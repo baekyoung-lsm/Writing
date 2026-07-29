@@ -3714,7 +3714,7 @@ function renderSidebar() {
   var templateWorks = visibleWorks.filter(function(w){ return w.isTemplate; });
   function renderWorkFolder(work) {
     var wkey = "work:"+work.id, wcollapsed = !!state.collapsed[wkey];
-    var out = '<div class="sb-group work-folder'+(work.isTemplate?" template-folder":"")+'"><div class="sb-group-head work-head" data-toggle="'+wkey+'"><span class="chev '+(wcollapsed?"collapsed":"")+'">'+ic("chevron",13)+'</span><span class="gt work-title">'+esc(work.title||"제목 없는 작품")+'</span>'+(work.isTemplate?'<span class="template-badge">예시</span>':'')+'<button class="row-del" data-delwork="'+work.id+'" title="작품 삭제">'+ic("trash",12)+'</button></div>';
+    var out = '<div class="sb-group work-folder'+(work.isTemplate?" template-folder":"")+'"><div class="sb-group-head work-head" data-toggle="'+wkey+'"><span class="chev '+(wcollapsed?"collapsed":"")+'">'+ic("chevron",13)+'</span><span class="gt work-title">'+esc(work.title||"제목 없는 작품")+'</span>'+(work.isTemplate?'<span class="template-badge">예시</span>':'')+'<button class="row-settings" data-exportzip="'+work.id+'" title="원고·설정집 내보내기(ZIP)">'+ic("upload",12)+'</button><button class="row-del" data-delwork="'+work.id+'" title="작품 삭제">'+ic("trash",12)+'</button></div>';
     if (!wcollapsed) out += renderWorkBody(work, q);
     out += '</div>';
     return out;
@@ -3772,6 +3772,7 @@ function renderSidebar() {
   el.querySelectorAll("[data-deltimeline]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteTimeline(b.dataset.deltimeline); }); });
   el.querySelectorAll("[data-delmap]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteMap(b.dataset.delmap); }); });
   el.querySelectorAll("[data-delwork]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteWork(b.dataset.delwork); }); });
+  el.querySelectorAll("[data-exportzip]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); openExportZipModal(b.dataset.exportzip); }); });
   document.getElementById("searchIcon").innerHTML = ic("search",13);
 }
 
@@ -7650,6 +7651,1351 @@ document.getElementById("search").addEventListener("keydown", function(e){
 });
 
 document.getElementById("brandHome").addEventListener("click", function(){ state.mode = "empty"; state.activeId = null; render(); });
+
+var ASSET_CSS = `/* World-Building Viewer — self-contained stylesheet (no external fonts/CDN). */
+:root {
+  --accent: #3B82F6;
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --accent-strong: color-mix(in srgb, var(--accent) 82%, black);
+  --bg: #faf9f6; --bg-card: #ffffff; --bg-card-hover: #f4f3ef; --bg-sidebar: #f4f3ef;
+  --ink: #17181c; --ink-soft: #4b4d55; --ink-faint: #8a8c94;
+  --border: #e6e4dd; --border-strong: #d8d5cb;
+  --shadow: rgba(20,20,15,0.08);
+  --radius: 12px;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #17181a; --bg-card: #1f2023; --bg-card-hover: #26282b; --bg-sidebar: #1b1c1f;
+  --ink: #eceef0; --ink-soft: #b7bac0; --ink-faint: #74777d;
+  --border: #2c2e32; --border-strong: #383b40;
+  --shadow: rgba(0,0,0,0.4);
+  --accent-strong: color-mix(in srgb, var(--accent) 78%, white);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17181a; --bg-card: #1f2023; --bg-card-hover: #26282b; --bg-sidebar: #1b1c1f;
+    --ink: #eceef0; --ink-soft: #b7bac0; --ink-faint: #74777d;
+    --border: #2c2e32; --border-strong: #383b40;
+    --shadow: rgba(0,0,0,0.4);
+    --accent-strong: color-mix(in srgb, var(--accent) 78%, white);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "Apple SD Gothic Neo", "Segoe UI", sans-serif;
+  background: var(--bg); color: var(--ink);
+  font-size: 15px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.wb-shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.wb-sidebar {
+  background: var(--bg-sidebar); border-right: 1px solid var(--border);
+  padding: 18px 14px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.wb-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px; padding: 6px 8px 16px; }
+.wb-brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
+.wb-nav-label { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .05em; padding: 14px 8px 6px; }
+.wb-nav-item {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 8px;
+  color: var(--ink-soft); font-size: 13.5px; transition: background .12s, color .12s;
+}
+.wb-nav-item:hover { background: var(--bg-card-hover); color: var(--ink); text-decoration: none; }
+.wb-nav-item.active { background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
+.wb-nav-item .cnt { margin-left: auto; font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.wb-nav-item.active .cnt { color: var(--accent-strong); }
+
+.wb-main { min-width: 0; padding: 26px 34px 60px; }
+.wb-overlay { display: none; }
+.wb-topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
+.wb-search-wrap { position: relative; flex: 1; min-width: 220px; max-width: 460px; }
+.wb-search {
+  width: 100%; padding: 10px 14px 10px 36px; border-radius: 10px; border: 1px solid var(--border-strong);
+  background: var(--bg-card); color: var(--ink); font-size: 13.5px;
+}
+.wb-search:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.wb-search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); pointer-events: none; }
+.wb-search-results {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--bg-card);
+  border: 1px solid var(--border-strong); border-radius: 10px; box-shadow: 0 8px 28px var(--shadow);
+  max-height: 360px; overflow-y: auto; z-index: 40; display: none;
+}
+.wb-search-results.open { display: block; }
+.wb-search-result { display: block; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.wb-search-result:last-child { border-bottom: none; }
+.wb-search-result:hover { background: var(--bg-card-hover); text-decoration: none; }
+.wb-search-result .k { font-size: 10.5px; color: var(--accent); font-weight: 600; }
+.wb-search-result .t { font-size: 13.5px; color: var(--ink); margin-top: 1px; }
+.wb-search-result .s { font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wb-search-empty { padding: 16px; text-align: center; color: var(--ink-faint); font-size: 12.5px; }
+
+.wb-theme-toggle { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.wb-icon-btn {
+  display: flex; align-items: center; justify-content: center; width: 34px; height: 34px;
+  border-radius: 9px; border: 1px solid var(--border-strong); background: var(--bg-card); color: var(--ink-soft);
+  cursor: pointer;
+}
+.wb-icon-btn:hover { background: var(--bg-card-hover); color: var(--ink); }
+.wb-settings-pop {
+  position: absolute; top: calc(100% + 8px); right: 0; width: 260px; background: var(--bg-card);
+  border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 10px 32px var(--shadow);
+  padding: 14px; z-index: 50; display: none;
+}
+.wb-settings-pop.open { display: block; }
+.wb-settings-label { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .04em; margin: 10px 0 8px; }
+.wb-settings-label:first-child { margin-top: 0; }
+.wb-mode-row { display: flex; gap: 6px; }
+.wb-mode-btn { flex: 1; padding: 7px 0; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--bg); color: var(--ink-soft); font-size: 12.5px; cursor: pointer; }
+.wb-mode-btn.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); font-weight: 600; }
+.wb-accent-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.wb-accent-swatch { width: 24px; height: 24px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.wb-accent-swatch.on { border-color: var(--ink); }
+.wb-accent-custom-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.wb-accent-custom-row input[type=color] { width: 30px; height: 30px; border: none; border-radius: 6px; padding: 0; background: none; cursor: pointer; }
+.wb-accent-custom-row input[type=text] { flex: 1; min-width: 0; padding: 6px 8px; border-radius: 7px; border: 1px solid var(--border-strong); background: var(--bg); color: var(--ink); font-size: 12px; }
+
+.wb-filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+.wb-filter-chip { padding: 6px 13px; border-radius: 20px; border: 1px solid var(--border-strong); background: var(--bg-card); color: var(--ink-soft); font-size: 12.5px; cursor: pointer; }
+.wb-filter-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+.wb-h1 { font-size: 25px; font-weight: 700; margin: 0 0 6px; }
+.wb-sub { color: var(--ink-faint); font-size: 13.5px; margin: 0 0 24px; }
+.wb-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 12px; margin-bottom: 28px; }
+.wb-stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 3px var(--shadow); }
+.wb-stat-card .n { font-size: 22px; font-weight: 700; }
+.wb-stat-card .l { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+
+.wb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px,1fr)); gap: 14px; }
+.wb-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; box-shadow: 0 1px 3px var(--shadow); transition: transform .14s, box-shadow .14s, border-color .14s;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.wb-card:hover { transform: translateY(-2px); box-shadow: 0 10px 26px var(--shadow); border-color: var(--accent); text-decoration: none; }
+.wb-card .avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-strong); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 17px; margin-bottom: 4px; }
+.wb-card .name { font-size: 15px; font-weight: 700; color: var(--ink); }
+.wb-card .alias { font-size: 11.5px; color: var(--ink-faint); }
+.wb-card .desc { font-size: 12.5px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.wb-card .tag-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+.wb-tag { font-size: 10.5px; padding: 3px 8px; border-radius: 12px; background: var(--bg-card-hover); color: var(--ink-faint); }
+.wb-empty { color: var(--ink-faint); font-size: 13px; padding: 40px 0; text-align: center; }
+
+.wb-detail-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 1px 3px var(--shadow); padding: 24px; margin-bottom: 18px; }
+.wb-detail-head { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 4px; }
+.wb-detail-avatar { width: 76px; height: 76px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-strong); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 28px; flex: none; }
+.wb-detail-title { font-size: 24px; font-weight: 700; }
+.wb-detail-alias { color: var(--ink-faint); font-size: 13px; margin-top: 2px; }
+.wb-field-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 14px; margin-top: 18px; }
+.wb-field { }
+.wb-field .k { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 3px; }
+.wb-field .v { font-size: 14px; color: var(--ink); }
+.wb-section-title { font-size: 13px; font-weight: 700; color: var(--ink-soft); margin: 22px 0 10px; display: flex; align-items: center; gap: 6px; }
+.wb-prose p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.75; color: var(--ink-soft); }
+.wb-prose h1, .wb-prose h2, .wb-prose h3 { font-size: 14.5px; margin: 16px 0 6px; color: var(--ink); }
+
+.wb-rel-list { display: flex; flex-direction: column; gap: 8px; }
+.wb-rel-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 9px; }
+.wb-rel-row .rn { font-weight: 600; font-size: 13px; }
+.wb-rel-row .rk { font-size: 11.5px; color: var(--accent-strong); background: var(--accent-soft); padding: 2px 8px; border-radius: 10px; }
+.wb-rel-row .rm { font-size: 11.5px; color: var(--ink-faint); margin-left: auto; }
+
+.wb-ep-chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.wb-ep-chip { font-size: 11.5px; padding: 5px 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); color: var(--ink-soft); }
+
+.wb-timeline { position: relative; padding-left: 28px; }
+.wb-timeline::before { content:""; position: absolute; left: 8px; top: 4px; bottom: 4px; width: 2px; background: var(--border-strong); }
+.wb-tl-item { position: relative; padding-bottom: 26px; }
+.wb-tl-item::before { content:""; position: absolute; left: -24px; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 3px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.wb-tl-label { font-size: 11.5px; color: var(--accent-strong); font-weight: 700; margin-bottom: 3px; }
+.wb-tl-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.wb-tl-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.65; }
+.wb-tl-group { font-size: 12px; color: var(--ink-faint); margin: 22px 0 10px; text-transform: uppercase; letter-spacing: .04em; }
+
+@media (max-width: 900px) {
+  .wb-shell { grid-template-columns: 1fr; }
+  .wb-sidebar {
+    position: fixed; left: 0; top: 0; z-index: 100; width: 260px; transform: translateX(-100%);
+    transition: transform .2s; box-shadow: 0 0 30px var(--shadow);
+  }
+  .wb-sidebar.open { transform: translateX(0); }
+  .wb-hamburger { display: flex !important; }
+  .wb-main { padding: 18px 16px 50px; }
+  .wb-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 90; }
+  .wb-overlay.open { display: block; }
+}
+.wb-hamburger { display: none; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--bg-card); color: var(--ink-soft); cursor: pointer; flex: none; }
+
+.wb-detail-image { width: 100%; max-width: 320px; border-radius: var(--radius); display: block; margin-bottom: 16px; background: var(--bg); }
+`;
+var ASSET_JS = `/* World-Building Viewer — shared client logic (no CDN, no framework). */
+(function () {
+  "use strict";
+
+  /* ---------------- Theme Manager ---------------- */
+  var THEME_KEY = "wb_theme_v1";
+  var ACCENT_PRESETS = [
+    { key: "blue", label: "Blue", hex: "#3B82F6" },
+    { key: "purple", label: "Purple", hex: "#8B5CF6" },
+    { key: "green", label: "Green", hex: "#22C55E" },
+    { key: "red", label: "Red", hex: "#EF4444" },
+    { key: "orange", label: "Orange", hex: "#F97316" }
+  ];
+  function loadTheme() {
+    try {
+      var raw = localStorage.getItem(THEME_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return { mode: "system", accent: ACCENT_PRESETS[0].hex };
+  }
+  function saveTheme(t) {
+    try { localStorage.setItem(THEME_KEY, JSON.stringify(t)); } catch (e) {}
+  }
+  var theme = loadTheme();
+  function applyTheme() {
+    var root = document.documentElement;
+    if (theme.mode === "light" || theme.mode === "dark") root.setAttribute("data-theme", theme.mode);
+    else root.removeAttribute("data-theme");
+    root.style.setProperty("--accent", theme.accent || ACCENT_PRESETS[0].hex);
+  }
+  applyTheme();
+
+  function isValidHex(v) { return /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(v.trim()); }
+  function normalizeHex(v) {
+    v = v.trim();
+    if (/^#[0-9a-fA-F]{3}$/.test(v)) {
+      v = "#" + v[1] + v[1] + v[2] + v[2] + v[3] + v[3];
+    }
+    return v.toUpperCase();
+  }
+
+  function wireThemeUI() {
+    var toggleBtn = document.getElementById("wbSettingsBtn");
+    var pop = document.getElementById("wbSettingsPop");
+    if (!toggleBtn || !pop) return;
+    toggleBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      pop.classList.toggle("open");
+    });
+    document.addEventListener("click", function (e) {
+      if (!pop.contains(e.target) && e.target !== toggleBtn) pop.classList.remove("open");
+    });
+
+    pop.querySelectorAll("[data-mode]").forEach(function (btn) {
+      btn.classList.toggle("on", theme.mode === btn.dataset.mode);
+      btn.addEventListener("click", function () {
+        theme.mode = btn.dataset.mode;
+        saveTheme(theme); applyTheme();
+        pop.querySelectorAll("[data-mode]").forEach(function (b) { b.classList.toggle("on", b === btn); });
+      });
+    });
+
+    var swatchRow = document.getElementById("wbAccentSwatches");
+    if (swatchRow) {
+      ACCENT_PRESETS.forEach(function (p) {
+        var sw = document.createElement("button");
+        sw.type = "button"; sw.className = "wb-accent-swatch";
+        sw.style.background = p.hex; sw.title = p.label;
+        sw.dataset.hex = p.hex;
+        if ((theme.accent || "").toUpperCase() === p.hex.toUpperCase()) sw.classList.add("on");
+        sw.addEventListener("click", function () {
+          theme.accent = p.hex; saveTheme(theme); applyTheme();
+          swatchRow.querySelectorAll(".wb-accent-swatch").forEach(function (s) { s.classList.remove("on"); });
+          sw.classList.add("on");
+          var hexInput = document.getElementById("wbAccentHex");
+          if (hexInput) hexInput.value = p.hex;
+        });
+        swatchRow.appendChild(sw);
+      });
+    }
+
+    var colorPicker = document.getElementById("wbAccentColor");
+    var hexInput = document.getElementById("wbAccentHex");
+    if (hexInput) hexInput.value = theme.accent || ACCENT_PRESETS[0].hex;
+    if (colorPicker) {
+      colorPicker.value = theme.accent || ACCENT_PRESETS[0].hex;
+      colorPicker.addEventListener("input", function () {
+        theme.accent = colorPicker.value; saveTheme(theme); applyTheme();
+        if (hexInput) hexInput.value = colorPicker.value;
+        if (swatchRow) swatchRow.querySelectorAll(".wb-accent-swatch").forEach(function (s) { s.classList.remove("on"); });
+      });
+    }
+    if (hexInput) {
+      hexInput.addEventListener("change", function () {
+        if (!isValidHex(hexInput.value)) return;
+        var hex = normalizeHex(hexInput.value);
+        theme.accent = hex; saveTheme(theme); applyTheme();
+        if (colorPicker) colorPicker.value = hex;
+        if (swatchRow) swatchRow.querySelectorAll(".wb-accent-swatch").forEach(function (s) { s.classList.remove("on"); });
+      });
+    }
+  }
+
+  /* ---------------- Mobile nav ---------------- */
+  function wireMobileNav() {
+    var hb = document.getElementById("wbHamburger");
+    var sidebar = document.querySelector(".wb-sidebar");
+    var overlay = document.getElementById("wbOverlay");
+    if (!hb || !sidebar) return;
+    function close() { sidebar.classList.remove("open"); if (overlay) overlay.classList.remove("open"); }
+    hb.addEventListener("click", function () {
+      sidebar.classList.toggle("open");
+      if (overlay) overlay.classList.toggle("open");
+    });
+    if (overlay) overlay.addEventListener("click", close);
+  }
+
+  /* ---------------- Search Engine ---------------- */
+  function wireSearch() {
+    var input = document.getElementById("wbSearchInput");
+    var results = document.getElementById("wbSearchResults");
+    if (!input || !results || typeof WB_DATA === "undefined") return;
+    var index = WB_DATA.searchIndex || [];
+    function render(query) {
+      var q = query.trim().toLowerCase();
+      if (!q) { results.classList.remove("open"); results.innerHTML = ""; return; }
+      var matches = index.filter(function (item) {
+        return (item.title || "").toLowerCase().indexOf(q) !== -1 ||
+          (item.subtitle || "").toLowerCase().indexOf(q) !== -1 ||
+          (item.body || "").toLowerCase().indexOf(q) !== -1;
+      }).slice(0, 20);
+      results.innerHTML = matches.length ? matches.map(function (m) {
+        return '<a class="wb-search-result" href="' + m.url + '">' +
+          '<div class="k">' + escHtml(m.typeLabel) + '</div>' +
+          '<div class="t">' + escHtml(m.title) + '</div>' +
+          (m.subtitle ? '<div class="s">' + escHtml(m.subtitle) + '</div>' : "") +
+          '</a>';
+      }).join("") : '<div class="wb-search-empty">검색 결과가 없어요</div>';
+      results.classList.add("open");
+    }
+    input.addEventListener("input", function () { render(input.value); });
+    input.addEventListener("focus", function () { if (input.value.trim()) render(input.value); });
+    document.addEventListener("click", function (e) {
+      if (!results.contains(e.target) && e.target !== input) results.classList.remove("open");
+    });
+  }
+
+  /* ---------------- Filter Engine (per-page category chips) ---------------- */
+  function wireFilters() {
+    var row = document.getElementById("wbFilterRow");
+    if (!row) return;
+    var chips = row.querySelectorAll(".wb-filter-chip");
+    var cards = document.querySelectorAll("[data-filter-tags]");
+    chips.forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        chips.forEach(function (c) { c.classList.remove("on"); });
+        chip.classList.add("on");
+        var f = chip.dataset.filter;
+        var shown = 0;
+        cards.forEach(function (card) {
+          var tags = (card.dataset.filterTags || "").split(",");
+          var show = f === "all" || tags.indexOf(f) !== -1;
+          card.style.display = show ? "" : "none";
+          if (show) shown++;
+        });
+        var emptyEl = document.getElementById("wbGridEmpty");
+        if (emptyEl) emptyEl.style.display = shown ? "none" : "";
+      });
+    });
+  }
+
+  function escHtml(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    wireThemeUI();
+    wireMobileNav();
+    wireSearch();
+    wireFilters();
+  });
+
+  window.WBViewer = { escHtml: escHtml, ACCENT_PRESETS: ACCENT_PRESETS };
+})();
+`;
+
+/* =========================================================================
+ * 작품 내보내기(ZIP) — ExportService
+ * 원고(TXT/DOCX/PDF, 통합 또는 회차별)와 설정집(오프라인 HTML 위키 Viewer)을
+ * 하나의 ZIP으로 묶어 내보냅니다. 전부 이 파일 안에서 순수 JS로 직접 구현했고,
+ * 외부 라이브러리나 CDN은 쓰지 않습니다(ZIP 자체도 손으로 만든 패커입니다).
+ * ========================================================================= */
+
+/* ---- ZIP writer ---- */
+  function zipUtf8Bytes(str) {
+    if (typeof TextEncoder !== "undefined") return new TextEncoder().encode(str);
+    // Node fallback (used only during dev/testing outside a browser)
+    return new Uint8Array(Buffer.from(str, "utf-8"));
+  }
+
+  var CRC_TABLE = (function () {
+    var table = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      table[n] = c >>> 0;
+    }
+    return table;
+  })();
+  function crc32(bytes) {
+    var crc = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) {
+      crc = CRC_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+    }
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  // MS-DOS date/time packing (ZIP spec requires this format in local headers)
+  function dosDateTime(date) {
+    date = date || new Date();
+    var time = ((date.getHours() & 0x1F) << 11) | ((date.getMinutes() & 0x3F) << 5) | ((date.getSeconds() >> 1) & 0x1F);
+    var yr = date.getFullYear() - 1980;
+    var dosDate = ((yr & 0x7F) << 9) | (((date.getMonth() + 1) & 0xF) << 5) | (date.getDate() & 0x1F);
+    return { time: time & 0xFFFF, date: dosDate & 0xFFFF };
+  }
+
+  function MiniZip() {
+    this.files = []; // { name, bytes, crc, size, offset }
+  }
+  MiniZip.prototype.addFile = function (path, content, date) {
+    var bytes = (content instanceof Uint8Array) ? content : zipUtf8Bytes(String(content));
+    this.files.push({ name: path.replace(/\\/g, "/"), bytes: bytes, date: date });
+    return this;
+  };
+  MiniZip.prototype.addFolder = function (path) {
+    // Explicit empty-folder entries are optional in ZIP (folders are implied by file paths),
+    // but some tools display them more nicely if present. Zero-byte entry ending in '/'.
+    return this.addFile(path.replace(/\/?$/, "/"), new Uint8Array(0));
+  };
+
+  function writeU16(arr, v) { arr.push(v & 0xFF, (v >>> 8) & 0xFF); }
+  function writeU32(arr, v) { arr.push(v & 0xFF, (v >>> 8) & 0xFF, (v >>> 16) & 0xFF, (v >>> 24) & 0xFF); }
+
+  MiniZip.prototype.generate = function () {
+    var localParts = [];
+    var centralParts = [];
+    var offset = 0;
+    var self = this;
+
+    this.files.forEach(function (f) {
+      var nameBytes = zipUtf8Bytes(f.name);
+      var crc = crc32(f.bytes);
+      var dt = dosDateTime(f.date);
+      f._crc = crc; f._offset = offset;
+
+      var lh = [];
+      writeU32(lh, 0x04034b50);      // local file header signature
+      writeU16(lh, 20);              // version needed
+      writeU16(lh, 0x0800);          // general purpose flag: bit 11 = UTF-8 names
+      writeU16(lh, 0);               // compression method: 0 = store
+      writeU16(lh, dt.time);
+      writeU16(lh, dt.date);
+      writeU32(lh, crc);
+      writeU32(lh, f.bytes.length);  // compressed size == size (store)
+      writeU32(lh, f.bytes.length);  // uncompressed size
+      writeU16(lh, nameBytes.length);
+      writeU16(lh, 0);               // extra field length
+      var lhBytes = new Uint8Array(lh);
+      var localEntry = new Uint8Array(lhBytes.length + nameBytes.length + f.bytes.length);
+      localEntry.set(lhBytes, 0);
+      localEntry.set(nameBytes, lhBytes.length);
+      localEntry.set(f.bytes, lhBytes.length + nameBytes.length);
+      localParts.push(localEntry);
+      offset += localEntry.length;
+
+      var ch = [];
+      writeU32(ch, 0x02014b50);      // central directory header signature
+      writeU16(ch, 20);              // version made by
+      writeU16(ch, 20);              // version needed
+      writeU16(ch, 0x0800);          // UTF-8 flag
+      writeU16(ch, 0);               // method: store
+      writeU16(ch, dt.time);
+      writeU16(ch, dt.date);
+      writeU32(ch, crc);
+      writeU32(ch, f.bytes.length);
+      writeU32(ch, f.bytes.length);
+      writeU16(ch, nameBytes.length);
+      writeU16(ch, 0);               // extra length
+      writeU16(ch, 0);               // comment length
+      writeU16(ch, 0);               // disk number start
+      writeU16(ch, 0);               // internal attrs
+      writeU32(ch, 0);               // external attrs
+      writeU32(ch, f._offset);       // relative offset of local header
+      var chBytes = new Uint8Array(ch);
+      var centralEntry = new Uint8Array(chBytes.length + nameBytes.length);
+      centralEntry.set(chBytes, 0);
+      centralEntry.set(nameBytes, chBytes.length);
+      centralParts.push(centralEntry);
+    });
+
+    var centralSize = centralParts.reduce(function (s, p) { return s + p.length; }, 0);
+    var centralOffset = offset;
+
+    var eocd = [];
+    writeU32(eocd, 0x06054b50);
+    writeU16(eocd, 0);               // disk number
+    writeU16(eocd, 0);               // disk with central dir
+    writeU16(eocd, this.files.length);
+    writeU16(eocd, this.files.length);
+    writeU32(eocd, centralSize);
+    writeU32(eocd, centralOffset);
+    writeU16(eocd, 0);               // comment length
+
+    var totalSize = offset + centralSize + eocd.length;
+    var out = new Uint8Array(totalSize);
+    var pos = 0;
+    localParts.forEach(function (p) { out.set(p, pos); pos += p.length; });
+    centralParts.forEach(function (p) { out.set(p, pos); pos += p.length; });
+    out.set(new Uint8Array(eocd), pos);
+    return out;
+  };
+
+/* ---- DOCX generator ---- */
+  function docxEsc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+  }
+
+  var CONTENT_TYPES =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+    '<Default Extension="xml" ContentType="application/xml"/>' +
+    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+    '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
+    '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' +
+    '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>' +
+    '</Types>';
+
+  var ROOT_RELS =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>' +
+    '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>' +
+    '</Relationships>';
+
+  var DOC_RELS =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+    '</Relationships>';
+
+  var STYLES =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+    '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Malgun Gothic" w:eastAsia="맑은 고딕" w:hAnsi="Malgun Gothic" w:cs="Malgun Gothic"/><w:sz w:val="22"/></w:rPr></w:rPrDefault></w:docDefaults>' +
+    '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/>' +
+    '<w:pPr><w:spacing w:after="160" w:line="360" w:lineRule="auto"/></w:pPr></w:style>' +
+    '<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/>' +
+    '<w:pPr><w:spacing w:after="400"/><w:jc w:val="center"/></w:pPr>' +
+    '<w:rPr><w:rFonts w:ascii="Malgun Gothic" w:eastAsia="맑은 고딕" w:hAnsi="Malgun Gothic"/><w:b/><w:sz w:val="44"/></w:rPr></w:style>' +
+    '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/>' +
+    '<w:pPr><w:spacing w:before="480" w:after="240"/><w:pageBreakBefore/></w:pPr>' +
+    '<w:rPr><w:rFonts w:ascii="Malgun Gothic" w:eastAsia="맑은 고딕" w:hAnsi="Malgun Gothic"/><w:b/><w:sz w:val="32"/></w:rPr></w:style>' +
+    '</w:styles>';
+
+  function coreProps(title, author) {
+    var now = new Date().toISOString();
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" ' +
+      'xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
+      '<dc:title>' + docxEsc(title) + '</dc:title>' +
+      '<dc:creator>' + docxEsc(author || "집필 노트") + '</dc:creator>' +
+      '<dcterms:created xsi:type="dcterms:W3CDTF">' + now + '</dcterms:created>' +
+      '<dcterms:modified xsi:type="dcterms:W3CDTF">' + now + '</dcterms:modified>' +
+      '</cp:coreProperties>';
+  }
+
+  var APP_PROPS =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">' +
+    '<Application>집필 노트</Application></Properties>';
+
+  function paragraphXml(text, styleId) {
+    var pPr = styleId ? '<w:pPr><w:pStyle w:val="' + styleId + '"/></w:pPr>' : "";
+    if (!text) return '<w:p>' + pPr + '</w:p>';
+    return '<w:p>' + pPr + '<w:r><w:t xml:space="preserve">' + docxEsc(text) + '</w:t></w:r></w:p>';
+  }
+
+  /* chapters: [{ title: string, text: string }]. bodyTitle: optional doc-level title paragraph. */
+  function buildDocumentXml(bodyTitle, chapters) {
+    var body = "";
+    if (bodyTitle) body += paragraphXml(bodyTitle, "Title");
+    chapters.forEach(function (ch, i) {
+      body += paragraphXml(ch.title || ("(제목 없음 " + (i + 1) + ")"), "Heading1");
+      var paras = (ch.text || "").split(/\n+/).filter(function (p) { return p.length; });
+      if (!paras.length) body += paragraphXml("");
+      paras.forEach(function (p) { body += paragraphXml(p); });
+    });
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+      '<w:body>' + body +
+      '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1417" w:bottom="1417" w:left="1417"/></w:sectPr>' +
+      '</w:body></w:document>';
+  }
+
+  /* Returns a Uint8Array of a complete .docx file.
+   * opts: { title, author, chapters: [{title, text}] }
+   */
+  function generateDocx(opts) {
+    var zip = new MiniZip();
+    zip.addFile("[Content_Types].xml", CONTENT_TYPES);
+    zip.addFile("_rels/.rels", ROOT_RELS);
+    zip.addFile("docProps/core.xml", coreProps(opts.title, opts.author));
+    zip.addFile("docProps/app.xml", APP_PROPS);
+    zip.addFile("word/document.xml", buildDocumentXml(opts.bodyTitle, opts.chapters));
+    zip.addFile("word/styles.xml", STYLES);
+    zip.addFile("word/_rels/document.xml.rels", DOC_RELS);
+    return zip.generate();
+  }
+
+/* ---- PDF generator (Korean text is rasterized to per-page JPEG images by the
+ * browser's own font engine, then embedded — see rasterizeChaptersToPdfPages) ---- */
+  function pdfUtf8Bytes(str) {
+    if (typeof TextEncoder !== "undefined") return new TextEncoder().encode(str);
+    return new Uint8Array(Buffer.from(str, "utf-8"));
+  }
+  /* str's char codes (0-255) are treated as literal raw bytes -- must NOT go through
+   * UTF-8 re-encoding, unlike pdfUtf8Bytes(). Used for already-byte-escaped PDF string literals. */
+  function latin1Bytes(str) {
+    var out = new Uint8Array(str.length);
+    for (var i = 0; i < str.length; i++) out[i] = str.charCodeAt(i) & 0xFF;
+    return out;
+  }
+  function concatBytes(parts) {
+    var total = 0;
+    for (var i = 0; i < parts.length; i++) total += parts[i].length;
+    var out = new Uint8Array(total);
+    var pos = 0;
+    for (i = 0; i < parts.length; i++) { out.set(parts[i], pos); pos += parts[i].length; }
+    return out;
+  }
+  function pad10(n) { var s = String(n); while (s.length < 10) s = "0" + s; return s; }
+  /* PDF string literals default to PDFDocEncoding (Latin-1-ish), which can't hold Korean.
+   * The spec's way to represent Unicode text in a string literal is UTF-16BE with a
+   * leading U+FEFF byte-order-mark, byte-escaping any \, ( or ) that appear in the stream. */
+  function pdfUnicodeString(str) {
+    var s = String(str || "");
+    var bytes = [0xFE, 0xFF];
+    for (var i = 0; i < s.length; i++) {
+      var code = s.charCodeAt(i);
+      bytes.push((code >> 8) & 0xFF, code & 0xFF);
+    }
+    var out = "";
+    for (i = 0; i < bytes.length; i++) {
+      var b = bytes[i];
+      if (b === 0x5C || b === 0x28 || b === 0x29) out += "\\" + String.fromCharCode(b);
+      else out += String.fromCharCode(b);
+    }
+    return out;
+  }
+
+  /* pages: [{ pixelWidth, pixelHeight, widthPt, heightPt, jpegBytes: Uint8Array }] */
+  function generatePdf(pages, opts) {
+    opts = opts || {};
+    var chunks = [];
+    var offsets = [null]; // 1-indexed; offsets[n] = byte offset of object n
+    var pos = 0;
+    function append(bytes) { chunks.push(bytes); pos += bytes.length; }
+    function beginObj(num) { offsets[num] = pos; append(pdfUtf8Bytes(num + " 0 obj\n")); }
+    function endObj() { append(pdfUtf8Bytes("\nendobj\n")); }
+
+    append(pdfUtf8Bytes("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n"));
+
+    // Object numbering plan: 1=Catalog, 2=Pages, 3=Info, then per page: image, content, page (3 objs each)
+    var catalogNum = 1, pagesNum = 2, infoNum = 3;
+    var nextNum = 4;
+    var kidsRefs = [];
+
+    pages.forEach(function (pg) {
+      var imgNum = nextNum++, contentNum = nextNum++, pageNum = nextNum++;
+
+      beginObj(imgNum);
+      append(pdfUtf8Bytes(
+        "<< /Type /XObject /Subtype /Image /Width " + pg.pixelWidth + " /Height " + pg.pixelHeight +
+        " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + pg.jpegBytes.length + " >>\nstream\n"
+      ));
+      append(pg.jpegBytes);
+      append(pdfUtf8Bytes("\nendstream"));
+      endObj();
+
+      var contentStr = "q " + pg.widthPt.toFixed(2) + " 0 0 " + pg.heightPt.toFixed(2) + " 0 0 cm /Im0 Do Q";
+      beginObj(contentNum);
+      append(pdfUtf8Bytes("<< /Length " + contentStr.length + " >>\nstream\n" + contentStr + "\nendstream"));
+      endObj();
+
+      beginObj(pageNum);
+      append(pdfUtf8Bytes(
+        "<< /Type /Page /Parent " + pagesNum + " 0 R /MediaBox [0 0 " + pg.widthPt.toFixed(2) + " " + pg.heightPt.toFixed(2) + "] " +
+        "/Resources << /XObject << /Im0 " + imgNum + " 0 R >> >> /Contents " + contentNum + " 0 R >>"
+      ));
+      endObj();
+
+      kidsRefs.push(pageNum);
+    });
+
+    beginObj(catalogNum);
+    append(pdfUtf8Bytes("<< /Type /Catalog /Pages " + pagesNum + " 0 R >>"));
+    endObj();
+
+    beginObj(pagesNum);
+    append(pdfUtf8Bytes("<< /Type /Pages /Kids [" + kidsRefs.map(function (n) { return n + " 0 R"; }).join(" ") + "] /Count " + kidsRefs.length + " >>"));
+    endObj();
+
+    var creationDate = "D:" + new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
+    beginObj(infoNum);
+    append(pdfUtf8Bytes("<< /Title ("));
+    append(latin1Bytes(pdfUnicodeString(opts.title || "")));
+    append(pdfUtf8Bytes(") /Producer (jipseul-note) /CreationDate (" + creationDate + ") >>"));
+    endObj();
+
+    var totalObjs = nextNum - 1;
+    var xrefStart = pos;
+    var xrefLines = ["xref", "0 " + (totalObjs + 1), "0000000000 65535 f "];
+    for (var n = 1; n <= totalObjs; n++) xrefLines.push(pad10(offsets[n]) + " 00000 n ");
+    var trailer =
+      "trailer\n<< /Size " + (totalObjs + 1) + " /Root " + catalogNum + " 0 R /Info " + infoNum + " 0 R >>\n" +
+      "startxref\n" + xrefStart + "\n%%EOF";
+    append(pdfUtf8Bytes(xrefLines.join("\n") + "\n" + trailer));
+
+    return concatBytes(chunks);
+  }
+
+/* ---- Canvas rasterizer (browser-only) ---- */
+var PT_PER_IN = 72;
+  var DPI = 150; // print-quality but keeps file size reasonable
+
+  function mkCanvas(wPx, hPx) {
+    var c = document.createElement("canvas");
+    c.width = wPx; c.height = hPx;
+    return c;
+  }
+
+  function wrapLines(ctx, text, maxWidth) {
+    // Character-level wrapping: correct for CJK (no reliable word-space breaks) and
+    // still reads fine for the occasional embedded Latin word/number.
+    var lines = [];
+    var line = "";
+    for (var i = 0; i < text.length; i++) {
+      var next = line + text[i];
+      if (ctx.measureText(next).width > maxWidth && line.length) {
+        lines.push(line);
+        line = text[i];
+      } else {
+        line = next;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  function canvasToJpegBytes(canvas, quality) {
+    return new Promise(function (resolve, reject) {
+      canvas.toBlob(function (blob) {
+        if (!blob) { reject(new Error("toBlob failed")); return; }
+        var reader = new FileReader();
+        reader.onload = function () { resolve(new Uint8Array(reader.result)); };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(blob);
+      }, "image/jpeg", quality || 0.85);
+    });
+  }
+
+  /* chapters: [{ title, text }]. Returns a Promise<Array<pageDescriptor>>. */
+  async function rasterizeChaptersToPdfPages(chapters, opts) {
+    opts = opts || {};
+    var widthPt = opts.widthPt || 595.28;   // A4
+    var heightPt = opts.heightPt || 841.89;
+    var pxW = Math.round(widthPt / PT_PER_IN * DPI);
+    var pxH = Math.round(heightPt / PT_PER_IN * DPI);
+    var marginPx = Math.round(0.9 * DPI);
+    var bodyFontPx = Math.round(11.5 * DPI / 72);
+    var titleFontPx = Math.round(20 * DPI / 72);
+    var lineHeightPx = Math.round(bodyFontPx * 1.9);
+    var fontStack = "'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif";
+
+    var pages = [];
+    var canvas = null, ctx = null, y = 0;
+    var maxTextWidth = pxW - marginPx * 2;
+
+    function newPage() {
+      canvas = mkCanvas(pxW, pxH);
+      ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, pxW, pxH);
+      ctx.fillStyle = "#1a1a1a";
+      ctx.textBaseline = "alphabetic";
+      y = marginPx;
+      pages.push(canvas);
+    }
+    function ensureRoom(lineH) {
+      if (y + lineH > pxH - marginPx) newPage();
+    }
+    function drawLine(text, fontPx, bold, extraGapAfter) {
+      ctx.font = (bold ? "bold " : "") + fontPx + "px " + fontStack;
+      ensureRoom(lineHeightPx);
+      y += lineHeightPx;
+      ctx.fillText(text, marginPx, y);
+      if (extraGapAfter) y += extraGapAfter;
+    }
+
+    newPage();
+    chapters.forEach(function (ch, idx) {
+      if (idx > 0) newPage(); // each chapter starts on a fresh page, like the DOCX/print convention
+      ctx.font = "bold " + titleFontPx + "px " + fontStack;
+      drawLine(ch.title || "(제목 없음)", titleFontPx, true, lineHeightPx * 0.6);
+      var paras = (ch.text || "").split(/\n+/).filter(function (p) { return p.length; });
+      if (!paras.length) paras = [""];
+      paras.forEach(function (p) {
+        ctx.font = bodyFontPx + "px " + fontStack;
+        var lines = wrapLines(ctx, p, maxTextWidth);
+        lines.forEach(function (line) { drawLine(line, bodyFontPx, false, 0); });
+        y += Math.round(lineHeightPx * 0.35); // paragraph gap
+      });
+    });
+
+    var jpegPages = [];
+    for (var i = 0; i < pages.length; i++) {
+      var bytes = await canvasToJpegBytes(pages[i], 0.85);
+      jpegPages.push({ pixelWidth: pxW, pixelHeight: pxH, widthPt: widthPt, heightPt: heightPt, jpegBytes: bytes });
+    }
+    return jpegPages;
+  }
+
+/* ---- TXT generator ---- */
+function buildManuscriptTxt(bodyTitle, chapters) {
+  var parts = [];
+  if (bodyTitle) { parts.push(bodyTitle); parts.push(""); }
+  chapters.forEach(function(ch){
+    parts.push(ch.title || "(제목 없음)");
+    parts.push("");
+    parts.push(ch.text || "");
+    parts.push(""); parts.push("");
+  });
+  return parts.join("\n");
+}
+
+/* ---- World-Building Viewer generator ---- */
+
+  function wbEsc(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function slugify(id) { return "e" + String(id).replace(/[^a-zA-Z0-9_-]/g, ""); }
+  function initials(title) { return (title || "?").trim().slice(0, 1); }
+  function wbFmtNum(n) { return (n || 0).toLocaleString("ko-KR"); }
+
+  var NAV_ITEMS = [
+    { key: "index", label: "작품 정보", href: "index.html", icon: "home" },
+    { key: "characters", label: "등장인물", href: "characters.html", icon: "person" },
+    { key: "organizations", label: "조직", href: "organizations.html", icon: "org" },
+    { key: "locations", label: "지역", href: "locations.html", icon: "map" },
+    { key: "events", label: "사건", href: "events.html", icon: "flag" },
+    { key: "settings", label: "설정", href: "settings.html", icon: "book" },
+    { key: "timeline", label: "연표", href: "timeline.html", icon: "clock" }
+  ];
+  var ICONS = {
+    home: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2 7L8 2l6 5v6.5a1 1 0 0 1-1 1h-3v-4H6v4H3a1 1 0 0 1-1-1V7z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+    person: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.2" r="2.7" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 14c.7-3 2.9-4.7 5.5-4.7s4.8 1.7 5.5 4.7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+    org: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="2" y="6" width="5" height="8" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="2" width="5" height="12" stroke="currentColor" stroke-width="1.3"/></svg>',
+    map: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M5.5 2.5 2 4v9.5l3.5-1.5L10.5 13l3.5-1.5V2l-3.5 1.5-5-1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+    flag: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 2v12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M3 3h8l-2 2.5L11 8H3" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+    book: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2 3.5c1.5-1 3.5-1 5.5 0v9.5c-2-1-4-1-5.5 0V3.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M13.5 3.5c-1.5-1-3.5-1-5.5 0v9.5c2-1 4-1 5.5 0V3.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+    clock: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 4.5V8l2.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+    search: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.3" stroke="currentColor" stroke-width="1.3"/><path d="M13 13l-2.3-2.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+    gear: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.2" stroke="currentColor" stroke-width="1.3"/><path d="M8 2.2v1.6M8 12.2v1.6M13.8 8h-1.6M3.8 8H2.2M12 4l-1.1 1.1M5.1 10.9 4 12M12 12l-1.1-1.1M5.1 5.1 4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+    menu: '<svg width="17" height="17" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>'
+  };
+
+  function wbRenderSidebar(activeKey, counts, workTitle) {
+    var items = NAV_ITEMS.filter(function (n) { return n.key === "index" || n.key === "settings" || (counts[n.key] || 0) > 0; });
+    return '<aside class="wb-sidebar">' +
+      '<div class="wb-brand"><span class="dot"></span><span>' + wbEsc(workTitle || "설정집") + '</span></div>' +
+      items.map(function (n) {
+        var cnt = n.key !== "index" && n.key !== "settings" ? counts[n.key] : null;
+        return '<a class="wb-nav-item' + (n.key === activeKey ? " active" : "") + '" href="' + n.href + '">' +
+          ICONS[n.icon] + '<span>' + wbEsc(n.label) + '</span>' + (cnt != null ? '<span class="cnt">' + cnt + '</span>' : "") + '</a>';
+      }).join("") +
+      '</aside>';
+  }
+
+  function renderSettingsPop() {
+    return '<div class="wb-settings-pop" id="wbSettingsPop">' +
+      '<div class="wb-settings-label">테마</div>' +
+      '<div class="wb-mode-row">' +
+      '<button type="button" class="wb-mode-btn" data-mode="light">Light</button>' +
+      '<button type="button" class="wb-mode-btn" data-mode="dark">Dark</button>' +
+      '<button type="button" class="wb-mode-btn" data-mode="system">System</button>' +
+      '</div>' +
+      '<div class="wb-settings-label">강조 색상</div>' +
+      '<div class="wb-accent-row" id="wbAccentSwatches"></div>' +
+      '<div class="wb-accent-custom-row">' +
+      '<input type="color" id="wbAccentColor">' +
+      '<input type="text" id="wbAccentHex" placeholder="#3B82F6">' +
+      '</div>' +
+      '</div>';
+  }
+
+  function renderTopbar(showFilters, filterChips) {
+    return '<div class="wb-topbar">' +
+      '<button type="button" class="wb-hamburger" id="wbHamburger">' + ICONS.menu + '</button>' +
+      '<div class="wb-search-wrap">' +
+      '<span class="wb-search-icon">' + ICONS.search + '</span>' +
+      '<input type="text" class="wb-search" id="wbSearchInput" placeholder="설정집 전체 검색..." autocomplete="off">' +
+      '<div class="wb-search-results" id="wbSearchResults"></div>' +
+      '</div>' +
+      '<div class="wb-theme-toggle" style="position:relative">' +
+      '<button type="button" class="wb-icon-btn" id="wbSettingsBtn">' + ICONS.gear + '</button>' +
+      renderSettingsPop() +
+      '</div>' +
+      '</div>' +
+      (showFilters ? '<div class="wb-filter-row" id="wbFilterRow">' + filterChips + '</div>' : "");
+  }
+
+  function renderShell(opts) {
+    return '<!doctype html><html lang="ko"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>' + wbEsc(opts.title) + ' · ' + wbEsc(opts.workTitle) + '</title>' +
+      '<link rel="stylesheet" href="' + opts.assetPrefix + 'assets/css/style.css">' +
+      '</head><body>' +
+      '<script>(function(){try{var t=JSON.parse(localStorage.getItem("wb_theme_v1")||"{}");if(t.mode==="light"||t.mode==="dark")document.documentElement.setAttribute("data-theme",t.mode);if(t.accent)document.documentElement.style.setProperty("--accent",t.accent);}catch(e){}})();<\/script>' +
+      '<div class="wb-shell">' +
+      wbRenderSidebar(opts.activeKey, opts.counts, opts.workTitle) +
+      '<div class="wb-overlay" id="wbOverlay"></div>' +
+      '<main class="wb-main">' +
+      renderTopbar(!!opts.filterChips, opts.filterChips || "") +
+      opts.body +
+      '</main>' +
+      '</div>' +
+      '<script src="' + opts.assetPrefix + 'assets/js/data.js"><\/script>' +
+      '<script src="' + opts.assetPrefix + 'assets/js/app.js"><\/script>' +
+      '</body></html>';
+  }
+
+  function entityCard(e, href) {
+    return '<a class="wb-card" href="' + href + '" data-filter-tags="' + wbEsc(e.filterTags || "") + '">' +
+      (e.imageSvg ? '<div style="width:44px">' + e.imageSvg + '</div>' : '<div class="avatar">' + wbEsc(initials(e.title)) + '</div>') +
+      '<div class="name">' + wbEsc(e.title) + '</div>' +
+      (e.subtitle ? '<div class="alias">' + wbEsc(e.subtitle) + '</div>' : "") +
+      (e.desc ? '<div class="desc">' + wbEsc(e.desc) + '</div>' : "") +
+      (e.tags && e.tags.length ? '<div class="tag-row">' + e.tags.map(function (t) { return '<span class="wb-tag">' + wbEsc(t) + '</span>'; }).join("") + '</div>' : "") +
+      '</a>';
+  }
+
+  function fieldGrid(fields) {
+    var shown = fields.filter(function (f) { return f.v; });
+    if (!shown.length) return "";
+    return '<div class="wb-field-grid">' + shown.map(function (f) {
+      return '<div class="wb-field"><div class="k">' + wbEsc(f.k) + '</div><div class="v">' + wbEsc(f.v) + '</div></div>';
+    }).join("") + '</div>';
+  }
+
+  function relList(rels) {
+    if (!rels || !rels.length) return "";
+    return '<div class="wb-rel-list">' + rels.map(function (r) {
+      return '<div class="wb-rel-row"><span class="rn">' + wbEsc(r.name) + '</span>' +
+        (r.kind ? '<span class="rk">' + wbEsc(r.kind) + '</span>' : "") +
+        (r.memo ? '<span class="rm">' + wbEsc(r.memo) + '</span>' : "") + '</div>';
+    }).join("") + '</div>';
+  }
+
+  function proseHtml(blocks) {
+    if (!blocks || !blocks.length) return "";
+    return '<div class="wb-prose">' + blocks.map(function (b) {
+      if (b.type === "h") return "<h3>" + wbEsc(b.text) + "</h3>";
+      return "<p>" + wbEsc(b.text || "") + "</p>";
+    }).join("") + '</div>';
+  }
+
+  /* ---- main entry point ---- */
+  function generateViewerFiles(data) {
+    /* data: {
+     *   workTitle, stats: {characters,organizations,locations,events,manuscripts,chars},
+     *   characters: [{ id, title, aliases, summary, fields:[{k,v}], tags, imageSvg, relationships:[{name,kind,memo}], episodes:[{title,url}], memo, blocks }],
+     *   organizations: [{ id, title, summary, houseTypeLabel, color, members:[{name}], rivals:[{name}], blocks }],
+     *   locations: [{ id, title, terrain, orgName, mapTitle }],
+     *   events: [{ id, title, summary, blocks }],
+     *   settingsDocs: [{ id, title, category, summary, blocks }],
+     *   timelineGroups: [{ title, events:[{label,title,description}] }]
+     * }
+     */
+    var files = {};
+    var counts = {
+      characters: data.characters.length,
+      organizations: data.organizations.length,
+      locations: data.locations.length,
+      events: data.events.length,
+      settings: data.settingsDocs.length
+    };
+    var searchIndex = [];
+    data.characters.forEach(function (c) { searchIndex.push({ type: "character", typeLabel: "등장인물", title: c.title, subtitle: (c.aliases || []).join(", "), body: c.summary, url: "characters/" + slugify(c.id) + ".html" }); });
+    data.organizations.forEach(function (o) { searchIndex.push({ type: "organization", typeLabel: "조직", title: o.title, subtitle: o.houseTypeLabel, body: o.summary, url: "organizations/" + slugify(o.id) + ".html" }); });
+    data.locations.forEach(function (l) { searchIndex.push({ type: "location", typeLabel: "지역", title: l.title, subtitle: l.mapTitle, body: "", url: "locations.html#" + slugify(l.id) }); });
+    data.events.forEach(function (e) { searchIndex.push({ type: "event", typeLabel: "사건", title: e.title, subtitle: "", body: e.summary, url: "events.html#" + slugify(e.id) }); });
+    data.settingsDocs.forEach(function (s) { searchIndex.push({ type: "setting", typeLabel: s.category, title: s.title, subtitle: "", body: s.summary, url: "settings.html#" + slugify(s.id) }); });
+
+    files["WorldBuilding/assets/css/style.css"] = ASSET_CSS;
+    files["WorldBuilding/assets/js/app.js"] = ASSET_JS;
+    files["WorldBuilding/assets/js/data.js"] = "window.WB_DATA = " + JSON.stringify({ workTitle: data.workTitle, searchIndex: searchIndex }) + ";";
+
+    // ---- index.html ----
+    var idxBody =
+      '<h1 class="wb-h1">' + wbEsc(data.workTitle) + '</h1>' +
+      '<p class="wb-sub">이 작품의 설정집(World Building) — 오프라인에서 index.html만 열면 바로 탐색할 수 있어요.</p>' +
+      '<div class="wb-stat-grid">' +
+      '<div class="wb-stat-card"><div class="n">' + wbFmtNum(data.stats.characters) + '</div><div class="l">등장인물</div></div>' +
+      '<div class="wb-stat-card"><div class="n">' + wbFmtNum(data.stats.organizations) + '</div><div class="l">조직</div></div>' +
+      '<div class="wb-stat-card"><div class="n">' + wbFmtNum(data.stats.locations) + '</div><div class="l">지역</div></div>' +
+      '<div class="wb-stat-card"><div class="n">' + wbFmtNum(data.stats.events) + '</div><div class="l">사건</div></div>' +
+      '<div class="wb-stat-card"><div class="n">' + wbFmtNum(data.stats.manuscripts) + '</div><div class="l">원고 글자 수</div></div>' +
+      '</div>' +
+      (data.readme ? '<div class="wb-detail-card">' + proseHtml(data.readme) + '</div>' : "");
+    files["WorldBuilding/index.html"] = renderShell({ title: "작품 정보", workTitle: data.workTitle, activeKey: "index", counts: counts, assetPrefix: "", body: idxBody });
+
+    // ---- characters.html (gallery) + detail pages ----
+    var charFilterTagsSet = {};
+    data.characters.forEach(function (c) { (c.tags || []).forEach(function (t) { charFilterTagsSet[t] = true; }); });
+    var charFilterChips = '<button type="button" class="wb-filter-chip on" data-filter="all">전체</button>' +
+      Object.keys(charFilterTagsSet).map(function (t) { return '<button type="button" class="wb-filter-chip" data-filter="' + wbEsc(t) + '">' + wbEsc(t) + '</button>'; }).join("");
+    var charGrid = data.characters.length
+      ? '<div class="wb-grid">' + data.characters.map(function (c) { return entityCard({ title: c.title, subtitle: (c.aliases||[]).join(", "), desc: c.summary, tags: c.tags, imageSvg: c.imageSvg, filterTags: (c.tags||[]).join(",") }, "characters/" + slugify(c.id) + ".html"); }).join("") + '</div>'
+      : '<div class="wb-empty">아직 등록된 등장인물이 없어요.</div>';
+    files["WorldBuilding/characters.html"] = renderShell({
+      title: "등장인물", workTitle: data.workTitle, activeKey: "characters", counts: counts, assetPrefix: "",
+      filterChips: Object.keys(charFilterTagsSet).length ? charFilterChips : "",
+      body: '<h1 class="wb-h1">등장인물</h1><p class="wb-sub">' + counts.characters + '명</p>' + charGrid + '<div class="wb-empty" id="wbGridEmpty" style="display:none">조건에 맞는 인물이 없어요.</div>'
+    });
+    data.characters.forEach(function (c) {
+      var head = '<div class="wb-detail-head">' +
+        (c.imageSvg ? '<div style="width:76px;flex:none">' + c.imageSvg + '</div>' : '<div class="wb-detail-avatar">' + wbEsc(initials(c.title)) + '</div>') +
+        '<div><div class="wb-detail-title">' + wbEsc(c.title) + '</div>' +
+        (c.aliases && c.aliases.length ? '<div class="wb-detail-alias">' + wbEsc(c.aliases.join(" · ")) + '</div>' : "") + '</div></div>';
+      var body = '<div class="wb-detail-card">' + head +
+        (c.summary ? '<div class="wb-prose" style="margin-top:14px"><p>' + wbEsc(c.summary) + '</p></div>' : "") +
+        fieldGrid(c.fields) +
+        '</div>' +
+        (c.relationships && c.relationships.length ? '<div class="wb-detail-card"><div class="wb-section-title">' + ICONS.person + ' 관계도</div>' + relList(c.relationships) + '</div>' : "") +
+        (c.episodes && c.episodes.length ? '<div class="wb-detail-card"><div class="wb-section-title">' + ICONS.book + ' 등장 회차 · ' + c.episodes.length + '개</div><div class="wb-ep-chip-row">' + c.episodes.map(function (e) { return '<span class="wb-ep-chip">' + wbEsc(e) + '</span>'; }).join("") + '</div></div>' : "") +
+        (c.blocks && c.blocks.length ? '<div class="wb-detail-card"><div class="wb-section-title">' + ICONS.gear + ' 메모</div>' + proseHtml(c.blocks) + '</div>' : "");
+      files["WorldBuilding/characters/" + slugify(c.id) + ".html"] = renderShell({ title: c.title, workTitle: data.workTitle, activeKey: "characters", counts: counts, assetPrefix: "../", body: body });
+    });
+
+    // ---- organizations.html + detail pages ----
+    var orgGrid = data.organizations.length
+      ? '<div class="wb-grid">' + data.organizations.map(function (o) { return entityCard({ title: o.title, subtitle: o.houseTypeLabel, desc: o.summary, imageSvg: '<div style="width:44px;height:44px;border-radius:12px;background:' + (o.color || "var(--accent)") + '"></div>' }, "organizations/" + slugify(o.id) + ".html"); }).join("") + '</div>'
+      : '<div class="wb-empty">아직 등록된 조직이 없어요.</div>';
+    files["WorldBuilding/organizations.html"] = renderShell({ title: "조직", workTitle: data.workTitle, activeKey: "organizations", counts: counts, assetPrefix: "", body: '<h1 class="wb-h1">조직</h1><p class="wb-sub">' + counts.organizations + '개</p>' + orgGrid });
+    data.organizations.forEach(function (o) {
+      var head = '<div class="wb-detail-head">' +
+        '<div class="wb-detail-avatar" style="background:' + (o.color || "var(--accent-soft)") + ';color:#fff">' + wbEsc(initials(o.title)) + '</div>' +
+        '<div><div class="wb-detail-title">' + wbEsc(o.title) + '</div>' +
+        (o.houseTypeLabel ? '<div class="wb-detail-alias">' + wbEsc(o.houseTypeLabel) + '</div>' : "") + '</div></div>';
+      var body = '<div class="wb-detail-card">' + head +
+        (o.summary ? '<div class="wb-prose" style="margin-top:14px"><p>' + wbEsc(o.summary) + '</p></div>' : "") +
+        '</div>' +
+        (o.members && o.members.length ? '<div class="wb-detail-card"><div class="wb-section-title">' + ICONS.person + ' 소속 인물 · ' + o.members.length + '명</div><div class="wb-ep-chip-row">' + o.members.map(function (m) { return '<span class="wb-ep-chip">' + wbEsc(m) + '</span>'; }).join("") + '</div></div>' : "") +
+        (o.rivals && o.rivals.length ? '<div class="wb-detail-card"><div class="wb-section-title">' + ICONS.flag + ' 적대 세력</div><div class="wb-ep-chip-row">' + o.rivals.map(function (m) { return '<span class="wb-ep-chip">' + wbEsc(m) + '</span>'; }).join("") + '</div></div>' : "") +
+        (o.blocks && o.blocks.length ? '<div class="wb-detail-card"><div class="wb-section-title">' + ICONS.gear + ' 상세 설명</div>' + proseHtml(o.blocks) + '</div>' : "");
+      files["WorldBuilding/organizations/" + slugify(o.id) + ".html"] = renderShell({ title: o.title, workTitle: data.workTitle, activeKey: "organizations", counts: counts, assetPrefix: "../", body: body });
+    });
+
+    // ---- locations.html (single page, inline detail) ----
+    var locBody = '<h1 class="wb-h1">지역</h1><p class="wb-sub">' + counts.locations + '곳</p>' +
+      (data.locations.length ? data.locations.map(function (l) {
+        return '<div class="wb-detail-card" id="' + slugify(l.id) + '">' +
+          '<div class="wb-detail-title" style="font-size:18px">' + wbEsc(l.title) + '</div>' +
+          fieldGrid([{ k: "지형", v: l.terrain }, { k: "소속 지도", v: l.mapTitle }, { k: "관련 조직", v: l.orgName }]) +
+          '</div>';
+      }).join("") : '<div class="wb-empty">아직 등록된 지역이 없어요. 지도에 지역을 그리고 이름을 붙이면 여기 나타나요.</div>');
+    files["WorldBuilding/locations.html"] = renderShell({ title: "지역", workTitle: data.workTitle, activeKey: "locations", counts: counts, assetPrefix: "", body: locBody });
+
+    // ---- events.html ----
+    var evBody = '<h1 class="wb-h1">사건</h1><p class="wb-sub">' + counts.events + '건</p>' +
+      (data.events.length ? data.events.map(function (e) {
+        return '<div class="wb-detail-card" id="' + slugify(e.id) + '">' +
+          '<div class="wb-detail-title" style="font-size:18px">' + wbEsc(e.title) + '</div>' +
+          (e.summary ? '<div class="wb-prose" style="margin-top:10px"><p>' + wbEsc(e.summary) + '</p></div>' : "") +
+          proseHtml(e.blocks) +
+          '</div>';
+      }).join("") : '<div class="wb-empty">아직 등록된 사건이 없어요.</div>');
+    files["WorldBuilding/events.html"] = renderShell({ title: "사건", workTitle: data.workTitle, activeKey: "events", counts: counts, assetPrefix: "", body: evBody });
+
+    // ---- settings.html (세계관/기타 등 그 외 설정 문서) ----
+    var setBody = '<h1 class="wb-h1">설정</h1><p class="wb-sub">세계관 · 기타 설정 문서 ' + counts.settings + '개</p>' +
+      (data.settingsDocs.length ? data.settingsDocs.map(function (s) {
+        return '<div class="wb-detail-card" id="' + slugify(s.id) + '">' +
+          '<div class="wb-detail-title" style="font-size:18px">' + wbEsc(s.title) + '</div>' +
+          '<div class="wb-detail-alias">' + wbEsc(s.category) + '</div>' +
+          (s.summary ? '<div class="wb-prose" style="margin-top:10px"><p>' + wbEsc(s.summary) + '</p></div>' : "") +
+          proseHtml(s.blocks) +
+          '</div>';
+      }).join("") : '<div class="wb-empty">그 외 설정 문서가 없어요.</div>');
+    files["WorldBuilding/settings.html"] = renderShell({ title: "설정", workTitle: data.workTitle, activeKey: "settings", counts: counts, assetPrefix: "", body: setBody });
+
+    // ---- timeline.html ----
+    var tlBody = '<h1 class="wb-h1">연표</h1><p class="wb-sub">' + data.timelineGroups.length + '개 연표</p>' +
+      (data.timelineGroups.length ? data.timelineGroups.map(function (g) {
+        return '<div class="wb-tl-group">' + wbEsc(g.title) + '</div>' +
+          '<div class="wb-timeline">' + g.events.map(function (ev) {
+            return '<div class="wb-tl-item">' +
+              '<div class="wb-tl-label">' + wbEsc(ev.label || "") + '</div>' +
+              '<div class="wb-tl-title">' + wbEsc(ev.title || "") + '</div>' +
+              (ev.description ? '<div class="wb-tl-desc">' + wbEsc(ev.description) + '</div>' : "") +
+              '</div>';
+          }).join("") + '</div>';
+      }).join("") : '<div class="wb-empty">아직 등록된 연표가 없어요.</div>');
+    files["WorldBuilding/timeline.html"] = renderShell({ title: "연표", workTitle: data.workTitle, activeKey: "timeline", counts: counts, assetPrefix: "", body: tlBody });
+
+    return files;
+  }
+/* ---- 이 앱의 데이터 모델 -> 내보내기용 데이터 변환 ---- */
+function buildWorldBuildingData(workId) {
+  var work = WORKS.find(function (w) { return w.id === workId; });
+  var workDocs = DOCS.filter(function (d) { return d.workId === workId; });
+  var workGraphs = GRAPHS.filter(function (g) { return g.workId === workId; });
+  var workMaps = MAPS.filter(function (m) { return m.workId === workId; });
+  var workTimelines = TIMELINES.filter(function (t) { return t.workId === workId; });
+  var workNovels = NOVELS.filter(function (n) { return n.workId === workId; });
+  var novelIds = workNovels.map(function (n) { return n.id; });
+  var workManuscripts = MANUSCRIPTS.filter(function (m) { return novelIds.indexOf(m.novelId) !== -1; });
+  workManuscripts.forEach(function (m) { try { detectCharactersInManuscript(m, workId); } catch (e) {} });
+
+  function edgeOtherNode(g, edge, docId) {
+    var fromNode = g.nodes.find(function (n) { return n.id === edge.from; });
+    var toNode = g.nodes.find(function (n) { return n.id === edge.to; });
+    if (fromNode && fromNode.docId === docId) return toNode;
+    if (toNode && toNode.docId === docId) return fromNode;
+    return null;
+  }
+  function relationshipsForDoc(docId) {
+    var rels = [];
+    workGraphs.forEach(function (g) {
+      g.edges.forEach(function (e) {
+        var other = edgeOtherNode(g, e, docId);
+        if (!other) return;
+        var kindLabel = (EDGE_KINDS[e.kind] || {}).label || e.kind || "";
+        rels.push({ name: other.label || "?", kind: kindLabel, memo: e.label || "" });
+      });
+    });
+    return rels;
+  }
+  function nodeIdsForDoc(g, docId) {
+    return g.nodes.filter(function (n) { return n.docId === docId; }).map(function (n) { return n.id; });
+  }
+  function orgMembersAndRivals(orgDoc) {
+    var members = [], rivals = [];
+    workGraphs.forEach(function (g) {
+      nodeIdsForDoc(g, orgDoc.id).forEach(function (orgNodeId) {
+        g.edges.forEach(function (e) {
+          if (e.from !== orgNodeId && e.to !== orgNodeId) return;
+          var otherId = e.from === orgNodeId ? e.to : e.from;
+          var otherNode = g.nodes.find(function (n) { return n.id === otherId; });
+          if (!otherNode) return;
+          if (e.kind === "affil" && members.indexOf(otherNode.label) === -1) members.push(otherNode.label);
+          if (e.kind === "hostile" && rivals.indexOf(otherNode.label) === -1) rivals.push(otherNode.label);
+        });
+      });
+    });
+    workDocs.filter(function (d) { return d.category === "등장인물"; }).forEach(function (cd) {
+      var hit = (cd.props || []).some(function (p) { return p.key === "소속" && p.value === orgDoc.title; });
+      if (hit && members.indexOf(cd.title) === -1) members.push(cd.title);
+    });
+    return { members: members, rivals: rivals };
+  }
+  function episodesForDoc(docId) {
+    return workManuscripts.filter(function (m) { return (m.characterIds || []).indexOf(docId) !== -1; })
+      .map(function (m) { return m.title || "제목 없음"; });
+  }
+  var CURATED_KEYS = ["나이", "생일", "성별", "종족", "신장", "몸무게", "능력", "무기", "소속", "직업", "성격", "목표"];
+  function fieldsForDoc(d) {
+    var out = [];
+    var seen = {};
+    CURATED_KEYS.forEach(function (k) {
+      var p = (d.props || []).find(function (p) { return p.key === k; });
+      if (p && p.value) { out.push({ k: k, v: String(p.value) }); seen[k] = true; }
+    });
+    (d.props || []).forEach(function (p) {
+      if (!seen[p.key] && p.value) out.push({ k: p.key, v: String(p.value) });
+    });
+    return out;
+  }
+
+  var characters = workDocs.filter(function (d) { return d.category === "등장인물"; }).map(function (d) {
+    var imageSvg = null;
+    try { if (d.appearance) imageSvg = renderAppearanceSvg(d.appearance); } catch (e) {}
+    return {
+      id: d.id, title: d.title || "제목 없음", aliases: d.aliases || [], summary: d.summary || "",
+      tags: d.tags || [], imageSvg: imageSvg, fields: fieldsForDoc(d),
+      relationships: relationshipsForDoc(d.id), episodes: episodesForDoc(d.id), blocks: d.blocks || []
+    };
+  });
+
+  var organizations = workDocs.filter(function (d) { return d.category === "세력"; }).map(function (d) {
+    var mr = orgMembersAndRivals(d);
+    return {
+      id: d.id, title: d.title || "제목 없음", summary: d.summary || "",
+      houseTypeLabel: d.houseType && HOUSE_TYPES[d.houseType] ? HOUSE_TYPES[d.houseType].label : "",
+      color: d.color || "#8B8579", members: mr.members, rivals: mr.rivals, blocks: d.blocks || []
+    };
+  });
+
+  var locations = [];
+  workMaps.forEach(function (mp) {
+    (mp.regions || []).forEach(function (r) {
+      if (!r.label) return;
+      var org = r.houseId ? workDocs.find(function (d) { return d.id === r.houseId; }) : null;
+      locations.push({
+        id: r.id, title: r.label,
+        terrain: (MAP_TERRAINS[r.terrain] || {}).label || "",
+        mapTitle: mp.title || "지도", orgName: org ? org.title : ""
+      });
+    });
+  });
+
+  var events = workDocs.filter(function (d) { return d.category === "사건"; }).map(function (d) {
+    return { id: d.id, title: d.title || "제목 없음", summary: d.summary || "", blocks: d.blocks || [] };
+  });
+
+  var OTHER_CATS = ["세계관", "떡밥", "부·사이드", "기타"];
+  var settingsDocs = workDocs.filter(function (d) { return OTHER_CATS.indexOf(d.category) !== -1; }).map(function (d) {
+    return { id: d.id, title: d.title || "제목 없음", category: d.category, summary: d.summary || "", blocks: d.blocks || [] };
+  });
+
+  var timelineGroups = workTimelines.map(function (tl) {
+    var evs = (tl.events || []).slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
+    return { title: tl.title || "연표", events: evs.map(function (e) { return { label: e.label || "", title: e.title || "", description: e.description || "" }; }) };
+  });
+
+  var readmeDoc = workDocs.find(function (d) { return d.category === "기타" && (d.tags || []).indexOf("readme") !== -1; });
+  var totalChars = workManuscripts.reduce(function (s, m) { return s + charCount(m.text); }, 0);
+
+  return {
+    workTitle: (work && work.title) || "제목 없는 작품",
+    readme: readmeDoc ? readmeDoc.blocks : null,
+    stats: { characters: characters.length, organizations: organizations.length, locations: locations.length, events: events.length, manuscripts: totalChars },
+    characters: characters, organizations: organizations, locations: locations,
+    events: events, settingsDocs: settingsDocs, timelineGroups: timelineGroups
+  };
+}
+
+/* chapters across every novel in a work (used for "전체 원고" combined export), or for one novel */
+function collectExportChapters(workId, novelId) {
+  var novels = NOVELS.filter(function (n) { return n.workId === workId && (!novelId || n.id === novelId); });
+  var chapters = [];
+  novels.forEach(function (n) {
+    var eps = MANUSCRIPTS.filter(function (m) { return m.novelId === n.id; })
+      .sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+    eps.forEach(function (m) { chapters.push({ novelTitle: n.title || "제목 없는 소설", title: m.title || "제목 없음", text: m.text || "" }); });
+  });
+  return chapters;
+}
+
+function safeFileName(s) {
+  return String(s || "제목없음").replace(/[\\/:*?"<>|]/g, "_").trim().slice(0, 80) || "제목없음";
+}
+function pad3(n) { var s = String(n); while (s.length < 3) s = "0" + s; return s; }
+
+/* ---------------- ExportService: orchestrator ---------------- */
+var ExportService = {
+  /* format: 'docx'|'pdf'|'txt', scope: 'combined'|'perEpisode', includeWorldBuilding: bool */
+  run: async function (workId, opts) {
+    var work = WORKS.find(function (w) { return w.id === workId; });
+    var workTitle = (work && work.title) || "작품";
+    var zip = new MiniZip();
+    var chapters = collectExportChapters(workId, null);
+
+    if (chapters.length) {
+      if (opts.scope === "perEpisode") {
+        for (var i = 0; i < chapters.length; i++) {
+          var ch = chapters[i];
+          var base = "Manuscript/" + safeFileName(ch.novelTitle) + "/Episode_" + pad3(i + 1) + "_" + safeFileName(ch.title);
+          await ExportService._writeChapterFile(zip, base, [ch], opts.format, workTitle);
+        }
+      } else {
+        // combined: one file per novel (keeps chapter headings inside), grouped under Manuscript/
+        var byNovel = {};
+        var order = [];
+        chapters.forEach(function (c) { if (!byNovel[c.novelTitle]) { byNovel[c.novelTitle] = []; order.push(c.novelTitle); } byNovel[c.novelTitle].push(c); });
+        for (var ni = 0; ni < order.length; ni++) {
+          var novelTitle = order[ni];
+          var base = "Manuscript/" + safeFileName(novelTitle);
+          await ExportService._writeChapterFile(zip, base, byNovel[novelTitle], opts.format, novelTitle);
+        }
+      }
+    }
+
+    if (opts.includeWorldBuilding) {
+      var wbData = buildWorldBuildingData(workId);
+      var files = generateViewerFiles(wbData);
+      Object.keys(files).forEach(function (p) { zip.addFile(p, files[p]); });
+    }
+
+    var zipBytes = zip.generate();
+    var blob = new Blob([zipBytes], { type: "application/zip" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = safeFileName(workTitle) + ".zip";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  },
+
+  _writeChapterFile: async function (zip, basePath, chaptersSlice, format, bodyTitle) {
+    if (format === "txt") {
+      zip.addFile(basePath + ".txt", buildManuscriptTxt(chaptersSlice.length > 1 ? bodyTitle : null, chaptersSlice));
+    } else if (format === "docx") {
+      var bytes = generateDocx({ title: bodyTitle, author: "집필 노트", bodyTitle: chaptersSlice.length > 1 ? bodyTitle : null, chapters: chaptersSlice });
+      zip.addFile(basePath + ".docx", bytes);
+    } else if (format === "pdf") {
+      var pages = await rasterizeChaptersToPdfPages(chaptersSlice, {});
+      var pdfBytes = generatePdf(pages, { title: bodyTitle });
+      zip.addFile(basePath + ".pdf", pdfBytes);
+    }
+  }
+};
+
+/* ---------------- UI: export modal ---------------- */
+function openExportZipModal(workId) {
+  var work = WORKS.find(function (w) { return w.id === workId; });
+  if (!work) return;
+  var hasNovels = NOVELS.some(function (n) { return n.workId === workId; }) && MANUSCRIPTS.some(function (m) {
+    var n = NOVELS.find(function (n) { return n.id === m.novelId; });
+    return n && n.workId === workId;
+  });
+  openModal({
+    title: '"' + (work.title || "제목 없음") + '" 내보내기',
+    message: hasNovels ? "원고와 설정집(World Building)을 ZIP 파일 하나로 내보냅니다." : "이 작품에는 아직 원고가 없어서 설정집만 내보낼 수 있어요.",
+    pickers: [
+      { key: "format", label: "원고 형식", default: "docx", noDot: true, options: [
+        { value: "docx", label: "DOCX" }, { value: "pdf", label: "PDF" }, { value: "txt", label: "TXT" }
+      ] },
+      { key: "scope", label: "원고 내보내기 방식", default: "combined", noDot: true, options: [
+        { value: "combined", label: "소설별로 하나의 파일" }, { value: "perEpisode", label: "회차별 파일" }
+      ] }
+    ],
+    checkbox: "설정집(World Building) 오프라인 Viewer도 함께 포함",
+    checkboxDefault: true,
+    confirmLabel: "ZIP으로 내보내기",
+    onConfirm: function (values, checked, picks) {
+      var opts = { format: picks.format || "docx", scope: picks.scope || "combined", includeWorldBuilding: checked !== false };
+      var btn = document.getElementById("exportZipBtn_" + workId);
+      openModal({ title: "내보내는 중...", message: "잠시만 기다려주세요. 원고 분량이 많으면 몇 초 정도 걸릴 수 있어요.", confirmLabel: "" });
+      var okBtn = document.getElementById("modalOk"); if (okBtn) okBtn.style.display = "none";
+      var cancelBtn = document.getElementById("modalCancel"); if (cancelBtn) cancelBtn.style.display = "none";
+      ExportService.run(workId, opts).then(function () {
+        closeModal();
+      }).catch(function (err) {
+        closeModal();
+        openModal({ title: "내보내기 실패", message: "문제가 발생했어요: " + (err && err.message ? err.message : String(err)), confirmLabel: "확인" });
+      });
+    }
+  });
+}
 
 render();
 </script>
