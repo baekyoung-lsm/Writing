@@ -97,7 +97,14 @@
   .graph-row:hover .row-move { display:inline-flex; }
   .row-move:hover { opacity:1 !important; color:var(--accent); background:var(--bg-card-hover); }
   .row-move:disabled { visibility:hidden; }
+  .row-insert { font-size:11px; font-weight:700; }
   .row-del:hover { opacity:1; color:var(--rose); background:var(--rose-soft); }
+  .row-settings { flex:none; display:flex; align-items:center; justify-content:center; color:var(--ink-faint); opacity:.55; background:none; border:none; padding:3px; border-radius:5px; font-size:12px; }
+  .row-settings:hover { opacity:1; color:var(--accent); background:var(--bg-card-hover); }
+  .ms-draggable[draggable="true"] { cursor:grab; }
+  .ms-draggable.dragging { opacity:.4; cursor:grabbing; }
+  .ms-draggable.drag-over-top { box-shadow:inset 0 2px 0 0 var(--accent); }
+  .ms-draggable.drag-over-bottom { box-shadow:inset 0 -2px 0 0 var(--accent); }
   .sb-empty { font-size:12px; color:var(--ink-faint); padding:4px 8px 10px; }
 
   .sidebar-foot { margin-top:auto; padding-top:12px; border-top:1px solid var(--border); font-size:11px; color:var(--ink-faint); line-height:1.6; }
@@ -3075,15 +3082,31 @@ function newNovel(workId) {
   openModal({
     title: "새 소설 폴더",
     fields: [{ placeholder: "소설 제목" }],
-    pickers: [{ key:"epScheme", label:"화 제목 방식", default:"prologue", noDot:true,
+    pickers: [{ key:"epScheme", label:"새 화 제목 방식(나중에 언제든 바꿀 수 있어요)", default:"subtitle", noDot:true,
       options: Object.keys(EP_SCHEMES).map(function(k){ return { value:k, label:EP_SCHEMES[k].label }; }) }],
     confirmLabel: "만들기",
     onConfirm: function(values, checked, picks){
       var title = values[0]; if (!title) return;
-      var n = { id: uid(), workId: workId, title: title, epScheme: picks.epScheme || "prologue" };
+      var n = { id: uid(), workId: workId, title: title, epScheme: picks.epScheme || "subtitle" };
       NOVELS.push(n); saveData();
       state.collapsed["manuscript:"+workId] = false; state.collapsed["novel:"+n.id] = false;
       render();
+    }
+  });
+}
+function openNovelSettings(novelId) {
+  var n = NOVELS.find(function(x){ return x.id === novelId; });
+  if (!n) return;
+  openModal({
+    title: "소설 설정",
+    fields: [{ placeholder: "소설 제목", value: n.title || "" }],
+    pickers: [{ key:"epScheme", label:"새 화 제목 방식(이미 만든 화의 제목은 바뀌지 않아요)", default: n.epScheme || "subtitle", noDot:true,
+      options: Object.keys(EP_SCHEMES).map(function(k){ return { value:k, label:EP_SCHEMES[k].label }; }) }],
+    confirmLabel: "저장",
+    onConfirm: function(values, checked, picks){
+      if (values[0]) n.title = values[0];
+      n.epScheme = picks.epScheme || n.epScheme || "subtitle";
+      saveData(); renderSidebar();
     }
   });
 }
@@ -3104,20 +3127,114 @@ function deleteNovel(id) {
     }
   });
 }
-function newManuscriptIn(novelId) {
+function createManuscript(novelId, createdAt) {
   var count = MANUSCRIPTS.filter(function(m){ return m.novelId === novelId; }).length;
   var n = NOVELS.find(function(n){ return n.id === novelId; });
-  var scheme = (n && n.epScheme) || "prologue";
+  var scheme = (n && n.epScheme) || "subtitle";
   var title;
   if (scheme === "chapter") title = (count+1) + "장";
   else if (scheme === "subtitle") title = "";
   else title = count === 0 ? "프롤로그" : count + "화";
-  var m = { id: uid(), title: title, text: "", format: "general", novelId: novelId, previewDark: false, previewFontSize: 16, previewFont: "sans", bookMode: "edit", bookPage: 0, bookSpread: false, editScrollFrac: 0, createdAt: Date.now(), characterIds: [], excludedCharacterIds: [] };
+  var m = { id: uid(), title: title, text: "", format: "general", novelId: novelId, previewDark: false, previewFontSize: 16, previewFont: "sans", bookMode: "edit", bookPage: 0, bookSpread: false, editScrollFrac: 0, createdAt: createdAt, characterIds: [], excludedCharacterIds: [] };
   MANUSCRIPTS.push(m); saveData();
+  return m;
+}
+function openNewManuscript(m, novelId) {
   state.mode = "manuscript"; state.activeId = m.id; state.collapsed["novel:"+novelId] = false;
   render();
   var t = document.getElementById("msTitle");
   if (t) { t.focus(); t.select(); }
+}
+function newManuscriptIn(novelId) {
+  var m = createManuscript(novelId, Date.now());
+  openNewManuscript(m, novelId);
+}
+function sortedEpsOf(novelId, excludeId) {
+  var n = NOVELS.find(function(x){ return x.id === novelId; });
+  var sortMode = (n && n.epSort === "newest") ? "newest" : "oldest";
+  return MANUSCRIPTS.filter(function(x){ return x.novelId === novelId && x.id !== excludeId; }).slice().sort(function(a,b){
+    var ac = a.createdAt||0, bc = b.createdAt||0;
+    return sortMode === "newest" ? bc-ac : ac-bc;
+  });
+}
+function insertManuscriptAfter(novelId, afterId) {
+  var n = NOVELS.find(function(x){ return x.id === novelId; });
+  var sortMode = (n && n.epSort === "newest") ? "newest" : "oldest";
+  var eps = sortedEpsOf(novelId);
+  var idx = eps.findIndex(function(x){ return x.id === afterId; });
+  if (idx === -1) return;
+  var after = eps[idx], next = eps[idx+1];
+  var newCreatedAt;
+  if (next) {
+    newCreatedAt = ((after.createdAt||0) + (next.createdAt||0)) / 2;
+  } else {
+    newCreatedAt = sortMode === "newest" ? (after.createdAt||Date.now()) - 1 : Date.now();
+  }
+  var m = createManuscript(novelId, newCreatedAt);
+  openNewManuscript(m, novelId);
+}
+function moveManuscriptTo(draggedId, targetId, before) {
+  var dragged = MANUSCRIPTS.find(function(x){ return x.id === draggedId; });
+  var target = MANUSCRIPTS.find(function(x){ return x.id === targetId; });
+  if (!dragged || !target || dragged.novelId !== target.novelId || draggedId === targetId) return;
+  var novelId = dragged.novelId;
+  var n = NOVELS.find(function(x){ return x.id === novelId; });
+  var sortMode = (n && n.epSort === "newest") ? "newest" : "oldest";
+  var eps = sortedEpsOf(novelId, draggedId);
+  var idx = eps.findIndex(function(x){ return x.id === targetId; });
+  if (idx === -1) return;
+  var nb = before ? eps[idx-1] : eps[idx];
+  var na = before ? eps[idx] : eps[idx+1];
+  var newCreatedAt;
+  if (nb && na) newCreatedAt = ((nb.createdAt||0) + (na.createdAt||0)) / 2;
+  else if (!nb && na) newCreatedAt = sortMode === "newest" ? (na.createdAt||Date.now()) + 1 : (na.createdAt||Date.now()) - 1;
+  else if (nb && !na) newCreatedAt = sortMode === "newest" ? (nb.createdAt||Date.now()) - 1 : (nb.createdAt||Date.now()) + 1;
+  else newCreatedAt = Date.now();
+  dragged.createdAt = newCreatedAt;
+  saveData(); renderSidebar();
+}
+var msDragId = null;
+function wireManuscriptDragDrop(el) {
+  var rows = el.querySelectorAll('.ms-draggable[draggable="true"]');
+  function clearDragOverMarks() {
+    el.querySelectorAll(".drag-over-top,.drag-over-bottom").forEach(function(r){ r.classList.remove("drag-over-top","drag-over-bottom"); });
+  }
+  rows.forEach(function(row){
+    row.addEventListener("dragstart", function(e){
+      msDragId = row.dataset.openms;
+      row.classList.add("dragging");
+      if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = "move";
+        try { e.dataTransfer.setData("text/plain", row.dataset.openms); } catch (err) {}
+      }
+    });
+    row.addEventListener("dragend", function(){
+      row.classList.remove("dragging");
+      clearDragOverMarks();
+      msDragId = null;
+    });
+    row.addEventListener("dragover", function(e){
+      if (!msDragId || msDragId === row.dataset.openms) return;
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+      var rect = row.getBoundingClientRect();
+      var before = (e.clientY - rect.top) < rect.height/2;
+      row.classList.toggle("drag-over-top", before);
+      row.classList.toggle("drag-over-bottom", !before);
+    });
+    row.addEventListener("dragleave", function(){
+      row.classList.remove("drag-over-top","drag-over-bottom");
+    });
+    row.addEventListener("drop", function(e){
+      e.preventDefault();
+      var draggedId = msDragId || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
+      var targetId = row.dataset.openms;
+      var before = row.classList.contains("drag-over-top");
+      clearDragOverMarks();
+      if (!draggedId || draggedId === targetId) return;
+      moveManuscriptTo(draggedId, targetId, before);
+    });
+  });
 }
 function toggleNovelSort(novelId) {
   var n = NOVELS.find(function(n){ return n.id === novelId; });
@@ -3445,7 +3562,7 @@ function renderWorkBody(work, q) {
         '<option value="">전체 인물</option>' +
         workCharacterDocs.map(function(d){ return '<option value="'+d.id+'" '+(povSel===d.id?"selected":"")+'>'+esc(d.title||"제목 없음")+'</option>'; }).join("") +
         '</select>' : '';
-      html += '<div class="novel-folder"><div class="sb-head" style="margin-left:18px" data-toggle="'+nkey+'"><span class="chev '+(ncollapsed?"collapsed":"")+'">'+ic("chevron",12)+'</span><span class="t">'+esc(n.title||"제목 없는 소설")+' · 전체 '+eps.length+'화'+(novelCharTotal?' · '+fmtNum(novelCharTotal)+'자':'')+'</span><button class="add" data-newep="'+n.id+'" title="새 화">'+ic("plus",12)+'</button><button class="row-del" data-delnovel="'+n.id+'" title="폴더 삭제" style="margin-left:0">'+ic("trash",12)+'</button></div>';
+      html += '<div class="novel-folder"><div class="sb-head" style="margin-left:18px" data-toggle="'+nkey+'"><span class="chev '+(ncollapsed?"collapsed":"")+'">'+ic("chevron",12)+'</span><span class="t">'+esc(n.title||"제목 없는 소설")+' · 전체 '+eps.length+'화'+(novelCharTotal?' · '+fmtNum(novelCharTotal)+'자':'')+'</span><button class="add" data-newep="'+n.id+'" title="새 화(맨 아래에 추가)">'+ic("plus",12)+'</button><button class="row-settings" data-novelsettings="'+n.id+'" title="소설 설정">&#9881;</button><button class="row-del" data-delnovel="'+n.id+'" title="폴더 삭제" style="margin-left:0">'+ic("trash",12)+'</button></div>';
       if (!ncollapsed && (workCharacterDocs.length || eps.length > 1)) {
         html += '<div class="novel-subrow" style="margin-left:36px"><button class="ms-sort-btn" data-sortnovel="'+n.id+'" title="정렬 방식 전환">'+(sortMode==="newest"?"최신순":"시간순")+'</button>'+povFilterHtml+'</div>';
       }
@@ -3454,10 +3571,12 @@ function renderWorkBody(work, q) {
         var epCharIds = m.characterIds || (m.povId ? [m.povId] : []);
         var epCharNames = epCharIds.map(function(id){ var d = workCharacterDocs.find(function(d){ return d.id===id; }); return d ? d.title : null; }).filter(Boolean);
         var povBadge = epCharNames.length ? '<span class="pov-badge" title="'+esc(epCharNames.join(", "))+'">'+esc(epCharNames.slice(0,2).join(", "))+(epCharNames.length>2?" +"+(epCharNames.length-2):"")+'</span>' : '';
-        var moveHtml = (!povSel && eps.length > 1) ?
+        var canReorder = !povSel && eps.length > 1;
+        var insertHtml = !povSel ? '<button class="row-move row-insert" data-msinsertafter="'+m.id+'" title="이 화 다음에 새 화 삽입">+</button>' : '';
+        var moveHtml = canReorder ?
           '<button class="row-move" data-msmoveup="'+m.id+'" title="위로 이동"'+(epIdx===0?" disabled":"")+'>&#9650;</button>' +
           '<button class="row-move" data-msmovedown="'+m.id+'" title="아래로 이동"'+(epIdx===eps.length-1?" disabled":"")+'>&#9660;</button>' : '';
-        html += '<div class="graph-row '+(state.mode==="manuscript"&&state.activeId===m.id?"active":"")+'" data-openms="'+m.id+'" style="margin-left:26px">'+ic("docIcon",13)+'<span style="flex:1 1 0%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(m.title||"제목 없음")+'</span>'+povBadge+(epChars?'<span class="char-total">'+fmtNum(epChars)+'자</span>':'')+moveHtml+'<button class="row-del" data-delms="'+m.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
+        html += '<div class="graph-row ms-draggable'+(state.mode==="manuscript"&&state.activeId===m.id?" active":"")+'" data-openms="'+m.id+'" draggable="'+(canReorder?"true":"false")+'" style="margin-left:26px">'+ic("docIcon",13)+'<span style="flex:1 1 0%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(m.title||"제목 없음")+'</span>'+povBadge+(epChars?'<span class="char-total">'+fmtNum(epChars)+'자</span>':'')+insertHtml+moveHtml+'<button class="row-del" data-delms="'+m.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
       });
       if (!eps.length) html += '<div class="sb-empty" style="margin-left:26px">'+(povSel?"이 인물이 등장하는 화가 없습니다.":"아직 화가 없습니다.")+'</div>';
       html += '</div>';
@@ -3621,6 +3740,9 @@ function renderSidebar() {
   el.querySelectorAll("[data-delms]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteManuscript(b.dataset.delms); }); });
   el.querySelectorAll("[data-msmoveup]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); moveManuscript(b.dataset.msmoveup, -1); }); });
   el.querySelectorAll("[data-msmovedown]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); moveManuscript(b.dataset.msmovedown, 1); }); });
+  el.querySelectorAll("[data-msinsertafter]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); var row = b.closest("[data-openms]"); var novelRow = b.closest(".novel-folder").querySelector("[data-newep]"); insertManuscriptAfter(novelRow.dataset.newep, b.dataset.msinsertafter); }); });
+  el.querySelectorAll("[data-novelsettings]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); openNovelSettings(b.dataset.novelsettings); }); });
+  wireManuscriptDragDrop(el);
   el.querySelectorAll("[data-delnovel]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteNovel(b.dataset.delnovel); }); });
   el.querySelectorAll("[data-deltable]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteTable(b.dataset.deltable); }); });
   el.querySelectorAll("[data-delscript]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteScript(b.dataset.delscript); }); });
