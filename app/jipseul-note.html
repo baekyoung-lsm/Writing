@@ -92,6 +92,11 @@
   .char-total { margin-left:auto; font-size:10px; color:var(--ink-faint); flex:none; font-variant-numeric:tabular-nums; }
   .row-del { margin-left:auto; flex:none; display:flex; color:var(--ink-faint); opacity:.55; background:none; border:none; padding:3px; border-radius:5px; }
   .row-meta ~ .row-del, .char-total ~ .row-del, .pov-badge ~ .row-del { margin-left:6px; }
+  .row-move { flex:none; display:none; align-items:center; justify-content:center; color:var(--ink-faint); opacity:.7; background:none; border:none; padding:2px 3px; border-radius:4px; font-size:8px; margin-left:3px; }
+  .char-total ~ .row-move, .pov-badge ~ .row-move { margin-left:5px; }
+  .graph-row:hover .row-move { display:inline-flex; }
+  .row-move:hover { opacity:1 !important; color:var(--accent); background:var(--bg-card-hover); }
+  .row-move:disabled { visibility:hidden; }
   .row-del:hover { opacity:1; color:var(--rose); background:var(--rose-soft); }
   .sb-empty { font-size:12px; color:var(--ink-faint); padding:4px 8px 10px; }
 
@@ -438,6 +443,34 @@
   .ms-notch { width:64px; height:5px; border-radius:4px; background:var(--border-strong); margin:0 auto 10px; }
   .ms-screen { border-radius:16px; overflow:hidden; }
   .ms-textarea { width:100%; height:460px; border:none; outline:none; resize:none; box-sizing:border-box; overflow-y:auto; }
+
+  /* ---------- 일반 집필창 (워드/HWP 스타일) ---------- */
+  .ms-doc-page { width:100%; max-width:820px; margin:0 auto; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; box-shadow:0 2px 16px var(--shadow); overflow:hidden; }
+  .ms-doc-ruler { height:18px; background:repeating-linear-gradient(to right, var(--border) 0 1px, transparent 1px 40px); border-bottom:1px solid var(--border); }
+  .ms-doc-screen { }
+  .ms-doc-textarea { width:100%; min-height:640px; height:auto; resize:vertical; box-sizing:border-box; }
+
+  /* ---------- 목표 글자수 / 저장 표시 / 이전 화 이어보기 ---------- */
+  .ms-goal-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .ms-goal-label { display:flex; align-items:center; gap:5px; font-size:12px; color:var(--ink-faint); flex:none; }
+  .ms-goal-input { width:88px; border:1px solid var(--border-strong); border-radius:6px; padding:4px 7px; font-size:12px; background:var(--bg-card); color:var(--ink); }
+  .ms-goal-bar-wrap { display:flex; align-items:center; gap:8px; flex:1; min-width:120px; }
+  .ms-goal-bar-track { flex:1; height:6px; border-radius:4px; background:var(--border); overflow:hidden; min-width:80px; }
+  .ms-goal-bar-fill { height:100%; background:var(--accent); border-radius:4px; }
+  .ms-goal-bar-fill.done { background:var(--moss, #5E7A3A); }
+  .ms-goal-pct { font-size:11.5px; color:var(--ink-faint); flex:none; font-variant-numeric:tabular-nums; }
+  .ms-save-indicator { font-size:11px; color:var(--ink-faint); flex:none; }
+  .ms-save-indicator.saved { color:var(--moss, #5E7A3A); }
+  .ms-peek { margin-bottom:12px; }
+  .ms-peek-toggle { display:flex; align-items:center; gap:5px; background:none; border:none; padding:4px 0; font-size:12px; color:var(--accent); }
+  .ms-peek-toggle .icon, .ms-peek-toggle svg { transition:transform .15s; }
+  .ms-peek-toggle.open svg { transform:rotate(90deg); }
+  .ms-peek-body { margin-top:6px; padding:10px 12px; border:1px dashed var(--border-strong); border-radius:8px; font-size:12.5px; line-height:1.6; color:var(--ink-faint); background:var(--bg-card); white-space:pre-wrap; }
+
+  /* ---------- 집중 모드 ---------- */
+  .app.focus-mode { grid-template-columns:1fr; }
+  .app.focus-mode .sidebar { display:none; }
+  .app.focus-mode .page-pad { max-width:900px; margin:0 auto; }
 
   /* ---------- book mode (양장본) ---------- */
   .book-outer { display:flex; justify-content:center; padding:6px 0 22px; overflow-x:auto; }
@@ -792,11 +825,11 @@ function ic(name, size) {
 }
 
 /* ---------------- data ---------------- */
-var CATS = ["등장인물","가문","세계관","사건","떡밥","부·사이드","기타"];
+var CATS = ["등장인물","세력","세계관","사건","떡밥","부·사이드","기타"];
 var HOUSE_TYPES = {
-  major: { label:"대가문" },
-  vassal: { label:"가신 가문" },
-  sub: { label:"휘하 가문" },
+  major: { label:"대세력" },
+  vassal: { label:"가신 세력" },
+  sub: { label:"휘하 세력" },
   merc: { label:"용병단" },
   sect: { label:"문파" },
   guild: { label:"길드" },
@@ -836,6 +869,7 @@ var LIFE_STATUSES = {
 };
 var MS_FORMATS = {
   general: { label:"일반(양장본)" },
+  plain:   { label:"일반 집필창", lineHeight:"1.9", pad:"56px 64px", bg:"#FFFFFF", color:"#1A1A1A", spacing:"0" },
   joara:   { label:"조아라", lineHeight:"1.55", pad:"14px 12px", bg:"#F4F4F1", color:"#222222", spacing:"-0.01em" },
   munpia:  { label:"문피아", lineHeight:"1.9", pad:"18px 16px", bg:"#FFFFFF", color:"#1E1E1E", spacing:"0" },
   naver:   { label:"네이버시리즈", lineHeight:"1.95", pad:"22px 18px", bg:"#FFFFFF", color:"#191919", spacing:"-0.01em" }
@@ -1262,6 +1296,12 @@ function pushRecentColor(hex) {
     saveData();
   }
   WORKS.forEach(function(w){ if (w.isTemplate === undefined) w.isTemplate = false; });
+})();
+(function migrateCategoryNames(){
+  /* "가문" 대분류 명칭을 "세력"으로 변경 — 이전에 저장된 문서의 category 값도 함께 갱신 */
+  var changed = false;
+  DOCS.forEach(function(d){ if (d.category === "가문") { d.category = "세력"; changed = true; } });
+  if (changed) saveData();
 })();
 (function migrateUnits(){
   WORKS.forEach(function(w){
@@ -2172,7 +2212,12 @@ function openFindReplace(textareaId, triggerEl, onUpdate) {
 }
 
 /* ---------------- state ---------------- */
-var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null };
+var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, focusMode: false };
+function applyFocusModeClass() {
+  var appEl = document.querySelector(".app");
+  if (!appEl) return;
+  appEl.classList.toggle("focus-mode", !!(state.focusMode && state.mode === "manuscript"));
+}
 
 /* ---------------- works (top-level project folders) ---------------- */
 function createGenreTemplateWork() {
@@ -2187,9 +2232,9 @@ function createGenreTemplateWork() {
     { id: uid(), type: "h", text: "스포츠물" },
     { id: uid(), type: "p", text: "등장인물 \"이강산\"에서 능력치(스탯 바) 속성을, \"수상 기록\"·\"경기·시즌 기록\" 표에서 표 템플릿을 확인하세요." },
     { id: uid(), type: "h", text: "헌터물·시스템물" },
-    { id: uid(), type: "p", text: "등장인물 \"정하준\"에서 등급(배지)·능력치 속성을, 가문 \"태양 길드\"에서 길드 유형을, \"던전·게이트 공략 기록\" 표를 확인하세요." },
+    { id: uid(), type: "p", text: "등장인물 \"정하준\"에서 등급(배지)·능력치 속성을, 세력 \"태양 길드\"에서 길드 유형을, \"던전·게이트 공략 기록\" 표를 확인하세요." },
     { id: uid(), type: "h", text: "무협" },
-    { id: uid(), type: "p", text: "등장인물 \"남궁현\"에서 등급(배지)로 경지를 표현한 예시를, 가문 \"청풍문파\"에서 문파 유형을, 관계도 \"[무협] 사제 관계 예시\"에서 가계도 빠른 채우기의 사부→제자 프리셋을, \"무공·스킬 목록\" 표를 확인하세요." },
+    { id: uid(), type: "p", text: "등장인물 \"남궁현\"에서 등급(배지)로 경지를 표현한 예시를, 세력 \"청풍문파\"에서 문파 유형을, 관계도 \"[무협] 사제 관계 예시\"에서 가계도 빠른 채우기의 사부→제자 프리셋을, \"무공·스킬 목록\" 표를 확인하세요." },
     { id: uid(), type: "h", text: "로맨스·로판" },
     { id: uid(), type: "p", text: "관계도 \"[로맨스] 관계 예시\"에서 호감도 수치와 연애 진행 단계 배지가 함께 표시된 관계선을, \"관계 호감도 기록\" 표를 확인하세요." },
     { id: uid(), type: "h", text: "미스터리·추리" },
@@ -2266,9 +2311,9 @@ function createGenreTemplateWork() {
   ], houseType: null, parentHouseId: null };
   DOCS.push(wuxiaChar);
 
-  var guild = { id: uid(), workId: wid, title: "태양 길드", summary: "헌터물 예시 — 가문 유형 \"길드\"", tags: [], aliases: [], category: "가문", color: "#4C6E9A", importance: 0, props: [], blocks: [], houseType: "guild", parentHouseId: null };
+  var guild = { id: uid(), workId: wid, title: "태양 길드", summary: "헌터물 예시 — 세력 유형 \"길드\"", tags: [], aliases: [], category: "세력", color: "#4C6E9A", importance: 0, props: [], blocks: [], houseType: "guild", parentHouseId: null };
   DOCS.push(guild);
-  var sect = { id: uid(), workId: wid, title: "청풍문파", summary: "무협 예시 — 가문 유형 \"문파\"", tags: [], aliases: [], category: "가문", color: "#B15A2C", importance: 0, props: [], blocks: [], houseType: "sect", parentHouseId: null };
+  var sect = { id: uid(), workId: wid, title: "청풍문파", summary: "무협 예시 — 세력 유형 \"문파\"", tags: [], aliases: [], category: "세력", color: "#B15A2C", importance: 0, props: [], blocks: [], houseType: "sect", parentHouseId: null };
   DOCS.push(sect);
 
   var romanceGraph = { id: uid(), workId: wid, title: "[로맨스] 관계 예시", nodes: [], edges: [], view: { x: 200, y: 150, scale: 1 } };
@@ -2833,7 +2878,7 @@ function createMingChinaMapTemplate(workId) {
   });
   var provinceSectCount = {};
   MING_SECTS.forEach(function(s){
-    var houseDoc = { id: uid(), workId: workId, title: s.name, summary: "", tags: [], aliases: [], category: "가문", color: "#9C8268", importance: 0, props: [], blocks: [], houseType: s.houseType, parentHouseId: null };
+    var houseDoc = { id: uid(), workId: workId, title: s.name, summary: "", tags: [], aliases: [], category: "세력", color: "#9C8268", importance: 0, props: [], blocks: [], houseType: s.houseType, parentHouseId: null };
     DOCS.push(houseDoc);
     var region = s.province ? regionByProvince[s.province] : null;
     if (region) {
@@ -2919,11 +2964,11 @@ var MAP_TEMPLATE_GUIDES = {
     title: "명나라풍 중국 지도 사용 안내",
     body: [
       "실제 중국 성(省)급 행정구역 경계 데이터를 바탕으로 명나라 시대(양경십삼성)에 맞게 병합·투영한 지도예요. 다만 위성 지도 수준의 정확한 좌표는 아니고, 단순화된 시작 지도라는 점을 참고해주세요.",
-      "지역을 더블클릭하면 이름·지형·연결된 가문(문파)·국가 정보를 편집할 수 있어요.",
+      "지역을 더블클릭하면 이름·지형·연결된 세력(문파)·국가 정보를 편집할 수 있어요.",
       "이동 도구에서 지역을 드래그해 통째로 옮기거나, 선택 후 Delete로 지우고 '지역' 도구로 새로 그릴 수 있어요.",
       "구파일방(소림·무당·화산·종남·공동·아미·청성·곤륜·점창·개방)과 녹림채·장강수로채, 그리고 마교·남만야수궁·빙궁·오독교 같은 새외 세력까지 이미 지역에 배치돼 있어요. 새외 세력은 실제로는 15개 성 바깥(서역·막북·묘강 등)에 있는 곳이 많아서, 지도상 가장 가까운 성에 근사치로 놓아뒀다는 점을 참고해주세요.",
       "태산·형산·황산·여산 같은 명산과 소주·양주·항주·서안·성도·광주 같은 주요 도시, 장강·황하 두 물줄기도 지도에 추가해뒀어요. 강은 성(省) 중심점을 잇는 근사 경로라 정확한 하천 굴곡은 아니니, 필요하면 선을 다시 그려서 다듬어도 좋아요.",
-      "한 성(省)에 기호가 여럿이면 겹치지 않게 살짝 흩어뒀으니, 툴바의 '지역 목록'으로 지역을 이름으로 바로 찾거나 기호를 클릭해 위치를 확인해보세요. 가문 문서에서 상위·하위 문파 관계나 세력권 설명을 자유롭게 채워보세요.",
+      "한 성(省)에 기호가 여럿이면 겹치지 않게 살짝 흩어뒀으니, 툴바의 '지역 목록'으로 지역을 이름으로 바로 찾거나 기호를 클릭해 위치를 확인해보세요. 세력 문서에서 상위·하위 문파 관계나 세력권 설명을 자유롭게 채워보세요.",
       "지도에 마우스를 올리면(이동 도구일 때) 지역별 국가 정보 카드가 표시돼요."
     ]
   },
@@ -2932,7 +2977,7 @@ var MAP_TEMPLATE_GUIDES = {
     body: [
       "실제 대한민국 17개 시도 행정구역 경계 데이터를 투영·단순화한 지도예요. 정밀 좌표가 아닌 스타일화된 시작 지도입니다.",
       "로맨스·헌터물·미스터리·스포츠 등 현실 배경 장르에 어울려요 — 지역을 더블클릭해 사건이 벌어지는 도시·지역 정보를 채워보세요.",
-      "게이트·던전·사건 현장 등은 '기호' 도구로 원하는 위치에 찍고, 등장인물 소속은 지역의 '연결된 가문'(길드 등)으로 표현할 수 있어요."
+      "게이트·던전·사건 현장 등은 '기호' 도구로 원하는 위치에 찍고, 등장인물 소속은 지역의 '연결된 세력'(길드 등)으로 표현할 수 있어요."
     ]
   }
 };
@@ -3127,6 +3172,24 @@ function deleteManuscript(id) {
     }
   });
 }
+function moveManuscript(id, dir) {
+  var m = MANUSCRIPTS.find(function(x){ return x.id === id; });
+  if (!m) return;
+  var n = NOVELS.find(function(x){ return x.id === m.novelId; });
+  var sortMode = (n && n.epSort === "newest") ? "newest" : "oldest";
+  var eps = MANUSCRIPTS.filter(function(x){ return x.novelId === m.novelId; }).slice().sort(function(a,b){
+    var ac = a.createdAt||0, bc = b.createdAt||0;
+    return sortMode === "newest" ? bc-ac : ac-bc;
+  });
+  var idx = eps.findIndex(function(x){ return x.id === id; });
+  var swapIdx = idx + dir;
+  if (idx === -1 || swapIdx < 0 || swapIdx >= eps.length) return;
+  var other = eps[swapIdx];
+  var tmp = m.createdAt;
+  m.createdAt = other.createdAt;
+  other.createdAt = tmp;
+  saveData(); renderSidebar();
+}
 
 function docMetaHtml(d) {
   var metaHtml = "";
@@ -3136,7 +3199,7 @@ function docMetaHtml(d) {
   if (d.category==="떡밥") {
     metaHtml += '<span class="life-badge" style="--lc:'+(d.resolved?"var(--moss)":"var(--rose)")+'">'+(d.resolved?"회수됨":"미회수")+'</span>';
   }
-  if (d.category==="가문" && d.houseType && HOUSE_TYPES[d.houseType]) {
+  if (d.category==="세력" && d.houseType && HOUSE_TYPES[d.houseType]) {
     metaHtml += '<span class="life-badge" style="--lc:'+colorForFaction(d.title||d.id)+'">'+HOUSE_TYPES[d.houseType].label+'</span>';
   }
   if (d.importance) metaHtml += starGlyphs(d.importance);
@@ -3386,12 +3449,15 @@ function renderWorkBody(work, q) {
       if (!ncollapsed && (workCharacterDocs.length || eps.length > 1)) {
         html += '<div class="novel-subrow" style="margin-left:36px"><button class="ms-sort-btn" data-sortnovel="'+n.id+'" title="정렬 방식 전환">'+(sortMode==="newest"?"최신순":"시간순")+'</button>'+povFilterHtml+'</div>';
       }
-      if (!ncollapsed) eps.forEach(function(m){
+      if (!ncollapsed) eps.forEach(function(m, epIdx){
         var epChars = charCount(m.text);
         var epCharIds = m.characterIds || (m.povId ? [m.povId] : []);
         var epCharNames = epCharIds.map(function(id){ var d = workCharacterDocs.find(function(d){ return d.id===id; }); return d ? d.title : null; }).filter(Boolean);
         var povBadge = epCharNames.length ? '<span class="pov-badge" title="'+esc(epCharNames.join(", "))+'">'+esc(epCharNames.slice(0,2).join(", "))+(epCharNames.length>2?" +"+(epCharNames.length-2):"")+'</span>' : '';
-        html += '<div class="graph-row '+(state.mode==="manuscript"&&state.activeId===m.id?"active":"")+'" data-openms="'+m.id+'" style="margin-left:26px">'+ic("docIcon",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(m.title||"제목 없음")+'</span>'+povBadge+(epChars?'<span class="char-total">'+fmtNum(epChars)+'자</span>':'')+'<button class="row-del" data-delms="'+m.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
+        var moveHtml = (!povSel && eps.length > 1) ?
+          '<button class="row-move" data-msmoveup="'+m.id+'" title="위로 이동"'+(epIdx===0?" disabled":"")+'>&#9650;</button>' +
+          '<button class="row-move" data-msmovedown="'+m.id+'" title="아래로 이동"'+(epIdx===eps.length-1?" disabled":"")+'>&#9660;</button>' : '';
+        html += '<div class="graph-row '+(state.mode==="manuscript"&&state.activeId===m.id?"active":"")+'" data-openms="'+m.id+'" style="margin-left:26px">'+ic("docIcon",13)+'<span style="flex:1 1 0%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(m.title||"제목 없음")+'</span>'+povBadge+(epChars?'<span class="char-total">'+fmtNum(epChars)+'자</span>':'')+moveHtml+'<button class="row-del" data-delms="'+m.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
       });
       if (!eps.length) html += '<div class="sb-empty" style="margin-left:26px">'+(povSel?"이 인물이 등장하는 화가 없습니다.":"아직 화가 없습니다.")+'</div>';
       html += '</div>';
@@ -3553,6 +3619,8 @@ function renderSidebar() {
   el.querySelectorAll("[data-deldoc]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteDoc(b.dataset.deldoc); }); });
   el.querySelectorAll("[data-delgraph]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteGraph(b.dataset.delgraph); }); });
   el.querySelectorAll("[data-delms]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteManuscript(b.dataset.delms); }); });
+  el.querySelectorAll("[data-msmoveup]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); moveManuscript(b.dataset.msmoveup, -1); }); });
+  el.querySelectorAll("[data-msmovedown]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); moveManuscript(b.dataset.msmovedown, 1); }); });
   el.querySelectorAll("[data-delnovel]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteNovel(b.dataset.delnovel); }); });
   el.querySelectorAll("[data-deltable]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteTable(b.dataset.deltable); }); });
   el.querySelectorAll("[data-delscript]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteScript(b.dataset.delscript); }); });
@@ -3672,7 +3740,7 @@ function renderDocCategoryPage(workId, category) {
   var work = WORKS.find(function(w){ return w.id === workId; });
   var docs = DOCS.filter(function(d){ return d.workId===workId && d.category===category; });
   var main = document.getElementById("main");
-  var isHouse = category === "가문";
+  var isHouse = category === "세력";
   var cardHtml = function(d, depth) {
     var meta = docMetaHtml(d);
     return '<div class="doc-card'+(isHouse?" doc-card-tree":"")+'" data-opendoccard="'+d.id+'"'+(isHouse?' style="margin-left:'+(depth*26)+'px"':'')+'>' +
@@ -4473,16 +4541,16 @@ function renderDocPage(doc) {
       '<select class="sel" id="resolvedMsSelect" style="max-width:220px">'+epOptions+'</select>' +
     '</div>');
   }
-  if (doc.category === "가문") {
-    propsHtml += propRow("crown", "가문 유형", '<div class="life-pick-row" id="houseTypePickRow">' +
+  if (doc.category === "세력") {
+    propsHtml += propRow("crown", "세력 유형", '<div class="life-pick-row" id="houseTypePickRow">' +
       Object.keys(HOUSE_TYPES).map(function(k){
         return '<button type="button" class="life-pick '+(doc.houseType===k?"on":"")+'" data-housetypeval="'+k+'" style="--lc:'+colorForFaction(doc.title||doc.id)+'">'+HOUSE_TYPES[k].label+'</button>';
       }).join("") +
       '<button type="button" class="life-pick clear '+(!doc.houseType?"on":"")+'" data-housetypeval="">표시 안 함</button>' +
     '</div>');
-    var excludeIds = [doc.id].concat(houseDescendantIds(doc, DOCS.filter(function(d){ return d.workId===doc.workId && d.category==="가문"; })));
-    var houseOptions = DOCS.filter(function(d){ return d.workId===doc.workId && d.category==="가문" && excludeIds.indexOf(d.id)===-1; });
-    propsHtml += propRow("chevron", "상위 가문", '<select class="sel" id="parentHouseSelect" style="max-width:220px">' +
+    var excludeIds = [doc.id].concat(houseDescendantIds(doc, DOCS.filter(function(d){ return d.workId===doc.workId && d.category==="세력"; })));
+    var houseOptions = DOCS.filter(function(d){ return d.workId===doc.workId && d.category==="세력" && excludeIds.indexOf(d.id)===-1; });
+    propsHtml += propRow("chevron", "상위 세력", '<select class="sel" id="parentHouseSelect" style="max-width:220px">' +
       '<option value="">없음 (최상위)</option>' +
       houseOptions.map(function(d){ return '<option value="'+d.id+'" '+(doc.parentHouseId===d.id?"selected":"")+'>'+esc(d.title||"제목 없음")+'</option>'; }).join("") +
     '</select>');
@@ -4494,7 +4562,7 @@ function renderDocPage(doc) {
       linkedRegions.map(function(x){
         return '<span class="chip house-region-chip" data-gotoregion="'+x.mp.id+'::'+x.r.id+'">'+ic("map",10)+' '+esc(x.mp.title||"지도")+(x.r.label?" · "+esc(x.r.label):"")+'</span>';
       }).join("") +
-    '</div>' : '<span class="chip-empty-hint">지도의 지역 편집에서 이 가문을 연결하면 여기에 표시돼요</span>');
+    '</div>' : '<span class="chip-empty-hint">지도의 지역 편집에서 이 세력을 연결하면 여기에 표시돼요</span>');
   }
 
   propsHtml += propRow("circle", "색상", '<div class="color-dot-sel"><button class="color-trigger" id="colorTrigger" type="button"><span class="color-dot" style="background:'+colorOf(doc.color)+'"></span><span>색상 선택</span></button></div>');
@@ -4644,7 +4712,7 @@ function renderDocPage(doc) {
     });
   }
 
-  // house type & hierarchy (가문)
+  // house type & hierarchy (세력)
   main.querySelectorAll("[data-housetypeval]").forEach(function(btn){
     btn.addEventListener("click", function(){
       doc.houseType = btn.dataset.housetypeval || null;
@@ -5495,9 +5563,9 @@ function openMapRegionModal(mp, region, onDone) {
       saveData();
     });
   });
-  var houseDocs = DOCS.filter(function(d){ return d.workId===mp.workId && d.category==="가문"; });
+  var houseDocs = DOCS.filter(function(d){ return d.workId===mp.workId && d.category==="세력"; });
   if (houseDocs.length) {
-    var houseHtml = '<div class="modal-picker-label">연결된 가문</div>' +
+    var houseHtml = '<div class="modal-picker-label">연결된 세력</div>' +
       '<select class="modal-input" id="regionHouseSelect"><option value="">연결 안 함</option>' +
       houseDocs.map(function(d){
         return '<option value="'+d.id+'" '+(region.houseId===d.id?"selected":"")+'>'+esc(d.title||"제목 없음")+(d.houseType&&HOUSE_TYPES[d.houseType]?" ("+HOUSE_TYPES[d.houseType].label+")":"")+'</option>';
@@ -5608,7 +5676,7 @@ function drawMap(mp) {
     html += '<g class="map-region '+(isSel?"selected":"")+'" data-region="'+r.id+'">' +
       '<polygon points="'+ptsStr+'" style="fill:'+kind.color+';stroke:'+(houseColor||(isSel?"var(--accent)":"rgba(20,16,10,0.55)"))+';stroke-width:'+(house?3:(isSel?2.6:1.4))+'"></polygon>' +
       '<text x="'+c[0]+'" y="'+c[1]+'" text-anchor="middle" class="map-region-label">'+esc(kind.label)+(r.label?" · "+esc(r.label):"")+'</text>' +
-      (house ? '<text x="'+c[0]+'" y="'+(c[1]+15)+'" text-anchor="middle" class="map-region-house-label" style="fill:'+houseColor+'">&#9813; '+esc(house.title||"가문")+'</text>' : '') +
+      (house ? '<text x="'+c[0]+'" y="'+(c[1]+15)+'" text-anchor="middle" class="map-region-house-label" style="fill:'+houseColor+'">&#9813; '+esc(house.title||"세력")+'</text>' : '') +
       (house ? '<g class="map-region-focus" data-regionfocus="'+r.id+'" transform="translate('+c[0]+','+(c[1]-22)+')" title="이 지역으로 확대"><circle r="9" style="fill:'+houseColor+'"></circle><g transform="translate(-6,-6)" style="color:#fff">'+ic("search",12)+'</g></g>' : '') +
     '</g>';
   });
@@ -6474,6 +6542,42 @@ function updateMsStatsBar(m) {
     '<span>소설 전체 <b>'+fmtNum(st.total)+'</b>자 ('+st.count+'화)</span>' +
     '<span>화 평균 <b>'+fmtNum(st.avg)+'</b>자</span>';
 }
+function updateMsGoalBar(m) {
+  var wrap = document.getElementById("msGoalBarWrap");
+  if (!wrap) return;
+  var goal = Number(m.goalChars) || 0;
+  if (!goal) { wrap.innerHTML = ""; return; }
+  var cur = charCount(m.text);
+  var pct = Math.round((cur/goal)*100);
+  var barPct = Math.max(0, Math.min(100, pct));
+  wrap.innerHTML =
+    '<div class="ms-goal-bar-track"><div class="ms-goal-bar-fill'+(pct>=100?" done":"")+'" style="width:'+barPct+'%"></div></div>' +
+    '<span class="ms-goal-pct">'+fmtNum(cur)+' / '+fmtNum(goal)+'자 ('+pct+'%)</span>';
+}
+var msSaveTimer = null;
+function flashSaveIndicator() {
+  var el = document.getElementById("msSaveIndicator");
+  if (!el) return;
+  el.textContent = "저장 중…";
+  el.classList.remove("saved");
+  clearTimeout(msSaveTimer);
+  msSaveTimer = setTimeout(function(){
+    el.textContent = "저장됨";
+    el.classList.add("saved");
+  }, 500);
+}
+function prevManuscriptOf(m) {
+  if (!m.novelId) return null;
+  var sibs = MANUSCRIPTS.filter(function(x){ return x.novelId === m.novelId; })
+    .slice().sort(function(a,b){ return (a.createdAt||0)-(b.createdAt||0); });
+  var idx = sibs.findIndex(function(x){ return x.id === m.id; });
+  return idx > 0 ? sibs[idx-1] : null;
+}
+function tailText(text, n) {
+  var t = (text||"").trim();
+  if (!t) return "(아직 내용이 없어요)";
+  return (t.length > n ? "…" : "") + t.slice(-n);
+}
 
 var BOOK_SINGLE_W = 338, BOOK_SINGLE_H = 552;
 var BOOK_SPREAD_W = 288, BOOK_SPREAD_H = 552;
@@ -6584,7 +6688,7 @@ function renderBookArea(m) {
       m.text = flowEl.innerText.split(String.fromCharCode(160)).join(" ");
       var denom0 = flowEl.scrollWidth - flowEl.clientWidth;
       m.editScrollFrac = denom0 > 0 ? Math.max(0, Math.min(1, flowEl.scrollLeft/denom0)) : 0;
-      saveData(); updateMsCharCount(m); updateCharacterChips(m, bookWorkId);
+      saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); flashSaveIndicator();
     });
     flowEl.addEventListener("scroll", function(){
       var denom = flowEl.scrollWidth - flowEl.clientWidth;
@@ -6599,7 +6703,7 @@ function renderBookArea(m) {
       '<div class="book-outer"><div class="book-shell"><textarea class="book-edit-textarea" id="bookEditText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요.">'+esc(m.text||"")+'</textarea></div></div>' +
       '<div class="book-hint">쓰기 모드는 스크롤로 이어 씁니다 — 미리보기에서 페이지 단위로 넘겨볼 수 있어요</div>';
     var editEl = document.getElementById("bookEditText");
-    editEl.addEventListener("input", function(e){ m.text = e.target.value; m.editScrollFrac = editScrollFraction(); saveData(); updateMsCharCount(m); updateCharacterChips(m, bookWorkId); });
+    editEl.addEventListener("input", function(e){ m.text = e.target.value; m.editScrollFrac = editScrollFraction(); saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); flashSaveIndicator(); });
     editEl.addEventListener("scroll", function(){ m.editScrollFrac = editScrollFraction(); });
     requestAnimationFrame(function(){
       var denom = editEl.scrollHeight - editEl.clientHeight;
@@ -6650,29 +6754,49 @@ function renderManuscriptPage(m) {
 
   var main = document.getElementById("main");
   var isBook = m.format === "general";
+  var isPlain = m.format === "plain";
 
   var novelOfMs = NOVELS.find(function(n){ return n.id === m.novelId; });
   var msWorkId = novelOfMs ? novelOfMs.workId : null;
   var povHtml = '<div class="pov-row"><span class="pov-label">'+ic("person",13)+'<span>등장인물</span></span><div class="chip-row" id="msCharacterChips" style="flex:1"></div></div>';
+
+  var prevMs = prevManuscriptOf(m);
+  var peekHtml = prevMs ?
+    '<div class="ms-peek">' +
+      '<button type="button" class="ms-peek-toggle" id="msPeekToggle">'+ic("chevron",11)+' 이전 화("'+esc(prevMs.title||"제목 없음")+'") 이어보기</button>' +
+      '<div class="ms-peek-body" id="msPeekBody" style="display:none">'+esc(tailText(prevMs.text, 220))+'</div>' +
+    '</div>' : '';
+
   var statsHtml = '<div class="ms-stats-bar" id="msStatsBar"></div>' +
+    '<div class="ms-goal-row">' +
+      '<label class="ms-goal-label" for="msGoalInput">'+ic("star",12)+'목표 글자수</label>' +
+      '<input type="number" min="0" step="100" class="ms-goal-input" id="msGoalInput" value="'+(m.goalChars?m.goalChars:"")+'" placeholder="예: 5000">' +
+      '<div class="ms-goal-bar-wrap" id="msGoalBarWrap"></div>' +
+    '</div>' +
+    peekHtml +
     '<div class="ms-spellcheck-hint">맞춤법 검사가 켜져 있어요 — 캐릭터 이름 같은 고유명사에 빨간 밑줄이 뜨면, 그 단어 위에서 마우스 오른쪽 버튼을 눌러 "사전에 추가"를 선택하면 이후로는 표시되지 않아요.</div>';
 
   var tabsHtml = '<div class="ms-tabs">' + Object.keys(MS_FORMATS).map(function(key){
     return '<button type="button" class="ms-tab '+(m.format===key?"on":"")+'" data-msformat="'+key+'">'+esc(MS_FORMATS[key].label)+'</button>';
   }).join("") + '</div>';
 
+  var focusBtnHtml = '<button type="button" id="msFocusToggle" class="'+(state.focusMode?"on":"")+'" title="사이드바를 숨기고 집중해서 씁니다">'+ic("eye",13)+'<span>집중 모드</span></button><div class="sep"></div>';
+
   var bodyHtml;
   if (isBook) {
     bodyHtml =
       '<div class="ms-controls">' +
+        focusBtnHtml +
         '<button type="button" class="'+(m.bookMode!=="view"?"on":"")+'" id="msEditBtn">'+ic("p",13)+'<span>쓰기</span></button>' +
         '<button type="button" class="'+(m.bookMode==="view"?"on":"")+'" id="msViewBtn">'+ic("docIcon",13)+'<span>미리보기</span></button>' +
         (m.bookMode!=="view" && !m.bookSpread ? '<div class="sep"></div><button type="button" id="msFindBtnBook">'+ic("search",13)+'<span>찾아바꾸기</span></button>' : '') +
       '</div>' +
       '<div id="bookArea"></div>';
   } else {
+    var textareaHtml = '<textarea class="ms-textarea'+(isPlain?" ms-doc-textarea":"")+'" id="msText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요.">'+esc(m.text||"")+'</textarea>';
     bodyHtml =
       '<div class="ms-controls">' +
+        focusBtnHtml +
         '<button type="button" id="msDarkToggle" class="'+(m.previewDark?"on":"")+'">'+ic(m.previewDark?"moon":"sun",13)+'<span>다크 모드</span></button>' +
         '<div class="sep"></div>' +
         '<button type="button" id="msFontDec">A-</button>' +
@@ -6683,26 +6807,43 @@ function renderManuscriptPage(m) {
         '<div class="sep"></div>' +
         '<button type="button" id="msFindBtn">'+ic("search",13)+'<span>찾아바꾸기</span></button>' +
       '</div>' +
-      '<div class="ms-frame">' +
-        '<div class="ms-notch"></div>' +
-        '<div class="ms-screen">' +
-          '<textarea class="ms-textarea" id="msText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요.">'+esc(m.text||"")+'</textarea>' +
-        '</div>' +
-      '</div>';
+      (isPlain
+        ? '<div class="ms-doc-page"><div class="ms-doc-ruler"></div><div class="ms-doc-screen">' + textareaHtml + '</div></div>'
+        : '<div class="ms-frame"><div class="ms-notch"></div><div class="ms-screen">' + textareaHtml + '</div></div>');
   }
 
   main.innerHTML =
     '<div class="graph-shell">' +
-      '<div class="graph-title-bar"><input class="graph-title" id="msTitle" value="'+esc(m.title)+'" placeholder="원고(화) 제목"><span class="ms-char-count" id="msCharCount">'+fmtNum(charCount(m.text))+'자</span><button class="page-del" id="deleteMsBtn" style="margin-top:0">'+ic("trash",13)+'<span>원고 삭제</span></button></div>' +
+      '<div class="graph-title-bar"><input class="graph-title" id="msTitle" value="'+esc(m.title)+'" placeholder="원고(화) 제목"><span class="ms-save-indicator saved" id="msSaveIndicator">저장됨</span><span class="ms-char-count" id="msCharCount">'+fmtNum(charCount(m.text))+'자</span><button class="page-del" id="deleteMsBtn" style="margin-top:0">'+ic("trash",13)+'<span>원고 삭제</span></button></div>' +
       '<div class="page-pad" style="padding-top:26px">' + povHtml + statsHtml + tabsHtml + bodyHtml + '</div>' +
     '</div>';
 
-  document.getElementById("msTitle").addEventListener("input", function(e){ m.title = e.target.value; saveData(); renderSidebar(); updateMsStatsBar(m); });
+  document.getElementById("msTitle").addEventListener("input", function(e){ m.title = e.target.value; saveData(); renderSidebar(); updateMsStatsBar(m); flashSaveIndicator(); });
   document.getElementById("deleteMsBtn").addEventListener("click", function(){ deleteManuscript(m.id); });
   updateCharacterChips(m, msWorkId, true);
   updateMsStatsBar(m);
+  updateMsGoalBar(m);
   main.querySelectorAll("[data-msformat]").forEach(function(btn){
     btn.addEventListener("click", function(){ m.format = btn.dataset.msformat; saveData(); renderManuscriptPage(m); });
+  });
+  var goalInput = document.getElementById("msGoalInput");
+  if (goalInput) goalInput.addEventListener("input", function(e){
+    var v = parseInt(e.target.value, 10);
+    m.goalChars = isNaN(v) || v <= 0 ? null : v;
+    saveData(); updateMsGoalBar(m);
+  });
+  var peekToggle = document.getElementById("msPeekToggle");
+  if (peekToggle) peekToggle.addEventListener("click", function(){
+    var body = document.getElementById("msPeekBody");
+    var willOpen = body.style.display === "none";
+    body.style.display = willOpen ? "block" : "none";
+    peekToggle.classList.toggle("open", willOpen);
+  });
+  var focusToggle = document.getElementById("msFocusToggle");
+  if (focusToggle) focusToggle.addEventListener("click", function(){
+    state.focusMode = !state.focusMode;
+    applyFocusModeClass();
+    focusToggle.classList.toggle("on", state.focusMode);
   });
 
   if (isBook) {
@@ -6719,20 +6860,20 @@ function renderManuscriptPage(m) {
     var findBtnBook = document.getElementById("msFindBtnBook");
     if (findBtnBook) findBtnBook.addEventListener("click", function(e){
       openFindReplace("bookEditText", e.currentTarget, function(newVal){
-        m.text = newVal; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateCharacterChips(m, msWorkId, true);
+        m.text = newVal; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId, true); flashSaveIndicator();
       });
     });
     renderBookArea(m);
   } else {
     applyMsStyle(m);
-    document.getElementById("msText").addEventListener("input", function(e){ m.text = e.target.value; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateCharacterChips(m, msWorkId); });
+    document.getElementById("msText").addEventListener("input", function(e){ m.text = e.target.value; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId); flashSaveIndicator(); });
     document.getElementById("msDarkToggle").addEventListener("click", function(){ m.previewDark = !m.previewDark; saveData(); renderManuscriptPage(m); });
     document.getElementById("msFontDec").addEventListener("click", function(){ m.previewFontSize = Math.max(13, m.previewFontSize-1); saveData(); applyMsStyle(m); document.getElementById("msFontVal").textContent = m.previewFontSize+"px"; });
     document.getElementById("msFontInc").addEventListener("click", function(){ m.previewFontSize = Math.min(20, m.previewFontSize+1); saveData(); applyMsStyle(m); document.getElementById("msFontVal").textContent = m.previewFontSize+"px"; });
     document.getElementById("msFontFamily").addEventListener("change", function(e){ m.previewFont = e.target.value; saveData(); applyMsStyle(m); });
     document.getElementById("msFindBtn").addEventListener("click", function(e){
       openFindReplace("msText", e.currentTarget, function(newVal){
-        m.text = newVal; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateCharacterChips(m, msWorkId, true);
+        m.text = newVal; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId, true); flashSaveIndicator();
       });
     });
   }
@@ -7259,6 +7400,7 @@ function renderHomePage() {
 /* ---------------- root render ---------------- */
 function render() {
   renderSidebar();
+  applyFocusModeClass();
   window.onkeydown = null;
   hideRegionTooltip();
   if (state.mode === "doc") {
