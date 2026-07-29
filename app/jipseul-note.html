@@ -2617,6 +2617,28 @@ function newWork() {
     }
   });
 }
+function openWorkOverview(workId) {
+  state.collapsed["work:"+workId] = false;
+  var firstMs = null;
+  NOVELS.filter(function(n){ return n.workId === workId; }).forEach(function(n){
+    var eps = MANUSCRIPTS.filter(function(m){ return m.novelId === n.id; });
+    eps.forEach(function(m){ if (!firstMs || (m.createdAt||0) < (firstMs.createdAt||0)) firstMs = m; });
+  });
+  if (firstMs) {
+    state.mode = "manuscript"; state.activeId = firstMs.id;
+  } else {
+    var firstDoc = DOCS.filter(function(d){ return d.workId === workId; })[0];
+    var firstGraph = GRAPHS.filter(function(g){ return g.workId === workId; })[0];
+    if (firstDoc) { state.mode = "doc"; state.activeId = firstDoc.id; }
+    else if (firstGraph) { state.mode = "graph"; state.activeId = firstGraph.id; }
+    else { state.mode = "empty"; state.activeId = null; }
+  }
+  render();
+  if (state.mode === "empty") {
+    var el = document.querySelector('[data-toggle="work:'+workId+'"]');
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" });
+  }
+}
 function deleteWork(id) {
   var w = WORKS.find(function(w){ return w.id === id; });
   if (!w) return;
@@ -7512,10 +7534,7 @@ function renderHomePage() {
   var b0 = document.getElementById("es_newwork"); if (b0) b0.addEventListener("click", newWork);
   var b1 = document.getElementById("es_newwork2"); if (b1) b1.addEventListener("click", newWork);
   main.querySelectorAll("[data-openwork]").forEach(function(card){
-    card.addEventListener("click", function(){
-      state.collapsed["work:"+card.dataset.openwork] = false;
-      render();
-    });
+    card.addEventListener("click", function(){ openWorkOverview(card.dataset.openwork); });
   });
 }
 
