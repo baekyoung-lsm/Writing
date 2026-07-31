@@ -3966,28 +3966,28 @@ function renderDocCategoryPage(workId, category) {
   /* ---- shared, recolorable palette. A "look" supplies concrete hex values for
    * these keys; part authors only ever reference the key, never a literal color. */
   var PALETTE_KEYS = [
-    "skin", "skinShadow", "skinLine", "skinBlush",
+    "skin", "skinShadow", "skinLine", "skinBlush", "skinHighlight",
     "hair", "hairShadow", "hairLine", "hairHighlight",
     "brow",
     "eyeWhite", "eyeIris", "eyeIrisLeft", "eyeIrisRight", "eyePupil", "eyeLine", "eyeGlow",
     "mouth", "mouthDark", "teeth", "blood",
     "beard", "beardShadow",
-    "top", "topShadow", "topLine", "topAccent",
-    "bottom", "bottomShadow", "bottomLine",
+    "top", "topShadow", "topHighlight", "topLine", "topAccent",
+    "bottom", "bottomShadow", "bottomHighlight", "bottomLine",
     "shoe", "shoeShadow", "shoeSole",
     "metal", "metalShadow", "cloth2", "cloth2Shadow",
     "bustColor"
   ];
 
   var DEFAULT_PALETTE = {
-    skin: "#f0c199", skinShadow: "#d49f70", skinLine: "#7a5236", skinBlush: "#e8a888",
+    skin: "#f0c199", skinShadow: "#d49f70", skinLine: "#7a5236", skinBlush: "#e8a888", skinHighlight: "#f8ddc0",
     hair: "#3b2a20", hairShadow: "#2a1d16", hairLine: "#1c130d", hairHighlight: "#5c4536",
     brow: "#2a1d16",
     eyeWhite: "#f6f3ec", eyeIris: "#3d6b8a", eyeIrisLeft: "#3d6b8a", eyeIrisRight: "#3d6b8a", eyePupil: "#161616", eyeLine: "#20140f", eyeGlow: "#ffffff",
     mouth: "#a5443c", mouthDark: "#5c1f1c", teeth: "#f6f3ec", blood: "#8c1c1c",
     beard: "#2a1d16", beardShadow: "#1c130d",
-    top: "#4a6fa5", topShadow: "#33507d", topLine: "#22375a", topAccent: "#e7c65c",
-    bottom: "#38394a", bottomShadow: "#26273350", bottomLine: "#1a1b26",
+    top: "#4a6fa5", topShadow: "#33507d", topHighlight: "#6f92c4", topLine: "#22375a", topAccent: "#e7c65c",
+    bottom: "#38394a", bottomShadow: "#26273350", bottomHighlight: "#54566c", bottomLine: "#1a1b26",
     shoe: "#3a2a22", shoeShadow: "#281c17", shoeSole: "#171012",
     metal: "#b9bfc9", metalShadow: "#7d838d", cloth2: "#7a3b3b", cloth2Shadow: "#542828",
     bustColor: "#f0c199"
@@ -4023,6 +4023,22 @@ function renderDocCategoryPage(workId, category) {
         var gx = x + xx, gy = y + yy;
         if (overKey && grid[gy * GRID + gx] !== overKey) continue;
         px(grid, gx, gy, ((gx + gy) % 2 === 0) ? keyA : keyB);
+      }
+    }
+  }
+  /* Masked solid fill: like dither's overKey masking (only paints cells that already
+   * have `overKey` set, so it never spills past an existing silhouette), but a flat
+   * 100% fill instead of a checkerboard -- reads as clean cel-shading (a hard-edged
+   * shadow/highlight panel) at this grid's resolution, where dithering a large area
+   * shows as a visible stipple/static pattern instead of a soft gradient. Reserve
+   * dither() for small accents (a cheek blush, a thin highlight streak); use shade()
+   * for anything covering more than a few rows. */
+  function shade(grid, x, y, w, h, key, overKey) {
+    for (var yy = 0; yy < h; yy++) {
+      for (var xx = 0; xx < w; xx++) {
+        var gx = x + xx, gy = y + yy;
+        if (overKey && grid[gy * GRID + gx] !== overKey) continue;
+        px(grid, gx, gy, key);
       }
     }
   }
@@ -4157,7 +4173,7 @@ function renderDocCategoryPage(workId, category) {
 
   global.PixelDoll = {
     GRID: GRID, OUT: OUT, ANCHORS: ANCHORS, PALETTE_KEYS: PALETTE_KEYS, DEFAULT_PALETTE: DEFAULT_PALETTE,
-    px: px, rect: rect, taper: taper, ascii: ascii, mirrorAscii: mirrorAscii, mirrorAsciiLR: mirrorAsciiLR, dither: dither,
+    px: px, rect: rect, taper: taper, ascii: ascii, mirrorAscii: mirrorAscii, mirrorAsciiLR: mirrorAsciiLR, dither: dither, shade: shade,
     newGrid: newGrid, compose: compose, paintToCanvas: paintToCanvas, renderSvgString: renderSvgString
   };
 })(typeof window !== "undefined" ? window : this);
@@ -4194,21 +4210,56 @@ function renderDocCategoryPage(workId, category) {
   function aPoseArmPair(grid, w0, w1, dx, dy, key, shadowKey) {
     var sy = 54, sx = SHOULDER_INNER_X - w0 / 2;
     var hx = sx - dx, hy = sy + dy;
+    function at(t) { return { y: Math.round(sy + (hy - sy) * t), x: sx + (hx - sx) * t }; }
+    /* Anatomical width profile along the straight shoulder->hand line: bicep (full
+     * width) -> elbow (narrower) -> forearm (bulges back out) -> wrist (narrowest,
+     * right before the hand takes over). A single monotonic taper end-to-end reads
+     * as a featureless tapered tube; this keeps the arm's DIRECTION a single straight
+     * line (still the requested A-pose, no elbow bend) while giving its WIDTH the
+     * shape of an actual arm instead. */
+    var wBicep = w0, wElbow = Math.max(2, Math.round(w0 * 0.74)), wForearm = Math.min(w0 - 1, Math.round(w1 * 1.3)), wWrist = w1;
+    var p0 = at(0), p1 = at(0.4), p2 = at(0.7), p3 = at(1);
     [false, true].forEach(function (mirror) {
       function mx(x) { return mirror ? 2 * A.centerX - x : x; }
-      E.taper(grid, sy, hy, Math.round(mx(sx) - w0 / 2), w0, Math.round(mx(hx) - w1 / 2), w1, key);
+      function seg(pa, wa, pb, wb) {
+        E.taper(grid, pa.y, pb.y, Math.round(mx(pa.x) - wa / 2), wa, Math.round(mx(pb.x) - wb / 2), wb, key);
+      }
+      seg(p0, wBicep, p1, wElbow);
+      seg(p1, wElbow, p2, wForearm);
+      seg(p2, wForearm, p3, wWrist);
       /* Bridge fill: the torso taper and this arm taper are two independently-rounded
        * shapes that are only guaranteed to touch at row sy -- as the torso taper's own
        * edge recedes toward the waist while the arm sweeps outward, per-row rounding
        * can leave a 1-2px background sliver between them a few rows down (this is
-       * exactly the bug report: "체형/옷 바꾸면 떨어지는 현상"). A short solid block
-       * spanning both shapes' widest plausible extent for the first ~14 rows below the
-       * shoulder makes them overlap on purpose instead of hoping independent rounding
-       * happens to agree. */
-      E.rect(grid, Math.round(mx(sx) - w0 / 2) - 8, sy, w0 + 16, 22, key);
-      var hcx = mx(hx), hw = w1 + 2, hh = 6;
-      E.rect(grid, Math.round(hcx - hw / 2), hy, hw, hh, key);
-      E.rect(grid, Math.round(hcx - hw / 2), hy + hh - 2, hw, 2, shadowKey);
+       * exactly the bug report: "체형/옷 바꾸면 떨어지는 현상"). Only the INNER
+       * (torso-facing) edge needs the extra reach -- extending the outer edge too (as
+       * a symmetric rect) made it stick out past the arm's own narrower elbow taper as
+       * a visible notch/bulge. Computed via mx() on both true edges so it stays
+       * correct after mirroring instead of needing separate left/right-arm math. */
+      (function () {
+        var bridgeRows = 22;
+        var outerX = Math.round(mx(sx - w0 / 2 - 4));
+        var innerX0 = Math.round(mx(sx + w0 / 2 + 18));
+        var innerX1 = Math.round(mx(sx + w0 / 2 + 8));
+        var bw0 = Math.abs(innerX0 - outerX), bw1 = Math.abs(innerX1 - outerX);
+        var bx0 = Math.min(outerX, innerX0), bx1 = Math.min(outerX, innerX1);
+        /* Tapers the extra reach back down to near-zero by the bridge's last row
+         * instead of an abrupt rect cutoff -- a hard edge there left a 1px seam
+         * against the torso/arm's own independently-rounded silhouette right at the
+         * transition into the (correct, intentional) armpit gap below it. */
+        E.taper(grid, sy, sy + bridgeRows, bx0, bw0, bx1, bw1, key);
+      })();
+      /* Hand: a rounded fist a little wider than the wrist, plus a thumb bump on the
+       * outer side and a knuckle shadow line, instead of the wrist just ending in a
+       * plain rectangle (the "featureless mitten" look the arm was flagged for). A
+       * wrist-crease shadow line (same convention as the neck/chin creases elsewhere
+       * on the body) marks where the forearm ends and the hand begins. */
+      var hcx = mx(p3.x), hw = wWrist + 4, hh = 7, hy0 = p3.y;
+      E.rect(grid, Math.round(hcx - wWrist / 2), hy0 - 1, wWrist, 2, "skinShadow");
+      E.rect(grid, Math.round(hcx - hw / 2), hy0 + 1, hw, hh, key);
+      var thumbX = mirror ? Math.round(hcx + hw / 2 - 2) : Math.round(hcx - hw / 2 - 1);
+      E.rect(grid, thumbX, hy0 + 2, 3, 3, key);
+      E.rect(grid, Math.round(hcx - hw / 2 + 1), hy0 + hh - 2, hw - 2, 2, shadowKey);
     });
   }
 
@@ -4353,15 +4404,54 @@ function renderDocCategoryPage(workId, category) {
       E.rect(grid, A.centerX - 1, A.nose.y + A.nose.h - 1, 3, 1, "skinShadow");
       E.dither(grid, h.left + 2, A.eye.y + 4, 6, 4, "skinBlush", "skin", "skin");
       E.dither(grid, h.right - 8, A.eye.y + 4, 6, 4, "skinBlush", "skin", "skin");
+      /* Forehead sheen + jaw contour shadow -- gives the face a soft cel-shaded volume
+       * instead of a single flat skin tone, on top of the existing blush/nose shading.
+       * Solid (shade), not dithered: at this grid's resolution a checkerboard over an
+       * area this size reads as visible static rather than a soft gradient. */
+      E.shade(grid, h.left + 8, h.top + 2, h.right - h.left - 16, 2, "skinHighlight", "skin");
+      E.shade(grid, h.left + 1, h.bottom - 6, 3, 4, "skinShadow", "skin");
+      E.shade(grid, h.right - 4, h.bottom - 6, 3, 4, "skinShadow", "skin");
+      E.dither(grid, A.centerX - 3, A.nose.y, 1, 2, "skinHighlight", "skin", "skin");
     }
   };
-  /* Hair highlight: dithered lighter tone over the upper-front of whichever hair mass
-   * is already there (overKey:"hair"), so it works unchanged for every hairstyle
-   * without each one needing its own highlight pass. */
+  /* Hair shading: solid darker/lighter panels over whichever hair mass is already
+   * there (overKey:"hair"), so it works unchanged for every hairstyle without each
+   * one needing its own shading pass. Runs right after the back-hair layer, so it
+   * only reaches hair drawn so far (the back/crown mass) -- HAIR_FRONT_HIGHLIGHT
+   * below covers the front bangs, which are drawn later. */
   var HAIR_HIGHLIGHT = {
     id: "hair_highlight", layer: 7.2,
     draw: function (grid, p) {
-      E.dither(grid, h.left + 3, h.top - 10, 12, 6, "hairHighlight", "hair", "hair");
+      E.shade(grid, h.left - 2, h.top + 3, 3, 10, "hairShadow", "hair");
+      E.shade(grid, h.right - 1, h.top + 3, 3, 10, "hairShadow", "hair");
+      E.shade(grid, h.left + 4, h.top - 9, 10, 4, "hairHighlight", "hair");
+    }
+  };
+  /* Front-bangs shine: a second highlight pass positioned after the front hair layer
+   * (see buildAppearanceLayers) so bangs drawn over the forehead get the same
+   * multi-tone treatment as the back/crown hair instead of staying flat. */
+  var HAIR_FRONT_HIGHLIGHT = {
+    id: "hair_front_highlight", layer: 10.2,
+    draw: function (grid, p) {
+      E.shade(grid, h.left + 10, h.hairline - 2, h.right - h.left - 20, 3, "hairHighlight", "hair");
+    }
+  };
+  /* Fabric fold shading for whichever top/bottom is worn -- a solid panel masked over
+   * the garment's own fill color (overKey:"top"/"bottom"), so a plain "flat color"
+   * garment reads as cloth with volume (a shadow fold, a shoulder sheen) instead of a
+   * single flat block. No-ops cleanly for "none" (nothing to shade). */
+  var CLOTH_TOP_SHADING = {
+    id: "cloth_top_shading", layer: 9.2,
+    draw: function (grid, p) {
+      E.shade(grid, A.waist.left + 2, A.shoulder.y + 14, Math.max(0, A.waist.right - A.waist.left - 4), 4, "topShadow", "top");
+      E.shade(grid, A.shoulder.left + 8, A.shoulder.y + 1, 7, 2, "topHighlight", "top");
+      E.shade(grid, A.shoulder.right - 15, A.shoulder.y + 1, 7, 2, "topHighlight", "top");
+    }
+  };
+  var CLOTH_BOTTOM_SHADING = {
+    id: "cloth_bottom_shading", layer: 8.2,
+    draw: function (grid, p) {
+      E.shade(grid, A.hip.left + 3, A.hip.y + 5, Math.max(0, A.hip.right - A.hip.left - 6), 4, "bottomShadow", "bottom");
     }
   };
 
@@ -4395,6 +4485,9 @@ function renderDocCategoryPage(workId, category) {
   global.PixelDollParts.ears = EARS;
   global.PixelDollParts.headDetail = HEAD_DETAIL;
   global.PixelDollParts.hairHighlight = HAIR_HIGHLIGHT;
+  global.PixelDollParts.hairFrontHighlight = HAIR_FRONT_HIGHLIGHT;
+  global.PixelDollParts.clothTopShading = CLOTH_TOP_SHADING;
+  global.PixelDollParts.clothBottomShading = CLOTH_BOTTOM_SHADING;
   global.PixelDollParts.bustSizes = BUST_SIZES;
 })(typeof window !== "undefined" ? window : this);
 
@@ -4416,11 +4509,27 @@ function renderDocCategoryPage(workId, category) {
       legendL[ch] = key === "eyeIris" ? "eyeIrisLeft" : key;
       legendR[ch] = key === "eyeIris" ? "eyeIrisRight" : key;
     });
+    /* Catch-light: every variant gets a 1px glint at its first (top-left-most) iris
+     * cell, found automatically from its own ascii art -- so a new eye shape only
+     * needs an "I" in its rows to get a highlight, never a hand-placed pixel. */
+    var irisChar = Object.keys(legend).filter(function (ch) { return legend[ch] === "eyeIris"; })[0];
+    var glintRow = -1, glintCol = -1;
+    if (irisChar) {
+      for (var yy = 0; yy < rows.length && glintRow === -1; yy++) {
+        var idx = rows[yy].indexOf(irisChar);
+        if (idx !== -1) { glintRow = yy; glintCol = idx; }
+      }
+    }
     return {
       id: id, label: label, genre: genre, layer: 6,
       draw: function (grid, p) {
         var dy = A.eye.y + (dyAdjust || 0);
         E.mirrorAsciiLR(grid, CX - 5 - w, dy, rows, legendL, legendR, CX);
+        if (glintRow !== -1) {
+          var gx = CX - 5 - w + glintCol, gy = dy + glintRow;
+          E.px(grid, gx, gy, "eyeGlow");
+          E.px(grid, 2 * CX - gx - 1, gy, "eyeGlow");
+        }
       }
     };
   }
@@ -5204,9 +5313,12 @@ function buildAppearanceLayers(ap) {
     hairSet.back,
     D.hairHighlight,
     bottomDef,
+    D.clothBottomShading,
     topDef,
+    D.clothTopShading,
     showBust ? (D.bustSizes[ap.bustSize] || D.bustSizes.medium) : null,
     hairSet.front,
+    D.hairFrontHighlight,
     D.shoes[ap.shoes] || D.shoes.sneakers
   ];
 }
@@ -5219,12 +5331,28 @@ function lightenHex(hex, amt) {
   function hx(c) { var s = c.toString(16); return s.length < 2 ? "0" + s : s; }
   return "#" + hx(up(r)) + hx(up(g)) + hx(up(b));
 }
+function darkenHex(hex, amt) {
+  var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  function down(c) { return Math.max(0, Math.min(255, Math.round(c * (1 - amt)))); }
+  function hx(c) { var s = c.toString(16); return s.length < 2 ? "0" + s : s; }
+  return "#" + hx(down(r)) + hx(down(g)) + hx(down(b));
+}
 function buildAppearancePalette(ap) {
   var topDef = PixelDollParts.tops[ap.top] || PixelDollParts.tops.shirt;
   var palette = Object.assign({}, PixelDoll.DEFAULT_PALETTE, {
     skin: ap.skinTone, hair: ap.hairColor, top: ap.topColor, bottom: ap.bottomColor,
+    /* Shadow/highlight tones are derived from the user's own color choices (not left
+     * at their fixed defaults) so shading stays coherent across any skin/hair/outfit
+     * combination instead of only looking right for the one default tone. */
+    skinShadow: darkenHex(ap.skinTone, 0.16),
+    skinHighlight: lightenHex(ap.skinTone, 0.22),
     skinBlush: mixTowardBlush(ap.skinTone),
-    hairHighlight: lightenHex(ap.hairColor, 0.35)
+    hairShadow: darkenHex(ap.hairColor, 0.30),
+    hairHighlight: lightenHex(ap.hairColor, 0.35),
+    topShadow: darkenHex(ap.topColor, 0.22),
+    topHighlight: lightenHex(ap.topColor, 0.25),
+    bottomShadow: darkenHex(ap.bottomColor, 0.22),
+    bottomHighlight: lightenHex(ap.bottomColor, 0.25)
   });
   palette.eyeIrisLeft = ap.oddEye ? (ap.eyeColorLeft || ap.eyeColor) : ap.eyeColor;
   palette.eyeIrisRight = ap.oddEye ? (ap.eyeColorRight || ap.eyeColor) : ap.eyeColor;
