@@ -191,6 +191,16 @@
   .appear-field { display:flex; flex-direction:column; gap:4px; }
   .appear-field label { font-size:11px; color:var(--ink-faint); }
   .appear-field .sel { border:1px solid var(--border); width:100%; }
+  .appear-picker-section { display:flex; flex-direction:column; gap:6px; }
+  .appear-picker-label { font-size:11px; color:var(--ink-faint); }
+  .appear-picker-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(64px,1fr)); gap:6px; }
+  .appear-pick-btn { display:flex; flex-direction:column; align-items:center; gap:3px; padding:5px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; cursor:pointer; }
+  .appear-pick-btn:hover { border-color:var(--border-strong); }
+  .appear-pick-btn.on { border-color:var(--accent); background:var(--accent-soft); }
+  .appear-pick-thumb { display:block; width:100%; aspect-ratio:1/1; background:var(--bg-card-hover); border-radius:5px; overflow:hidden; }
+  .appear-pick-thumb svg { display:block; width:100%; height:100%; }
+  .appear-pick-name { font-size:10px; color:var(--ink-faint); text-align:center; line-height:1.25; }
+  .appear-pick-btn.on .appear-pick-name { color:var(--ink); }
   .appear-swrow { grid-template-columns:repeat(7, 1fr); margin-bottom:0; }
   .appear-oddeye-check { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-soft); cursor:pointer; padding:2px 0; }
   .appear-oddeye-check input { accent-color:var(--accent); }
@@ -3920,660 +3930,1308 @@ function renderDocCategoryPage(workId, category) {
     btn.addEventListener("click", function(e){ e.stopPropagation(); deleteDoc(btn.dataset.deldoccard); });
   });
 }
-/* ---------------- appearance builder (등장인물) ---------------- */
-var APPEAR_BODY_TYPES = [
-  { id:"slim", label:"슬림", gender:"u", sw:34, ww:22, hw:26, lw:11, heightK:1.0 },
-  { id:"average", label:"보통 체형", gender:"u", sw:38, ww:26, hw:30, lw:13, heightK:1.0 },
-  { id:"curvy", label:"글래머", gender:"f", sw:36, ww:24, hw:38, lw:13, heightK:1.0 },
-  { id:"hourglass", label:"모래시계형", gender:"f", sw:38, ww:22, hw:38, lw:13, heightK:1.0 },
-  { id:"petite", label:"소녀 체형(단신)", gender:"f", sw:30, ww:20, hw:26, lw:10, heightK:0.82 },
-  { id:"athletic_f", label:"탄탄한 운동 체형", gender:"f", sw:38, ww:24, hw:30, lw:13, heightK:1.03 },
-  { id:"plump", label:"통통한 체형", gender:"u", sw:40, ww:34, hw:36, lw:15, heightK:0.95 },
-  { id:"broad", label:"다부진 체형", gender:"m", sw:46, ww:32, hw:32, lw:15, heightK:1.03 },
-  { id:"muscular", label:"근육질", gender:"m", sw:50, ww:30, hw:32, lw:16, heightK:1.04 },
-  { id:"lanky", label:"마르고 큰 체형", gender:"m", sw:36, ww:24, hw:26, lw:11, heightK:1.12 },
-  { id:"stocky", label:"땅딸막한 체형", gender:"m", sw:42, ww:34, hw:34, lw:15, heightK:0.84 },
-  { id:"lean_m", label:"호리호리한 체형", gender:"m", sw:36, ww:26, hw:28, lw:12, heightK:1.04 },
-  { id:"pear", label:"하체가 발달한 체형", gender:"u", sw:32, ww:26, hw:40, lw:15, heightK:0.97 },
-  { id:"inverted_triangle", label:"역삼각형 체형", gender:"m", sw:48, ww:28, hw:26, lw:13, heightK:1.02 },
-  { id:"soft_round", label:"둥글둥글한 체형", gender:"u", sw:36, ww:36, hw:36, lw:14, heightK:0.94 },
-  { id:"tall_elegant", label:"장신·우아한 체형", gender:"u", sw:36, ww:23, hw:30, lw:12, heightK:1.14 }
-];
-var APPEAR_FACE_SHAPES = [
-  { id:"oval", label:"계란형", gender:"u", topW:0.68, midW:0.88, jawW:0.6, chinY:1.3, angular:false },
-  { id:"round", label:"둥근형", gender:"u", topW:0.85, midW:0.95, jawW:0.82, chinY:0.95, angular:false },
-  { id:"square", label:"각진형", gender:"u", topW:0.88, midW:0.92, jawW:0.88, chinY:0.85, angular:true },
-  { id:"heart", label:"하트형", gender:"u", topW:0.95, midW:0.85, jawW:0.45, chinY:1.2, angular:false },
-  { id:"diamond", label:"다이아몬드형", gender:"u", topW:0.55, midW:0.98, jawW:0.45, chinY:1.25, angular:false },
-  { id:"long", label:"긴 얼굴형", gender:"u", topW:0.68, midW:0.78, jawW:0.55, chinY:1.65, angular:false },
-  { id:"babyface", label:"동안형(볼살있는)", gender:"u", topW:0.86, midW:1.0, jawW:0.88, chinY:0.9, angular:false },
-  { id:"sharp", label:"날렵한 형", gender:"u", topW:0.62, midW:0.8, jawW:0.42, chinY:1.4, angular:true },
-  { id:"soft_round2", label:"부드러운 둥근형", gender:"u", topW:0.78, midW:0.9, jawW:0.72, chinY:1.05, angular:false },
-  { id:"strong_square", label:"뚜렷한 각진형", gender:"u", topW:0.92, midW:0.96, jawW:0.94, chinY:0.8, angular:true },
-  { id:"triangle_chin", label:"갸름한 역삼각형", gender:"u", topW:0.5, midW:0.92, jawW:0.4, chinY:1.3, angular:true },
-  { id:"full", label:"통통한 얼굴형", gender:"u", topW:0.92, midW:1.02, jawW:0.95, chinY:0.85, angular:false }
-];
-var GENDER_SHAPE_MODS = { f:{sw:0.87, ww:0.85, hw:1.15, heightK:0.96}, m:{sw:1.16, ww:1.03, hw:0.88, heightK:1.04}, u:{sw:1, ww:1, hw:1, heightK:1} };
-var APPEAR_BUST_SIZES = [
-  { id:"none", label:"없음/납작", gender:"u", bulge:0 },
-  { id:"small", label:"작음", gender:"u", bulge:5 },
-  { id:"medium", label:"보통", gender:"u", bulge:8 },
-  { id:"large", label:"큼", gender:"u", bulge:11 },
-  { id:"xlarge", label:"매우 큼", gender:"u", bulge:14 }
-];
-var APPEAR_HAIR_STYLES = [
-  { id:"buzz", label:"삭발/버즈컷", gender:"m", len:0, style:"buzz", bangs:"none" },
-  { id:"short_crop", label:"짧은 스포츠머리", gender:"m", len:1, style:"straight", bangs:"none" },
-  { id:"short_side_part", label:"짧은 옆가르마", gender:"m", len:1, style:"straight", bangs:"side" },
-  { id:"pompadour", label:"포마드/올백머리", gender:"m", len:1, style:"straight", bangs:"side" },
-  { id:"mohawk", label:"모히칸", gender:"m", len:1, style:"mohawk", bangs:"none" },
-  { id:"messy_short_m", label:"부스스한 단발(남)", gender:"m", len:1, style:"wavy", bangs:"full" },
-  { id:"medium_wavy_m", label:"어깨선 웨이브(남)", gender:"m", len:2, style:"wavy", bangs:"side" },
-  { id:"long_tied_m", label:"질끈 묶은 장발(남)", gender:"m", len:3, style:"ponytail", bangs:"side" },
-  { id:"topknot", label:"상투머리", gender:"m", len:2, style:"bun", bangs:"none" },
-  { id:"undercut", label:"언더컷", gender:"u", len:1, style:"undercut", bangs:"side" },
-  { id:"bob", label:"단발(보브컷)", gender:"f", len:1, style:"straight", bangs:"full" },
-  { id:"bob_wavy", label:"웨이브 단발", gender:"f", len:1, style:"wavy", bangs:"side" },
-  { id:"medium_straight_f", label:"중단발 스트레이트", gender:"f", len:2, style:"straight", bangs:"side" },
-  { id:"long_straight", label:"긴 생머리", gender:"f", len:3, style:"straight", bangs:"none" },
-  { id:"long_wavy", label:"긴 웨이브 롱헤어", gender:"f", len:3, style:"wavy", bangs:"side" },
-  { id:"long_curly", label:"긴 곱슬머리", gender:"f", len:3, style:"curly", bangs:"none" },
-  { id:"very_long_straight", label:"허리까지 오는 긴 머리", gender:"f", len:4, style:"straight", bangs:"curtain" },
-  { id:"ponytail_high", label:"높이 묶은 포니테일", gender:"f", len:3, style:"ponytail_high", bangs:"full" },
-  { id:"ponytail_low", label:"낮게 묶은 포니테일", gender:"f", len:3, style:"ponytail", bangs:"side" },
-  { id:"twintail", label:"트윈테일", gender:"f", len:2, style:"twintail", bangs:"full" },
-  { id:"twintail_long", label:"긴 트윈테일", gender:"f", len:3, style:"twintail", bangs:"full" },
-  { id:"braid_single", label:"한 갈래 땋은머리", gender:"f", len:3, style:"braid", bangs:"side" },
-  { id:"braid_twin", label:"양 갈래 땋은머리", gender:"f", len:2, style:"braid_twin", bangs:"full" },
-  { id:"bun_high", label:"올림머리(쪽머리)", gender:"f", len:2, style:"bun", bangs:"none" },
-  { id:"half_up", label:"반묶음머리", gender:"f", len:3, style:"wavy", bangs:"side" },
-  { id:"afro", label:"아프로", gender:"u", len:1, style:"afro", bangs:"none" },
-  { id:"curly_short", label:"짧은 곱슬머리", gender:"u", len:1, style:"curly", bangs:"full" },
-  { id:"pixie", label:"픽시컷", gender:"f", len:0, style:"straight", bangs:"side" },
-  { id:"bald", label:"대머리/민머리", gender:"u", len:-1, style:"straight", bangs:"none" },
-  { id:"silver_long_fantasy", label:"판타지풍 찰랑거리는 장발", gender:"u", len:4, style:"wavy", bangs:"curtain" }
-];
-var APPEAR_TOPS = [
-  { id:"tshirt", label:"티셔츠", gender:"u", fam:"fitted", sleeve:"short", frill:false, collar:false },
-  { id:"tank", label:"탱크탑", gender:"u", fam:"fitted", sleeve:"none", frill:false, collar:false },
-  { id:"shirt", label:"셔츠", gender:"u", fam:"fitted", sleeve:"long", frill:false, collar:true },
-  { id:"blouse", label:"블라우스", gender:"f", fam:"fitted", sleeve:"long", frill:true, collar:true },
-  { id:"frill_blouse", label:"프릴 블라우스", gender:"f", fam:"fitted", sleeve:"long", frill:true, collar:true, frillHeavy:true },
-  { id:"crop_top", label:"크롭탑", gender:"f", fam:"fitted", sleeve:"short", frill:false, collar:false },
-  { id:"off_shoulder", label:"오프숄더 상의", gender:"f", fam:"fitted", sleeve:"short", frill:true, collar:false },
-  { id:"knit", label:"니트/스웨터", gender:"u", fam:"loose", sleeve:"long", frill:false, collar:false },
-  { id:"hoodie", label:"후드티", gender:"u", fam:"loose", sleeve:"long", frill:false, collar:false },
-  { id:"vest", label:"조끼", gender:"u", fam:"fitted", sleeve:"none", frill:false, collar:false },
-  { id:"jacket", label:"자켓", gender:"u", fam:"loose", sleeve:"long", frill:false, collar:true },
-  { id:"leather_jacket", label:"가죽 자켓", gender:"u", fam:"loose", sleeve:"long", frill:false, collar:true },
-  { id:"coat", label:"코트", gender:"u", fam:"loose_long", sleeve:"long", frill:false, collar:true },
-  { id:"trenchcoat", label:"트렌치코트", gender:"u", fam:"loose_long", sleeve:"long", frill:false, collar:true },
-  { id:"tuxedo", label:"턱시도 재킷", gender:"m", fam:"fitted", sleeve:"long", frill:false, collar:true },
-  { id:"suit_jacket", label:"정장 재킷", gender:"u", fam:"fitted", sleeve:"long", frill:false, collar:true },
-  { id:"light_armor", label:"경갑(가죽 갑옷)", gender:"u", fam:"armor", sleeve:"short", armor:true },
-  { id:"plate_armor", label:"판금 갑옷", gender:"u", fam:"armor", sleeve:"none", armor:true },
-  { id:"chainmail", label:"사슬 갑옷", gender:"u", fam:"armor", sleeve:"long", armor:true },
-  { id:"robe", label:"로브", gender:"u", fam:"robe", sleeve:"long", frill:false, collar:false },
-  { id:"wizard_robe", label:"마법사 로브", gender:"u", fam:"robe", sleeve:"long", frill:false, collar:true },
-  { id:"hanbok_jeogori", label:"저고리(한복)", gender:"u", fam:"fitted", sleeve:"long", frill:false, collar:true, hanbok:true },
-  { id:"dopo", label:"도포", gender:"m", fam:"robe", sleeve:"long", frill:false, collar:true, hanbok:true },
-  { id:"cape", label:"케이프/망토", gender:"u", fam:"loose_long", sleeve:"none", frill:false, collar:true },
-  { id:"poncho", label:"판초", gender:"u", fam:"loose", sleeve:"none", frill:false, collar:false },
-  { id:"sailor_top", label:"세일러 상의", gender:"f", fam:"fitted", sleeve:"short", frill:false, collar:true },
-  { id:"dress_short", label:"미니 원피스", gender:"f", fam:"dress", sleeve:"short", frill:true, hemLen:"thigh" },
-  { id:"dress_midi", label:"미디 원피스", gender:"f", fam:"dress", sleeve:"short", frill:false, hemLen:"knee" },
-  { id:"dress_ball", label:"드레스(무도회용)", gender:"f", fam:"dress", sleeve:"long", frill:true, frillHeavy:true, hemLen:"ankle" },
-  { id:"qipao", label:"치파오", gender:"f", fam:"dress", sleeve:"none", frill:false, hemLen:"ankle" },
-  { id:"none_top", label:"상의 없음/맨몸", gender:"u", fam:"none" }
-];
-var APPEAR_BOTTOMS = [
-  { id:"jeans", label:"청바지", gender:"u", fam:"pants", len:"ankle" },
-  { id:"slacks", label:"슬랙스", gender:"u", fam:"pants", len:"ankle" },
-  { id:"cargo", label:"카고 팬츠", gender:"u", fam:"pants_wide", len:"ankle" },
-  { id:"wide_pants", label:"와이드 팬츠", gender:"u", fam:"pants_wide", len:"ankle" },
-  { id:"shorts", label:"반바지", gender:"u", fam:"pants", len:"thigh" },
-  { id:"leggings", label:"레깅스", gender:"u", fam:"leggings", len:"ankle" },
-  { id:"mini_skirt", label:"미니스커트", gender:"f", fam:"skirt", len:"thigh" },
-  { id:"pleated_skirt", label:"플리츠 스커트", gender:"f", fam:"skirt_pleated", len:"knee" },
-  { id:"a_skirt", label:"A라인 스커트", gender:"f", fam:"skirt", len:"knee" },
-  { id:"long_skirt", label:"롱스커트", gender:"f", fam:"skirt", len:"ankle" },
-  { id:"hanbok_chima", label:"치마(한복)", gender:"f", fam:"skirt", len:"ankle", hanbok:true },
-  { id:"baji", label:"바지(한복)", gender:"u", fam:"pants_wide", len:"ankle", hanbok:true },
-  { id:"armor_greaves", label:"갑옷 하의(각반)", gender:"u", fam:"armor", len:"knee" },
-  { id:"flare_pants", label:"나팔바지", gender:"u", fam:"pants_wide", len:"ankle" },
-  { id:"none_bottom", label:"하의 없음", gender:"u", fam:"none" },
-  { id:"bare_legs", label:"맨다리", gender:"u", fam:"none" }
-];
-var APPEAR_SHOES = [
-  { id:"sneakers", label:"스니커즈", gender:"u", fam:"low" },
-  { id:"walkers", label:"워커", gender:"u", fam:"short" },
-  { id:"leather_shoes", label:"구두", gender:"u", fam:"low" },
-  { id:"heels", label:"하이힐", gender:"f", fam:"low" },
-  { id:"sandals", label:"샌들", gender:"u", fam:"low" },
-  { id:"boots_long", label:"롱부츠", gender:"u", fam:"long" },
-  { id:"boots_short", label:"숏부츠/앵클부츠", gender:"u", fam:"short" },
-  { id:"slippers", label:"슬리퍼", gender:"u", fam:"low" },
-  { id:"straw_sandals", label:"짚신", gender:"u", fam:"low" },
-  { id:"armor_boots", label:"갑옷 부츠", gender:"u", fam:"short" },
-  { id:"mary_jane", label:"메리제인 슈즈", gender:"f", fam:"low" },
-  { id:"combat_boots", label:"컴뱃부츠", gender:"u", fam:"short" },
-  { id:"barefoot", label:"맨발", gender:"u", fam:"none" }
-];
+/* ---------------- appearance builder (등장인물) ----------------
+
+ * Modular pixel-doll engine + part library (see the standalone showcase artifact
+
+ * for the full design rationale) -- embedded directly so the appearance editor and
+
+ * the settings-wiki export share exactly one rendering path.
+
+ * ---------------------------------------------------------------- */
+
+/* Modular pixel-doll compositor.
+ * Master grid: 128x128 units, upscaled nearest-neighbor to a 500x500 canvas.
+ * See ANCHORS for the shared coordinate system every part is authored against.
+ */
+(function (global) {
+  "use strict";
+
+  var GRID = 128;
+  var OUT = 500;
+
+  /* ---- shared anchor system (all parts are authored against these) ---- */
+  var ANCHORS = {
+    centerX: 64,
+    head: { top: 14, hairline: 18, bottom: 47, left: 47, right: 81 },
+    brow: { y: 27, h: 3 },
+    eye: { y: 31, h: 6 },
+    nose: { y: 37, h: 3 },
+    mouth: { y: 41, h: 6 },
+    neck: { top: 47, bottom: 51, left: 58, right: 70 },
+    shoulder: { y: 51, left: 40, right: 88 }, // FIXED frame -- clothes always author to this
+    waist: { y: 88, left: 50, right: 78 },
+    hip: { y: 92, left: 44, right: 84 },
+    legTop: 92, legBottom: 121,
+    footTop: 121, footBottom: 128,
+    legs: { leftOuter: 46, leftInner: 61, rightInner: 67, rightOuter: 82 }
+  };
+
+  /* ---- shared, recolorable palette. A "look" supplies concrete hex values for
+   * these keys; part authors only ever reference the key, never a literal color. */
+  var PALETTE_KEYS = [
+    "skin", "skinShadow", "skinLine",
+    "hair", "hairShadow", "hairLine",
+    "brow",
+    "eyeWhite", "eyeIris", "eyePupil", "eyeLine", "eyeGlow",
+    "mouth", "mouthDark", "teeth", "blood",
+    "beard", "beardShadow",
+    "top", "topShadow", "topLine", "topAccent",
+    "bottom", "bottomShadow", "bottomLine",
+    "shoe", "shoeShadow", "shoeSole",
+    "metal", "metalShadow", "cloth2", "cloth2Shadow"
+  ];
+
+  var DEFAULT_PALETTE = {
+    skin: "#f0c199", skinShadow: "#d49f70", skinLine: "#7a5236",
+    hair: "#3b2a20", hairShadow: "#2a1d16", hairLine: "#1c130d",
+    brow: "#2a1d16",
+    eyeWhite: "#f6f3ec", eyeIris: "#3d6b8a", eyePupil: "#161616", eyeLine: "#20140f", eyeGlow: "#ffffff",
+    mouth: "#a5443c", mouthDark: "#5c1f1c", teeth: "#f6f3ec", blood: "#8c1c1c",
+    beard: "#2a1d16", beardShadow: "#1c130d",
+    top: "#4a6fa5", topShadow: "#33507d", topLine: "#22375a", topAccent: "#e7c65c",
+    bottom: "#38394a", bottomShadow: "#26273350", bottomLine: "#1a1b26",
+    shoe: "#3a2a22", shoeShadow: "#281c17", shoeSole: "#171012",
+    metal: "#b9bfc9", metalShadow: "#7d838d", cloth2: "#7a3b3b", cloth2Shadow: "#542828"
+  };
+
+  /* ---- geometry helpers: every big silhouette is built from these, so shapes
+   * stay exact and reliably alignable instead of freehand pixel tracing. ---- */
+  function px(grid, x, y, key) {
+    if (x < 0 || y < 0 || x >= GRID || y >= GRID) return;
+    grid[y * GRID + x] = key;
+  }
+  function rect(grid, x, y, w, h, key) {
+    for (var yy = y; yy < y + h; yy++) for (var xx = x; xx < x + w; xx++) px(grid, xx, yy, key);
+  }
+  /* trapezoid: linearly interpolates left/right edge from (x0..x0+w0) at y0 to (x1..x1+w1) at y1-1 */
+  function taper(grid, y0, y1, x0, w0, x1, w1, key) {
+    var h = y1 - y0;
+    for (var yy = 0; yy < h; yy++) {
+      var t = h <= 1 ? 0 : yy / (h - 1);
+      var lx = Math.round(x0 + (x1 - x0) * t);
+      var lw = Math.round(w0 + (w1 - w0) * t);
+      rect(grid, lx, y0 + yy, lw, 1, key);
+    }
+  }
+  /* ASCII grid: rows of characters, legend maps a character to a palette key. '.' = transparent. */
+  function ascii(grid, dx, dy, rows, legend) {
+    for (var yy = 0; yy < rows.length; yy++) {
+      var row = rows[yy];
+      for (var xx = 0; xx < row.length; xx++) {
+        var ch = row[xx];
+        if (ch === "." || ch === " ") continue;
+        var key = legend[ch];
+        if (key) px(grid, dx + xx, dy + yy, key);
+      }
+    }
+  }
+  function mirrorAscii(grid, dx, dy, rows, legend, centerX) {
+    ascii(grid, dx, dy, rows, legend);
+    for (var yy = 0; yy < rows.length; yy++) {
+      var row = rows[yy];
+      for (var xx = 0; xx < row.length; xx++) {
+        var ch = row[xx];
+        if (ch === "." || ch === " ") continue;
+        var key = legend[ch];
+        if (!key) continue;
+        var srcX = dx + xx;
+        var mirroredX = 2 * centerX - srcX - 1;
+        px(grid, mirroredX, dy + yy, key);
+      }
+    }
+  }
+  /* Like mirrorAscii, but the left and right halves can use different legends --
+   * e.g. two different iris-color keys for an odd-eye (heterochromia) look. */
+  function mirrorAsciiLR(grid, dx, dy, rows, legendLeft, legendRight, centerX) {
+    ascii(grid, dx, dy, rows, legendLeft);
+    for (var yy = 0; yy < rows.length; yy++) {
+      var row = rows[yy];
+      for (var xx = 0; xx < row.length; xx++) {
+        var ch = row[xx];
+        if (ch === "." || ch === " ") continue;
+        var key = legendRight[ch];
+        if (!key) continue;
+        var srcX = dx + xx;
+        var mirroredX = 2 * centerX - srcX - 1;
+        px(grid, mirroredX, dy + yy, key);
+      }
+    }
+  }
+
+  function newGrid() { return new Array(GRID * GRID).fill(null); }
+
+  /* ---- compose a full look: layers is an ordered array (z-order low->high) of
+   * { draw: function(grid, palette) } objects. ---- */
+  function compose(layers, palette) {
+    var grid = newGrid();
+    layers.forEach(function (layer) { if (layer) layer.draw(grid, palette); });
+    return grid;
+  }
+
+  function paintToCanvas(grid, palette, canvas, opts) {
+    opts = opts || {};
+    var showGuides = !!opts.showGuides;
+    var off = document.createElement("canvas");
+    off.width = GRID; off.height = GRID;
+    var octx = off.getContext("2d");
+    var img = octx.createImageData(GRID, GRID);
+    for (var i = 0; i < grid.length; i++) {
+      var key = grid[i];
+      if (!key) continue;
+      var hex = palette[key] || DEFAULT_PALETTE[key] || "#ff00ff";
+      var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+      var a = hex.length > 7 ? parseInt(hex.slice(7, 9), 16) : 255;
+      img.data[i * 4] = r; img.data[i * 4 + 1] = g; img.data[i * 4 + 2] = b; img.data[i * 4 + 3] = a;
+    }
+    octx.putImageData(img, 0, 0);
+
+    var ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+    canvas.width = OUT; canvas.height = OUT;
+    ctx.clearRect(0, 0, OUT, OUT);
+    ctx.drawImage(off, 0, 0, GRID, GRID, 0, 0, OUT, OUT);
+
+    if (showGuides) drawGuides(ctx);
+  }
+
+  function xmlEsc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
+  /* Pure-string SVG renderer -- no canvas/document needed, so the exact same call
+   * works in the live editor and in a data-only export context (settings-wiki JSON).
+   * Horizontal run-length encoding per row keeps the node count reasonable (a full
+   * character is a few hundred <rect>s, not one per pixel). */
+  function gridToSvgRects(grid, palette) {
+    var out = [];
+    for (var y = 0; y < GRID; y++) {
+      var x = 0;
+      while (x < GRID) {
+        var key = grid[y * GRID + x];
+        if (!key) { x++; continue; }
+        var runStart = x;
+        while (x < GRID && grid[y * GRID + x] === key) x++;
+        var hex = palette[key] || DEFAULT_PALETTE[key] || "#ff00ff";
+        out.push('<rect x="' + runStart + '" y="' + y + '" width="' + (x - runStart) + '" height="1" fill="' + hex + '"/>');
+      }
+    }
+    return out.join("");
+  }
+
+  /* width/height are always "100%" -- the viewBox carries the real aspect ratio, so
+   * this scales correctly to whatever container CSS puts it in (76px WorldBuilding
+   * avatar, 230px editor preview, 60px picker thumbnail, ...) without a call site
+   * ever needing to know or pass a pixel size. */
+  function renderSvgString(layers, palette) {
+    var grid = compose(layers, palette);
+    var rects = gridToSvgRects(grid, palette);
+    return '<svg viewBox="0 0 ' + GRID + ' ' + GRID + '" width="100%" height="100%"' +
+      ' shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">' + rects + '</svg>';
+  }
+
+  function drawGuides(ctx) {
+    var s = OUT / GRID;
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,0,150,0.55)";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    [ANCHORS.brow.y, ANCHORS.eye.y, ANCHORS.mouth.y, ANCHORS.neck.top, ANCHORS.shoulder.y, ANCHORS.waist.y, ANCHORS.hip.y, ANCHORS.legTop, ANCHORS.footTop]
+      .forEach(function (y) {
+        ctx.beginPath(); ctx.moveTo(0, y * s); ctx.lineTo(OUT, y * s); ctx.stroke();
+      });
+    ctx.strokeStyle = "rgba(60,180,255,0.55)";
+    ctx.beginPath(); ctx.moveTo(ANCHORS.centerX * s, 0); ctx.lineTo(ANCHORS.centerX * s, OUT); ctx.stroke();
+    ctx.restore();
+  }
+
+  global.PixelDoll = {
+    GRID: GRID, OUT: OUT, ANCHORS: ANCHORS, PALETTE_KEYS: PALETTE_KEYS, DEFAULT_PALETTE: DEFAULT_PALETTE,
+    px: px, rect: rect, taper: taper, ascii: ascii, mirrorAscii: mirrorAscii, mirrorAsciiLR: mirrorAsciiLR,
+    newGrid: newGrid, compose: compose, paintToCanvas: paintToCanvas, renderSvgString: renderSvgString
+  };
+})(typeof window !== "undefined" ? window : this);
+
+/* Base body + head parts. See engine.js ANCHORS for the shared coordinate frame.
+ *
+ * A note on scope: every body type below stays within the FIXED shoulder/waist/hip
+ * frame (A.shoulder/A.waist/A.hip) so clothes never clip regardless of which one is
+ * selected -- see the comment on HEAD_BASE/clothes further down. That rules out a
+ * true "hourglass" silhouette that's physically wider at the hip than the frame
+ * allows; curvier body types instead read through a sharper waist taper within the
+ * same frame. Likewise every part is anchored to FIXED y-coordinates (head/shoulder/
+ * waist/hip/leg/foot never move), so there's no independent "height" slider the way
+ * the old system had one (재petite/장신 등) -- that would require scaling the whole
+ * anchor system, a bigger change than this pass covers. */
+(function (global) {
+  "use strict";
+  var E = global.PixelDoll, A = E.ANCHORS;
+
+  function bodyPart(id, label, gender, drawFn) { return { id: id, label: label, gender: gender, layer: 1, draw: drawFn }; }
+
+  var BODIES = {
+    normal: bodyPart("normal", "보통 체형", "u", function (grid, p) {
+      E.rect(grid, A.neck.left, A.neck.top, A.neck.right - A.neck.left, A.neck.bottom - A.neck.top, "skin");
+      E.rect(grid, A.neck.left, A.neck.bottom - 2, A.neck.right - A.neck.left, 2, "skinShadow");
+      E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.waist.left, A.waist.right - A.waist.left, "skin");
+      E.taper(grid, 54, 100, 31, 8, 33, 7, "skin");
+      E.taper(grid, 54, 100, 89, 8, 88, 7, "skin");
+      E.rect(grid, 30, 96, 9, 3, "skinShadow");
+      E.rect(grid, 89, 96, 9, 3, "skinShadow");
+      E.rect(grid, 30, 100, 8, 6, "skin");
+      E.rect(grid, 90, 100, 8, 6, "skin");
+      E.rect(grid, 30, 104, 8, 2, "skinShadow");
+      E.rect(grid, 90, 104, 8, 2, "skinShadow");
+      E.rect(grid, 46, A.legTop, 16, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 66, A.legTop, 16, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 46, A.footTop, 17, 7, "skin");
+      E.rect(grid, 65, A.footTop, 17, 7, "skin");
+    }),
+    slim: bodyPart("slim", "슬림", "u", function (grid, p) {
+      E.rect(grid, A.neck.left + 1, A.neck.top, A.neck.right - A.neck.left - 2, A.neck.bottom - A.neck.top, "skin");
+      E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left + 4, A.shoulder.right - A.shoulder.left - 8, A.waist.left + 2, A.waist.right - A.waist.left - 4, "skin");
+      E.taper(grid, 54, 100, 35, 6, 36, 5, "skin");
+      E.taper(grid, 54, 100, 87, 6, 87, 5, "skin");
+      E.rect(grid, 34, 100, 6, 6, "skin");
+      E.rect(grid, 88, 100, 6, 6, "skin");
+      E.rect(grid, 34, 104, 6, 2, "skinShadow");
+      E.rect(grid, 88, 104, 6, 2, "skinShadow");
+      E.rect(grid, 48, A.legTop, 12, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 68, A.legTop, 12, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 47, A.footTop, 14, 7, "skin");
+      E.rect(grid, 67, A.footTop, 14, 7, "skin");
+    }),
+    muscular: bodyPart("muscular", "근육질", "m", function (grid, p) {
+      E.rect(grid, A.neck.left - 1, A.neck.top, A.neck.right - A.neck.left + 2, A.neck.bottom - A.neck.top, "skin");
+      E.taper(grid, A.shoulder.y, A.shoulder.y + 8, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.shoulder.left + 3, A.shoulder.right - A.shoulder.left - 6, "skin");
+      E.taper(grid, A.shoulder.y + 8, A.waist.y, A.shoulder.left + 3, A.shoulder.right - A.shoulder.left - 6, A.waist.left - 2, A.waist.right - A.waist.left + 4, "skin");
+      E.taper(grid, 54, 100, 28, 10, 30, 8, "skin");
+      E.taper(grid, 54, 100, 90, 10, 90, 8, "skin");
+      E.rect(grid, 27, 96, 12, 3, "skinShadow");
+      E.rect(grid, 89, 96, 12, 3, "skinShadow");
+      E.rect(grid, 27, 100, 9, 7, "skin");
+      E.rect(grid, 92, 100, 9, 7, "skin");
+      E.rect(grid, 27, 105, 9, 2, "skinShadow");
+      E.rect(grid, 92, 105, 9, 2, "skinShadow");
+      E.rect(grid, 44, A.legTop, 18, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 66, A.legTop, 18, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 44, A.footTop, 19, 7, "skin");
+      E.rect(grid, 65, A.footTop, 19, 7, "skin");
+    }),
+    // hourglass-read within the fixed frame: shoulder and hip both stay near frame
+    // max while the waist taper is unusually sharp, instead of a truly wider hip
+    curvy: bodyPart("curvy", "글래머(모래시계형)", "f", function (grid, p) {
+      E.rect(grid, A.neck.left, A.neck.top, A.neck.right - A.neck.left, A.neck.bottom - A.neck.top, "skin");
+      E.taper(grid, A.shoulder.y, A.shoulder.y + 14, A.shoulder.left + 2, A.shoulder.right - A.shoulder.left - 4, A.waist.left + 4, A.waist.right - A.waist.left - 8, "skin");
+      E.taper(grid, A.shoulder.y + 14, A.waist.y, A.waist.left + 4, A.waist.right - A.waist.left - 8, A.waist.left + 4, A.waist.right - A.waist.left - 8, "skin");
+      E.taper(grid, A.waist.y, A.hip.y + 4, A.waist.left + 4, A.waist.right - A.waist.left - 8, A.hip.left, A.hip.right - A.hip.left, "skin");
+      E.taper(grid, 54, 100, 33, 7, 34, 6, "skin");
+      E.taper(grid, 54, 100, 88, 7, 87, 6, "skin");
+      E.rect(grid, 32, 100, 7, 6, "skin");
+      E.rect(grid, 88, 100, 7, 6, "skin");
+      E.rect(grid, 47, A.legTop, 14, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 67, A.legTop, 14, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 46, A.footTop, 16, 7, "skin");
+      E.rect(grid, 66, A.footTop, 16, 7, "skin");
+    }),
+    // wide shoulder, almost no waist taper -- bulkier read than muscular
+    broad: bodyPart("broad", "다부진 체형", "m", function (grid, p) {
+      E.rect(grid, A.neck.left - 1, A.neck.top, A.neck.right - A.neck.left + 2, A.neck.bottom - A.neck.top, "skin");
+      E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.waist.left - 4, A.waist.right - A.waist.left + 8, "skin");
+      E.taper(grid, 54, 98, 27, 11, 29, 9, "skin");
+      E.taper(grid, 54, 98, 90, 11, 89, 9, "skin");
+      E.rect(grid, 26, 94, 12, 3, "skinShadow");
+      E.rect(grid, 90, 94, 12, 3, "skinShadow");
+      E.rect(grid, 26, 98, 10, 7, "skin");
+      E.rect(grid, 92, 98, 10, 7, "skin");
+      E.rect(grid, 44, A.legTop, 18, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 66, A.legTop, 18, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 44, A.footTop, 19, 7, "skin");
+      E.rect(grid, 65, A.footTop, 19, 7, "skin");
+    }),
+    // shoulder AND hip both near frame max, minimal taper anywhere -- stout read
+    stocky: bodyPart("stocky", "땅딸막한 체형", "u", function (grid, p) {
+      E.rect(grid, A.neck.left - 1, A.neck.top, A.neck.right - A.neck.left + 2, A.neck.bottom - A.neck.top, "skin");
+      E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.hip.left, A.hip.right - A.hip.left, "skin");
+      E.taper(grid, 54, 98, 30, 9, 31, 8, "skin");
+      E.taper(grid, 54, 98, 89, 9, 88, 8, "skin");
+      E.rect(grid, 29, 94, 9, 6, "skin");
+      E.rect(grid, 89, 94, 9, 6, "skin");
+      E.rect(grid, 44, A.legTop, 17, A.legBottom - A.legTop - 4, "skin");
+      E.rect(grid, 67, A.legTop, 17, A.legBottom - A.legTop - 4, "skin");
+      E.rect(grid, 43, A.footTop - 4, 19, 11, "skin");
+      E.rect(grid, 65, A.footTop - 4, 19, 11, "skin");
+    })
+  };
+
+  /* Opaque skin fill for skull/jaw/ears -- must render BEFORE beard (layer 4) so a
+   * beard drawn on the jaw stays visible. This is the "체형"-adjacent skin base, not
+   * the "얼굴 형태" detail layer (see headDetail below, which is layer 5 and only
+   * ever adds thin contour lines on top -- it must never re-fill broad skin areas,
+   * or it would blot out any beard drawn in between). Every shape stays within
+   * A.head's fixed bounding box so eyes/brows/mouth/beard/ears all still land on
+   * the same anchor lines regardless of which face shape is picked. */
+  function faceShape(id, label, drawFn) { return { id: id, label: label, layer: 2, draw: drawFn }; }
+  var h = A.head;
+  var FACE_SHAPES = {
+    oval: faceShape("oval", "계란형", function (grid, p) {
+      E.rect(grid, h.left + 4, h.top, h.right - h.left - 8, 3, "skin");
+      E.rect(grid, h.left + 1, h.top + 3, h.right - h.left - 2, 4, "skin");
+      E.rect(grid, h.left, h.top + 7, h.right - h.left, 20, "skin");
+      E.taper(grid, h.top + 27, h.bottom, h.left + 1, h.right - h.left - 2, h.left + 6, h.right - h.left - 12, "skin");
+    }),
+    round: faceShape("round", "둥근형", function (grid, p) {
+      E.rect(grid, h.left + 3, h.top, h.right - h.left - 6, 3, "skin");
+      E.rect(grid, h.left, h.top + 3, h.right - h.left, 24, "skin");
+      E.taper(grid, h.top + 27, h.bottom, h.left, h.right - h.left, h.left + 4, h.right - h.left - 8, "skin");
+    }),
+    square: faceShape("square", "각진형", function (grid, p) {
+      E.rect(grid, h.left + 2, h.top, h.right - h.left - 4, 3, "skin");
+      E.rect(grid, h.left, h.top + 3, h.right - h.left, 24, "skin");
+      E.rect(grid, h.left + 1, h.bottom - 8, h.right - h.left - 2, 8, "skin");
+    }),
+    long: faceShape("long", "긴 얼굴형", function (grid, p) {
+      E.rect(grid, h.left + 5, h.top, h.right - h.left - 10, 3, "skin");
+      E.rect(grid, h.left + 2, h.top + 3, h.right - h.left - 4, 4, "skin");
+      E.rect(grid, h.left + 1, h.top + 7, h.right - h.left - 2, 20, "skin");
+      E.taper(grid, h.top + 27, h.bottom, h.left + 2, h.right - h.left - 4, h.left + 8, h.right - h.left - 16, "skin");
+    }),
+    heart: faceShape("heart", "하트형", function (grid, p) {
+      E.rect(grid, h.left, h.top, h.right - h.left, 3, "skin");
+      E.rect(grid, h.left, h.top + 3, h.right - h.left, 4, "skin");
+      E.rect(grid, h.left + 1, h.top + 7, h.right - h.left - 2, 18, "skin");
+      E.taper(grid, h.top + 25, h.bottom + 2, h.left + 1, h.right - h.left - 2, h.left + 10, h.right - h.left - 20, "skin");
+    }),
+    babyface: faceShape("babyface", "동안형(볼살있는)", function (grid, p) {
+      E.rect(grid, h.left + 3, h.top, h.right - h.left - 6, 4, "skin");
+      E.rect(grid, h.left, h.top + 4, h.right - h.left, 25, "skin");
+      E.taper(grid, h.top + 29, h.bottom, h.left + 1, h.right - h.left - 2, h.left + 5, h.right - h.left - 10, "skin");
+    })
+  };
+  var EARS = {
+    id: "ears", layer: 3,
+    draw: function (grid, p) {
+      E.rect(grid, h.left - 2, A.eye.y - 1, 3, 8, "skin");
+      E.rect(grid, h.right - 1, A.eye.y - 1, 3, 8, "skin");
+      E.rect(grid, h.left - 1, A.eye.y + 5, 2, 2, "skinShadow");
+      E.rect(grid, h.right, A.eye.y + 5, 2, 2, "skinShadow");
+    }
+  };
+  /* Contour lines only -- drawn after beard, must stay thin so it never covers a
+   * beard/jaw area with opaque fill. */
+  var HEAD_DETAIL = {
+    id: "head_detail", layer: 5,
+    draw: function (grid, p) {
+      E.rect(grid, h.left + 6, h.bottom - 1, h.right - h.left - 12, 1, "skinShadow");
+      E.rect(grid, A.centerX - 1, A.nose.y - 1, 2, A.nose.h, "skinShadow");
+      E.rect(grid, A.centerX - 1, A.nose.y + A.nose.h - 1, 3, 1, "skinShadow");
+    }
+  };
+
+  /* 5-stage bust size, gender-gated to "f" like the old system. Always drawn right
+   * after the top layer (9) using a "bustColor" palette key the caller resolves to
+   * either skin (top === "none") or the top's own color -- see app-side buildLayers. */
+  function bust(id, label, bulge) {
+    return {
+      id: id, label: label, bulge: bulge, layer: 9.5,
+      draw: function (grid, p) {
+        if (!bulge) return;
+        var cy = 58 - Math.floor(bulge / 2), h2 = bulge, w2 = bulge + 1;
+        E.rect(grid, A.centerX - w2 - 2, cy, w2, h2, "bustColor");
+        E.rect(grid, A.centerX + 2, cy, w2, h2, "bustColor");
+        E.rect(grid, A.centerX - w2 - 2, cy + h2 - 1, w2, 1, "topShadow");
+        E.rect(grid, A.centerX + 2, cy + h2 - 1, w2, 1, "topShadow");
+      }
+    };
+  }
+  var BUST_SIZES = {
+    none: bust("none", "없음/납작", 0),
+    small: bust("small", "작음", 2),
+    medium: bust("medium", "보통", 3),
+    large: bust("large", "큼", 4),
+    xlarge: bust("xlarge", "매우 큼", 5)
+  };
+
+  global.PixelDollParts = global.PixelDollParts || {};
+  global.PixelDollParts.bodies = BODIES;
+  global.PixelDollParts.faceShapes = FACE_SHAPES;
+  global.PixelDollParts.ears = EARS;
+  global.PixelDollParts.headDetail = HEAD_DETAIL;
+  global.PixelDollParts.bustSizes = BUST_SIZES;
+})(typeof window !== "undefined" ? window : this);
+
+/* Eyes, brows, mouth, beard. Small ASCII grids -- '.' transparent, legend maps char->palette key.
+ * All positioned via A.eye/A.brow/A.mouth so they line up regardless of which variant is chosen. */
+(function (global) {
+  "use strict";
+  var E = global.PixelDoll, A = E.ANCHORS;
+  var CX = A.centerX;
+
+  /* Iris color is always split into independent left/right palette keys (eyeIrisLeft /
+   * eyeIrisRight). For a normal (non odd-eye) look the app just sets both to the same
+   * color -- the shape code never needs to know whether odd-eye is on. */
+  function eye(id, label, genre, rows, legend, dyAdjust) {
+    var w = rows[0].length;
+    var legendL = {}, legendR = {};
+    Object.keys(legend).forEach(function (ch) {
+      var key = legend[ch];
+      legendL[ch] = key === "eyeIris" ? "eyeIrisLeft" : key;
+      legendR[ch] = key === "eyeIris" ? "eyeIrisRight" : key;
+    });
+    return {
+      id: id, label: label, genre: genre, layer: 6,
+      draw: function (grid, p) {
+        var dy = A.eye.y + (dyAdjust || 0);
+        E.mirrorAsciiLR(grid, CX - 5 - w, dy, rows, legendL, legendR, CX);
+      }
+    };
+  }
+  var LEG = { W: "eyeWhite", I: "eyeIris", P: "eyePupil", L: "eyeLine", G: "eyeGlow" };
+
+  var EYES = {
+    basic: eye("basic", "기본 눈", "공통", [
+      ".LLLL.",
+      "LWWWWL",
+      "LWIIWL",
+      "LWIPWL",
+      "LWWWWL",
+      ".LLLL."
+    ], LEG),
+    sharp: eye("sharp", "날카로운 눈", "무협·악역", [
+      "LLLLLL.",
+      ".LWWWLL",
+      ".LWIPWL",
+      "..LWWL.",
+      "...LL.."
+    ], LEG),
+    gentle: eye("gentle", "순한 눈", "로맨스", [
+      "..LLLL..",
+      ".LWWWWL.",
+      "LWWIIWWL",
+      "LWWIPWWL",
+      ".LWWWWL.",
+      "..LLLL.."
+    ], LEG),
+    narrow: eye("narrow", "실눈", "공통", [
+      "LLLLLLL",
+      "LIIIIIL",
+      "LLLLLLL"
+    ], LEG, 2),
+    bandaged: eye("bandaged", "붕대 감은 눈", "판타지·다크", [
+      "BBBBBBB",
+      "B/////B",
+      "BBBBBBB",
+      "B/////B"
+    ], { B: "top", "/": "topShadow" }, -1),
+    almond: eye("almond", "아몬드형 눈", "공통", [
+      "..LLLL..",
+      ".LWWWWL.",
+      "LWIIIIWL",
+      ".LWIPWL.",
+      "..LWWL.."
+    ], LEG),
+    wide: eye("wide", "큰 눈", "공통", [
+      ".LLLLL.",
+      "LWWWWWL",
+      "LWIIIWL",
+      "LWIIIWL",
+      "LWIPIWL",
+      "LWWWWWL",
+      ".LLLLL."
+    ], LEG),
+    droopy: eye("droopy", "처진 눈", "로맨스", [
+      "LLLLL..",
+      "LWWWWL.",
+      "LWIIWLL",
+      "LWIPWWL",
+      ".LWWWL.",
+      "..LLL.."
+    ], LEG),
+    burning: eye("burning", "불타는 눈동자", "판타지·마왕", [
+      ".GGGG.",
+      "GOOOOG",
+      "GOPPOG",
+      "GOOOOG",
+      ".GGGG."
+    ], { G: "eyeGlow", O: "blood", P: "eyePupil" }),
+    tired: eye("tired", "다크서클 진 눈", "현대·느와르", [
+      ".LLLL.",
+      "LWWWWL",
+      "LWIPWL",
+      "LWWWWL",
+      "SSSSSS"
+    ], { W: "eyeWhite", I: "eyeIris", P: "eyePupil", L: "eyeLine", S: "skinShadow" })
+  };
+
+  function brow(id, label, genre, rows, legend) {
+    var w = rows[0].length;
+    return {
+      id: id, label: label, genre: genre, layer: 5,
+      draw: function (grid, p) { E.mirrorAscii(grid, CX - 5 - w, A.brow.y, rows, legend, CX); }
+    };
+  }
+  var BG = { B: "brow" };
+  var BROWS = {
+    normal: brow("normal", "기본 눈썹", "공통", ["BBBBB.", ".BBBB."], BG),
+    thick: brow("thick", "짙은 눈썹", "공통", ["BBBBBB", "BBBBBB"], BG),
+    thin: brow("thin", "가느다란 눈썹", "공통", ["BBBBB."], BG),
+    sad: brow("sad", "처진 눈썹", "로맨스", [".BBBBB", "BBBB.."], BG),
+    angry: brow("angry", "화난 눈썹(치켜올라간)", "무협·악역", ["BB....", ".BBBB.", "...BBB"], BG),
+    scarred: brow("scarred", "상처 난 눈썹", "무협", ["BBB.BB", ".BB.B."], { B: "brow", ".": null }),
+    arched: brow("arched", "아치형 눈썹", "공통", [".BB.", "B..B", "B..B"], BG)
+  };
+
+  function mouth(id, label, genre, rows, legend) {
+    var w = rows[0].length;
+    return {
+      id: id, label: label, genre: genre, layer: 5,
+      draw: function (grid, p) { E.ascii(grid, CX - Math.floor(w / 2), A.mouth.y, rows, legend); }
+    };
+  }
+  var MG = { M: "mouth", D: "mouthDark", T: "teeth" };
+  var MOUTHS = {
+    flat: mouth("flat", "일자 입", "공통", ["MMMM"], MG),
+    smile: mouth("smile", "미소", "공통", [".MM.", "M..M", ".MM."], MG),
+    grin: mouth("grin", "활짝 웃는 입", "공통", ["MMMMMM", "MTTTTM", ".MMMM."], MG),
+    angry: mouth("angry", "화난 입", "무협·악역", ["DDDDD", ".DDD."], { D: "mouthDark" }),
+    smirk: mouth("smirk", "비웃음", "악역", [".MMM", "M..M", ".M.."], MG),
+    pipe: mouth("pipe", "파이프를 문 입", "현대·신사", ["MMM======", ".MM......"], { M: "mouth", "=": "shoeSole" }),
+    bloody: mouth("bloody", "피 흘리는 입", "다크판타지", ["MMMM", "BBB.", ".B.."], { M: "mouth", B: "blood" }),
+    neutral: mouth("neutral", "무표정", "공통", ["....", "MMMM", "...."], MG),
+    fang: mouth("fang", "송곳니 미소", "판타지", [".MMMM.", "M.T.TM", ".MMMM."], MG)
+  };
+
+  function beard(id, label, genre, rows, legend, dy) {
+    var w = rows[0].length;
+    return {
+      id: id, label: label, genre: genre, layer: 4,
+      draw: function (grid, p) { E.mirrorAscii(grid, CX - Math.ceil(w / 2), dy, rows, legend, CX); }
+    };
+  }
+  var BDG = { B: "beard", S: "beardShadow" };
+  var BEARDS = {
+    none: { id: "none", label: "없음", genre: "공통", layer: 4, draw: function () {} },
+    // jaw-hugging short beard, sits just below/around the mouth line
+    short: beard("short", "짧은 턱수염", "현대", [
+      "..BBBB..",
+      ".BBBBBB.",
+      "BBBBBBBB",
+      ".SSSSSS."
+    ], BDG, 40),
+    // mustache only, sits right above the mouth line
+    mustache: beard("mustache", "콧수염(신사풍)", "현대·신사", [
+      "BBB..BBB",
+      ".BBBBBB."
+    ], BDG, 39),
+    // long flowing chin beard, hangs well past the jaw down over the neck/chest
+    long: beard("long", "긴 턱수염(현자풍)", "판타지·현자", [
+      "..BBBBBB..",
+      ".BBBBBBBB.",
+      "BBBBBBBBBB",
+      ".BBBBBBBB.",
+      "..BBBBBB..",
+      "...BBBB...",
+      "...BBBB...",
+      "....BB....",
+      "....BB....",
+      ".....B....."
+    ], BDG, 44),
+    // narrow, long, tapering point -- Three-Kingdoms-style chin beard (관우 수염)
+    sagegwan: beard("sagegwan", "삼국지형 긴 수염", "무협", [
+      "..BBBB..",
+      ".BBBBBB.",
+      ".BBBBBB.",
+      "..BBBB..",
+      "..BBBB..",
+      "...BB...",
+      "...BB...",
+      "...BB...",
+      "....B...",
+      "....B...",
+      "....B..."
+    ], BDG, 44),
+    // scruffy stubble/sideburns hugging the jawline only, no hang-down
+    stubble: beard("stubble", "구레나룻/까칠한 수염", "현대", [
+      "S......S",
+      "SS....SS",
+      ".S.SS.S.",
+      "..SSSS.."
+    ], { S: "beardShadow" }, 38),
+    // chin-only tuft, narrower than 'short' -- doesn't reach the cheeks
+    goatee: beard("goatee", "턱수염(고트)", "현대", [
+      "..BB..",
+      ".BBBB.",
+      "..BB..",
+      "..BB.."
+    ], BDG, 42)
+  };
+
+  global.PixelDollParts = global.PixelDollParts || {};
+  global.PixelDollParts.eyes = EYES;
+  global.PixelDollParts.brows = BROWS;
+  global.PixelDollParts.mouths = MOUTHS;
+  global.PixelDollParts.beards = BEARDS;
+})(typeof window !== "undefined" ? window : this);
+
+/* Hair is split back/front so it can sandwich clothes (back hair layer 7, under
+ * clothes; front hair layer 10, over clothes) -- see engine ANCHORS + z-order. Every
+ * style below is a matched {back, front} pair sharing one id/label/genre. */
+(function (global) {
+  "use strict";
+  var E = global.PixelDoll, A = E.ANCHORS;
+  var CX = A.centerX;
+  var HG = { H: "hair", S: "hairShadow", L: "hairLine" };
+
+  function part(layer, drawFn) { return { layer: layer, draw: drawFn }; }
+
+  var STYLES = {};
+
+  // ---- 댄디컷: modern short, swept side part ----
+  STYLES.dandy = {
+    id: "dandy", label: "댄디컷", genre: "현대", gender: "m",
+    back: part(7, function (grid, p) {
+      E.rect(grid, A.head.left - 1, A.head.top - 2, A.head.right - A.head.left + 2, 10, "hair");
+      E.rect(grid, A.head.left - 1, A.head.top + 6, 3, 6, "hairShadow");
+      E.rect(grid, A.head.right - 2, A.head.top + 6, 3, 6, "hairShadow");
+    }),
+    front: part(10, function (grid, p) {
+      E.ascii(grid, A.head.left - 1, A.head.top - 1, [
+        "HHHHHHHHHHHHHHHHHHHH",
+        "HHHHHHHHHHHHHHHHHHHH",
+        "HHHSSHH.LHHHHLHHHHH.",
+        "H.....L........L...."
+      ], HG);
+    })
+  };
+
+  // ---- 판타지식 장발: long flowing hair past the shoulders ----
+  // NOTE: below the hairline (y > head.top+5), back-hair must stay OUTSIDE the face
+  // box (x < head.left or x > head.right) so it never paints over eyes/mouth, which
+  // render at layer 6/5 -- underneath this layer 7. It's only allowed to go full-width
+  // again once it's past the chin (y > head.bottom), draping over the neck/shoulders.
+  STYLES.longFantasy = {
+    id: "longFantasy", label: "판타지 장발", genre: "판타지", gender: "u",
+    back: part(7, function (grid, p) {
+      E.rect(grid, A.head.left - 2, A.head.top - 3, A.head.right - A.head.left + 4, 9, "hair");
+      // left side cascade (stays left of the face box)
+      E.taper(grid, A.head.top + 5, A.head.top + 22, A.head.left - 6, 6, A.head.left - 8, 7, "hair");
+      E.taper(grid, A.head.top + 22, 78, A.head.left - 8, 7, A.head.left - 4, 5, "hair");
+      E.rect(grid, A.head.left - 8, A.head.top + 24, 2, 30, "hairShadow");
+      // right side cascade (mirrored)
+      E.taper(grid, A.head.top + 5, A.head.top + 22, A.head.right, 6, A.head.right + 2, 7, "hair");
+      E.taper(grid, A.head.top + 22, 78, A.head.right + 2, 7, A.head.right - 1, 5, "hair");
+      E.rect(grid, A.head.right + 6, A.head.top + 24, 2, 30, "hairShadow");
+      // behind the neck, connecting the two sides once past the chin
+      E.rect(grid, A.head.left + 2, A.head.bottom, A.head.right - A.head.left - 4, 4, "hair");
+    }),
+    front: part(10, function (grid, p) {
+      E.ascii(grid, A.head.left - 2, A.head.top - 2, [
+        "HHHHHHHHHHHHHHHHHHHHHHHH",
+        "HHHHHHHHHHHHHHHHHHHHHHHH",
+        "HHHL..HHHHHHHHHHHH..LHHH"
+      ], HG);
+      E.mirrorAscii(grid, CX - 18, A.head.top + 5, [
+        "H.",
+        "H.",
+        "HL",
+        "H.",
+        "H."
+      ], HG, CX);
+    })
+  };
+
+  // ---- 무협 상투: topknot bun, swept-back hairline ----
+  STYLES.topknot = {
+    id: "topknot", label: "무협 상투", genre: "무협", gender: "m",
+    back: part(7, function (grid, p) {
+      E.rect(grid, A.head.left, A.head.top - 1, A.head.right - A.head.left, 9, "hair");
+      E.rect(grid, A.head.left, A.head.top + 5, 2, 8, "hairShadow");
+      E.rect(grid, A.head.right - 2, A.head.top + 5, 2, 8, "hairShadow");
+      // topknot bun at the crown
+      E.rect(grid, CX - 4, A.head.top - 9, 8, 7, "hair");
+      E.rect(grid, CX - 5, A.head.top - 6, 10, 3, "hairShadow");
+      E.rect(grid, CX - 1, A.head.top - 12, 2, 4, "hairLine");
+    }),
+    front: part(10, function (grid, p) {
+      E.ascii(grid, A.head.left - 1, A.head.top - 1, [
+        "H.................H",
+        "HH...............HH"
+      ], HG);
+    })
+  };
+
+  // ---- 포니테일 ----
+  STYLES.ponytail = {
+    id: "ponytail", label: "포니테일", genre: "현대·로맨스", gender: "u",
+    back: part(7, function (grid, p) {
+      E.rect(grid, A.head.left - 1, A.head.top - 2, A.head.right - A.head.left + 2, 9, "hair");
+      E.rect(grid, A.head.left - 1, A.head.top + 6, 3, 6, "hairShadow");
+      E.rect(grid, A.head.right - 2, A.head.top + 6, 3, 6, "hairShadow");
+      // tail hanging from crown/back down past shoulder
+      E.taper(grid, A.head.top - 4, A.head.top + 4, CX + 12, 6, CX + 13, 5, "hair");
+      E.taper(grid, A.head.top + 4, 80, CX + 12, 5, CX + 16, 4, "hair");
+      E.rect(grid, CX + 12, A.head.top + 3, 6, 2, "hairLine");
+    }),
+    front: part(10, function (grid, p) {
+      E.ascii(grid, A.head.left - 1, A.head.top - 1, [
+        "HHHHHHHHHHHHHHHHHHHH",
+        "HSSHHH.LHHHHHHHLHHHH",
+        "H.............L....."
+      ], HG);
+    })
+  };
+
+  // ---- 트윈테일 ----
+  STYLES.twintail = {
+    id: "twintail", label: "트윈테일", genre: "로맨스판타지", gender: "f",
+    back: part(7, function (grid, p) {
+      E.rect(grid, A.head.left - 1, A.head.top - 2, A.head.right - A.head.left + 2, 9, "hair");
+      // two side bunches from temple down past shoulder
+      E.taper(grid, A.head.top + 6, A.head.top + 18, A.head.left - 6, 6, A.head.left - 8, 5, "hair");
+      E.taper(grid, A.head.top + 18, 78, A.head.left - 8, 5, A.head.left - 6, 4, "hair");
+      E.taper(grid, A.head.top + 6, A.head.top + 18, A.head.right, 6, A.head.right + 2, 5, "hair");
+      E.taper(grid, A.head.top + 18, 78, A.head.right + 2, 5, A.head.right, 4, "hair");
+      E.rect(grid, A.head.left - 7, A.head.top + 6, 2, 3, "hairLine");
+      E.rect(grid, A.head.right + 5, A.head.top + 6, 2, 3, "hairLine");
+    }),
+    front: part(10, function (grid, p) {
+      E.ascii(grid, A.head.left - 1, A.head.top - 1, [
+        "HHHHHHHHHHHHHHHHHHHH",
+        "HHHHHL.HHHHHH.LHHHHH",
+        "H....L........L....."
+      ], HG);
+    })
+  };
+
+  // ---- 단발(로맨스판타지 클래식 보브) ----
+  STYLES.bob = {
+    id: "bob", label: "단발", genre: "로맨스판타지", gender: "f",
+    back: part(7, function (grid, p) {
+      E.rect(grid, A.head.left - 1, A.head.top - 2, A.head.right - A.head.left + 2, 8, "hair");
+      E.taper(grid, A.head.top + 6, A.head.top + 18, A.head.left - 2, A.head.right - A.head.left + 4, A.head.left - 3, A.head.right - A.head.left + 6, "hair");
+      E.rect(grid, A.head.left - 3, A.head.top + 18, 4, 4, "hairShadow");
+      E.rect(grid, A.head.right - 1, A.head.top + 18, 4, 4, "hairShadow");
+    }),
+    front: part(10, function (grid, p) {
+      E.ascii(grid, A.head.left - 1, A.head.top - 1, [
+        "HHHHHHHHHHHHHHHHHHHH",
+        "HHHHL.HHHHHHHH.LHHHH",
+        "H...L..........L...."
+      ], HG);
+    })
+  };
+
+  // ---- 아프로 ----
+  // stepped bands (narrow -> wide -> narrow) instead of one straight taper, so the
+  // silhouette reads as a round puff rather than a jagged wedge
+  STYLES.afro = {
+    id: "afro", label: "아프로", genre: "공통", gender: "u",
+    back: part(7, function (grid, p) {
+      var cxL = A.head.left, cxR = A.head.right;
+      E.rect(grid, cxL + 6, A.head.top - 16, cxR - cxL - 12, 3, "hair");
+      E.rect(grid, cxL + 2, A.head.top - 13, cxR - cxL + 4, 4, "hair");
+      E.rect(grid, cxL - 4, A.head.top - 9, cxR - cxL + 16, 6, "hair");
+      E.rect(grid, cxL - 8, A.head.top - 3, cxR - cxL + 24, 8, "hair");
+      E.rect(grid, cxL - 6, A.head.top + 5, cxR - cxL + 20, 3, "hair");
+      E.rect(grid, cxL - 8, A.head.top - 1, 5, 8, "hairShadow");
+      E.rect(grid, cxR + 3, A.head.top - 1, 5, 8, "hairShadow");
+      E.rect(grid, cxL - 3, A.head.top - 15, 4, 6, "hairShadow");
+      E.rect(grid, cxR - 1, A.head.top - 15, 4, 6, "hairShadow");
+    }),
+    front: part(10, function (grid, p) {
+      E.rect(grid, A.head.left - 6, A.head.top - 1, A.head.right - A.head.left + 12, 4, "hair");
+    })
+  };
+
+  // ---- 모히칸 ----
+  STYLES.mohawk = {
+    id: "mohawk", label: "모히칸", genre: "현대·판타지", gender: "m",
+    back: part(7, function (grid, p) {
+      E.rect(grid, CX - 1, A.head.top - 3, 2, 1, "hair");
+    }),
+    front: part(10, function (grid, p) {
+      E.taper(grid, A.head.top - 10, A.head.top + 2, CX - 5, 10, CX - 3, 6, "hair");
+      E.rect(grid, CX - 4, A.head.top - 10, 8, 3, "hairShadow");
+    })
+  };
+
+  // ---- 버즈컷/삭발 ----
+  STYLES.buzz = {
+    id: "buzz", label: "버즈컷/삭발", genre: "공통", gender: "m",
+    back: part(7, function (grid, p) {
+      E.rect(grid, A.head.left, A.head.top - 1, A.head.right - A.head.left, 3, "hairShadow");
+    }),
+    front: part(10, function (grid, p) { })
+  };
+
+  // ---- 대머리/민머리 (헤어 없음, 목록의 "없음"과 동일 취급) ----
+  STYLES.bald = {
+    id: "bald", label: "대머리/민머리", genre: "공통", gender: "u",
+    back: part(7, function (grid, p) { }),
+    front: part(10, function (grid, p) {
+      E.rect(grid, A.head.left + 2, A.head.top + 1, A.head.right - A.head.left - 4, 1, "hairLine");
+    })
+  };
+
+  // ---- 픽시컷 ----
+  STYLES.pixie = {
+    id: "pixie", label: "픽시컷", genre: "현대", gender: "f",
+    back: part(7, function (grid, p) {
+      E.rect(grid, A.head.left - 1, A.head.top - 2, A.head.right - A.head.left + 2, 8, "hair");
+      E.rect(grid, A.head.left - 1, A.head.top + 4, 2, 4, "hairShadow");
+      E.rect(grid, A.head.right - 1, A.head.top + 4, 2, 4, "hairShadow");
+    }),
+    front: part(10, function (grid, p) {
+      E.ascii(grid, A.head.left - 1, A.head.top - 1, [
+        "HHHHHHHHHHHHHHHHHHHH",
+        "HHHHHHL.HHHHHHHHHHHH",
+        "H......L............"
+      ], HG);
+    })
+  };
+
+  // ---- 양갈래 땋은머리 ----
+  STYLES.braidTwin = {
+    id: "braidTwin", label: "양 갈래 땋은머리", genre: "로맨스판타지", gender: "f",
+    back: part(7, function (grid, p) {
+      E.rect(grid, A.head.left - 1, A.head.top - 2, A.head.right - A.head.left + 2, 8, "hair");
+      [-1, 1].forEach(function (sign) {
+        var bx = CX + sign * (A.head.right - CX + 3);
+        E.rect(grid, bx - 2, A.head.top + 4, 4, 40, "hair");
+        for (var y = A.head.top + 8; y < A.head.top + 40; y += 6) E.rect(grid, bx - 2, y, 4, 1, "hairLine");
+      });
+    }),
+    front: part(10, function (grid, p) {
+      E.ascii(grid, A.head.left - 1, A.head.top - 1, [
+        "HHHHHHHHHHHHHHHHHHHH",
+        "HSSHHHH.LLHH.LHHHHHH",
+        "H..............L...."
+      ], HG);
+    })
+  };
+
+  // ---- 올림머리(쪽머리) ----
+  STYLES.updo = {
+    id: "updo", label: "올림머리(쪽머리)", genre: "로맨스판타지", gender: "f",
+    back: part(7, function (grid, p) {
+      E.rect(grid, A.head.left - 1, A.head.top - 2, A.head.right - A.head.left + 2, 8, "hair");
+      E.rect(grid, A.head.left, A.head.top + 4, 2, 3, "hairShadow");
+      E.rect(grid, A.head.right - 2, A.head.top + 4, 2, 3, "hairShadow");
+      E.rect(grid, CX - 5, A.head.top - 9, 10, 8, "hair");
+      E.rect(grid, CX - 6, A.head.top - 5, 12, 3, "hairShadow");
+    }),
+    front: part(10, function (grid, p) {
+      E.ascii(grid, A.head.left - 1, A.head.top - 1, [
+        "HHHHHHHHHHHHHHHHHHHH",
+        ".HHHHHHHHHHHHHHHHHH."
+      ], HG);
+    })
+  };
+
+  global.PixelDollParts = global.PixelDollParts || {};
+  global.PixelDollParts.hair = STYLES;
+})(typeof window !== "undefined" ? window : this);
+
+/* Tops/bottoms/shoes. Tops are ALWAYS authored to the fixed shoulder/waist frame
+ * (A.shoulder, A.waist) regardless of body type underneath -- see parts_base.js
+ * comment on why that keeps every body type clip-free under the same clothes. */
+(function (global) {
+  "use strict";
+  var E = global.PixelDoll, A = E.ANCHORS;
+  var CX = A.centerX;
+
+  /* dress: true marks a top that also covers the leg area down to hemBottom (like the
+   * old system's top.fam==="dress") -- the app hides the bottom picker while one is
+   * selected, matching old behavior where a dress top replaces the bottom entirely. */
+  function top(id, label, genre, gender, drawFn, opts) {
+    return Object.assign({ id: id, label: label, genre: genre, gender: gender || "u", layer: 9, draw: drawFn }, opts || {});
+  }
+  function bottom(id, label, genre, gender, drawFn) { return { id: id, label: label, genre: genre, gender: gender || "u", layer: 8, draw: drawFn }; }
+  function shoe(id, label, genre, gender, drawFn) { return { id: id, label: label, genre: genre, gender: gender || "u", layer: 11, draw: drawFn }; }
+
+  var TOPS = {
+    shirt: top("shirt", "캐주얼 셔츠", "현대", "u", function (grid, p) {
+      E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.waist.left, A.waist.right - A.waist.left, "top");
+      E.rect(grid, A.shoulder.left, A.shoulder.y, A.shoulder.right - A.shoulder.left, 3, "topShadow");
+      E.rect(grid, CX - 1, A.shoulder.y, 2, 10, "topLine");
+      E.ascii(grid, CX - 4, A.shoulder.y, ["H.H", "..."], { H: "skin" }); // open collar shows a bit of skin
+      E.rect(grid, A.shoulder.left - 2, A.shoulder.y, 9, 22, "topShadow");
+      E.rect(grid, A.shoulder.right - 7, A.shoulder.y, 9, 22, "topShadow");
+    }),
+    hoodie: top("hoodie", "후드티", "현대", "u", function (grid, p) {
+      E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.waist.left - 1, A.waist.right - A.waist.left + 2, "top");
+      E.rect(grid, A.neck.left - 3, A.shoulder.y - 2, A.neck.right - A.neck.left + 6, 4, "topShadow");
+      E.rect(grid, CX - 5, A.shoulder.y + 4, 1, 10, "topLine");
+      E.rect(grid, CX + 4, A.shoulder.y + 4, 1, 10, "topLine");
+      E.rect(grid, CX - 1, A.shoulder.y + 12, 2, 2, "topAccent");
+      E.rect(grid, A.shoulder.left - 3, A.shoulder.y, 10, 24, "topShadow");
+      E.rect(grid, A.shoulder.right - 7, A.shoulder.y, 10, 24, "topShadow");
+    }),
+    romanceUniform: top("romanceUniform", "로맨스 판타지 제복", "로맨스판타지", "u", function (grid, p) {
+      E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left + 1, A.shoulder.right - A.shoulder.left - 2, A.waist.left, A.waist.right - A.waist.left, "top");
+      E.rect(grid, A.shoulder.left + 1, A.shoulder.y, A.shoulder.right - A.shoulder.left - 2, 3, "cloth2");
+      for (var y = A.shoulder.y + 4; y < A.waist.y - 2; y += 5) E.rect(grid, CX - 1, y, 2, 2, "topAccent");
+      E.rect(grid, CX - 2, A.shoulder.y, 4, A.waist.y - A.shoulder.y - 4, "topLine");
+      E.rect(grid, A.shoulder.left, A.shoulder.y + 2, 6, 4, "topAccent");
+      E.rect(grid, A.shoulder.right - 6, A.shoulder.y + 2, 6, 4, "topAccent");
+    }),
+    wuxiaRobe: top("wuxiaRobe", "무협 도포(상의)", "무협", "u", function (grid, p) {
+      E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left - 3, A.shoulder.right - A.shoulder.left + 6, A.waist.left - 2, A.waist.right - A.waist.left + 4, "top");
+      // crossed lapel (교임)
+      E.taper(grid, A.shoulder.y + 2, A.waist.y, CX - 10, 4, CX - 2, 3, "topLine");
+      E.taper(grid, A.shoulder.y + 2, A.waist.y, CX + 6, 4, CX - 1, 3, "topLine");
+      // wide sleeves
+      E.taper(grid, A.shoulder.y + 2, 96, A.shoulder.left - 8, 12, A.shoulder.left - 12, 16, "top");
+      E.taper(grid, A.shoulder.y + 2, 96, A.shoulder.right - 4, 12, A.shoulder.right - 4, 16, "top");
+      // sash
+      E.rect(grid, A.waist.left - 1, A.waist.y - 4, A.waist.right - A.waist.left + 2, 4, "topAccent");
+    }),
+    armor: top("armor", "판타지 갑옷", "판타지", "u", function (grid, p) {
+      E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.waist.left - 2, A.waist.right - A.waist.left + 4, "metal");
+      // pauldrons
+      E.rect(grid, A.shoulder.left - 4, A.shoulder.y - 1, 10, 6, "metal");
+      E.rect(grid, A.shoulder.right - 6, A.shoulder.y - 1, 10, 6, "metal");
+      E.rect(grid, A.shoulder.left - 4, A.shoulder.y + 4, 10, 2, "metalShadow");
+      E.rect(grid, A.shoulder.right - 6, A.shoulder.y + 4, 10, 2, "metalShadow");
+      // chest ridge + gem
+      E.rect(grid, CX - 1, A.shoulder.y + 2, 2, A.waist.y - A.shoulder.y - 6, "metalShadow");
+      E.rect(grid, CX - 2, A.shoulder.y + 6, 4, 4, "topAccent");
+      for (var y2 = A.shoulder.y + 12; y2 < A.waist.y - 2; y2 += 4) E.rect(grid, A.waist.left, y2, A.waist.right - A.waist.left, 1, "metalShadow");
+    }),
+    tank: top("tank", "탱크탑", "현대", "u", function (grid, p) {
+      E.taper(grid, A.shoulder.y + 3, A.waist.y, A.shoulder.left + 6, A.shoulder.right - A.shoulder.left - 12, A.waist.left, A.waist.right - A.waist.left, "top");
+      E.rect(grid, CX - 1, A.shoulder.y + 4, 2, A.waist.y - A.shoulder.y - 8, "topLine");
+    }),
+    none: top("none", "상의 없음/맨몸", "공통", "u", function (grid, p) { }),
+    qipaoDress: top("qipaoDress", "치파오", "로맨스판타지", "f", function (grid, p) {
+      E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left + 2, A.shoulder.right - A.shoulder.left - 4, A.waist.left, A.waist.right - A.waist.left, "top");
+      E.taper(grid, A.waist.y, A.legBottom, A.waist.left, A.waist.right - A.waist.left, A.hip.left - 6, A.hip.right - A.hip.left + 12, "top");
+      E.rect(grid, CX - 1, A.shoulder.y + 2, 2, A.legBottom - A.shoulder.y - 6, "topLine");
+      E.rect(grid, A.shoulder.left + 2, A.shoulder.y, 4, 4, "topAccent");
+      E.rect(grid, A.shoulder.right - 6, A.shoulder.y, 4, 4, "topAccent");
+    }, { dress: true, hemBottom: A.legBottom }),
+    ballDress: top("ballDress", "드레스(무도회용)", "로맨스판타지", "f", function (grid, p) {
+      E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.waist.left, A.waist.right - A.waist.left, "top");
+      var fy0 = A.waist.y, fy1 = A.legBottom + 6;
+      var fx0 = A.waist.left - 2, fw0 = A.waist.right - A.waist.left + 4;
+      var fx1 = A.hip.left - 20, fw1 = A.hip.right - A.hip.left + 40;
+      E.taper(grid, fy0, fy1, fx0, fw0, fx1, fw1, "top");
+      E.rect(grid, fx1, A.legBottom, fw1, 3, "topShadow");
+      E.rect(grid, CX - 1, A.waist.y, 2, A.legBottom - A.waist.y, "topLine");
+      // accent stripes: width interpolated to match the taper at each row, so they
+      // never stick out past the dress's own silhouette
+      for (var fy = fy0 + 6; fy < fy1 - 2; fy += 8) {
+        var t = (fy - fy0) / (fy1 - fy0);
+        var lx = Math.round(fx0 + (fx1 - fx0) * t), lw = Math.round(fw0 + (fw1 - fw0) * t);
+        E.rect(grid, lx + 2, fy, lw - 4, 1, "topAccent");
+      }
+    }, { dress: true, hemBottom: A.legBottom + 6 })
+  };
+
+  var BOTTOMS = {
+    jeans: bottom("jeans", "청바지", "현대", "u", function (grid, p) {
+      E.rect(grid, A.hip.left, A.hip.y, A.hip.right - A.hip.left, 2, "bottomShadow");
+      E.rect(grid, 46, A.legTop, 16, A.legBottom - A.legTop - 6, "bottom");
+      E.rect(grid, 66, A.legTop, 16, A.legBottom - A.legTop - 6, "bottom");
+      E.rect(grid, 46, A.legTop, 2, A.legBottom - A.legTop - 6, "bottomLine");
+      E.rect(grid, 80, A.legTop, 2, A.legBottom - A.legTop - 6, "bottomLine");
+    }),
+    shorts: bottom("shorts", "반바지", "현대", "u", function (grid, p) {
+      E.rect(grid, A.hip.left, A.hip.y, A.hip.right - A.hip.left, 12, "bottom");
+      E.rect(grid, A.hip.left, A.hip.y + 9, A.hip.right - A.hip.left, 2, "bottomShadow");
+    }),
+    romanceSkirt: bottom("romanceSkirt", "로맨스 판타지 스커트", "로맨스판타지", "f", function (grid, p) {
+      E.taper(grid, A.hip.y, A.hip.y + 22, A.hip.left + 2, A.hip.right - A.hip.left - 4, A.hip.left - 10, A.hip.right - A.hip.left + 20, "bottom");
+      E.rect(grid, A.hip.left - 10, A.hip.y + 19, A.hip.right - A.hip.left + 20, 3, "bottomShadow");
+      E.rect(grid, CX - 1, A.hip.y + 2, 2, 18, "bottomLine");
+    }),
+    wuxiaRobeSkirt: bottom("wuxiaRobeSkirt", "무협 도포자락", "무협", "u", function (grid, p) {
+      E.taper(grid, A.hip.y, A.legBottom + 4, A.hip.left - 4, A.hip.right - A.hip.left + 8, A.hip.left - 14, A.hip.right - A.hip.left + 28, "bottom");
+      E.rect(grid, CX - 1, A.hip.y + 2, 2, A.legBottom - A.hip.y, "bottomLine");
+      E.rect(grid, A.hip.left - 14, A.legBottom, A.hip.right - A.hip.left + 28, 4, "bottomShadow");
+    }),
+    armorLegs: bottom("armorLegs", "판타지 갑옷 하의", "판타지", "u", function (grid, p) {
+      E.rect(grid, A.hip.left, A.hip.y, A.hip.right - A.hip.left, 4, "metal");
+      var legY = A.legTop;
+      while (legY < A.legBottom - 6) {
+        E.rect(grid, 46, legY, 16, 5, "metal");
+        E.rect(grid, 66, legY, 16, 5, "metal");
+        E.rect(grid, 46, legY + 4, 16, 1, "metalShadow");
+        E.rect(grid, 66, legY + 4, 16, 1, "metalShadow");
+        legY += 6;
+      }
+    }),
+    leggings: bottom("leggings", "레깅스", "현대", "u", function (grid, p) {
+      E.rect(grid, A.hip.left, A.hip.y, A.hip.right - A.hip.left, 2, "bottomShadow");
+      E.rect(grid, 47, A.legTop, 14, A.legBottom - A.legTop - 2, "bottom");
+      E.rect(grid, 67, A.legTop, 14, A.legBottom - A.legTop - 2, "bottom");
+    }),
+    hanbokChima: bottom("hanbokChima", "치마(한복)", "무협", "f", function (grid, p) {
+      E.taper(grid, A.waist.y - 2, A.legBottom, A.waist.left - 2, A.waist.right - A.waist.left + 4, A.hip.left - 12, A.hip.right - A.hip.left + 24, "bottom");
+      E.rect(grid, A.waist.left - 2, A.waist.y - 2, A.waist.right - A.waist.left + 4, 3, "bottomShadow");
+      E.rect(grid, CX - 1, A.waist.y + 1, 2, A.legBottom - A.waist.y - 3, "bottomLine");
+    }),
+    none: bottom("none", "하의 없음", "공통", "u", function (grid, p) { })
+  };
+
+  var SHOES = {
+    sneakers: shoe("sneakers", "운동화", "현대", "u", function (grid, p) {
+      E.rect(grid, 45, A.footTop, 18, 7, "shoe");
+      E.rect(grid, 65, A.footTop, 18, 7, "shoe");
+      E.rect(grid, 45, A.footTop + 5, 18, 2, "shoeSole");
+      E.rect(grid, 65, A.footTop + 5, 18, 2, "shoeSole");
+      E.rect(grid, 49, A.footTop + 1, 10, 1, "topAccent");
+      E.rect(grid, 69, A.footTop + 1, 10, 1, "topAccent");
+    }),
+    dressShoes: shoe("dressShoes", "구두", "현대", "u", function (grid, p) {
+      E.rect(grid, 46, A.footTop, 16, 6, "shoeShadow");
+      E.rect(grid, 66, A.footTop, 16, 6, "shoeShadow");
+      E.rect(grid, 46, A.footTop + 4, 16, 2, "shoeSole");
+      E.rect(grid, 66, A.footTop + 4, 16, 2, "shoeSole");
+    }),
+    boots: shoe("boots", "부츠", "공통", "u", function (grid, p) {
+      E.rect(grid, 45, A.footTop - 8, 18, 15, "shoe");
+      E.rect(grid, 65, A.footTop - 8, 18, 15, "shoe");
+      E.rect(grid, 45, A.footTop + 5, 18, 2, "shoeSole");
+      E.rect(grid, 65, A.footTop + 5, 18, 2, "shoeSole");
+      E.rect(grid, 45, A.footTop - 8, 18, 2, "shoeShadow");
+      E.rect(grid, 65, A.footTop - 8, 18, 2, "shoeShadow");
+    }),
+    leatherBoots: shoe("leatherBoots", "가죽 장화", "판타지·무협", "u", function (grid, p) {
+      E.rect(grid, 44, A.footTop - 20, 20, 27, "shoe");
+      E.rect(grid, 64, A.footTop - 20, 20, 27, "shoe");
+      E.rect(grid, 44, A.footTop + 5, 20, 2, "shoeSole");
+      E.rect(grid, 64, A.footTop + 5, 20, 2, "shoeSole");
+      for (var y3 = A.footTop - 18; y3 < A.footTop; y3 += 6) {
+        E.rect(grid, 44, y3, 20, 1, "shoeShadow");
+        E.rect(grid, 64, y3, 20, 1, "shoeShadow");
+      }
+    }),
+    heels: shoe("heels", "하이힐", "현대·로맨스판타지", "f", function (grid, p) {
+      E.rect(grid, 46, A.footTop, 16, 5, "shoe");
+      E.rect(grid, 66, A.footTop, 16, 5, "shoe");
+      E.rect(grid, 51, A.footTop + 4, 3, 5, "shoeShadow");
+      E.rect(grid, 71, A.footTop + 4, 3, 5, "shoeShadow");
+    }),
+    sandals: shoe("sandals", "샌들", "현대", "u", function (grid, p) {
+      E.rect(grid, 45, A.footTop + 3, 18, 3, "shoeSole");
+      E.rect(grid, 65, A.footTop + 3, 18, 3, "shoeSole");
+      E.rect(grid, 52, A.footTop, 2, 4, "shoeShadow");
+      E.rect(grid, 72, A.footTop, 2, 4, "shoeShadow");
+    }),
+    barefoot: shoe("barefoot", "맨발", "공통", "u", function (grid, p) { })
+  };
+
+  global.PixelDollParts = global.PixelDollParts || {};
+  global.PixelDollParts.tops = TOPS;
+  global.PixelDollParts.bottoms = BOTTOMS;
+  global.PixelDollParts.shoes = SHOES;
+})(typeof window !== "undefined" ? window : this);
+
+/* ---------------- appearance builder (등장인물) ----------------
+ * Built on the modular pixel-doll system (PixelDoll / PixelDollParts below) instead
+ * of the old organic-SVG generator. Field names that mean the same thing in both
+ * systems (gender/memo/skinTone/hairColor/topColor/bottomColor/eyeColor/oddEye/
+ * eyeColorLeft/eyeColorRight) are kept identical; enum-valued fields (bodyType,
+ * faceShape, hairStyle, top, bottom, shoes, bustSize, eyebrowShape, eyeShape,
+ * mouthShape, facialHair) point at new pixel-system option ids and get remapped by
+ * migrateLegacyAppearance() for any character saved under the old schema. */
 var APPEAR_SKIN_TONES = ["#FDE3CF","#F5D0A9","#E8C39E","#D8AC7E","#C0895B","#9C6B44","#7A4E32","#5A3826"];
 var APPEAR_HAIR_COLORS = ["#1C1712","#3B2A1E","#5C4030","#7A5230","#A9743A","#C9A15A","#E8D9A0","#EDEDED","#D6D6D6","#8B5FBF","#4A6FA5","#3E7A6B","#A6473C","#C9738A"];
 var APPEAR_OUTFIT_COLORS = ["#6E8CAE","#8B5E83","#4F7942","#B0524D","#C99A3E","#5B5F97","#3E3E3E","#B7B7A4","#7A4B3A","#2E5266","#8E6C88","#A65A3A"];
-var APPEAR_EYEBROW_SHAPES = [
-  { id:"straight", label:"일자형" },
-  { id:"arched", label:"아치형" },
-  { id:"thick", label:"두꺼운" },
-  { id:"thin", label:"얇은" },
-  { id:"upturned", label:"올라간(강한 인상)" },
-  { id:"downturned", label:"처진(순한 인상)" }
-];
-var APPEAR_EYE_SHAPES = [
-  { id:"round", label:"동그란 눈" },
-  { id:"almond", label:"아몬드형" },
-  { id:"narrow", label:"가늘게 뜬 눈" },
-  { id:"wide", label:"큰 눈" },
-  { id:"droopy", label:"처진 눈" },
-  { id:"sharp", label:"날카로운 눈" }
-];
 var APPEAR_EYE_COLORS = ["#3B2A1E","#1C1712","#5C4530","#3E6B8A","#3F6B34","#6B4F3F","#8A6B3F","#7A4B6B"];
-var APPEAR_MOUTH_SHAPES = [
-  { id:"smile", label:"미소" },
-  { id:"neutral", label:"무표정" },
-  { id:"smirk", label:"한쪽 입꼬리" },
-  { id:"open_smile", label:"활짝 웃음" },
-  { id:"small", label:"작은 입" }
-];
-var APPEAR_FACIAL_HAIR = [
-  { id:"none", label:"없음" },
-  { id:"mustache", label:"콧수염" },
-  { id:"goatee", label:"턱수염(고트)" },
-  { id:"full_beard", label:"풍성한 수염" },
-  { id:"stubble", label:"짧은 수염" }
+
+var APPEAR_CATS = [
+  { key: "bodyType", label: "체형", dict: function () { return PixelDollParts.bodies; } },
+  { key: "faceShape", label: "얼굴형", dict: function () { return PixelDollParts.faceShapes; } },
+  { key: "eyebrowShape", label: "눈썹 모양", dict: function () { return PixelDollParts.brows; } },
+  { key: "eyeShape", label: "눈 모양", dict: function () { return PixelDollParts.eyes; } },
+  { key: "mouthShape", label: "입 모양", dict: function () { return PixelDollParts.mouths; } },
+  { key: "facialHair", label: "수염", dict: function () { return PixelDollParts.beards; }, genderOnly: "m" },
+  { key: "hairStyle", label: "헤어스타일", dict: function () { return PixelDollParts.hair; } },
+  { key: "top", label: "상의", dict: function () { return PixelDollParts.tops; } },
+  { key: "bottom", label: "하의", dict: function () { return PixelDollParts.bottoms; }, hideIfDress: true },
+  { key: "shoes", label: "신발", dict: function () { return PixelDollParts.shoes; } },
+  { key: "bustSize", label: "가슴 크기", dict: function () { return PixelDollParts.bustSizes; }, genderOnly: "f" }
 ];
 
 function defaultAppearance() {
-  return { gender:"u", skinTone: APPEAR_SKIN_TONES[2], hairColor: APPEAR_HAIR_COLORS[1], topColor: APPEAR_OUTFIT_COLORS[0], bottomColor: APPEAR_OUTFIT_COLORS[6],
-    bodyType:"average", faceShape:"oval", hairStyle:"medium_straight_f", top:"tshirt", bottom:"jeans", shoes:"sneakers", bustSize:"medium",
-    eyebrowShape:"straight", eyeShape:"round", eyeColor: APPEAR_EYE_COLORS[0], oddEye:false, eyeColorLeft: APPEAR_EYE_COLORS[0], eyeColorRight: APPEAR_EYE_COLORS[0], mouthShape:"smile", facialHair:"none", memo:"" };
+  return {
+    system: "pixel_v1", gender: "u",
+    skinTone: APPEAR_SKIN_TONES[2], hairColor: APPEAR_HAIR_COLORS[1], topColor: APPEAR_OUTFIT_COLORS[0], bottomColor: APPEAR_OUTFIT_COLORS[6],
+    bodyType: "normal", faceShape: "oval", hairStyle: "dandy", top: "shirt", bottom: "jeans", shoes: "sneakers", bustSize: "medium",
+    eyebrowShape: "normal", eyeShape: "basic", eyeColor: APPEAR_EYE_COLORS[0], oddEye: false, eyeColorLeft: APPEAR_EYE_COLORS[0], eyeColorRight: APPEAR_EYE_COLORS[0],
+    mouthShape: "smile", facialHair: "none", memo: ""
+  };
 }
 
-var APPEAR_EDGE = ' stroke="#1a1a1a" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"';
-
-function organicLimbD(x1, y1, x2, y2, profile) {
-  var dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy) || 1;
-  var ux = dx/len, uy = dy/len, nx = -uy, ny = ux;
-  function widthAt(t) {
-    var hw = profile[0][1];
-    for (var i=0; i<profile.length-1; i++) {
-      if (t >= profile[i][0] && t <= profile[i+1][0]) {
-        var span = profile[i+1][0]-profile[i][0];
-        var f = span ? (t-profile[i][0])/span : 0;
-        return profile[i][1] + (profile[i+1][1]-profile[i][1])*f;
-      }
-    }
-    return profile[profile.length-1][1];
+/* Best-effort id remap from the old organic-SVG schema to the nearest pixel-system
+ * equivalent, so a character saved before this change doesn't reset to defaults. */
+var APPEAR_MIGRATE_MAPS = {
+  bodyType: { slim: "slim", average: "normal", curvy: "curvy", hourglass: "curvy", petite: "slim", athletic_f: "curvy", plump: "stocky", broad: "broad", muscular: "muscular", lanky: "slim", stocky: "stocky", lean_m: "slim", pear: "curvy", inverted_triangle: "broad", soft_round: "stocky", tall_elegant: "slim" },
+  faceShape: { oval: "oval", round: "round", square: "square", heart: "heart", diamond: "heart", long: "long", babyface: "babyface", sharp: "long", soft_round2: "round", strong_square: "square", triangle_chin: "heart", full: "babyface" },
+  eyebrowShape: { straight: "normal", arched: "arched", thick: "thick", thin: "thin", upturned: "angry", downturned: "sad" },
+  eyeShape: { round: "basic", almond: "almond", narrow: "narrow", wide: "wide", droopy: "droopy", sharp: "sharp" },
+  mouthShape: { smile: "smile", neutral: "neutral", smirk: "smirk", open_smile: "grin", small: "flat" },
+  facialHair: { none: "none", mustache: "mustache", goatee: "goatee", full_beard: "long", stubble: "stubble" },
+  hairStyle: {
+    buzz: "buzz", short_crop: "dandy", short_side_part: "dandy", pompadour: "dandy", mohawk: "mohawk", messy_short_m: "dandy",
+    medium_wavy_m: "dandy", long_tied_m: "ponytail", topknot: "topknot", undercut: "buzz", bob: "bob", bob_wavy: "bob",
+    medium_straight_f: "bob", long_straight: "longFantasy", long_wavy: "longFantasy", long_curly: "afro", very_long_straight: "longFantasy",
+    ponytail_high: "ponytail", ponytail_low: "ponytail", twintail: "twintail", twintail_long: "twintail", braid_single: "braidTwin",
+    braid_twin: "braidTwin", bun_high: "updo", half_up: "updo", afro: "afro", curly_short: "afro", pixie: "pixie", bald: "bald",
+    silver_long_fantasy: "longFantasy"
+  },
+  top: {
+    tshirt: "shirt", tank: "tank", shirt: "shirt", blouse: "shirt", frill_blouse: "shirt", crop_top: "tank", off_shoulder: "tank",
+    knit: "hoodie", hoodie: "hoodie", vest: "tank", jacket: "hoodie", leather_jacket: "hoodie", coat: "wuxiaRobe", trenchcoat: "wuxiaRobe",
+    tuxedo: "shirt", suit_jacket: "shirt", light_armor: "armor", plate_armor: "armor", chainmail: "armor", robe: "wuxiaRobe",
+    wizard_robe: "wuxiaRobe", hanbok_jeogori: "wuxiaRobe", dopo: "wuxiaRobe", cape: "wuxiaRobe", poncho: "wuxiaRobe",
+    sailor_top: "romanceUniform", dress_short: "qipaoDress", dress_midi: "qipaoDress", dress_ball: "ballDress", qipao: "qipaoDress", none_top: "none"
+  },
+  bottom: {
+    jeans: "jeans", slacks: "jeans", cargo: "jeans", wide_pants: "jeans", shorts: "shorts", leggings: "leggings",
+    mini_skirt: "romanceSkirt", pleated_skirt: "romanceSkirt", a_skirt: "romanceSkirt", long_skirt: "hanbokChima",
+    hanbok_chima: "hanbokChima", baji: "jeans", armor_greaves: "armorLegs", flare_pants: "jeans", none_bottom: "none", bare_legs: "none"
+  },
+  shoes: {
+    sneakers: "sneakers", walkers: "boots", leather_shoes: "dressShoes", heels: "heels", sandals: "sandals",
+    boots_long: "leatherBoots", boots_short: "boots", slippers: "sandals", straw_sandals: "sandals", armor_boots: "boots",
+    mary_jane: "dressShoes", combat_boots: "boots", barefoot: "barefoot"
   }
-  var top = profile.map(function(p){
-    var hw = widthAt(p[0]), px = x1+ux*len*p[0], py = y1+uy*len*p[0];
-    return [px+nx*hw, py+ny*hw];
+};
+function migrateLegacyAppearance(old) {
+  var d = defaultAppearance();
+  function map(field, key) {
+    var m = APPEAR_MIGRATE_MAPS[field];
+    return (m && old[key] && m[old[key]]) || d[field];
+  }
+  return {
+    system: "pixel_v1", gender: old.gender || "u",
+    skinTone: old.skinTone || d.skinTone, hairColor: old.hairColor || d.hairColor,
+    topColor: old.topColor || old.outfitColor || d.topColor, bottomColor: old.bottomColor || old.outfitColor || d.bottomColor,
+    bodyType: map("bodyType", "bodyType"), faceShape: map("faceShape", "faceShape"),
+    hairStyle: map("hairStyle", "hairStyle"), top: map("top", "top"), bottom: map("bottom", "bottom"), shoes: map("shoes", "shoes"),
+    bustSize: (old.bustSize && PixelDollParts.bustSizes[old.bustSize]) ? old.bustSize : d.bustSize,
+    eyebrowShape: map("eyebrowShape", "eyebrowShape"), eyeShape: map("eyeShape", "eyeShape"),
+    eyeColor: old.eyeColor || d.eyeColor, oddEye: !!old.oddEye, eyeColorLeft: old.eyeColorLeft || old.eyeColor || d.eyeColorLeft, eyeColorRight: old.eyeColorRight || old.eyeColor || d.eyeColorRight,
+    mouthShape: map("mouthShape", "mouthShape"), facialHair: map("facialHair", "facialHair"), memo: old.memo || ""
+  };
+}
+function ensureAppearance(doc) {
+  if (!doc.appearance) { doc.appearance = defaultAppearance(); return; }
+  if (doc.appearance.system !== "pixel_v1") doc.appearance = migrateLegacyAppearance(doc.appearance);
+}
+
+function appearIsGenderVisible(entry, gender) {
+  return !entry.genderOnly || entry.genderOnly === gender;
+}
+function appearOptionIds(dict, gender) {
+  return Object.keys(dict).filter(function (id) {
+    var o = dict[id];
+    return !o.gender || o.gender === "u" || o.gender === gender;
   });
-  var bot = profile.map(function(p){
-    var hw = widthAt(p[0]), px = x1+ux*len*p[0], py = y1+uy*len*p[0];
-    return [px-nx*hw, py-ny*hw];
-  }).reverse();
-  var pts = top.concat(bot);
-  var d = 'M '+((pts[0][0]+pts[pts.length-1][0])/2)+' '+((pts[0][1]+pts[pts.length-1][1])/2);
-  for (var i=0; i<pts.length; i++) {
-    var next = pts[(i+1)%pts.length];
-    var mid = [(pts[i][0]+next[0])/2, (pts[i][1]+next[1])/2];
-    d += ' Q '+pts[i][0]+' '+pts[i][1]+' '+mid[0]+' '+mid[1];
-  }
-  return d + ' Z';
 }
 
-function organicLimb(x1, y1, x2, y2, profile, color) {
-  return '<path d="'+organicLimbD(x1, y1, x2, y2, profile)+'" fill="'+color+'"'+APPEAR_EDGE+'/>';
+function buildAppearanceLayers(ap) {
+  var D = PixelDollParts;
+  var topDef = D.tops[ap.top] || D.tops.shirt;
+  var bottomDef = topDef.dress ? D.bottoms.none : (D.bottoms[ap.bottom] || D.bottoms.jeans);
+  var showBust = ap.gender === "f";
+  var hairSet = D.hair[ap.hairStyle] || D.hair.dandy;
+  return [
+    D.bodies[ap.bodyType] || D.bodies.normal,
+    D.faceShapes[ap.faceShape] || D.faceShapes.oval,
+    D.ears,
+    D.beards[ap.facialHair] || D.beards.none,
+    D.headDetail,
+    D.brows[ap.eyebrowShape] || D.brows.normal,
+    D.mouths[ap.mouthShape] || D.mouths.smile,
+    D.eyes[ap.eyeShape] || D.eyes.basic,
+    hairSet.back,
+    bottomDef,
+    topDef,
+    showBust ? (D.bustSizes[ap.bustSize] || D.bustSizes.medium) : null,
+    hairSet.front,
+    D.shoes[ap.shoes] || D.shoes.sneakers
+  ];
 }
-
-function fingerCreases(x1, y1, x2, y2, handHalfW) {
-  var dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy) || 1;
-  var ux = dx/len, uy = dy/len, nx = -uy, ny = ux;
-  var out = "";
-  [-0.55, 0, 0.55].forEach(function(o){
-    var bx = x2 - ux*2 + nx*handHalfW*o, by = y2 - uy*2 + ny*handHalfW*o;
-    var ex = bx + ux*7, ey = by + uy*7;
-    out += '<path d="M '+bx+' '+by+' L '+ex+' '+ey+'" fill="none" stroke="#1a1a1a" stroke-width="1.4" stroke-linecap="round" opacity="0.45"/>';
+function buildAppearancePalette(ap) {
+  var topDef = PixelDollParts.tops[ap.top] || PixelDollParts.tops.shirt;
+  var palette = Object.assign({}, PixelDoll.DEFAULT_PALETTE, {
+    skin: ap.skinTone, hair: ap.hairColor, top: ap.topColor, bottom: ap.bottomColor
   });
-  return out;
+  palette.eyeIrisLeft = ap.oddEye ? (ap.eyeColorLeft || ap.eyeColor) : ap.eyeColor;
+  palette.eyeIrisRight = ap.oddEye ? (ap.eyeColorRight || ap.eyeColor) : ap.eyeColor;
+  palette.bustColor = topDef.id === "none" ? ap.skinTone : ap.topColor;
+  return palette;
 }
-
-function appearEarPaths(skin, cx, headCy, headR, fsh) {
-  var ex = fsh.midW*headR*0.98, ey = headCy + headR*0.05;
-  var out = "";
-  [-1,1].forEach(function(sign){
-    out += '<path d="M '+(cx+sign*(ex-4))+' '+(ey-8)+' Q '+(cx+sign*(ex+6))+' '+ey+' '+(cx+sign*(ex-4))+' '+(ey+9)+' Q '+(cx+sign*(ex-8))+' '+ey+' '+(cx+sign*(ex-4))+' '+(ey-8)+' Z" fill="'+skin+'"'+APPEAR_EDGE+'/>';
-  });
-  return out;
-}
-
-function facePath(fsh, cx, cy, r) {
-  var pts = [
-    [0, -1.05*r],
-    [fsh.topW*r, -0.7*r],
-    [fsh.midW*r, -0.02*r],
-    [fsh.jawW*r, 0.55*r],
-    [0, fsh.chinY*r],
-    [-fsh.jawW*r, 0.55*r],
-    [-fsh.midW*r, -0.02*r],
-    [-fsh.topW*r, -0.7*r]
-  ].map(function(p){ return [cx+p[0], cy+p[1]]; });
-  if (fsh.angular) {
-    return 'M '+pts.map(function(p){ return p[0]+' '+p[1]; }).join(' L ') + ' Z';
-  }
-  var d = 'M '+((pts[0][0]+pts[pts.length-1][0])/2)+' '+((pts[0][1]+pts[pts.length-1][1])/2);
-  for (var i=0; i<pts.length; i++) {
-    var next = pts[(i+1)%pts.length];
-    var mid = [(pts[i][0]+next[0])/2, (pts[i][1]+next[1])/2];
-    d += ' Q '+pts[i][0]+' '+pts[i][1]+' '+mid[0]+' '+mid[1];
-  }
-  return d + ' Z';
-}
-
-var APPEAR_PULLED_BACK_STYLES = { twintail:1, ponytail:1, ponytail_high:1, bun:1, braid:1, braid_twin:1 };
-
-function appearHairShapes(hs, hex, cx, cy, r) {
-  var back = [], extras = [], front = [];
-  if (hs.len < 0) return { back:back, extras:extras, front:front };
-  var widthMod = hs.style === "curly" ? 1.22 : hs.style === "wavy" ? 1.12 : 1.0;
-  var capX = r*0.92*widthMod;
-  var capBotY = cy - r*0.08;
-
-  if (hs.style === "afro") {
-    back.push('<circle cx="'+cx+'" cy="'+(cy-r*0.15)+'" r="'+(r*1.6)+'" fill="'+hex+'"'+APPEAR_EDGE+'/>');
-  } else if (hs.style === "mohawk") {
-    back.push('<path d="M '+(cx-4)+' '+(cy-r*0.95)+' Q '+cx+' '+(cy-r*2.2)+' '+(cx+4)+' '+(cy-r*0.95)+' L '+(cx+3)+' '+(cy+8)+' L '+(cx-3)+' '+(cy+8)+' Z" fill="'+hex+'"'+APPEAR_EDGE+'/>');
-  } else if (hs.style === "undercut") {
-    var ucX = r*0.55, ucBotY = cy-r*0.35, ucCrownY = cy-r*1.2;
-    back.push('<path d="M '+(cx-ucX)+' '+ucBotY+' Q '+(cx-ucX)+' '+ucCrownY+' '+cx+' '+ucCrownY+' Q '+(cx+ucX)+' '+ucCrownY+' '+(cx+ucX)+' '+ucBotY+' Q '+cx+' '+(cy-r*0.15)+' '+(cx-ucX)+' '+ucBotY+' Z" fill="'+hex+'"'+APPEAR_EDGE+'/>');
-  } else if (hs.style === "buzz") {
-    back.push('<path d="M '+(cx-r*1.0)+' '+cy+' Q '+(cx-r*1.05)+' '+(cy-r*1.1)+' '+cx+' '+(cy-r*1.18)+' Q '+(cx+r*1.05)+' '+(cy-r*1.1)+' '+(cx+r*1.0)+' '+cy+' Q '+cx+' '+(cy-r*0.85)+' '+(cx-r*1.0)+' '+cy+' Z" fill="'+hex+'" opacity="0.55"/>');
-  } else if (APPEAR_PULLED_BACK_STYLES[hs.style]) {
-    var pbBotY = cy - r*0.18, pbCrownY = cy - r*1.2, pbX = capX*0.92;
-    back.push('<path d="M '+(cx-pbX)+' '+pbBotY+' Q '+(cx-pbX)+' '+pbCrownY+' '+cx+' '+pbCrownY+' Q '+(cx+pbX)+' '+pbCrownY+' '+(cx+pbX)+' '+pbBotY+' Q '+cx+' '+(pbBotY+r*0.14)+' '+(cx-pbX)+' '+pbBotY+' Z" fill="'+hex+'"'+APPEAR_EDGE+'/>');
-  } else {
-    var crownY = cy - r*1.25;
-    back.push('<path d="M '+(cx-capX)+' '+capBotY+' Q '+(cx-capX)+' '+crownY+' '+cx+' '+crownY+' Q '+(cx+capX)+' '+crownY+' '+(cx+capX)+' '+capBotY+' Q '+cx+' '+(capBotY+r*0.14)+' '+(cx-capX)+' '+capBotY+' Z" fill="'+hex+'"'+APPEAR_EDGE+'/>');
-    if (hs.style === "curly") {
-      [[-1.0,-0.55],[-0.75,-1.0],[-0.35,-1.2],[0.05,-1.25],[0.45,-1.2],[0.8,-1.0],[1.02,-0.55]].forEach(function(o){
-        back.push('<circle cx="'+(cx+o[0]*capX)+'" cy="'+(cy+o[1]*r)+'" r="'+(r*0.3)+'" fill="'+hex+'"/>');
-      });
-    } else if (hs.style === "wavy") {
-      [-1,1].forEach(function(sign){
-        back.push('<path d="M '+(cx+sign*capX*0.85)+' '+(cy-r*0.5)+' Q '+(cx+sign*capX*1.05)+' '+(cy-r*0.1)+' '+(cx+sign*capX*0.8)+' '+capBotY+'" fill="none" stroke="'+hex+'" stroke-width="2.5" stroke-linecap="round" opacity="0.45"/>');
-      });
-    }
-    var strandBotY = [null, cy+r*0.85, cy+r*1.7, cy+r*2.6, cy+r*3.2][Math.max(0, Math.min(4, hs.len))];
-    if (strandBotY) {
-      [-1,1].forEach(function(sign){
-        var sx = cx+sign*capX*1.02, sw = 6 + (hs.len>=3 ? 1.5 : 0);
-        back.push('<path d="M '+(sx-sw)+' '+(capBotY-6)+' L '+(sx+sign*4-sw*0.55)+' '+strandBotY+' Q '+(sx+sign*4)+' '+(strandBotY+9)+' '+(sx+sign*4+sw*0.55)+' '+strandBotY+' L '+(sx+sw)+' '+(capBotY-6)+' Z" fill="'+hex+'"'+APPEAR_EDGE+'/>');
-      });
-    }
-  }
-
-  if (hs.style === "twintail") {
-    [-1,1].forEach(function(sign){
-      var tx = cx+sign*capX*1.08, ty = cy+r*0.18, tailLen = hs.len>=3 ? 92 : 56;
-      extras.push('<path d="M '+(tx-7)+' '+ty+' Q '+(tx+sign*16)+' '+(ty+tailLen*0.5)+' '+(tx-sign*2)+' '+(ty+tailLen)+' L '+(tx+sign*10)+' '+(ty+tailLen-4)+' Q '+(tx+sign*22)+' '+(ty+tailLen*0.5)+' '+(tx+7)+' '+ty+' Z" fill="'+hex+'"'+APPEAR_EDGE+'/>');
-    });
-  } else if (hs.style === "ponytail" || hs.style === "ponytail_high") {
-    var high = hs.style === "ponytail_high";
-    var ty2 = high ? cy-r*0.95 : cy+r*0.2, tailLen2 = hs.len>=3 ? 98 : 62, tx2 = cx+r*1.45;
-    extras.push('<path d="M '+(tx2-8)+' '+ty2+' L '+(tx2-3)+' '+(ty2+tailLen2)+' Q '+(tx2+3)+' '+(ty2+tailLen2+8)+' '+(tx2+9)+' '+(ty2+tailLen2)+' L '+(tx2+8)+' '+ty2+' Z" fill="'+hex+'"'+APPEAR_EDGE+'/>');
-  } else if (hs.style === "bun") {
-    extras.push('<circle cx="'+cx+'" cy="'+(cy-r*1.2)+'" r="'+(r*0.42)+'" fill="'+hex+'"'+APPEAR_EDGE+'/>');
-  } else if (hs.style === "braid" || hs.style === "braid_twin") {
-    var n = hs.style==="braid_twin" ? 2 : 1;
-    for (var i=0; i<n; i++) {
-      var sign = n===2 ? (i===0?-1:1) : 0;
-      var tx3 = cx+sign*capX*1.05, ty3 = cy+r*0.22, tailLen3 = 86;
-      extras.push('<path d="M '+(tx3-6)+' '+ty3+' L '+(tx3-3)+' '+(ty3+tailLen3)+' L '+(tx3+3)+' '+(ty3+tailLen3)+' L '+(tx3+6)+' '+ty3+' Z" fill="'+hex+'"'+APPEAR_EDGE+'/>');
-      for (var j=1; j<5; j++) {
-        extras.push('<line x1="'+(tx3-5)+'" y1="'+(ty3+tailLen3*j/5)+'" x2="'+(tx3+5)+'" y2="'+(ty3+tailLen3*j/5)+'" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>');
-      }
-    }
-  }
-
-  var bangsBotY = cy - r*0.22;
-  if (hs.bangs === "full") {
-    front.push('<path d="M '+(cx-r*0.75)+' '+bangsBotY+' Q '+cx+' '+(cy-r*0.85)+' '+(cx+r*0.75)+' '+bangsBotY+' Z" fill="'+hex+'"'+APPEAR_EDGE+'/>');
-  } else if (hs.bangs === "side") {
-    front.push('<path d="M '+(cx-r*0.72)+' '+bangsBotY+' Q '+(cx-r*0.1)+' '+(cy-r*0.98)+' '+(cx+r*0.5)+' '+(bangsBotY-r*0.03)+' Z" fill="'+hex+'"'+APPEAR_EDGE+'/>');
-  } else if (hs.bangs === "curtain") {
-    [-1,1].forEach(function(sign){
-      front.push('<path d="M '+(cx+sign*r*0.85)+' '+(cy-r*0.62)+' Q '+(cx+sign*r*0.95)+' '+(cy+r*0.25)+' '+(cx+sign*r*0.7)+' '+(cy+r*0.95)+' L '+(cx+sign*r*0.5)+' '+(cy+r*0.85)+' Q '+(cx+sign*r*0.65)+' '+(cy+r*0.2)+' '+(cx+sign*r*0.55)+' '+(cy-r*0.5)+' Z" fill="'+hex+'"'+APPEAR_EDGE+'/>');
-    });
-  }
-  return { back:back, extras:extras, front:front };
-}
-
-function appearShoePaths(shoe, legX, ankleY) {
-  if (shoe.fam === "none") return "";
-  var col = "#3A2E28";
-  var h = shoe.fam==="long" ? 46 : shoe.fam==="short" ? 22 : 12;
-  var out = "";
-  [-1,1].forEach(function(sign){
-    var x = 100+sign*legX;
-    out += '<path d="M '+(x-10)+' '+(ankleY-h+6)+' L '+(x+10)+' '+(ankleY-h+6)+' L '+(x+11)+' '+(ankleY+8)+' Q '+x+' '+(ankleY+13)+' '+(x-11)+' '+(ankleY+8)+' Z" fill="'+col+'"'+APPEAR_EDGE+'/>';
-  });
-  return out;
-}
-
-function appearBottomPaths(bottom, color, hw, legX, legW, hipY, kneeY, ankleY) {
-  if (bottom.fam === "none") return "";
-  var endY = bottom.len==="thigh" ? hipY+40 : bottom.len==="knee" ? kneeY : ankleY-6;
-  var out = "";
-  if (bottom.fam === "skirt" || bottom.fam === "skirt_pleated") {
-    var flare = (endY-hipY)*0.35;
-    out += '<path d="M '+(100-hw+2)+' '+hipY+' L '+(100-hw-flare)+' '+endY+' Q 100 '+(endY+8)+' '+(100+hw+flare)+' '+endY+' L '+(100+hw-2)+' '+hipY+' Q 100 '+(hipY+10)+' '+(100-hw+2)+' '+hipY+' Z" fill="'+color+'"'+APPEAR_EDGE+'/>';
-    if (bottom.fam === "skirt_pleated") {
-      for (var i=-2; i<=2; i++) {
-        var fx = 100+i*(hw/2.6);
-        out += '<line x1="'+fx+'" y1="'+(hipY+6)+'" x2="'+(fx+i*flare*0.4)+'" y2="'+endY+'" stroke="rgba(0,0,0,0.18)" stroke-width="1.3"/>';
-      }
-    }
-  } else {
-    [-1,1].forEach(function(sign){
-      var halfW = bottom.fam==="pants_wide" ? legW*0.5+6 : bottom.fam==="leggings" ? legW*0.5-3 : legW*0.5+1;
-      var cxLeg = 100+sign*legX;
-      out += '<path d="M '+(cxLeg-halfW)+' '+hipY+' L '+(cxLeg-halfW)+' '+endY+' L '+(cxLeg+halfW)+' '+endY+' L '+(cxLeg+halfW)+' '+hipY+' Z" fill="'+color+'"'+APPEAR_EDGE+'/>';
-    });
-  }
-  out += '<line x1="'+(100-hw+3)+'" y1="'+hipY+'" x2="'+(100+hw-3)+'" y2="'+hipY+'" stroke="rgba(20,16,10,0.16)" stroke-width="1.3"/>';
-  return out;
-}
-
-function appearBustEllipses(bust, color, cx, chestY) {
-  if (!bust) return "";
-  var bR = bust, bSpacing = bR*0.72;
-  var e = ' fill="'+color+'"'+APPEAR_EDGE;
-  return '<ellipse cx="'+(cx-bSpacing)+'" cy="'+chestY+'" rx="'+(bR*0.95)+'" ry="'+(bR*0.82)+'"'+e+'/>' +
-         '<ellipse cx="'+(cx+bSpacing)+'" cy="'+chestY+'" rx="'+(bR*0.95)+'" ry="'+(bR*0.82)+'"'+e+'/>';
-}
-
-function appearTopPaths(top, color, sw, ww, hw, shoulderY, waistY, hipY, kneeY, ankleY, armReach, armRise) {
-  if (top.fam === "none") return "";
-  var col = top.armor ? "#8B95A0" : color;
-  var out = "";
-  var hemY = top.fam==="dress" ? (top.hemLen==="thigh" ? hipY+40 : top.hemLen==="knee" ? kneeY : ankleY-6)
-    : (top.fam==="loose_long" || top.fam==="robe") ? hipY+30 : hipY+3;
-  var bottomHalfW = top.fam==="dress" ? (hw + (hemY-hipY)*0.3) : (top.fam==="loose_long"||top.fam==="robe" ? hw*0.9 : ww);
-
-  out += '<path d="M '+(100-sw)+' '+(shoulderY+4)+
-    ' Q '+(100-sw)+' '+((shoulderY+hemY)/2)+' '+(100-bottomHalfW)+' '+(hemY-2)+
-    ' Q 100 '+(hemY+8)+' '+(100+bottomHalfW)+' '+(hemY-2)+
-    ' Q '+(100+sw)+' '+((shoulderY+hemY)/2)+' '+(100+sw)+' '+(shoulderY+4)+
-    ' Q 100 '+(shoulderY-10)+' '+(100-sw)+' '+(shoulderY+4)+' Z" fill="'+col+'"'+APPEAR_EDGE+'/>';
-
-  [-1,1].forEach(function(sign){
-    out += '<line x1="'+(100+sign*sw*0.55)+'" y1="'+(shoulderY-2)+'" x2="'+(100+sign*sw*0.85)+'" y2="'+(shoulderY+10)+'" stroke="rgba(20,16,10,0.14)" stroke-width="1"/>';
-  });
-
-  if (top.sleeve === "long" || top.sleeve === "short") {
-    var frac = top.sleeve === "long" ? 0.85 : 0.38;
-    var w1 = top.sleeve === "long" ? 15 : 16, w2 = top.sleeve === "long" ? 10.5 : 13;
-    [-1,1].forEach(function(sign){
-      var sx = 100+sign*sw*0.55, sy = shoulderY+2;
-      var ex = 100+sign*(sw*0.68+armReach*frac), ey = shoulderY-armRise*frac;
-      out += organicLimb(sx, sy, ex, ey, [[0, w1*0.9],[0.22, w1],[0.65, (w1+w2)/2],[1, w2]], col);
-    });
-  }
-  if (top.collar) {
-    out += '<path d="M '+(100-9)+' '+(shoulderY-4)+' L 100 '+(shoulderY+10)+' L '+(100+9)+' '+(shoulderY-4)+'" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="1.4"/>';
-  }
-  if (top.frill) {
-    var n = top.frillHeavy ? 10 : 6, pts = [];
-    for (var i=0; i<=n; i++) {
-      var fx = (100-bottomHalfW) + (2*bottomHalfW*i/n);
-      var fy = hemY + (i%2===0 ? 6 : -2);
-      pts.push(fx+","+fy);
-    }
-    out += '<polyline points="'+pts.join(" ")+'" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2"/>';
-  }
-  if (top.armor) {
-    for (var ay=shoulderY+16; ay<hemY-6; ay+=14) {
-      var half = ww*(1-(ay-shoulderY)/(hemY-shoulderY)*0.15);
-      out += '<line x1="'+(100-half)+'" y1="'+ay+'" x2="'+(100+half)+'" y2="'+ay+'" stroke="rgba(0,0,0,0.22)" stroke-width="1.3"/>';
-    }
-  }
-  if (top.fam === "robe" || top.hanbok) {
-    out += '<line x1="100" y1="'+(shoulderY+6)+'" x2="100" y2="'+(hemY-4)+'" stroke="rgba(0,0,0,0.18)" stroke-width="1.3"/>';
-  }
-  return out;
-}
-
-function appearEyebrowPaths(shape, hex, cx, cy, r) {
-  var ey = cy - r*0.14, dx = r*0.32, w = r*0.26;
-  var out = "";
-  [-1,1].forEach(function(sign){
-    var bx = cx+sign*dx;
-    if (shape === "straight") {
-      out += '<line x1="'+(bx-w)+'" y1="'+ey+'" x2="'+(bx+w)+'" y2="'+ey+'" stroke="'+hex+'" stroke-width="2.6" stroke-linecap="round"/>';
-    } else if (shape === "arched") {
-      out += '<path d="M '+(bx-w)+' '+(ey+2)+' Q '+bx+' '+(ey-4)+' '+(bx+w)+' '+(ey+1)+'" fill="none" stroke="'+hex+'" stroke-width="2.6" stroke-linecap="round"/>';
-    } else if (shape === "thick") {
-      out += '<rect x="'+(bx-w)+'" y="'+(ey-2)+'" width="'+(w*2)+'" height="4.2" rx="2.1" fill="'+hex+'"/>';
-    } else if (shape === "thin") {
-      out += '<line x1="'+(bx-w)+'" y1="'+ey+'" x2="'+(bx+w)+'" y2="'+ey+'" stroke="'+hex+'" stroke-width="1.4" stroke-linecap="round"/>';
-    } else if (shape === "upturned") {
-      out += '<line x1="'+(bx-sign*w)+'" y1="'+(ey+2)+'" x2="'+(bx+sign*w)+'" y2="'+(ey-4)+'" stroke="'+hex+'" stroke-width="2.4" stroke-linecap="round"/>';
-    } else {
-      out += '<line x1="'+(bx-sign*w)+'" y1="'+(ey-2)+'" x2="'+(bx+sign*w)+'" y2="'+(ey+4)+'" stroke="'+hex+'" stroke-width="2.4" stroke-linecap="round"/>';
-    }
-  });
-  return out;
-}
-
-function appearEyePaths(shape, colorL, colorR, cx, cy, r) {
-  var ey = cy + r*0.06, dx = r*0.32;
-  var out = "";
-  [-1,1].forEach(function(sign){
-    var ex = cx+sign*dx;
-    var color = sign===-1 ? colorL : colorR;
-    if (shape === "round") {
-      out += '<circle cx="'+ex+'" cy="'+ey+'" r="'+(r*0.11)+'" fill="'+color+'"/><circle cx="'+(ex+r*0.03)+'" cy="'+(ey-r*0.04)+'" r="'+(r*0.03)+'" fill="#fff"/>';
-    } else if (shape === "almond") {
-      out += '<path d="M '+(ex-r*0.16)+' '+ey+' Q '+ex+' '+(ey-r*0.1)+' '+(ex+r*0.16)+' '+ey+' Q '+ex+' '+(ey+r*0.1)+' '+(ex-r*0.16)+' '+ey+' Z" fill="'+color+'"/>';
-    } else if (shape === "narrow") {
-      out += '<line x1="'+(ex-r*0.15)+'" y1="'+ey+'" x2="'+(ex+r*0.15)+'" y2="'+ey+'" stroke="'+color+'" stroke-width="2.2" stroke-linecap="round"/>';
-    } else if (shape === "wide") {
-      out += '<circle cx="'+ex+'" cy="'+ey+'" r="'+(r*0.14)+'" fill="'+color+'"/><circle cx="'+(ex+r*0.035)+'" cy="'+(ey-r*0.045)+'" r="'+(r*0.04)+'" fill="#fff"/>';
-    } else if (shape === "droopy") {
-      out += '<path d="M '+(ex-r*0.16)+' '+(ey-r*0.05)+' Q '+ex+' '+(ey+r*0.08)+' '+(ex+r*0.16)+' '+(ey+r*0.02)+'" fill="none" stroke="'+color+'" stroke-width="2.2" stroke-linecap="round"/>';
-    } else {
-      out += '<path d="M '+(ex-r*0.17)+' '+(ey+r*0.03)+' L '+(ex+r*0.17)+' '+(ey-r*0.05)+' L '+(ex+r*0.1)+' '+(ey+r*0.06)+' Z" fill="'+color+'"/>';
-    }
-  });
-  return out;
-}
-
-function appearMouthPath(shape, cx, cy, r) {
-  var my = cy + r*0.5, mc = "#8A5A50";
-  if (shape === "smile") {
-    return '<path d="M '+(cx-r*0.18)+' '+my+' Q '+cx+' '+(my+r*0.14)+' '+(cx+r*0.18)+' '+my+'" fill="none" stroke="'+mc+'" stroke-width="2" stroke-linecap="round"/>';
-  } else if (shape === "neutral") {
-    return '<line x1="'+(cx-r*0.14)+'" y1="'+my+'" x2="'+(cx+r*0.14)+'" y2="'+my+'" stroke="'+mc+'" stroke-width="2" stroke-linecap="round"/>';
-  } else if (shape === "smirk") {
-    return '<path d="M '+(cx-r*0.14)+' '+my+' Q '+cx+' '+(my+r*0.04)+' '+(cx+r*0.18)+' '+(my-r*0.08)+'" fill="none" stroke="'+mc+'" stroke-width="2" stroke-linecap="round"/>';
-  } else if (shape === "open_smile") {
-    return '<path d="M '+(cx-r*0.18)+' '+my+' Q '+cx+' '+(my+r*0.22)+' '+(cx+r*0.18)+' '+my+' Q '+cx+' '+(my+r*0.08)+' '+(cx-r*0.18)+' '+my+' Z" fill="'+mc+'"/>';
-  }
-  return '<path d="M '+(cx-r*0.08)+' '+my+' Q '+cx+' '+(my+r*0.06)+' '+(cx+r*0.08)+' '+my+'" fill="none" stroke="'+mc+'" stroke-width="1.8" stroke-linecap="round"/>';
-}
-
-function appearFacialHairPath(shape, hex, cx, cy, r) {
-  var my = cy + r*0.5;
-  if (shape === "mustache") {
-    return '<path d="M '+(cx-r*0.2)+' '+(my-r*0.14)+' Q '+(cx-r*0.08)+' '+(my-r*0.22)+' '+cx+' '+(my-r*0.13)+' Q '+(cx+r*0.08)+' '+(my-r*0.22)+' '+(cx+r*0.2)+' '+(my-r*0.14)+' Q '+(cx+r*0.1)+' '+(my-r*0.02)+' '+cx+' '+(my-r*0.08)+' Q '+(cx-r*0.1)+' '+(my-r*0.02)+' '+(cx-r*0.2)+' '+(my-r*0.14)+' Z" fill="'+hex+'"/>';
-  } else if (shape === "goatee") {
-    return '<path d="M '+(cx-r*0.14)+' '+(my+r*0.08)+' Q '+cx+' '+(my+r*0.05)+' '+(cx+r*0.14)+' '+(my+r*0.08)+' Q '+(cx+r*0.1)+' '+(my+r*0.4)+' '+cx+' '+(my+r*0.5)+' Q '+(cx-r*0.1)+' '+(my+r*0.4)+' '+(cx-r*0.14)+' '+(my+r*0.08)+' Z" fill="'+hex+'"/>';
-  } else if (shape === "full_beard") {
-    return '<path d="M '+(cx-r*0.62)+' '+(cy+r*0.15)+' Q '+(cx-r*0.62)+' '+(cy+r*0.75)+' '+cx+' '+(cy+r*0.98)+' Q '+(cx+r*0.62)+' '+(cy+r*0.75)+' '+(cx+r*0.62)+' '+(cy+r*0.15)+' Q '+(cx+r*0.4)+' '+(cy+r*0.35)+' '+cx+' '+(cy+r*0.32)+' Q '+(cx-r*0.4)+' '+(cy+r*0.35)+' '+(cx-r*0.62)+' '+(cy+r*0.15)+' Z" fill="'+hex+'" opacity="0.92"/>';
-  } else if (shape === "stubble") {
-    return '<path d="M '+(cx-r*0.55)+' '+(cy+r*0.18)+' Q '+(cx-r*0.55)+' '+(cy+r*0.7)+' '+cx+' '+(cy+r*0.9)+' Q '+(cx+r*0.55)+' '+(cy+r*0.7)+' '+(cx+r*0.55)+' '+(cy+r*0.18)+' Q '+(cx+r*0.35)+' '+(cy+r*0.3)+' '+cx+' '+(cy+r*0.28)+' Q '+(cx-r*0.35)+' '+(cy+r*0.3)+' '+(cx-r*0.55)+' '+(cy+r*0.18)+' Z" fill="'+hex+'" opacity="0.32"/>';
-  }
-  return "";
-}
-
 function renderAppearanceSvg(ap) {
-  var bt = APPEAR_BODY_TYPES.find(function(b){ return b.id===ap.bodyType; }) || APPEAR_BODY_TYPES[1];
-  var fsh = APPEAR_FACE_SHAPES.find(function(f){ return f.id===ap.faceShape; }) || APPEAR_FACE_SHAPES[0];
-  var hs = APPEAR_HAIR_STYLES.find(function(h){ return h.id===ap.hairStyle; }) || APPEAR_HAIR_STYLES[10];
-  var top = APPEAR_TOPS.find(function(t){ return t.id===ap.top; }) || APPEAR_TOPS[0];
-  var bottom = APPEAR_BOTTOMS.find(function(b){ return b.id===ap.bottom; }) || APPEAR_BOTTOMS[0];
-  var shoe = APPEAR_SHOES.find(function(s){ return s.id===ap.shoes; }) || APPEAR_SHOES[0];
-  var skin = ap.skinTone || APPEAR_SKIN_TONES[2];
-  var hairHex = ap.hairColor || APPEAR_HAIR_COLORS[1];
-  var topColor = ap.topColor || ap.outfitColor || APPEAR_OUTFIT_COLORS[0];
-  var bottomColor = ap.bottomColor || ap.outfitColor || APPEAR_OUTFIT_COLORS[6];
-  var eyebrowShape = ap.eyebrowShape || "straight";
-  var eyeShape = ap.eyeShape || "round";
-  var eyeColor = ap.eyeColor || APPEAR_EYE_COLORS[0];
-  var eyeColorL = ap.oddEye ? (ap.eyeColorLeft || eyeColor) : eyeColor;
-  var eyeColorR = ap.oddEye ? (ap.eyeColorRight || eyeColor) : eyeColor;
-  var mouthShape = ap.mouthShape || "smile";
-
-  var gm = GENDER_SHAPE_MODS[ap.gender] || GENDER_SHAPE_MODS.u;
-  var sw=bt.sw*gm.sw, ww=bt.ww*gm.ww, hw=bt.hw*gm.hw, lw=bt.lw, cx=100;
-  var bust = ap.gender==="f" ? (APPEAR_BUST_SIZES.find(function(b){ return b.id===ap.bustSize; }) || APPEAR_BUST_SIZES[2]).bulge : 0;
-  var headR=24;
-  var heightK = (bt.heightK || 1.0) * (gm.heightK || 1.0);
-  var upperK = 1 + (heightK - 1) * 0.3;
-  var ankleY = 385;
-  var hipY = ankleY - 145*heightK;
-  var kneeY = ankleY - 70*heightK;
-  var waistY = hipY - 22*upperK;
-  var shoulderY = waistY - 95*upperK;
-  var headCy = shoulderY - 8*upperK - headR*1.15;
-  var chestY = shoulderY + (waistY-shoulderY)*0.4;
-  var armReach = sw * 1.35, armRise = 28*upperK;
-
-  var legX = hw*0.42, legW = hw*0.58;
-
-  var out = [];
-  out.push('<rect x="-40" y="0" width="280" height="400" rx="14" fill="var(--bg-card)"/>');
-
-  // 6층: 뒷머리 (머리 뒤쪽에 붙어있는 부분 — 얼굴/몸통/옷보다 먼저 그려서 가장 아래에 깔림)
-  var hair = appearHairShapes(hs, hairHex, cx, headCy, headR);
-  out.push(hair.back.join(""));
-
-  // 5층: 몸통 및 목 (피부)
-  var neckTopY = headCy + headR*0.55, neckHalfW = fsh.jawW*headR*0.42, neckBotHalfW = neckHalfW*1.35;
-  out.push('<path d="M '+(cx-neckHalfW)+' '+neckTopY+' L '+(cx-neckBotHalfW)+' '+shoulderY+' L '+(cx+neckBotHalfW)+' '+shoulderY+' L '+(cx+neckHalfW)+' '+neckTopY+' Z" fill="'+skin+'"'+APPEAR_EDGE+'/>');
-  var legProfile = [[0, legW*0.54],[0.25, legW*0.5],[0.6, legW*0.4],[1, legW*0.33]];
-  out.push(organicLimb(cx-legX, hipY-8, cx-legX, ankleY-4, legProfile, skin));
-  out.push(organicLimb(cx+legX, hipY-8, cx+legX, ankleY-4, legProfile, skin));
-  out.push('<path d="M '+(cx-ww)+' '+(waistY-4)+' Q '+cx+' '+(waistY+4)+' '+(cx+ww)+' '+(waistY-4)+' L '+(cx+hw)+' '+hipY+' Q '+cx+' '+(hipY+8)+' '+(cx-hw)+' '+hipY+' Z" fill="'+skin+'"'+APPEAR_EDGE+'/>');
-  out.push('<path d="M '+(cx-sw)+' '+(shoulderY+4)+' Q '+(cx-sw)+' '+((shoulderY+waistY)/2)+' '+(cx-ww)+' '+(waistY-2)+' Q '+cx+' '+(waistY+8)+' '+(cx+ww)+' '+(waistY-2)+' Q '+(cx+sw)+' '+((shoulderY+waistY)/2)+' '+(cx+sw)+' '+(shoulderY+4)+' Q '+cx+' '+(shoulderY-16)+' '+(cx-sw)+' '+(shoulderY+4)+' Z" fill="'+skin+'"'+APPEAR_EDGE+'/>');
-  var armProfile = [[0, 15],[0.15, 17],[0.55, 12],[0.85, 10],[1, 12.5]];
-  var fingerBits = [];
-  [-1,1].forEach(function(sign){
-    var sx = cx+sign*sw*0.5, sy = shoulderY+4;
-    var hx = cx+sign*(sw*0.68+armReach), hy = shoulderY-armRise;
-    out.push(organicLimb(sx, sy, hx, hy, armProfile, skin));
-    fingerBits.push([sx, sy, hx, hy]);
-  });
-  if (top.fam === "none") out.push(appearBustEllipses(bust, skin, cx, chestY));
-
-  // 4층: 상의 (옷)
-  out.push(appearShoePaths(shoe, legX, ankleY));
-  if (top.fam !== "dress") out.push(appearBottomPaths(bottom, bottomColor, hw, legX, legW, hipY, kneeY, ankleY));
-  out.push(appearTopPaths(top, topColor, sw, ww, hw, shoulderY, waistY, hipY, kneeY, ankleY, armReach, armRise));
-  if (top.fam !== "none") out.push(appearBustEllipses(bust, top.armor ? "#8B95A0" : topColor, cx, chestY));
-  fingerBits.forEach(function(p){ out.push(fingerCreases(p[0], p[1], p[2], p[3], 12.5)); });
-  // 트윈테일/포니테일/땋은머리처럼 어깨 아래까지 늘어지는 머리 뭉치는 옷에 가려 사라지지 않도록 옷 위에 그림
-  out.push(hair.extras.join(""));
-
-  // 3층: 얼굴형 (피부 및 귀)
-  out.push('<path d="'+facePath(fsh, cx, headCy, headR)+'" fill="'+skin+'"'+APPEAR_EDGE+'/>');
-  out.push(appearEarPaths(skin, cx, headCy, headR, fsh));
-
-  // 2층: 이목구비 (눈썹/눈/입, 수염)
-  out.push(appearEyebrowPaths(eyebrowShape, hairHex, cx, headCy, headR));
-  out.push(appearEyePaths(eyeShape, eyeColorL, eyeColorR, cx, headCy, headR));
-  out.push(appearMouthPath(mouthShape, cx, headCy, headR));
-  if (ap.gender === "m" && ap.facialHair && ap.facialHair !== "none") {
-    out.push(appearFacialHairPath(ap.facialHair, hairHex, cx, headCy, headR));
-  }
-
-  // 1층: 앞머리 및 옆머리 (가장 위)
-  out.push(hair.front.join(""));
-  return '<svg viewBox="-40 0 280 400" width="280" height="400" xmlns="http://www.w3.org/2000/svg">'+out.join("")+'</svg>';
-}
-
-function appearOptions(list, gender) {
-  return list.filter(function(o){ return !gender || gender==="u" || o.gender==="u" || o.gender===gender; });
+  return PixelDoll.renderSvgString(buildAppearanceLayers(ap), buildAppearancePalette(ap));
 }
 
 function renderAppearanceEditor(doc) {
   var ap = doc.appearance;
   var g = ap.gender;
-  function selectField(label, id, list, current) {
-    return '<div class="appear-field"><label>'+label+'</label><select class="sel" id="'+id+'">' +
-      appearOptions(list, g).map(function(o){ return '<option value="'+o.id+'" '+(o.id===current?"selected":"")+'>'+esc(o.label)+'</option>'; }).join("") +
-      '</select></div>';
+
+  function pickerSection(cat) {
+    if (!appearIsGenderVisible(cat, g)) return "";
+    var dict = cat.dict();
+    if (cat.hideIfDress && (PixelDollParts.tops[ap.top] || {}).dress) return "";
+    var ids = appearOptionIds(dict, g);
+    var current = ap[cat.key];
+    return '<div class="appear-picker-section" style="grid-column:1/-1">' +
+      '<div class="appear-picker-label">' + esc(cat.label) + '</div>' +
+      '<div class="appear-picker-grid" data-pickcat="' + cat.key + '">' +
+      ids.map(function (id) {
+        var thumbAp = Object.assign({}, ap); thumbAp[cat.key] = id;
+        var o = dict[id];
+        return '<button type="button" class="appear-pick-btn' + (id === current ? " on" : "") + '" data-pickval="' + esc(id) + '" title="' + esc(o.label || id) + '">' +
+          '<span class="appear-pick-thumb">' + renderAppearanceSvg(thumbAp) + '</span>' +
+          '<span class="appear-pick-name">' + esc(o.label || id) + '</span>' +
+          '</button>';
+      }).join("") +
+      '</div></div>';
   }
+
   function swatchRow(id, list, current) {
     var cur = current || list[0];
-    return '<div class="swatch-grid appear-swrow" id="'+id+'">' + list.map(function(hex){
-      return '<span class="swatch '+(cur.toLowerCase()===hex.toLowerCase()?"on":"")+'" style="background:'+hex+'" data-hex="'+hex+'"></span>';
+    return '<div class="swatch-grid appear-swrow" id="' + id + '">' + list.map(function (hex) {
+      return '<span class="swatch ' + (cur.toLowerCase() === hex.toLowerCase() ? "on" : "") + '" style="background:' + hex + '" data-hex="' + hex + '"></span>';
     }).join("") +
-      '<label class="swatch swatch-custom" title="사용자 지정 색상"><input type="color" class="swatch-native-input" value="'+cur+'"></label>' +
-    '</div>' +
-    '<div class="appear-color-readout" id="'+id+'Readout">'+colorReadoutHtml(cur)+'</div>';
+      '<label class="swatch swatch-custom" title="사용자 지정 색상"><input type="color" class="swatch-native-input" value="' + cur + '"></label>' +
+      '</div>' +
+      '<div class="appear-color-readout" id="' + id + 'Readout">' + colorReadoutHtml(cur) + '</div>';
   }
+
   var memoKey = "amemoOpen:" + doc.id;
   var memoOpen = state.collapsed.hasOwnProperty(memoKey) ? state.collapsed[memoKey] : !!(ap.memo && ap.memo.trim());
+
   return '<div class="appear-card">' +
-    '<div class="appear-head">'+ic("person",15)+'<span>외견</span></div>' +
+    '<div class="appear-head">' + ic("person", 15) + '<span>외견</span></div>' +
     '<div class="appear-body">' +
-      '<div class="appear-preview" id="appearPreview">'+renderAppearanceSvg(ap)+'</div>' +
-      '<div class="appear-fields">' +
-        '<div class="life-pick-row appear-gender-row">' +
-          '<button type="button" class="life-pick '+(g==="f"?"on":"")+'" data-agender="f" style="--lc:#B0524D">여성</button>' +
-          '<button type="button" class="life-pick '+(g==="m"?"on":"")+'" data-agender="m" style="--lc:#4A6FA5">남성</button>' +
-          '<button type="button" class="life-pick '+(g==="u"?"on":"")+'" data-agender="u" style="--lc:#8B8579">공용/기타</button>' +
-        '</div>' +
-        selectField("체형", "aBodyType", APPEAR_BODY_TYPES, ap.bodyType) +
-        '<div class="appear-memo-wrap" style="grid-column:1/-1">' +
-          '<button type="button" class="appear-memo-toggle'+(memoOpen?" open":"")+'" data-memotoggle="1">'+ic("chevron",11)+(memoOpen ? " 메모 접기" : " 메모 더보기"+(ap.memo&&ap.memo.trim()?" · 작성됨":""))+'</button>' +
-          (memoOpen ? '<textarea class="field-input appear-memo" id="aMemo" rows="2" placeholder="추가로 외견을 메모해보세요 (예: 왼쪽 눈가의 흉터, 항상 두꺼운 목도리를 두름 등)">'+esc(ap.memo)+'</textarea>' : '') +
-        '</div>' +
-        (g==="f" ? selectField("가슴 크기", "aBustSize", APPEAR_BUST_SIZES, ap.bustSize||"medium") : "") +
-        selectField("얼굴형", "aFaceShape", APPEAR_FACE_SHAPES, ap.faceShape) +
-        selectField("눈썹 모양", "aEyebrowShape", APPEAR_EYEBROW_SHAPES, ap.eyebrowShape||"straight") +
-        selectField("눈 모양", "aEyeShape", APPEAR_EYE_SHAPES, ap.eyeShape||"round") +
-        '<div class="appear-field" style="grid-column:1/-1"><label class="appear-oddeye-check"><input type="checkbox" id="aOddEye" '+(ap.oddEye?"checked":"")+'> 오드아이 (좌우 눈 색 다르게)</label></div>' +
-        (ap.oddEye
-          ? '<div class="appear-field"><label>왼쪽 눈 색</label>'+swatchRow("aEyeColorLeftRow", APPEAR_EYE_COLORS, ap.eyeColorLeft||ap.eyeColor)+'</div>' +
-            '<div class="appear-field"><label>오른쪽 눈 색</label>'+swatchRow("aEyeColorRightRow", APPEAR_EYE_COLORS, ap.eyeColorRight||ap.eyeColor)+'</div>'
-          : '<div class="appear-field"><label>눈 색</label>'+swatchRow("aEyeColorRow", APPEAR_EYE_COLORS, ap.eyeColor)+'</div>') +
-        selectField("입 모양", "aMouthShape", APPEAR_MOUTH_SHAPES, ap.mouthShape||"smile") +
-        (g==="m" ? selectField("수염", "aFacialHair", APPEAR_FACIAL_HAIR, ap.facialHair||"none") : "") +
-        selectField("머리스타일", "aHairStyle", APPEAR_HAIR_STYLES, ap.hairStyle) +
-        selectField("상의", "aTop", APPEAR_TOPS, ap.top) +
-        selectField("하의", "aBottom", APPEAR_BOTTOMS, ap.bottom) +
-        selectField("신발", "aShoes", APPEAR_SHOES, ap.shoes) +
-        '<div class="appear-field"><label>피부톤</label>'+swatchRow("aSkinRow", APPEAR_SKIN_TONES, ap.skinTone)+'</div>' +
-        '<div class="appear-field"><label>머리색</label>'+swatchRow("aHairColorRow", APPEAR_HAIR_COLORS, ap.hairColor)+'</div>' +
-        '<div class="appear-field"><label>상의 색상</label>'+swatchRow("aTopColorRow", APPEAR_OUTFIT_COLORS, ap.topColor)+'</div>' +
-        '<div class="appear-field"><label>하의 색상</label>'+swatchRow("aBottomColorRow", APPEAR_OUTFIT_COLORS, ap.bottomColor)+'</div>' +
-      '</div>' +
+    '<div class="appear-preview" id="appearPreview">' + renderAppearanceSvg(ap) + '</div>' +
+    '<div class="appear-fields">' +
+    '<div class="life-pick-row appear-gender-row" style="grid-column:1/-1">' +
+    '<button type="button" class="life-pick ' + (g === "f" ? "on" : "") + '" data-agender="f" style="--lc:#B0524D">여성</button>' +
+    '<button type="button" class="life-pick ' + (g === "m" ? "on" : "") + '" data-agender="m" style="--lc:#4A6FA5">남성</button>' +
+    '<button type="button" class="life-pick ' + (g === "u" ? "on" : "") + '" data-agender="u" style="--lc:#8B8579">공용/기타</button>' +
     '</div>' +
-  '</div>';
+    '<div class="appear-memo-wrap" style="grid-column:1/-1">' +
+    '<button type="button" class="appear-memo-toggle' + (memoOpen ? " open" : "") + '" data-memotoggle="1">' + ic("chevron", 11) + (memoOpen ? " 메모 접기" : " 메모 더보기" + (ap.memo && ap.memo.trim() ? " · 작성됨" : "")) + '</button>' +
+    (memoOpen ? '<textarea class="field-input appear-memo" id="aMemo" rows="2" placeholder="추가로 외견을 메모해보세요 (예: 왼쪽 눈가의 흉터, 항상 두꺼운 목도리를 두름 등)">' + esc(ap.memo) + '</textarea>' : "") +
+    '</div>' +
+    APPEAR_CATS.map(pickerSection).join("") +
+    '<div class="appear-field" style="grid-column:1/-1"><label class="appear-oddeye-check"><input type="checkbox" id="aOddEye" ' + (ap.oddEye ? "checked" : "") + '> 오드아이 (좌우 눈 색 다르게)</label></div>' +
+    (ap.oddEye
+      ? '<div class="appear-field"><label>왼쪽 눈 색</label>' + swatchRow("aEyeColorLeftRow", APPEAR_EYE_COLORS, ap.eyeColorLeft || ap.eyeColor) + '</div>' +
+        '<div class="appear-field"><label>오른쪽 눈 색</label>' + swatchRow("aEyeColorRightRow", APPEAR_EYE_COLORS, ap.eyeColorRight || ap.eyeColor) + '</div>'
+      : '<div class="appear-field"><label>눈 색</label>' + swatchRow("aEyeColorRow", APPEAR_EYE_COLORS, ap.eyeColor) + '</div>') +
+    '<div class="appear-field"><label>피부톤</label>' + swatchRow("aSkinRow", APPEAR_SKIN_TONES, ap.skinTone) + '</div>' +
+    '<div class="appear-field"><label>머리색</label>' + swatchRow("aHairColorRow", APPEAR_HAIR_COLORS, ap.hairColor) + '</div>' +
+    '<div class="appear-field"><label>상의 색상</label>' + swatchRow("aTopColorRow", APPEAR_OUTFIT_COLORS, ap.topColor) + '</div>' +
+    '<div class="appear-field"><label>하의 색상</label>' + swatchRow("aBottomColorRow", APPEAR_OUTFIT_COLORS, ap.bottomColor) + '</div>' +
+    '</div>' +
+    '</div>' +
+    '</div>';
 }
 
 function wireAppearanceEditor(doc) {
@@ -4583,41 +5241,48 @@ function wireAppearanceEditor(doc) {
     if (pv) pv.innerHTML = renderAppearanceSvg(ap);
     saveData();
   }
-  document.querySelectorAll("[data-agender]").forEach(function(btn){
-    btn.addEventListener("click", function(){ ap.gender = btn.dataset.agender; saveData(); renderDocPage(doc); });
+  document.querySelectorAll("[data-agender]").forEach(function (btn) {
+    btn.addEventListener("click", function () { ap.gender = btn.dataset.agender; saveData(); renderDocPage(doc); });
   });
-  [["aBodyType","bodyType"],["aBustSize","bustSize"],["aFaceShape","faceShape"],["aEyebrowShape","eyebrowShape"],["aEyeShape","eyeShape"],["aMouthShape","mouthShape"],["aFacialHair","facialHair"],["aHairStyle","hairStyle"],["aTop","top"],["aBottom","bottom"],["aShoes","shoes"]].forEach(function(pair){
-    var el = document.getElementById(pair[0]);
-    if (el) el.addEventListener("change", function(){ ap[pair[1]] = el.value; refreshPreview(); });
+  document.querySelectorAll("[data-pickcat]").forEach(function (row) {
+    var cat = row.dataset.pickcat;
+    row.querySelectorAll("[data-pickval]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        ap[cat] = btn.dataset.pickval;
+        row.querySelectorAll(".appear-pick-btn").forEach(function (b) { b.classList.toggle("on", b === btn); });
+        refreshPreview();
+        if (cat === "top") renderDocPage(doc); // dress tops hide the bottom picker -- needs a full re-render
+      });
+    });
   });
-  [["aSkinRow","skinTone"],["aHairColorRow","hairColor"],["aTopColorRow","topColor"],["aBottomColorRow","bottomColor"],["aEyeColorRow","eyeColor"],["aEyeColorLeftRow","eyeColorLeft"],["aEyeColorRightRow","eyeColorRight"]].forEach(function(pair){
+  [["aSkinRow", "skinTone"], ["aHairColorRow", "hairColor"], ["aTopColorRow", "topColor"], ["aBottomColorRow", "bottomColor"], ["aEyeColorRow", "eyeColor"], ["aEyeColorLeftRow", "eyeColorLeft"], ["aEyeColorRightRow", "eyeColorRight"]].forEach(function (pair) {
     var row = document.getElementById(pair[0]);
     if (!row) return;
-    var readout = document.getElementById(pair[0]+"Readout");
+    var readout = document.getElementById(pair[0] + "Readout");
     function setColor(hex) {
       ap[pair[1]] = hex;
-      row.querySelectorAll(".swatch:not(.swatch-custom)").forEach(function(s){ s.classList.toggle("on", s.dataset.hex && s.dataset.hex.toLowerCase()===hex.toLowerCase()); });
+      row.querySelectorAll(".swatch:not(.swatch-custom)").forEach(function (s) { s.classList.toggle("on", s.dataset.hex && s.dataset.hex.toLowerCase() === hex.toLowerCase()); });
       var nativeInput = row.querySelector(".swatch-native-input");
       if (nativeInput) nativeInput.value = hex;
       if (readout) readout.innerHTML = colorReadoutHtml(hex);
       refreshPreview();
     }
-    row.querySelectorAll("[data-hex]").forEach(function(sw){
-      sw.addEventListener("click", function(){ setColor(sw.dataset.hex); });
+    row.querySelectorAll("[data-hex]").forEach(function (sw) {
+      sw.addEventListener("click", function () { setColor(sw.dataset.hex); });
     });
     var nativeInput = row.querySelector(".swatch-native-input");
-    if (nativeInput) nativeInput.addEventListener("input", function(){ setColor(nativeInput.value); });
+    if (nativeInput) nativeInput.addEventListener("input", function () { setColor(nativeInput.value); });
   });
   var oddEyeChk = document.getElementById("aOddEye");
-  if (oddEyeChk) oddEyeChk.addEventListener("change", function(){ ap.oddEye = oddEyeChk.checked; saveData(); renderDocPage(doc); });
+  if (oddEyeChk) oddEyeChk.addEventListener("change", function () { ap.oddEye = oddEyeChk.checked; saveData(); renderDocPage(doc); });
   var memoKey = "amemoOpen:" + doc.id;
   var memoOpenNow = state.collapsed.hasOwnProperty(memoKey) ? state.collapsed[memoKey] : !!(ap.memo && ap.memo.trim());
   var memoToggleBtn = document.querySelector("[data-memotoggle]");
-  if (memoToggleBtn) memoToggleBtn.addEventListener("click", function(){ state.collapsed[memoKey] = !memoOpenNow; render(); });
+  if (memoToggleBtn) memoToggleBtn.addEventListener("click", function () { state.collapsed[memoKey] = !memoOpenNow; render(); });
   var memoEl = document.getElementById("aMemo");
   if (memoEl) {
     autoGrow(memoEl);
-    memoEl.addEventListener("input", function(){ ap.memo = memoEl.value; autoGrow(memoEl); saveData(); });
+    memoEl.addEventListener("input", function () { ap.memo = memoEl.value; autoGrow(memoEl); saveData(); });
   }
 }
 
@@ -4663,7 +5328,7 @@ function renderDocPage(doc) {
   propsHtml += propRow("link", "별칭", chipRow("aliases"));
   propsHtml += propRow("grid", "대분류", '<select class="sel" id="propCategory">'+CATS.map(function(c){ return '<option value="'+esc(c)+'" '+(c===doc.category?"selected":"")+'>'+esc(c)+'</option>'; }).join("")+'</select>');
 
-  if (doc.category === "등장인물" && !doc.appearance) doc.appearance = defaultAppearance();
+  if (doc.category === "등장인물") ensureAppearance(doc);
 
   if (doc.category === "등장인물") {
     propsHtml += propRow("person", "생사", '<div class="life-pick-row" id="lifePickRow">' +
@@ -7886,7 +8551,7 @@ var ASSET_CLIENT_JS = `/* 설정집.html의 클라이언트 로직. window.WB_DA
   /* ---------------- shared render helpers ---------------- */
   function entityCard(e, kind) {
     return '<a class="wb-card" href="' + linkFor(kind, e.id) + '"' + (e.filterTags ? ' data-filter-tags="' + esc(e.filterTags) + '"' : "") + '>' +
-      (e.imageSvg ? '<div style="width:44px">' + e.imageSvg + '</div>' : '<div class="avatar">' + esc(initials(e.title)) + '</div>') +
+      (e.imageSvg ? '<div style="width:44px;aspect-ratio:1/1">' + e.imageSvg + '</div>' : '<div class="avatar">' + esc(initials(e.title)) + '</div>') +
       '<div class="name">' + esc(e.title) + '</div>' +
       (e.subtitle ? '<div class="alias">' + esc(e.subtitle) + '</div>' : "") +
       (e.desc ? '<div class="desc">' + esc(e.desc) + '</div>' : "") +
@@ -7972,7 +8637,7 @@ var ASSET_CLIENT_JS = `/* 설정집.html의 클라이언트 로직. window.WB_DA
     var c = (DATA.characters || []).find(function (x) { return x.id === id; });
     if (!c) return notFound("등장인물");
     var head = '<div class="wb-detail-head">' +
-      (c.imageSvg ? '<div style="width:76px;flex:none">' + c.imageSvg + '</div>' : '<div class="wb-detail-avatar">' + esc(initials(c.title)) + '</div>') +
+      (c.imageSvg ? '<div style="width:76px;aspect-ratio:1/1;flex:none">' + c.imageSvg + '</div>' : '<div class="wb-detail-avatar">' + esc(initials(c.title)) + '</div>') +
       '<div><div class="wb-detail-title">' + esc(c.title) + '</div>' +
       (c.aliases && c.aliases.length ? '<div class="wb-detail-alias">' + esc(c.aliases.join(" · ")) + '</div>' : "") + '</div></div>';
     var fields = (c.fields || []).map(function (f) {
@@ -9154,7 +9819,7 @@ function buildWorldBuildingData(workId) {
 
   var characters = workDocs.filter(function (d) { return d.category === "등장인물"; }).map(function (d) {
     var imageSvg = null;
-    try { if (d.appearance) imageSvg = renderAppearanceSvg(d.appearance); } catch (e) {}
+    try { if (d.appearance) imageSvg = renderAppearanceSvg(d.appearance.system === "pixel_v1" ? d.appearance : migrateLegacyAppearance(d.appearance)); } catch (e) {}
     var raceProp = (d.props || []).find(function (p) { return p.key === "종족" && p.value; });
     return {
       id: d.id, title: d.title || "제목 없음", aliases: d.aliases || [], summary: d.summary || "",
