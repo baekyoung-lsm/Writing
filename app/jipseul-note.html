@@ -3931,13 +3931,9 @@ function renderDocCategoryPage(workId, category) {
   });
 }
 /* ---------------- appearance builder (등장인물) ----------------
-
  * Modular pixel-doll engine + part library (see the standalone showcase artifact
-
  * for the full design rationale) -- embedded directly so the appearance editor and
-
  * the settings-wiki export share exactly one rendering path.
-
  * ---------------------------------------------------------------- */
 
 /* Modular pixel-doll compositor.
@@ -3970,29 +3966,31 @@ function renderDocCategoryPage(workId, category) {
   /* ---- shared, recolorable palette. A "look" supplies concrete hex values for
    * these keys; part authors only ever reference the key, never a literal color. */
   var PALETTE_KEYS = [
-    "skin", "skinShadow", "skinLine",
-    "hair", "hairShadow", "hairLine",
+    "skin", "skinShadow", "skinLine", "skinBlush", "skinHighlight",
+    "hair", "hairShadow", "hairLine", "hairHighlight",
     "brow",
-    "eyeWhite", "eyeIris", "eyePupil", "eyeLine", "eyeGlow",
+    "eyeWhite", "eyeIris", "eyeIrisLeft", "eyeIrisRight", "eyePupil", "eyeLine", "eyeGlow",
     "mouth", "mouthDark", "teeth", "blood",
     "beard", "beardShadow",
-    "top", "topShadow", "topLine", "topAccent",
-    "bottom", "bottomShadow", "bottomLine",
+    "top", "topShadow", "topHighlight", "topLine", "topAccent",
+    "bottom", "bottomShadow", "bottomHighlight", "bottomLine",
     "shoe", "shoeShadow", "shoeSole",
-    "metal", "metalShadow", "cloth2", "cloth2Shadow"
+    "metal", "metalShadow", "cloth2", "cloth2Shadow",
+    "bustColor"
   ];
 
   var DEFAULT_PALETTE = {
-    skin: "#f0c199", skinShadow: "#d49f70", skinLine: "#7a5236",
-    hair: "#3b2a20", hairShadow: "#2a1d16", hairLine: "#1c130d",
+    skin: "#f0c199", skinShadow: "#d49f70", skinLine: "#7a5236", skinBlush: "#e8a888", skinHighlight: "#f8ddc0",
+    hair: "#3b2a20", hairShadow: "#2a1d16", hairLine: "#1c130d", hairHighlight: "#5c4536",
     brow: "#2a1d16",
-    eyeWhite: "#f6f3ec", eyeIris: "#3d6b8a", eyePupil: "#161616", eyeLine: "#20140f", eyeGlow: "#ffffff",
+    eyeWhite: "#f6f3ec", eyeIris: "#3d6b8a", eyeIrisLeft: "#3d6b8a", eyeIrisRight: "#3d6b8a", eyePupil: "#161616", eyeLine: "#20140f", eyeGlow: "#ffffff",
     mouth: "#a5443c", mouthDark: "#5c1f1c", teeth: "#f6f3ec", blood: "#8c1c1c",
     beard: "#2a1d16", beardShadow: "#1c130d",
-    top: "#4a6fa5", topShadow: "#33507d", topLine: "#22375a", topAccent: "#e7c65c",
-    bottom: "#38394a", bottomShadow: "#26273350", bottomLine: "#1a1b26",
+    top: "#4a6fa5", topShadow: "#33507d", topHighlight: "#6f92c4", topLine: "#22375a", topAccent: "#e7c65c",
+    bottom: "#38394a", bottomShadow: "#26273350", bottomHighlight: "#54566c", bottomLine: "#1a1b26",
     shoe: "#3a2a22", shoeShadow: "#281c17", shoeSole: "#171012",
-    metal: "#b9bfc9", metalShadow: "#7d838d", cloth2: "#7a3b3b", cloth2Shadow: "#542828"
+    metal: "#b9bfc9", metalShadow: "#7d838d", cloth2: "#7a3b3b", cloth2Shadow: "#542828",
+    bustColor: "#f0c199"
   };
 
   /* ---- geometry helpers: every big silhouette is built from these, so shapes
@@ -4012,6 +4010,36 @@ function renderDocCategoryPage(workId, category) {
       var lx = Math.round(x0 + (x1 - x0) * t);
       var lw = Math.round(w0 + (w1 - w0) * t);
       rect(grid, lx, y0 + yy, lw, 1, key);
+    }
+  }
+  /* Ordered-dither fill: alternates two palette keys in a checkerboard so a flat two-
+   * tone area reads as a soft gradient/highlight at normal viewing size, without ever
+   * blending colors (every pixel is still one flat key, so it upscales exactly like
+   * everything else -- no anti-aliasing smuggled in). Only paints over cells that
+   * already have `overKey` set, so it never spills past an existing silhouette. */
+  function dither(grid, x, y, w, h, keyA, keyB, overKey) {
+    for (var yy = 0; yy < h; yy++) {
+      for (var xx = 0; xx < w; xx++) {
+        var gx = x + xx, gy = y + yy;
+        if (overKey && grid[gy * GRID + gx] !== overKey) continue;
+        px(grid, gx, gy, ((gx + gy) % 2 === 0) ? keyA : keyB);
+      }
+    }
+  }
+  /* Masked solid fill: like dither's overKey masking (only paints cells that already
+   * have `overKey` set, so it never spills past an existing silhouette), but a flat
+   * 100% fill instead of a checkerboard -- reads as clean cel-shading (a hard-edged
+   * shadow/highlight panel) at this grid's resolution, where dithering a large area
+   * shows as a visible stipple/static pattern instead of a soft gradient. Reserve
+   * dither() for small accents (a cheek blush, a thin highlight streak); use shade()
+   * for anything covering more than a few rows. */
+  function shade(grid, x, y, w, h, key, overKey) {
+    for (var yy = 0; yy < h; yy++) {
+      for (var xx = 0; xx < w; xx++) {
+        var gx = x + xx, gy = y + yy;
+        if (overKey && grid[gy * GRID + gx] !== overKey) continue;
+        px(grid, gx, gy, key);
+      }
     }
   }
   /* ASCII grid: rows of characters, legend maps a character to a palette key. '.' = transparent. */
@@ -4145,7 +4173,7 @@ function renderDocCategoryPage(workId, category) {
 
   global.PixelDoll = {
     GRID: GRID, OUT: OUT, ANCHORS: ANCHORS, PALETTE_KEYS: PALETTE_KEYS, DEFAULT_PALETTE: DEFAULT_PALETTE,
-    px: px, rect: rect, taper: taper, ascii: ascii, mirrorAscii: mirrorAscii, mirrorAsciiLR: mirrorAsciiLR,
+    px: px, rect: rect, taper: taper, ascii: ascii, mirrorAscii: mirrorAscii, mirrorAsciiLR: mirrorAsciiLR, dither: dither, shade: shade,
     newGrid: newGrid, compose: compose, paintToCanvas: paintToCanvas, renderSvgString: renderSvgString
   };
 })(typeof window !== "undefined" ? window : this);
@@ -4167,54 +4195,109 @@ function renderDocCategoryPage(workId, category) {
 
   function bodyPart(id, label, gender, drawFn) { return { id: id, label: label, gender: gender, layer: 1, draw: drawFn }; }
 
+  /* A-pose arm: a single straight diagonal from shoulder to hand (rotated down and
+   * outward from a T-pose -- no elbow bend), drawn for both sides at once.
+   *
+   * SHOULDER_INNER_X is the crucial fix for the "체형/옷 바꾸면 떨어지는" bug: every
+   * top is authored to the FIXED clothing frame (A.shoulder), so if an arm's
+   * attachment point is derived per body type by eye, a wide body type (muscular/
+   * broad/stocky) can end up with its arm's inner edge short of the frame -- leaving
+   * a sliver of background between the sleeve and the arm. Anchoring every body
+   * type's arm to the *same* guaranteed-safe inner edge (46, which clears every top's
+   * own shoulder coverage including the narrowest one, "tank" at 46) removes that
+   * failure mode structurally instead of by re-tuning numbers per body type. */
+  var SHOULDER_INNER_X = 46;
+  function aPoseArmPair(grid, w0, w1, dx, dy, key, shadowKey) {
+    var sy = 54, sx = SHOULDER_INNER_X - w0 / 2;
+    var hx = sx - dx, hy = sy + dy;
+    function at(t) { return { y: Math.round(sy + (hy - sy) * t), x: sx + (hx - sx) * t }; }
+    /* Anatomical width profile along the straight shoulder->hand line: bicep (full
+     * width) -> elbow (narrower) -> forearm (bulges back out) -> wrist (narrowest,
+     * right before the hand takes over). A single monotonic taper end-to-end reads
+     * as a featureless tapered tube; this keeps the arm's DIRECTION a single straight
+     * line (still the requested A-pose, no elbow bend) while giving its WIDTH the
+     * shape of an actual arm instead. */
+    var wBicep = w0, wElbow = Math.max(2, Math.round(w0 * 0.74)), wForearm = Math.min(w0 - 1, Math.round(w1 * 1.3)), wWrist = w1;
+    var p0 = at(0), p1 = at(0.4), p2 = at(0.7), p3 = at(1);
+    [false, true].forEach(function (mirror) {
+      function mx(x) { return mirror ? 2 * A.centerX - x : x; }
+      function seg(pa, wa, pb, wb) {
+        E.taper(grid, pa.y, pb.y, Math.round(mx(pa.x) - wa / 2), wa, Math.round(mx(pb.x) - wb / 2), wb, key);
+      }
+      seg(p0, wBicep, p1, wElbow);
+      seg(p1, wElbow, p2, wForearm);
+      seg(p2, wForearm, p3, wWrist);
+      /* Bridge fill: the torso taper and this arm taper are two independently-rounded
+       * shapes that are only guaranteed to touch at row sy -- as the torso taper's own
+       * edge recedes toward the waist while the arm sweeps outward, per-row rounding
+       * can leave a 1-2px background sliver between them a few rows down (this is
+       * exactly the bug report: "체형/옷 바꾸면 떨어지는 현상"). Only the INNER
+       * (torso-facing) edge needs the extra reach -- extending the outer edge too (as
+       * a symmetric rect) made it stick out past the arm's own narrower elbow taper as
+       * a visible notch/bulge. Computed via mx() on both true edges so it stays
+       * correct after mirroring instead of needing separate left/right-arm math. */
+      (function () {
+        var bridgeRows = 22;
+        var outerX = Math.round(mx(sx - w0 / 2 - 4));
+        var innerX0 = Math.round(mx(sx + w0 / 2 + 18));
+        var innerX1 = Math.round(mx(sx + w0 / 2 + 8));
+        var bw0 = Math.abs(innerX0 - outerX), bw1 = Math.abs(innerX1 - outerX);
+        var bx0 = Math.min(outerX, innerX0), bx1 = Math.min(outerX, innerX1);
+        /* Tapers the extra reach back down to near-zero by the bridge's last row
+         * instead of an abrupt rect cutoff -- a hard edge there left a 1px seam
+         * against the torso/arm's own independently-rounded silhouette right at the
+         * transition into the (correct, intentional) armpit gap below it. */
+        E.taper(grid, sy, sy + bridgeRows, bx0, bw0, bx1, bw1, key);
+      })();
+      /* Hand: a rounded fist a little wider than the wrist, plus a thumb bump on the
+       * outer side and a knuckle shadow line, instead of the wrist just ending in a
+       * plain rectangle (the "featureless mitten" look the arm was flagged for). A
+       * wrist-crease shadow line (same convention as the neck/chin creases elsewhere
+       * on the body) marks where the forearm ends and the hand begins. */
+      var hcx = mx(p3.x), hw = wWrist + 4, hh = 7, hy0 = p3.y;
+      E.rect(grid, Math.round(hcx - wWrist / 2), hy0 - 1, wWrist, 2, "skinShadow");
+      E.rect(grid, Math.round(hcx - hw / 2), hy0 + 1, hw, hh, key);
+      var thumbX = mirror ? Math.round(hcx + hw / 2 - 2) : Math.round(hcx - hw / 2 - 1);
+      E.rect(grid, thumbX, hy0 + 2, 3, 3, key);
+      E.rect(grid, Math.round(hcx - hw / 2 + 1), hy0 + hh - 2, hw - 2, 2, shadowKey);
+    });
+  }
+
   var BODIES = {
     normal: bodyPart("normal", "보통 체형", "u", function (grid, p) {
       E.rect(grid, A.neck.left, A.neck.top, A.neck.right - A.neck.left, A.neck.bottom - A.neck.top, "skin");
       E.rect(grid, A.neck.left, A.neck.bottom - 2, A.neck.right - A.neck.left, 2, "skinShadow");
       E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.waist.left, A.waist.right - A.waist.left, "skin");
-      E.taper(grid, 54, 100, 31, 8, 33, 7, "skin");
-      E.taper(grid, 54, 100, 89, 8, 88, 7, "skin");
-      E.rect(grid, 30, 96, 9, 3, "skinShadow");
-      E.rect(grid, 89, 96, 9, 3, "skinShadow");
-      E.rect(grid, 30, 100, 8, 6, "skin");
-      E.rect(grid, 90, 100, 8, 6, "skin");
-      E.rect(grid, 30, 104, 8, 2, "skinShadow");
-      E.rect(grid, 90, 104, 8, 2, "skinShadow");
+      aPoseArmPair(grid, 8, 5, 18, 42, "skin", "skinShadow");
       E.rect(grid, 46, A.legTop, 16, A.legBottom - A.legTop, "skin");
       E.rect(grid, 66, A.legTop, 16, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop, "skin");
       E.rect(grid, 46, A.footTop, 17, 7, "skin");
       E.rect(grid, 65, A.footTop, 17, 7, "skin");
+      E.rect(grid, 60, A.footTop, 8, 7, "skin");
     }),
     slim: bodyPart("slim", "슬림", "u", function (grid, p) {
       E.rect(grid, A.neck.left + 1, A.neck.top, A.neck.right - A.neck.left - 2, A.neck.bottom - A.neck.top, "skin");
       E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left + 4, A.shoulder.right - A.shoulder.left - 8, A.waist.left + 2, A.waist.right - A.waist.left - 4, "skin");
-      E.taper(grid, 54, 100, 35, 6, 36, 5, "skin");
-      E.taper(grid, 54, 100, 87, 6, 87, 5, "skin");
-      E.rect(grid, 34, 100, 6, 6, "skin");
-      E.rect(grid, 88, 100, 6, 6, "skin");
-      E.rect(grid, 34, 104, 6, 2, "skinShadow");
-      E.rect(grid, 88, 104, 6, 2, "skinShadow");
+      aPoseArmPair(grid, 6, 4, 16, 42, "skin", "skinShadow");
       E.rect(grid, 48, A.legTop, 12, A.legBottom - A.legTop, "skin");
       E.rect(grid, 68, A.legTop, 12, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop, "skin");
       E.rect(grid, 47, A.footTop, 14, 7, "skin");
       E.rect(grid, 67, A.footTop, 14, 7, "skin");
+      E.rect(grid, 60, A.footTop, 8, 7, "skin");
     }),
     muscular: bodyPart("muscular", "근육질", "m", function (grid, p) {
       E.rect(grid, A.neck.left - 1, A.neck.top, A.neck.right - A.neck.left + 2, A.neck.bottom - A.neck.top, "skin");
       E.taper(grid, A.shoulder.y, A.shoulder.y + 8, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.shoulder.left + 3, A.shoulder.right - A.shoulder.left - 6, "skin");
       E.taper(grid, A.shoulder.y + 8, A.waist.y, A.shoulder.left + 3, A.shoulder.right - A.shoulder.left - 6, A.waist.left - 2, A.waist.right - A.waist.left + 4, "skin");
-      E.taper(grid, 54, 100, 28, 10, 30, 8, "skin");
-      E.taper(grid, 54, 100, 90, 10, 90, 8, "skin");
-      E.rect(grid, 27, 96, 12, 3, "skinShadow");
-      E.rect(grid, 89, 96, 12, 3, "skinShadow");
-      E.rect(grid, 27, 100, 9, 7, "skin");
-      E.rect(grid, 92, 100, 9, 7, "skin");
-      E.rect(grid, 27, 105, 9, 2, "skinShadow");
-      E.rect(grid, 92, 105, 9, 2, "skinShadow");
+      aPoseArmPair(grid, 11, 7, 20, 40, "skin", "skinShadow");
       E.rect(grid, 44, A.legTop, 18, A.legBottom - A.legTop, "skin");
       E.rect(grid, 66, A.legTop, 18, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop, "skin");
       E.rect(grid, 44, A.footTop, 19, 7, "skin");
       E.rect(grid, 65, A.footTop, 19, 7, "skin");
+      E.rect(grid, 60, A.footTop, 8, 7, "skin");
     }),
     // hourglass-read within the fixed frame: shoulder and hip both stay near frame
     // max while the waist taper is unusually sharp, instead of a truly wider hip
@@ -4223,42 +4306,37 @@ function renderDocCategoryPage(workId, category) {
       E.taper(grid, A.shoulder.y, A.shoulder.y + 14, A.shoulder.left + 2, A.shoulder.right - A.shoulder.left - 4, A.waist.left + 4, A.waist.right - A.waist.left - 8, "skin");
       E.taper(grid, A.shoulder.y + 14, A.waist.y, A.waist.left + 4, A.waist.right - A.waist.left - 8, A.waist.left + 4, A.waist.right - A.waist.left - 8, "skin");
       E.taper(grid, A.waist.y, A.hip.y + 4, A.waist.left + 4, A.waist.right - A.waist.left - 8, A.hip.left, A.hip.right - A.hip.left, "skin");
-      E.taper(grid, 54, 100, 33, 7, 34, 6, "skin");
-      E.taper(grid, 54, 100, 88, 7, 87, 6, "skin");
-      E.rect(grid, 32, 100, 7, 6, "skin");
-      E.rect(grid, 88, 100, 7, 6, "skin");
+      aPoseArmPair(grid, 7, 5, 17, 42, "skin", "skinShadow");
       E.rect(grid, 47, A.legTop, 14, A.legBottom - A.legTop, "skin");
       E.rect(grid, 67, A.legTop, 14, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop, "skin");
       E.rect(grid, 46, A.footTop, 16, 7, "skin");
       E.rect(grid, 66, A.footTop, 16, 7, "skin");
+      E.rect(grid, 60, A.footTop, 8, 7, "skin");
     }),
     // wide shoulder, almost no waist taper -- bulkier read than muscular
     broad: bodyPart("broad", "다부진 체형", "m", function (grid, p) {
       E.rect(grid, A.neck.left - 1, A.neck.top, A.neck.right - A.neck.left + 2, A.neck.bottom - A.neck.top, "skin");
       E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.waist.left - 4, A.waist.right - A.waist.left + 8, "skin");
-      E.taper(grid, 54, 98, 27, 11, 29, 9, "skin");
-      E.taper(grid, 54, 98, 90, 11, 89, 9, "skin");
-      E.rect(grid, 26, 94, 12, 3, "skinShadow");
-      E.rect(grid, 90, 94, 12, 3, "skinShadow");
-      E.rect(grid, 26, 98, 10, 7, "skin");
-      E.rect(grid, 92, 98, 10, 7, "skin");
+      aPoseArmPair(grid, 12, 8, 20, 38, "skin", "skinShadow");
       E.rect(grid, 44, A.legTop, 18, A.legBottom - A.legTop, "skin");
       E.rect(grid, 66, A.legTop, 18, A.legBottom - A.legTop, "skin");
+      E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop, "skin");
       E.rect(grid, 44, A.footTop, 19, 7, "skin");
       E.rect(grid, 65, A.footTop, 19, 7, "skin");
+      E.rect(grid, 60, A.footTop, 8, 7, "skin");
     }),
     // shoulder AND hip both near frame max, minimal taper anywhere -- stout read
     stocky: bodyPart("stocky", "땅딸막한 체형", "u", function (grid, p) {
       E.rect(grid, A.neck.left - 1, A.neck.top, A.neck.right - A.neck.left + 2, A.neck.bottom - A.neck.top, "skin");
       E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.hip.left, A.hip.right - A.hip.left, "skin");
-      E.taper(grid, 54, 98, 30, 9, 31, 8, "skin");
-      E.taper(grid, 54, 98, 89, 9, 88, 8, "skin");
-      E.rect(grid, 29, 94, 9, 6, "skin");
-      E.rect(grid, 89, 94, 9, 6, "skin");
+      aPoseArmPair(grid, 10, 6, 16, 34, "skin", "skinShadow");
       E.rect(grid, 44, A.legTop, 17, A.legBottom - A.legTop - 4, "skin");
       E.rect(grid, 67, A.legTop, 17, A.legBottom - A.legTop - 4, "skin");
+      E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop - 4, "skin");
       E.rect(grid, 43, A.footTop - 4, 19, 11, "skin");
       E.rect(grid, 65, A.footTop - 4, 19, 11, "skin");
+      E.rect(grid, 60, A.footTop - 4, 8, 11, "skin");
     })
   };
 
@@ -4316,13 +4394,64 @@ function renderDocCategoryPage(workId, category) {
     }
   };
   /* Contour lines only -- drawn after beard, must stay thin so it never covers a
-   * beard/jaw area with opaque fill. */
+   * beard/jaw area with opaque fill. Cheek blush uses dither over "skin" so it only
+   * ever tints pixels the current face shape actually filled -- never spills past it. */
   var HEAD_DETAIL = {
     id: "head_detail", layer: 5,
     draw: function (grid, p) {
       E.rect(grid, h.left + 6, h.bottom - 1, h.right - h.left - 12, 1, "skinShadow");
       E.rect(grid, A.centerX - 1, A.nose.y - 1, 2, A.nose.h, "skinShadow");
       E.rect(grid, A.centerX - 1, A.nose.y + A.nose.h - 1, 3, 1, "skinShadow");
+      E.dither(grid, h.left + 2, A.eye.y + 4, 6, 4, "skinBlush", "skin", "skin");
+      E.dither(grid, h.right - 8, A.eye.y + 4, 6, 4, "skinBlush", "skin", "skin");
+      /* Forehead sheen + jaw contour shadow -- gives the face a soft cel-shaded volume
+       * instead of a single flat skin tone, on top of the existing blush/nose shading.
+       * Solid (shade), not dithered: at this grid's resolution a checkerboard over an
+       * area this size reads as visible static rather than a soft gradient. */
+      E.shade(grid, h.left + 8, h.top + 2, h.right - h.left - 16, 2, "skinHighlight", "skin");
+      E.shade(grid, h.left + 1, h.bottom - 6, 3, 4, "skinShadow", "skin");
+      E.shade(grid, h.right - 4, h.bottom - 6, 3, 4, "skinShadow", "skin");
+      E.dither(grid, A.centerX - 3, A.nose.y, 1, 2, "skinHighlight", "skin", "skin");
+    }
+  };
+  /* Hair shading: solid darker/lighter panels over whichever hair mass is already
+   * there (overKey:"hair"), so it works unchanged for every hairstyle without each
+   * one needing its own shading pass. Runs right after the back-hair layer, so it
+   * only reaches hair drawn so far (the back/crown mass) -- HAIR_FRONT_HIGHLIGHT
+   * below covers the front bangs, which are drawn later. */
+  var HAIR_HIGHLIGHT = {
+    id: "hair_highlight", layer: 7.2,
+    draw: function (grid, p) {
+      E.shade(grid, h.left - 2, h.top + 3, 3, 10, "hairShadow", "hair");
+      E.shade(grid, h.right - 1, h.top + 3, 3, 10, "hairShadow", "hair");
+      E.shade(grid, h.left + 4, h.top - 9, 10, 4, "hairHighlight", "hair");
+    }
+  };
+  /* Front-bangs shine: a second highlight pass positioned after the front hair layer
+   * (see buildAppearanceLayers) so bangs drawn over the forehead get the same
+   * multi-tone treatment as the back/crown hair instead of staying flat. */
+  var HAIR_FRONT_HIGHLIGHT = {
+    id: "hair_front_highlight", layer: 10.2,
+    draw: function (grid, p) {
+      E.shade(grid, h.left + 10, h.hairline - 2, h.right - h.left - 20, 3, "hairHighlight", "hair");
+    }
+  };
+  /* Fabric fold shading for whichever top/bottom is worn -- a solid panel masked over
+   * the garment's own fill color (overKey:"top"/"bottom"), so a plain "flat color"
+   * garment reads as cloth with volume (a shadow fold, a shoulder sheen) instead of a
+   * single flat block. No-ops cleanly for "none" (nothing to shade). */
+  var CLOTH_TOP_SHADING = {
+    id: "cloth_top_shading", layer: 9.2,
+    draw: function (grid, p) {
+      E.shade(grid, A.waist.left + 2, A.shoulder.y + 14, Math.max(0, A.waist.right - A.waist.left - 4), 4, "topShadow", "top");
+      E.shade(grid, A.shoulder.left + 8, A.shoulder.y + 1, 7, 2, "topHighlight", "top");
+      E.shade(grid, A.shoulder.right - 15, A.shoulder.y + 1, 7, 2, "topHighlight", "top");
+    }
+  };
+  var CLOTH_BOTTOM_SHADING = {
+    id: "cloth_bottom_shading", layer: 8.2,
+    draw: function (grid, p) {
+      E.shade(grid, A.hip.left + 3, A.hip.y + 5, Math.max(0, A.hip.right - A.hip.left - 6), 4, "bottomShadow", "bottom");
     }
   };
 
@@ -4355,6 +4484,10 @@ function renderDocCategoryPage(workId, category) {
   global.PixelDollParts.faceShapes = FACE_SHAPES;
   global.PixelDollParts.ears = EARS;
   global.PixelDollParts.headDetail = HEAD_DETAIL;
+  global.PixelDollParts.hairHighlight = HAIR_HIGHLIGHT;
+  global.PixelDollParts.hairFrontHighlight = HAIR_FRONT_HIGHLIGHT;
+  global.PixelDollParts.clothTopShading = CLOTH_TOP_SHADING;
+  global.PixelDollParts.clothBottomShading = CLOTH_BOTTOM_SHADING;
   global.PixelDollParts.bustSizes = BUST_SIZES;
 })(typeof window !== "undefined" ? window : this);
 
@@ -4376,11 +4509,27 @@ function renderDocCategoryPage(workId, category) {
       legendL[ch] = key === "eyeIris" ? "eyeIrisLeft" : key;
       legendR[ch] = key === "eyeIris" ? "eyeIrisRight" : key;
     });
+    /* Catch-light: every variant gets a 1px glint at its first (top-left-most) iris
+     * cell, found automatically from its own ascii art -- so a new eye shape only
+     * needs an "I" in its rows to get a highlight, never a hand-placed pixel. */
+    var irisChar = Object.keys(legend).filter(function (ch) { return legend[ch] === "eyeIris"; })[0];
+    var glintRow = -1, glintCol = -1;
+    if (irisChar) {
+      for (var yy = 0; yy < rows.length && glintRow === -1; yy++) {
+        var idx = rows[yy].indexOf(irisChar);
+        if (idx !== -1) { glintRow = yy; glintCol = idx; }
+      }
+    }
     return {
       id: id, label: label, genre: genre, layer: 6,
       draw: function (grid, p) {
         var dy = A.eye.y + (dyAdjust || 0);
         E.mirrorAsciiLR(grid, CX - 5 - w, dy, rows, legendL, legendR, CX);
+        if (glintRow !== -1) {
+          var gx = CX - 5 - w + glintCol, gy = dy + glintRow;
+          E.px(grid, gx, gy, "eyeGlow");
+          E.px(grid, 2 * CX - gx - 1, gy, "eyeGlow");
+        }
       }
     };
   }
@@ -4878,9 +5027,12 @@ function renderDocCategoryPage(workId, category) {
       // crossed lapel (교임)
       E.taper(grid, A.shoulder.y + 2, A.waist.y, CX - 10, 4, CX - 2, 3, "topLine");
       E.taper(grid, A.shoulder.y + 2, A.waist.y, CX + 6, 4, CX - 1, 3, "topLine");
-      // wide sleeves
-      E.taper(grid, A.shoulder.y + 2, 96, A.shoulder.left - 8, 12, A.shoulder.left - 12, 16, "top");
-      E.taper(grid, A.shoulder.y + 2, 96, A.shoulder.right - 4, 12, A.shoulder.right - 4, 16, "top");
+      // wide sleeves -- generously sized to envelope the A-pose arm's outward sweep
+      // (shoulder to hand) for every body type, not just follow one exact arm path
+      E.taper(grid, A.shoulder.y + 1, 60, A.shoulder.left - 10, 18, A.shoulder.left - 16, 20, "top");
+      E.taper(grid, 60, 98, A.shoulder.left - 16, 20, 8, 22, "top");
+      E.taper(grid, A.shoulder.y + 1, 60, A.shoulder.right - 8, 18, A.shoulder.right - 4, 20, "top");
+      E.taper(grid, 60, 98, A.shoulder.right - 4, 20, A.shoulder.right + 12, 22, "top");
       // sash
       E.rect(grid, A.waist.left - 1, A.waist.y - 4, A.waist.right - A.waist.left + 2, 4, "topAccent");
     }),
@@ -4931,6 +5083,7 @@ function renderDocCategoryPage(workId, category) {
       E.rect(grid, A.hip.left, A.hip.y, A.hip.right - A.hip.left, 2, "bottomShadow");
       E.rect(grid, 46, A.legTop, 16, A.legBottom - A.legTop - 6, "bottom");
       E.rect(grid, 66, A.legTop, 16, A.legBottom - A.legTop - 6, "bottom");
+      E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop - 6, "bottom");
       E.rect(grid, 46, A.legTop, 2, A.legBottom - A.legTop - 6, "bottomLine");
       E.rect(grid, 80, A.legTop, 2, A.legBottom - A.legTop - 6, "bottomLine");
     }),
@@ -4958,11 +5111,13 @@ function renderDocCategoryPage(workId, category) {
         E.rect(grid, 66, legY + 4, 16, 1, "metalShadow");
         legY += 6;
       }
+      E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop - 6, "metal");
     }),
     leggings: bottom("leggings", "레깅스", "현대", "u", function (grid, p) {
       E.rect(grid, A.hip.left, A.hip.y, A.hip.right - A.hip.left, 2, "bottomShadow");
       E.rect(grid, 47, A.legTop, 14, A.legBottom - A.legTop - 2, "bottom");
       E.rect(grid, 67, A.legTop, 14, A.legBottom - A.legTop - 2, "bottom");
+      E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop - 2, "bottom");
     }),
     hanbokChima: bottom("hanbokChima", "치마(한복)", "무협", "f", function (grid, p) {
       E.taper(grid, A.waist.y - 2, A.legBottom, A.waist.left - 2, A.waist.right - A.waist.left + 4, A.hip.left - 12, A.hip.right - A.hip.left + 24, "bottom");
@@ -4976,24 +5131,31 @@ function renderDocCategoryPage(workId, category) {
     sneakers: shoe("sneakers", "운동화", "현대", "u", function (grid, p) {
       E.rect(grid, 45, A.footTop, 18, 7, "shoe");
       E.rect(grid, 65, A.footTop, 18, 7, "shoe");
+      E.rect(grid, 60, A.footTop, 8, 7, "shoe");
       E.rect(grid, 45, A.footTop + 5, 18, 2, "shoeSole");
       E.rect(grid, 65, A.footTop + 5, 18, 2, "shoeSole");
+      E.rect(grid, 60, A.footTop + 5, 8, 2, "shoeSole");
       E.rect(grid, 49, A.footTop + 1, 10, 1, "topAccent");
       E.rect(grid, 69, A.footTop + 1, 10, 1, "topAccent");
     }),
     dressShoes: shoe("dressShoes", "구두", "현대", "u", function (grid, p) {
       E.rect(grid, 46, A.footTop, 16, 6, "shoeShadow");
       E.rect(grid, 66, A.footTop, 16, 6, "shoeShadow");
+      E.rect(grid, 60, A.footTop, 8, 6, "shoeShadow");
       E.rect(grid, 46, A.footTop + 4, 16, 2, "shoeSole");
       E.rect(grid, 66, A.footTop + 4, 16, 2, "shoeSole");
+      E.rect(grid, 60, A.footTop + 4, 8, 2, "shoeSole");
     }),
     boots: shoe("boots", "부츠", "공통", "u", function (grid, p) {
       E.rect(grid, 45, A.footTop - 8, 18, 15, "shoe");
       E.rect(grid, 65, A.footTop - 8, 18, 15, "shoe");
+      E.rect(grid, 60, A.footTop - 8, 8, 15, "shoe");
       E.rect(grid, 45, A.footTop + 5, 18, 2, "shoeSole");
       E.rect(grid, 65, A.footTop + 5, 18, 2, "shoeSole");
+      E.rect(grid, 60, A.footTop + 5, 8, 2, "shoeSole");
       E.rect(grid, 45, A.footTop - 8, 18, 2, "shoeShadow");
       E.rect(grid, 65, A.footTop - 8, 18, 2, "shoeShadow");
+      E.rect(grid, 60, A.footTop - 8, 8, 2, "shoeShadow");
     }),
     leatherBoots: shoe("leatherBoots", "가죽 장화", "판타지·무협", "u", function (grid, p) {
       E.rect(grid, 44, A.footTop - 20, 20, 27, "shoe");
@@ -5008,12 +5170,14 @@ function renderDocCategoryPage(workId, category) {
     heels: shoe("heels", "하이힐", "현대·로맨스판타지", "f", function (grid, p) {
       E.rect(grid, 46, A.footTop, 16, 5, "shoe");
       E.rect(grid, 66, A.footTop, 16, 5, "shoe");
+      E.rect(grid, 60, A.footTop, 8, 5, "shoe");
       E.rect(grid, 51, A.footTop + 4, 3, 5, "shoeShadow");
       E.rect(grid, 71, A.footTop + 4, 3, 5, "shoeShadow");
     }),
     sandals: shoe("sandals", "샌들", "현대", "u", function (grid, p) {
       E.rect(grid, 45, A.footTop + 3, 18, 3, "shoeSole");
       E.rect(grid, 65, A.footTop + 3, 18, 3, "shoeSole");
+      E.rect(grid, 60, A.footTop + 3, 8, 3, "shoeSole");
       E.rect(grid, 52, A.footTop, 2, 4, "shoeShadow");
       E.rect(grid, 72, A.footTop, 2, 4, "shoeShadow");
     }),
@@ -5147,22 +5311,60 @@ function buildAppearanceLayers(ap) {
     D.mouths[ap.mouthShape] || D.mouths.smile,
     D.eyes[ap.eyeShape] || D.eyes.basic,
     hairSet.back,
+    D.hairHighlight,
     bottomDef,
+    D.clothBottomShading,
     topDef,
+    D.clothTopShading,
     showBust ? (D.bustSizes[ap.bustSize] || D.bustSizes.medium) : null,
     hairSet.front,
+    D.hairFrontHighlight,
     D.shoes[ap.shoes] || D.shoes.sneakers
   ];
+}
+/* Derives a highlight/blush tone from a base hex so it always tracks the user's own
+ * color choice instead of a fixed hardcoded tint (e.g. a highlight that stays warm-
+ * brown even when the user picks jet-black or platinum-blonde hair would look wrong). */
+function lightenHex(hex, amt) {
+  var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  function up(c) { return Math.max(0, Math.min(255, Math.round(c + (255 - c) * amt))); }
+  function hx(c) { var s = c.toString(16); return s.length < 2 ? "0" + s : s; }
+  return "#" + hx(up(r)) + hx(up(g)) + hx(up(b));
+}
+function darkenHex(hex, amt) {
+  var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  function down(c) { return Math.max(0, Math.min(255, Math.round(c * (1 - amt)))); }
+  function hx(c) { var s = c.toString(16); return s.length < 2 ? "0" + s : s; }
+  return "#" + hx(down(r)) + hx(down(g)) + hx(down(b));
 }
 function buildAppearancePalette(ap) {
   var topDef = PixelDollParts.tops[ap.top] || PixelDollParts.tops.shirt;
   var palette = Object.assign({}, PixelDoll.DEFAULT_PALETTE, {
-    skin: ap.skinTone, hair: ap.hairColor, top: ap.topColor, bottom: ap.bottomColor
+    skin: ap.skinTone, hair: ap.hairColor, top: ap.topColor, bottom: ap.bottomColor,
+    /* Shadow/highlight tones are derived from the user's own color choices (not left
+     * at their fixed defaults) so shading stays coherent across any skin/hair/outfit
+     * combination instead of only looking right for the one default tone. */
+    skinShadow: darkenHex(ap.skinTone, 0.16),
+    skinHighlight: lightenHex(ap.skinTone, 0.22),
+    skinBlush: mixTowardBlush(ap.skinTone),
+    hairShadow: darkenHex(ap.hairColor, 0.30),
+    hairHighlight: lightenHex(ap.hairColor, 0.35),
+    topShadow: darkenHex(ap.topColor, 0.22),
+    topHighlight: lightenHex(ap.topColor, 0.25),
+    bottomShadow: darkenHex(ap.bottomColor, 0.22),
+    bottomHighlight: lightenHex(ap.bottomColor, 0.25)
   });
   palette.eyeIrisLeft = ap.oddEye ? (ap.eyeColorLeft || ap.eyeColor) : ap.eyeColor;
   palette.eyeIrisRight = ap.oddEye ? (ap.eyeColorRight || ap.eyeColor) : ap.eyeColor;
   palette.bustColor = topDef.id === "none" ? ap.skinTone : ap.topColor;
   return palette;
+}
+/* A gentle rosy tint on the cheek: nudge red up, blue down a touch, from the skin tone. */
+function mixTowardBlush(hex) {
+  var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  function cl(c) { return Math.max(0, Math.min(255, Math.round(c))); }
+  function hx(c) { var s = c.toString(16); return s.length < 2 ? "0" + s : s; }
+  return "#" + hx(cl(r + 14)) + hx(cl(g - 8)) + hx(cl(b - 14));
 }
 function renderAppearanceSvg(ap) {
   return PixelDoll.renderSvgString(buildAppearanceLayers(ap), buildAppearancePalette(ap));
@@ -5285,7 +5487,6 @@ function wireAppearanceEditor(doc) {
     memoEl.addEventListener("input", function () { ap.memo = memoEl.value; autoGrow(memoEl); saveData(); });
   }
 }
-
 function renderCharacterAppearancesCard(doc) {
   if (doc.category !== "등장인물") return "";
   var novelsInWork = NOVELS.filter(function(n){ return n.workId === doc.workId; });
@@ -8376,6 +8577,26 @@ a:hover { text-decoration: underline; }
 .wb-nav-item .cnt { margin-left: auto; font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 .wb-nav-item.active .cnt { color: var(--accent-strong); }
 
+.wb-nav-cat { display: flex; align-items: center; gap: 2px; }
+.wb-nav-cat .wb-nav-item { flex: 1; min-width: 0; }
+.wb-nav-toggle {
+  display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; flex: none;
+  border: none; background: none; color: var(--ink-faint); cursor: pointer; border-radius: 7px;
+  transition: transform .15s ease, background .12s, color .12s;
+}
+.wb-nav-toggle svg { transition: transform .15s ease; }
+.wb-nav-toggle:hover { background: var(--bg-card-hover); color: var(--ink); }
+.wb-nav-toggle.open svg { transform: rotate(90deg); }
+.wb-nav-sub { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .18s ease; }
+.wb-nav-sub.open { grid-template-rows: 1fr; }
+.wb-nav-sub-inner { overflow: hidden; display: flex; flex-direction: column; gap: 1px; padding: 2px 0 4px 30px; }
+.wb-nav-subitem {
+  display: block; padding: 6px 9px; border-radius: 7px; font-size: 12.5px; color: var(--ink-faint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background .12s, color .12s;
+}
+.wb-nav-subitem:hover { background: var(--bg-card-hover); color: var(--ink); text-decoration: none; }
+.wb-nav-subitem.active { background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
+
 .wb-main { min-width: 0; padding: 26px 34px 60px; }
 .wb-overlay { display: none; }
 .wb-topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
@@ -8532,7 +8753,8 @@ var ASSET_CLIENT_JS = `/* 설정집.html의 클라이언트 로직. window.WB_DA
     item: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2.3 5.2 8 2.2l5.7 3v5.6L8 13.8l-5.7-3V5.2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M2.3 5.2 8 8.2l5.7-3M8 8.2v5.6" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
     book: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2 3.5c1.5-1 3.5-1 5.5 0v9.5c-2-1-4-1-5.5 0V3.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M13.5 3.5c-1.5-1-3.5-1-5.5 0v9.5c2-1 4-1 5.5 0V3.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
     clock: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 4.5V8l2.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
-    gear: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.2" stroke="currentColor" stroke-width="1.3"/><path d="M8 2.2v1.6M8 12.2v1.6M13.8 8h-1.6M3.8 8H2.2M12 4l-1.1 1.1M5.1 10.9 4 12M12 12l-1.1-1.1M5.1 5.1 4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
+    gear: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.2" stroke="currentColor" stroke-width="1.3"/><path d="M8 2.2v1.6M8 12.2v1.6M13.8 8h-1.6M3.8 8H2.2M12 4l-1.1 1.1M5.1 10.9 4 12M12 12l-1.1-1.1M5.1 5.1 4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+    chevron: '<svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M6 3.5 11 8l-5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   };
 
   function countFor(key) {
@@ -8544,6 +8766,19 @@ var ASSET_CLIENT_JS = `/* 설정집.html의 클라이언트 로직. window.WB_DA
       case "events": return (DATA.events || []).length;
       case "items": return (DATA.items || []).length;
       case "settings": return (DATA.settingsDocs || []).length;
+      default: return null;
+    }
+  }
+  /* Sub-entities shown inline under a category when its dropdown is expanded. */
+  function itemsFor(key) {
+    switch (key) {
+      case "characters": return DATA.characters || [];
+      case "locations": return DATA.locations || [];
+      case "organizations": return DATA.organizations || [];
+      case "races": return DATA.races || [];
+      case "events": return DATA.events || [];
+      case "items": return DATA.items || [];
+      case "settings": return DATA.settingsDocs || [];
       default: return null;
     }
   }
@@ -8795,9 +9030,20 @@ var ASSET_CLIENT_JS = `/* 설정집.html의 클라이언트 로직. window.WB_DA
     if (slashIdx === -1) return { key: h, id: null };
     return { key: h.slice(0, slashIdx), id: decodeURIComponent(h.slice(slashIdx + 1)) };
   }
-  function updateActiveNav(key) {
+  function updateActiveNav(key, id) {
     var links = document.querySelectorAll(".wb-nav-item");
-    for (var i = 0; i < links.length; i++) links[i].classList.toggle("active", links[i].dataset.navkey === key);
+    for (var i = 0; i < links.length; i++) links[i].classList.toggle("active", links[i].dataset.navkey === key && !id);
+    var subitems = document.querySelectorAll(".wb-nav-subitem");
+    for (var j = 0; j < subitems.length; j++) {
+      subitems[j].classList.toggle("active", !!id && subitems[j].dataset.navkey === key && subitems[j].dataset.navid === id);
+    }
+    /* Auto-expand (never auto-collapse) the category the current page belongs to,
+     * so following a search result or relationship link into e.g. a character
+     * detail page reveals that character highlighted in the sidebar list. */
+    var sub = document.querySelector('.wb-nav-sub[data-subkey="' + key + '"]');
+    var toggle = document.querySelector('.wb-nav-toggle[data-togglekey="' + key + '"]');
+    if (sub) sub.classList.add("open");
+    if (toggle) toggle.classList.add("open");
   }
   function renderRoute() {
     var r = parseHash();
@@ -8805,7 +9051,7 @@ var ASSET_CLIENT_JS = `/* 설정집.html의 클라이언트 로직. window.WB_DA
     var html = (r.id && DETAIL_RENDERERS[key]) ? DETAIL_RENDERERS[key](r.id) : LIST_RENDERERS[key]();
     var contentEl = document.getElementById("wbContent");
     if (contentEl) contentEl.innerHTML = html;
-    updateActiveNav(key);
+    updateActiveNav(key, r.id);
     wireFilters();
     var main = document.querySelector(".wb-main");
     if (main) main.scrollTop = 0;
@@ -8813,13 +9059,38 @@ var ASSET_CLIENT_JS = `/* 설정집.html의 클라이언트 로직. window.WB_DA
     closeMobileNav();
   }
 
-  /* ---------------- sidebar (rendered once) ---------------- */
+  /* ---------------- sidebar (rendered once) ----------------
+   * Each category is a dropdown: the row itself is a plain link to that
+   * category's list page, and a separate chevron button toggles an inline,
+   * indented sub-list of that category's actual entities (characters,
+   * organizations, ...) so picking a specific one doesn't require a detour
+   * through the list page first. */
   function renderSidebar() {
     return NAV_ITEMS.map(function (n) {
       var cnt = countFor(n.key);
-      return '<a class="wb-nav-item" data-navkey="' + n.key + '" href="#' + (n.key === "index" ? "" : n.key) + '">' +
+      var list = itemsFor(n.key);
+      var itemLink = '<a class="wb-nav-item" data-navkey="' + n.key + '" href="#' + (n.key === "index" ? "" : n.key) + '">' +
         ICONS[n.icon] + '<span>' + esc(n.label) + '</span>' + (cnt != null ? '<span class="cnt">' + cnt + '</span>' : "") + '</a>';
+      if (!list || !list.length) return itemLink;
+      var toggleBtn = '<button type="button" class="wb-nav-toggle" data-togglekey="' + n.key + '" aria-label="' + esc(n.label) + ' 목록 펼치기/접기" aria-expanded="false">' + ICONS.chevron + '</button>';
+      var subItems = list.map(function (item) {
+        return '<a class="wb-nav-subitem" data-navkey="' + n.key + '" data-navid="' + esc(item.id) + '" href="' + linkFor(n.key, item.id) + '">' + esc(item.title || "(제목 없음)") + '</a>';
+      }).join("");
+      return '<div class="wb-nav-cat">' + itemLink + toggleBtn + '</div>' +
+        '<div class="wb-nav-sub" data-subkey="' + n.key + '"><div class="wb-nav-sub-inner">' + subItems + '</div></div>';
     }).join("");
+  }
+  function wireSidebarToggles() {
+    document.querySelectorAll(".wb-nav-toggle").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var key = btn.dataset.togglekey;
+        var sub = document.querySelector('.wb-nav-sub[data-subkey="' + key + '"]');
+        var willOpen = !btn.classList.contains("open");
+        btn.classList.toggle("open", willOpen);
+        btn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+        if (sub) sub.classList.toggle("open", willOpen);
+      });
+    });
   }
 
   /* ---------------- filters (re-wired after every content swap) ---------------- */
@@ -8994,6 +9265,7 @@ var ASSET_CLIENT_JS = `/* 설정집.html의 클라이언트 로직. window.WB_DA
     applyTheme();
     var sidebarEl = document.getElementById("wbSidebar");
     if (sidebarEl) sidebarEl.insertAdjacentHTML("beforeend", renderSidebar());
+    wireSidebarToggles();
     var popSlot = document.getElementById("wbSettingsPopSlot");
     if (popSlot) popSlot.innerHTML = renderSettingsPop();
     wireThemeUI();
