@@ -193,11 +193,27 @@
   .appear-body { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
   .appear-preview { flex:none; width:230px; border:1px solid var(--border); border-radius:11px; overflow:hidden; background:var(--bg-card-hover); }
   .appear-preview svg { display:block; width:100%; height:auto; }
-  .appear-fields { flex:1; min-width:240px; display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; }
-  .appear-gender-row { grid-column:1 / -1; }
+  .appear-fields { flex:1; min-width:240px; display:flex; flex-direction:column; gap:10px; }
+  .appear-gender-row { display:flex; gap:6px; }
   .appear-field { display:flex; flex-direction:column; gap:4px; }
   .appear-field label { font-size:11px; color:var(--ink-faint); }
   .appear-field .sel { border:1px solid var(--border); width:100%; }
+  .appear-tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); padding-bottom:0; }
+  .appear-tab { flex:1; background:none; border:none; padding:8px 4px; font-size:12.5px; color:var(--ink-faint); border-bottom:2px solid transparent; margin-bottom:-1px; cursor:pointer; transition:color .12s, border-color .12s; }
+  .appear-tab:hover { color:var(--ink); }
+  .appear-tab.on { color:var(--accent-strong); border-bottom-color:var(--accent); font-weight:600; }
+  .appear-tab-panel { display:flex; flex-direction:column; gap:8px; }
+  .appear-tab-panel[hidden] { display:none; }
+  .appear-acc { border:1px solid var(--border); border-radius:9px; overflow:hidden; background:var(--bg-card); }
+  .appear-acc-head { display:flex; align-items:center; gap:9px; width:100%; padding:7px 10px; background:none; border:none; cursor:pointer; text-align:left; }
+  .appear-acc-head:hover { background:var(--bg-card-hover); }
+  .appear-acc-thumb { flex:none; width:28px; height:28px; border-radius:6px; overflow:hidden; background:var(--bg-card-hover); }
+  .appear-acc-thumb svg { display:block; width:100%; height:100%; }
+  .appear-acc-label { font-size:12.5px; color:var(--ink-soft); flex:none; }
+  .appear-acc-value { font-size:12px; color:var(--ink-faint); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .appear-acc-head svg { flex:none; color:var(--ink-faint); transition:transform .12s; }
+  .appear-acc.open .appear-acc-head svg { transform:rotate(180deg); }
+  .appear-acc .appear-picker-grid { padding:8px; border-top:1px solid var(--border); }
   .appear-picker-section { display:flex; flex-direction:column; gap:6px; }
   .appear-picker-label { font-size:11px; color:var(--ink-faint); }
   .appear-picker-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(64px,1fr)); gap:6px; }
@@ -2237,7 +2253,7 @@ function openFindReplace(textareaId, triggerEl, onUpdate) {
 }
 
 /* ---------------- state ---------------- */
-var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, focusMode: false };
+var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, focusMode: false, appearTab: {} };
 function applyFocusModeClass() {
   var appEl = document.querySelector(".app");
   if (!appEl) return;
@@ -3990,7 +4006,7 @@ function renderDocCategoryPage(workId, category) {
     "bottom", "bottomShadow", "bottomHighlight", "bottomLine",
     "shoe", "shoeShadow", "shoeSole",
     "metal", "metalShadow", "cloth2", "cloth2Shadow",
-    "bustColor"
+    "bustColor", "bustHighlight", "bustShadow"
   ];
 
   var DEFAULT_PALETTE = {
@@ -4004,7 +4020,7 @@ function renderDocCategoryPage(workId, category) {
     bottom: "#38394a", bottomShadow: "#26273350", bottomHighlight: "#54566c", bottomLine: "#1a1b26",
     shoe: "#3a2a22", shoeShadow: "#281c17", shoeSole: "#171012",
     metal: "#b9bfc9", metalShadow: "#7d838d", cloth2: "#7a3b3b", cloth2Shadow: "#542828",
-    bustColor: "#f0c199"
+    bustColor: "#f0c199", bustHighlight: "#f8ddc0", bustShadow: "#d49f70"
   };
 
   /* ---- geometry helpers: every big silhouette is built from these, so shapes
@@ -4282,7 +4298,7 @@ function renderDocCategoryPage(workId, category) {
       E.rect(grid, A.neck.left, A.neck.top, A.neck.right - A.neck.left, A.neck.bottom - A.neck.top, "skin");
       E.rect(grid, A.neck.left, A.neck.bottom - 2, A.neck.right - A.neck.left, 2, "skinShadow");
       E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.waist.left, A.waist.right - A.waist.left, "skin");
-      aPoseArmPair(grid, 8, 5, 18, 42, "skin", "skinShadow");
+      aPoseArmPair(grid, 7, 4, 18, 42, "skin", "skinShadow");
       E.rect(grid, 46, A.legTop, 16, A.legBottom - A.legTop, "skin");
       E.rect(grid, 66, A.legTop, 16, A.legBottom - A.legTop, "skin");
       E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop, "skin");
@@ -4293,7 +4309,7 @@ function renderDocCategoryPage(workId, category) {
     slim: bodyPart("slim", "슬림", "u", function (grid, p) {
       E.rect(grid, A.neck.left + 1, A.neck.top, A.neck.right - A.neck.left - 2, A.neck.bottom - A.neck.top, "skin");
       E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left + 4, A.shoulder.right - A.shoulder.left - 8, A.waist.left + 2, A.waist.right - A.waist.left - 4, "skin");
-      aPoseArmPair(grid, 6, 4, 16, 42, "skin", "skinShadow");
+      aPoseArmPair(grid, 5, 3, 16, 42, "skin", "skinShadow");
       E.rect(grid, 48, A.legTop, 12, A.legBottom - A.legTop, "skin");
       E.rect(grid, 68, A.legTop, 12, A.legBottom - A.legTop, "skin");
       E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop, "skin");
@@ -4305,7 +4321,7 @@ function renderDocCategoryPage(workId, category) {
       E.rect(grid, A.neck.left - 1, A.neck.top, A.neck.right - A.neck.left + 2, A.neck.bottom - A.neck.top, "skin");
       E.taper(grid, A.shoulder.y, A.shoulder.y + 8, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.shoulder.left + 3, A.shoulder.right - A.shoulder.left - 6, "skin");
       E.taper(grid, A.shoulder.y + 8, A.waist.y, A.shoulder.left + 3, A.shoulder.right - A.shoulder.left - 6, A.waist.left - 2, A.waist.right - A.waist.left + 4, "skin");
-      aPoseArmPair(grid, 11, 7, 20, 40, "skin", "skinShadow");
+      aPoseArmPair(grid, 9, 6, 20, 40, "skin", "skinShadow");
       E.rect(grid, 44, A.legTop, 18, A.legBottom - A.legTop, "skin");
       E.rect(grid, 66, A.legTop, 18, A.legBottom - A.legTop, "skin");
       E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop, "skin");
@@ -4320,7 +4336,7 @@ function renderDocCategoryPage(workId, category) {
       E.taper(grid, A.shoulder.y, A.shoulder.y + 14, A.shoulder.left + 2, A.shoulder.right - A.shoulder.left - 4, A.waist.left + 4, A.waist.right - A.waist.left - 8, "skin");
       E.taper(grid, A.shoulder.y + 14, A.waist.y, A.waist.left + 4, A.waist.right - A.waist.left - 8, A.waist.left + 4, A.waist.right - A.waist.left - 8, "skin");
       E.taper(grid, A.waist.y, A.hip.y + 4, A.waist.left + 4, A.waist.right - A.waist.left - 8, A.hip.left, A.hip.right - A.hip.left, "skin");
-      aPoseArmPair(grid, 7, 5, 17, 42, "skin", "skinShadow");
+      aPoseArmPair(grid, 6, 4, 17, 42, "skin", "skinShadow");
       E.rect(grid, 47, A.legTop, 14, A.legBottom - A.legTop, "skin");
       E.rect(grid, 67, A.legTop, 14, A.legBottom - A.legTop, "skin");
       E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop, "skin");
@@ -4332,7 +4348,7 @@ function renderDocCategoryPage(workId, category) {
     broad: bodyPart("broad", "다부진 체형", "m", function (grid, p) {
       E.rect(grid, A.neck.left - 1, A.neck.top, A.neck.right - A.neck.left + 2, A.neck.bottom - A.neck.top, "skin");
       E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.waist.left - 4, A.waist.right - A.waist.left + 8, "skin");
-      aPoseArmPair(grid, 12, 8, 20, 38, "skin", "skinShadow");
+      aPoseArmPair(grid, 10, 7, 20, 38, "skin", "skinShadow");
       E.rect(grid, 44, A.legTop, 18, A.legBottom - A.legTop, "skin");
       E.rect(grid, 66, A.legTop, 18, A.legBottom - A.legTop, "skin");
       E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop, "skin");
@@ -4344,7 +4360,7 @@ function renderDocCategoryPage(workId, category) {
     stocky: bodyPart("stocky", "땅딸막한 체형", "u", function (grid, p) {
       E.rect(grid, A.neck.left - 1, A.neck.top, A.neck.right - A.neck.left + 2, A.neck.bottom - A.neck.top, "skin");
       E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.hip.left, A.hip.right - A.hip.left, "skin");
-      aPoseArmPair(grid, 10, 6, 16, 34, "skin", "skinShadow");
+      aPoseArmPair(grid, 8, 5, 16, 34, "skin", "skinShadow");
       E.rect(grid, 44, A.legTop, 17, A.legBottom - A.legTop - 4, "skin");
       E.rect(grid, 67, A.legTop, 17, A.legBottom - A.legTop - 4, "skin");
       E.rect(grid, 60, A.legTop, 8, A.legBottom - A.legTop - 4, "skin");
@@ -4471,17 +4487,38 @@ function renderDocCategoryPage(workId, category) {
 
   /* 5-stage bust size, gender-gated to "f" like the old system. Always drawn right
    * after the top layer (9) using a "bustColor" palette key the caller resolves to
-   * either skin (top === "none") or the top's own color -- see app-side buildLayers. */
+   * either skin (top === "none") or the top's own color -- see app-side buildLayers.
+   *
+   * Each cup is a soft teardrop taper (narrow top -> widest at mid -> tapering back
+   * in at the bottom) instead of a flat-sided rectangle, with the INNER edge (toward
+   * the sternum) held fixed and only the OUTER edge growing/shrinking -- so bigger
+   * sizes read as more curve, not two blocks marching toward each other. A highlight
+   * along the upper-outer curve and a shadow tucked under the lower-inner edge give
+   * it volume instead of a single flat fill. */
   function bust(id, label, bulge) {
     return {
       id: id, label: label, bulge: bulge, layer: 9.5,
       draw: function (grid, p) {
         if (!bulge) return;
-        var cy = 58 - Math.floor(bulge / 2), h2 = bulge, w2 = bulge + 1;
-        E.rect(grid, A.centerX - w2 - 2, cy, w2, h2, "bustColor");
-        E.rect(grid, A.centerX + 2, cy, w2, h2, "bustColor");
-        E.rect(grid, A.centerX - w2 - 2, cy + h2 - 1, w2, 1, "topShadow");
-        E.rect(grid, A.centerX + 2, cy + h2 - 1, w2, 1, "topShadow");
+        var top = 59, mid = top + 2, bottom = mid + 2 + Math.floor(bulge / 2);
+        var wTop = 1, wMid = 1 + bulge, wBottom = Math.max(1, Math.floor(bulge / 2));
+        [false, true].forEach(function (mirror) {
+          var innerX = mirror ? A.centerX + 1 : A.centerX - 1;
+          function seg(y0, w0, y1, w1) {
+            var x0 = mirror ? innerX : innerX - w0;
+            var x1 = mirror ? innerX : innerX - w1;
+            E.taper(grid, y0, y1, x0, w0, x1, w1, "bustColor");
+          }
+          seg(top, wTop, mid, wMid);
+          seg(mid, wMid, bottom, wBottom);
+          /* Two-tone shade over nearly the whole cup (not just a thin accent line) so
+           * the curve reads clearly even when bustColor matches the surrounding
+           * garment exactly -- upper half lit, lower half shadowed, the classic flat-
+           * shaded-sphere trick for implying volume in a few pixels. */
+          var boxX = innerX - wMid - 1, boxW = wMid + 2;
+          E.shade(grid, boxX, top, boxW, (mid - top) + 1, "bustHighlight", "bustColor");
+          E.shade(grid, boxX, mid + 1, boxW, Math.max(1, bottom - mid), "bustShadow", "bustColor");
+        });
       }
     };
   }
@@ -5230,6 +5267,16 @@ var APPEAR_CATS = [
   { key: "shoes", label: "신발", dict: function () { return PixelDollParts.shoes; } },
   { key: "bustSize", label: "가슴 크기", dict: function () { return PixelDollParts.bustSizes; }, genderOnly: "f" }
 ];
+/* Groups APPEAR_CATS into tabs so the editor doesn't dump every category as an
+ * always-expanded grid on one long page -- each tab only shows its own few
+ * categories (as collapsed accordion rows, see pickerSection) plus whatever
+ * color swatches are relevant to that group. */
+var APPEAR_TABS = [
+  { key: "body", label: "체형", cats: ["bodyType", "bustSize"] },
+  { key: "face", label: "얼굴", cats: ["faceShape", "eyebrowShape", "eyeShape", "mouthShape", "facialHair"] },
+  { key: "hair", label: "헤어", cats: ["hairStyle"] },
+  { key: "outfit", label: "의상", cats: ["top", "bottom", "shoes"] }
+];
 
 function defaultAppearance() {
   return {
@@ -5370,7 +5417,10 @@ function buildAppearancePalette(ap) {
   });
   palette.eyeIrisLeft = ap.oddEye ? (ap.eyeColorLeft || ap.eyeColor) : ap.eyeColor;
   palette.eyeIrisRight = ap.oddEye ? (ap.eyeColorRight || ap.eyeColor) : ap.eyeColor;
-  palette.bustColor = topDef.id === "none" ? ap.skinTone : ap.topColor;
+  var bustBase = topDef.id === "none" ? ap.skinTone : ap.topColor;
+  palette.bustColor = bustBase;
+  palette.bustHighlight = lightenHex(bustBase, 0.4);
+  palette.bustShadow = darkenHex(bustBase, 0.3);
   return palette;
 }
 /* A gentle rosy tint on the cheek: nudge red up, blue down a touch, from the skin tone. */
@@ -5387,16 +5437,23 @@ function renderAppearanceSvg(ap) {
 function renderAppearanceEditor(doc) {
   var ap = doc.appearance;
   var g = ap.gender;
+  var activeTab = (state.appearTab && state.appearTab[doc.id]) || "body";
 
+  /* Each category is a collapsed-by-default accordion row (small live thumbnail +
+   * current selection name), not an always-expanded grid -- this, plus splitting
+   * categories across tabs, is what gets the editor down to one screen instead of
+   * one long scroll of every option for every attribute at once. */
   function pickerSection(cat) {
     if (!appearIsGenderVisible(cat, g)) return "";
     var dict = cat.dict();
     if (cat.hideIfDress && (PixelDollParts.tops[ap.top] || {}).dress) return "";
     var ids = appearOptionIds(dict, g);
     var current = ap[cat.key];
-    return '<div class="appear-picker-section" style="grid-column:1/-1">' +
-      '<div class="appear-picker-label">' + esc(cat.label) + '</div>' +
-      '<div class="appear-picker-grid" data-pickcat="' + cat.key + '">' +
+    var curOpt = dict[current] || {};
+    var accKey = "aacc:" + doc.id + ":" + cat.key;
+    var open = !!(state.collapsed && state.collapsed[accKey]);
+    var headThumbAp = Object.assign({}, ap);
+    var gridHtml = open ? '<div class="appear-picker-grid" data-pickcat="' + cat.key + '">' +
       ids.map(function (id) {
         var thumbAp = Object.assign({}, ap); thumbAp[cat.key] = id;
         var o = dict[id];
@@ -5405,7 +5462,15 @@ function renderAppearanceEditor(doc) {
           '<span class="appear-pick-name">' + esc(o.label || id) + '</span>' +
           '</button>';
       }).join("") +
-      '</div></div>';
+      '</div>' : "";
+    return '<div class="appear-acc' + (open ? " open" : "") + '">' +
+      '<button type="button" class="appear-acc-head" data-acctoggle="' + accKey + '">' +
+      '<span class="appear-acc-thumb">' + renderAppearanceSvg(headThumbAp) + '</span>' +
+      '<span class="appear-acc-label">' + esc(cat.label) + '</span>' +
+      '<span class="appear-acc-value">' + esc(curOpt.label || current || "") + '</span>' +
+      ic("chevron", 11) +
+      '</button>' + gridHtml +
+      '</div>';
   }
 
   function swatchRow(id, list, current) {
@@ -5418,6 +5483,32 @@ function renderAppearanceEditor(doc) {
       '<div class="appear-color-readout" id="' + id + 'Readout">' + colorReadoutHtml(cur) + '</div>';
   }
 
+  function tabColorsHtml(tabKey) {
+    if (tabKey === "face") {
+      return '<div class="appear-field"><label class="appear-oddeye-check"><input type="checkbox" id="aOddEye" ' + (ap.oddEye ? "checked" : "") + '> 오드아이 (좌우 눈 색 다르게)</label></div>' +
+        (ap.oddEye
+          ? '<div class="appear-field"><label>왼쪽 눈 색</label>' + swatchRow("aEyeColorLeftRow", APPEAR_EYE_COLORS, ap.eyeColorLeft || ap.eyeColor) + '</div>' +
+            '<div class="appear-field"><label>오른쪽 눈 색</label>' + swatchRow("aEyeColorRightRow", APPEAR_EYE_COLORS, ap.eyeColorRight || ap.eyeColor) + '</div>'
+          : '<div class="appear-field"><label>눈 색</label>' + swatchRow("aEyeColorRow", APPEAR_EYE_COLORS, ap.eyeColor) + '</div>') +
+        '<div class="appear-field"><label>피부톤</label>' + swatchRow("aSkinRow", APPEAR_SKIN_TONES, ap.skinTone) + '</div>';
+    }
+    if (tabKey === "hair") return '<div class="appear-field"><label>머리색</label>' + swatchRow("aHairColorRow", APPEAR_HAIR_COLORS, ap.hairColor) + '</div>';
+    if (tabKey === "outfit") {
+      return '<div class="appear-field"><label>상의 색상</label>' + swatchRow("aTopColorRow", APPEAR_OUTFIT_COLORS, ap.topColor) + '</div>' +
+        '<div class="appear-field"><label>하의 색상</label>' + swatchRow("aBottomColorRow", APPEAR_OUTFIT_COLORS, ap.bottomColor) + '</div>';
+    }
+    return "";
+  }
+
+  function tabPanelHtml(tab) {
+    var catsHtml = tab.cats.map(function (key) {
+      var cat = APPEAR_CATS.filter(function (c) { return c.key === key; })[0];
+      return cat ? pickerSection(cat) : "";
+    }).join("");
+    return '<div class="appear-tab-panel" data-atabpanel="' + tab.key + '"' + (tab.key === activeTab ? "" : " hidden") + '>' +
+      catsHtml + tabColorsHtml(tab.key) + '</div>';
+  }
+
   var memoKey = "amemoOpen:" + doc.id;
   var memoOpen = state.collapsed.hasOwnProperty(memoKey) ? state.collapsed[memoKey] : !!(ap.memo && ap.memo.trim());
 
@@ -5426,25 +5517,19 @@ function renderAppearanceEditor(doc) {
     '<div class="appear-body">' +
     '<div class="appear-preview" id="appearPreview">' + renderAppearanceSvg(ap) + '</div>' +
     '<div class="appear-fields">' +
-    '<div class="life-pick-row appear-gender-row" style="grid-column:1/-1">' +
+    '<div class="life-pick-row appear-gender-row">' +
     '<button type="button" class="life-pick ' + (g === "f" ? "on" : "") + '" data-agender="f" style="--lc:#B0524D">여성</button>' +
     '<button type="button" class="life-pick ' + (g === "m" ? "on" : "") + '" data-agender="m" style="--lc:#4A6FA5">남성</button>' +
     '<button type="button" class="life-pick ' + (g === "u" ? "on" : "") + '" data-agender="u" style="--lc:#8B8579">공용/기타</button>' +
     '</div>' +
-    '<div class="appear-memo-wrap" style="grid-column:1/-1">' +
+    '<div class="appear-tabs" role="tablist">' + APPEAR_TABS.map(function (tab) {
+      return '<button type="button" class="appear-tab' + (tab.key === activeTab ? " on" : "") + '" data-atab="' + tab.key + '">' + esc(tab.label) + '</button>';
+    }).join("") + '</div>' +
+    APPEAR_TABS.map(tabPanelHtml).join("") +
+    '<div class="appear-memo-wrap">' +
     '<button type="button" class="appear-memo-toggle' + (memoOpen ? " open" : "") + '" data-memotoggle="1">' + ic("chevron", 11) + (memoOpen ? " 메모 접기" : " 메모 더보기" + (ap.memo && ap.memo.trim() ? " · 작성됨" : "")) + '</button>' +
     (memoOpen ? '<textarea class="field-input appear-memo" id="aMemo" rows="2" placeholder="추가로 외견을 메모해보세요 (예: 왼쪽 눈가의 흉터, 항상 두꺼운 목도리를 두름 등)">' + esc(ap.memo) + '</textarea>' : "") +
     '</div>' +
-    APPEAR_CATS.map(pickerSection).join("") +
-    '<div class="appear-field" style="grid-column:1/-1"><label class="appear-oddeye-check"><input type="checkbox" id="aOddEye" ' + (ap.oddEye ? "checked" : "") + '> 오드아이 (좌우 눈 색 다르게)</label></div>' +
-    (ap.oddEye
-      ? '<div class="appear-field"><label>왼쪽 눈 색</label>' + swatchRow("aEyeColorLeftRow", APPEAR_EYE_COLORS, ap.eyeColorLeft || ap.eyeColor) + '</div>' +
-        '<div class="appear-field"><label>오른쪽 눈 색</label>' + swatchRow("aEyeColorRightRow", APPEAR_EYE_COLORS, ap.eyeColorRight || ap.eyeColor) + '</div>'
-      : '<div class="appear-field"><label>눈 색</label>' + swatchRow("aEyeColorRow", APPEAR_EYE_COLORS, ap.eyeColor) + '</div>') +
-    '<div class="appear-field"><label>피부톤</label>' + swatchRow("aSkinRow", APPEAR_SKIN_TONES, ap.skinTone) + '</div>' +
-    '<div class="appear-field"><label>머리색</label>' + swatchRow("aHairColorRow", APPEAR_HAIR_COLORS, ap.hairColor) + '</div>' +
-    '<div class="appear-field"><label>상의 색상</label>' + swatchRow("aTopColorRow", APPEAR_OUTFIT_COLORS, ap.topColor) + '</div>' +
-    '<div class="appear-field"><label>하의 색상</label>' + swatchRow("aBottomColorRow", APPEAR_OUTFIT_COLORS, ap.bottomColor) + '</div>' +
     '</div>' +
     '</div>' +
     '</div>';
@@ -5459,6 +5544,17 @@ function wireAppearanceEditor(doc) {
   }
   document.querySelectorAll("[data-agender]").forEach(function (btn) {
     btn.addEventListener("click", function () { ap.gender = btn.dataset.agender; saveData(); renderDocPage(doc); });
+  });
+  document.querySelectorAll("[data-atab]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      state.appearTab = state.appearTab || {};
+      state.appearTab[doc.id] = btn.dataset.atab;
+      document.querySelectorAll(".appear-tab").forEach(function (b) { b.classList.toggle("on", b === btn); });
+      document.querySelectorAll(".appear-tab-panel").forEach(function (p) { p.hidden = p.dataset.atabpanel !== btn.dataset.atab; });
+    });
+  });
+  document.querySelectorAll("[data-acctoggle]").forEach(function (btn) {
+    btn.addEventListener("click", function () { toggleCollapse(btn.dataset.acctoggle); });
   });
   document.querySelectorAll("[data-pickcat]").forEach(function (row) {
     var cat = row.dataset.pickcat;
@@ -8687,6 +8783,8 @@ a:hover { text-decoration: underline; }
 }
 .wb-card:hover { transform: translateY(-2px); box-shadow: 0 10px 26px var(--shadow); border-color: var(--accent); text-decoration: none; }
 .wb-card .avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-strong); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 17px; margin-bottom: 4px; }
+.avatar-icon svg { width: 20px; height: 20px; }
+.wb-detail-avatar.avatar-icon svg { width: 32px; height: 32px; }
 .wb-card .name { font-size: 15px; font-weight: 700; color: var(--ink); }
 .wb-card .alias { font-size: 11.5px; color: var(--ink-faint); }
 .wb-card .desc { font-size: 12.5px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
@@ -8750,7 +8848,6 @@ var ASSET_CLIENT_JS = `/* 설정집.html의 클라이언트 로직. window.WB_DA
   var DATA = window.WB_DATA || {};
 
   function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
-  function initials(t) { return (t || "?").trim().slice(0, 1); }
   function fmtNum(n) { return (n || 0).toLocaleString("ko-KR"); }
   function linkFor(kind, id) { return "#" + kind + "/" + encodeURIComponent(id); }
 
@@ -8806,9 +8903,15 @@ var ASSET_CLIENT_JS = `/* 설정집.html의 클라이언트 로직. window.WB_DA
   }
 
   /* ---------------- shared render helpers ---------------- */
+  /* A category-appropriate icon (reusing the sidebar's own ICONS set) instead of a
+   * big initial letter when there's no portrait to show -- a plain letter carries no
+   * information and looks the same for every entity; a small person/building/map
+   * pin/... glyph at least hints at what kind of thing this card represents. */
+  var AVATAR_FALLBACK_ICON = { characters: "person", organizations: "org", locations: "map", races: "race", events: "flag", items: "item", settings: "book" };
+  function avatarFallbackHtml(kind) { return ICONS[AVATAR_FALLBACK_ICON[kind]] || ICONS.book; }
   function entityCard(e, kind) {
     return '<a class="wb-card" href="' + linkFor(kind, e.id) + '"' + (e.filterTags ? ' data-filter-tags="' + esc(e.filterTags) + '"' : "") + '>' +
-      (e.imageSvg ? '<div style="width:44px;aspect-ratio:1/1">' + e.imageSvg + '</div>' : '<div class="avatar">' + esc(initials(e.title)) + '</div>') +
+      (e.imageSvg ? '<div style="width:44px;aspect-ratio:1/1">' + e.imageSvg + '</div>' : '<div class="avatar avatar-icon">' + avatarFallbackHtml(kind) + '</div>') +
       '<div class="name">' + esc(e.title) + '</div>' +
       (e.subtitle ? '<div class="alias">' + esc(e.subtitle) + '</div>' : "") +
       (e.desc ? '<div class="desc">' + esc(e.desc) + '</div>' : "") +
@@ -8894,7 +8997,7 @@ var ASSET_CLIENT_JS = `/* 설정집.html의 클라이언트 로직. window.WB_DA
     var c = (DATA.characters || []).find(function (x) { return x.id === id; });
     if (!c) return notFound("등장인물");
     var head = '<div class="wb-detail-head">' +
-      (c.imageSvg ? '<div style="width:76px;aspect-ratio:1/1;flex:none">' + c.imageSvg + '</div>' : '<div class="wb-detail-avatar">' + esc(initials(c.title)) + '</div>') +
+      (c.imageSvg ? '<div style="width:76px;aspect-ratio:1/1;flex:none">' + c.imageSvg + '</div>' : '<div class="wb-detail-avatar avatar-icon">' + ICONS.person + '</div>') +
       '<div><div class="wb-detail-title">' + esc(c.title) + '</div>' +
       (c.aliases && c.aliases.length ? '<div class="wb-detail-alias">' + esc(c.aliases.join(" · ")) + '</div>' : "") + '</div></div>';
     var fields = (c.fields || []).map(function (f) {
@@ -8923,7 +9026,7 @@ var ASSET_CLIENT_JS = `/* 설정집.html의 클라이언트 로직. window.WB_DA
     var o = (DATA.organizations || []).find(function (x) { return x.id === id; });
     if (!o) return notFound("조직");
     var head = '<div class="wb-detail-head">' +
-      '<div class="wb-detail-avatar" style="background:' + (o.color || "var(--accent-soft)") + ';color:#fff">' + esc(initials(o.title)) + '</div>' +
+      '<div class="wb-detail-avatar avatar-icon" style="background:' + (o.color || "var(--accent-soft)") + ';color:#fff">' + ICONS.org + '</div>' +
       '<div><div class="wb-detail-title">' + esc(o.title) + '</div>' +
       (o.houseTypeLabel ? '<div class="wb-detail-alias">' + esc(o.houseTypeLabel) + '</div>' : "") + '</div></div>';
     return '<div class="wb-detail-card">' + head +
