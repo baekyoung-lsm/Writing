@@ -3970,29 +3970,31 @@ function renderDocCategoryPage(workId, category) {
   /* ---- shared, recolorable palette. A "look" supplies concrete hex values for
    * these keys; part authors only ever reference the key, never a literal color. */
   var PALETTE_KEYS = [
-    "skin", "skinShadow", "skinLine",
-    "hair", "hairShadow", "hairLine",
+    "skin", "skinShadow", "skinLine", "skinBlush",
+    "hair", "hairShadow", "hairLine", "hairHighlight",
     "brow",
-    "eyeWhite", "eyeIris", "eyePupil", "eyeLine", "eyeGlow",
+    "eyeWhite", "eyeIris", "eyeIrisLeft", "eyeIrisRight", "eyePupil", "eyeLine", "eyeGlow",
     "mouth", "mouthDark", "teeth", "blood",
     "beard", "beardShadow",
     "top", "topShadow", "topLine", "topAccent",
     "bottom", "bottomShadow", "bottomLine",
     "shoe", "shoeShadow", "shoeSole",
-    "metal", "metalShadow", "cloth2", "cloth2Shadow"
+    "metal", "metalShadow", "cloth2", "cloth2Shadow",
+    "bustColor"
   ];
 
   var DEFAULT_PALETTE = {
-    skin: "#f0c199", skinShadow: "#d49f70", skinLine: "#7a5236",
-    hair: "#3b2a20", hairShadow: "#2a1d16", hairLine: "#1c130d",
+    skin: "#f0c199", skinShadow: "#d49f70", skinLine: "#7a5236", skinBlush: "#e8a888",
+    hair: "#3b2a20", hairShadow: "#2a1d16", hairLine: "#1c130d", hairHighlight: "#5c4536",
     brow: "#2a1d16",
-    eyeWhite: "#f6f3ec", eyeIris: "#3d6b8a", eyePupil: "#161616", eyeLine: "#20140f", eyeGlow: "#ffffff",
+    eyeWhite: "#f6f3ec", eyeIris: "#3d6b8a", eyeIrisLeft: "#3d6b8a", eyeIrisRight: "#3d6b8a", eyePupil: "#161616", eyeLine: "#20140f", eyeGlow: "#ffffff",
     mouth: "#a5443c", mouthDark: "#5c1f1c", teeth: "#f6f3ec", blood: "#8c1c1c",
     beard: "#2a1d16", beardShadow: "#1c130d",
     top: "#4a6fa5", topShadow: "#33507d", topLine: "#22375a", topAccent: "#e7c65c",
     bottom: "#38394a", bottomShadow: "#26273350", bottomLine: "#1a1b26",
     shoe: "#3a2a22", shoeShadow: "#281c17", shoeSole: "#171012",
-    metal: "#b9bfc9", metalShadow: "#7d838d", cloth2: "#7a3b3b", cloth2Shadow: "#542828"
+    metal: "#b9bfc9", metalShadow: "#7d838d", cloth2: "#7a3b3b", cloth2Shadow: "#542828",
+    bustColor: "#f0c199"
   };
 
   /* ---- geometry helpers: every big silhouette is built from these, so shapes
@@ -4012,6 +4014,20 @@ function renderDocCategoryPage(workId, category) {
       var lx = Math.round(x0 + (x1 - x0) * t);
       var lw = Math.round(w0 + (w1 - w0) * t);
       rect(grid, lx, y0 + yy, lw, 1, key);
+    }
+  }
+  /* Ordered-dither fill: alternates two palette keys in a checkerboard so a flat two-
+   * tone area reads as a soft gradient/highlight at normal viewing size, without ever
+   * blending colors (every pixel is still one flat key, so it upscales exactly like
+   * everything else -- no anti-aliasing smuggled in). Only paints over cells that
+   * already have `overKey` set, so it never spills past an existing silhouette. */
+  function dither(grid, x, y, w, h, keyA, keyB, overKey) {
+    for (var yy = 0; yy < h; yy++) {
+      for (var xx = 0; xx < w; xx++) {
+        var gx = x + xx, gy = y + yy;
+        if (overKey && grid[gy * GRID + gx] !== overKey) continue;
+        px(grid, gx, gy, ((gx + gy) % 2 === 0) ? keyA : keyB);
+      }
     }
   }
   /* ASCII grid: rows of characters, legend maps a character to a palette key. '.' = transparent. */
@@ -4145,7 +4161,7 @@ function renderDocCategoryPage(workId, category) {
 
   global.PixelDoll = {
     GRID: GRID, OUT: OUT, ANCHORS: ANCHORS, PALETTE_KEYS: PALETTE_KEYS, DEFAULT_PALETTE: DEFAULT_PALETTE,
-    px: px, rect: rect, taper: taper, ascii: ascii, mirrorAscii: mirrorAscii, mirrorAsciiLR: mirrorAsciiLR,
+    px: px, rect: rect, taper: taper, ascii: ascii, mirrorAscii: mirrorAscii, mirrorAsciiLR: mirrorAsciiLR, dither: dither,
     newGrid: newGrid, compose: compose, paintToCanvas: paintToCanvas, renderSvgString: renderSvgString
   };
 })(typeof window !== "undefined" ? window : this);
@@ -4167,19 +4183,35 @@ function renderDocCategoryPage(workId, category) {
 
   function bodyPart(id, label, gender, drawFn) { return { id: id, label: label, gender: gender, layer: 1, draw: drawFn }; }
 
+  /* Bent-elbow arm pose (T-pose rotated ~45 degrees at the elbow, per direction),
+   * drawn for both sides at once from LEFT-side centerline coordinates (mirrored
+   * around A.centerX for the right side). Elbow swings outward from the shoulder,
+   * forearm swings back inward toward the waist -- the hand always stays outside
+   * A.hip's x-range so it never crosses under the bottom/top clothing drawn later. */
+  function bentArmPair(grid, sx, sy, ex, ey, hx, hy, w0, w1, w2, key, shadowKey) {
+    function seg(cx0, cy0, cx1, cy1, ww0, ww1, mirror) {
+      var x0 = mirror ? 2 * A.centerX - cx0 : cx0;
+      var x1 = mirror ? 2 * A.centerX - cx1 : cx1;
+      E.taper(grid, cy0, cy1, Math.round(x0 - ww0 / 2), ww0, Math.round(x1 - ww1 / 2), ww1, key);
+    }
+    [false, true].forEach(function (mirror) {
+      seg(sx, sy, ex, ey, w0, w1, mirror);
+      seg(ex, ey, hx, hy, w1, w2, mirror);
+      var hcx = mirror ? 2 * A.centerX - hx : hx;
+      var hw = w2 + 2, hh = 6;
+      E.rect(grid, Math.round(hcx - hw / 2), hy, hw, hh, key);
+      E.rect(grid, Math.round(hcx - hw / 2), hy + hh - 2, hw, 2, shadowKey);
+      var ecx = mirror ? 2 * A.centerX - ex : ex;
+      E.rect(grid, Math.round(ecx - w1 / 2) - 1, ey - 1, w1 + 2, 2, shadowKey);
+    });
+  }
+
   var BODIES = {
     normal: bodyPart("normal", "보통 체형", "u", function (grid, p) {
       E.rect(grid, A.neck.left, A.neck.top, A.neck.right - A.neck.left, A.neck.bottom - A.neck.top, "skin");
       E.rect(grid, A.neck.left, A.neck.bottom - 2, A.neck.right - A.neck.left, 2, "skinShadow");
       E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.waist.left, A.waist.right - A.waist.left, "skin");
-      E.taper(grid, 54, 100, 31, 8, 33, 7, "skin");
-      E.taper(grid, 54, 100, 89, 8, 88, 7, "skin");
-      E.rect(grid, 30, 96, 9, 3, "skinShadow");
-      E.rect(grid, 89, 96, 9, 3, "skinShadow");
-      E.rect(grid, 30, 100, 8, 6, "skin");
-      E.rect(grid, 90, 100, 8, 6, "skin");
-      E.rect(grid, 30, 104, 8, 2, "skinShadow");
-      E.rect(grid, 90, 104, 8, 2, "skinShadow");
+      bentArmPair(grid, 36, 54, 26, 70, 38, 86, 8, 6, 5, "skin", "skinShadow");
       E.rect(grid, 46, A.legTop, 16, A.legBottom - A.legTop, "skin");
       E.rect(grid, 66, A.legTop, 16, A.legBottom - A.legTop, "skin");
       E.rect(grid, 46, A.footTop, 17, 7, "skin");
@@ -4188,12 +4220,7 @@ function renderDocCategoryPage(workId, category) {
     slim: bodyPart("slim", "슬림", "u", function (grid, p) {
       E.rect(grid, A.neck.left + 1, A.neck.top, A.neck.right - A.neck.left - 2, A.neck.bottom - A.neck.top, "skin");
       E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left + 4, A.shoulder.right - A.shoulder.left - 8, A.waist.left + 2, A.waist.right - A.waist.left - 4, "skin");
-      E.taper(grid, 54, 100, 35, 6, 36, 5, "skin");
-      E.taper(grid, 54, 100, 87, 6, 87, 5, "skin");
-      E.rect(grid, 34, 100, 6, 6, "skin");
-      E.rect(grid, 88, 100, 6, 6, "skin");
-      E.rect(grid, 34, 104, 6, 2, "skinShadow");
-      E.rect(grid, 88, 104, 6, 2, "skinShadow");
+      bentArmPair(grid, 38, 54, 30, 68, 40, 84, 6, 5, 4, "skin", "skinShadow");
       E.rect(grid, 48, A.legTop, 12, A.legBottom - A.legTop, "skin");
       E.rect(grid, 68, A.legTop, 12, A.legBottom - A.legTop, "skin");
       E.rect(grid, 47, A.footTop, 14, 7, "skin");
@@ -4203,14 +4230,7 @@ function renderDocCategoryPage(workId, category) {
       E.rect(grid, A.neck.left - 1, A.neck.top, A.neck.right - A.neck.left + 2, A.neck.bottom - A.neck.top, "skin");
       E.taper(grid, A.shoulder.y, A.shoulder.y + 8, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.shoulder.left + 3, A.shoulder.right - A.shoulder.left - 6, "skin");
       E.taper(grid, A.shoulder.y + 8, A.waist.y, A.shoulder.left + 3, A.shoulder.right - A.shoulder.left - 6, A.waist.left - 2, A.waist.right - A.waist.left + 4, "skin");
-      E.taper(grid, 54, 100, 28, 10, 30, 8, "skin");
-      E.taper(grid, 54, 100, 90, 10, 90, 8, "skin");
-      E.rect(grid, 27, 96, 12, 3, "skinShadow");
-      E.rect(grid, 89, 96, 12, 3, "skinShadow");
-      E.rect(grid, 27, 100, 9, 7, "skin");
-      E.rect(grid, 92, 100, 9, 7, "skin");
-      E.rect(grid, 27, 105, 9, 2, "skinShadow");
-      E.rect(grid, 92, 105, 9, 2, "skinShadow");
+      bentArmPair(grid, 32, 54, 18, 70, 32, 88, 10, 8, 7, "skin", "skinShadow");
       E.rect(grid, 44, A.legTop, 18, A.legBottom - A.legTop, "skin");
       E.rect(grid, 66, A.legTop, 18, A.legBottom - A.legTop, "skin");
       E.rect(grid, 44, A.footTop, 19, 7, "skin");
@@ -4223,10 +4243,7 @@ function renderDocCategoryPage(workId, category) {
       E.taper(grid, A.shoulder.y, A.shoulder.y + 14, A.shoulder.left + 2, A.shoulder.right - A.shoulder.left - 4, A.waist.left + 4, A.waist.right - A.waist.left - 8, "skin");
       E.taper(grid, A.shoulder.y + 14, A.waist.y, A.waist.left + 4, A.waist.right - A.waist.left - 8, A.waist.left + 4, A.waist.right - A.waist.left - 8, "skin");
       E.taper(grid, A.waist.y, A.hip.y + 4, A.waist.left + 4, A.waist.right - A.waist.left - 8, A.hip.left, A.hip.right - A.hip.left, "skin");
-      E.taper(grid, 54, 100, 33, 7, 34, 6, "skin");
-      E.taper(grid, 54, 100, 88, 7, 87, 6, "skin");
-      E.rect(grid, 32, 100, 7, 6, "skin");
-      E.rect(grid, 88, 100, 7, 6, "skin");
+      bentArmPair(grid, 35, 54, 25, 70, 37, 86, 7, 6, 5, "skin", "skinShadow");
       E.rect(grid, 47, A.legTop, 14, A.legBottom - A.legTop, "skin");
       E.rect(grid, 67, A.legTop, 14, A.legBottom - A.legTop, "skin");
       E.rect(grid, 46, A.footTop, 16, 7, "skin");
@@ -4236,12 +4253,7 @@ function renderDocCategoryPage(workId, category) {
     broad: bodyPart("broad", "다부진 체형", "m", function (grid, p) {
       E.rect(grid, A.neck.left - 1, A.neck.top, A.neck.right - A.neck.left + 2, A.neck.bottom - A.neck.top, "skin");
       E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.waist.left - 4, A.waist.right - A.waist.left + 8, "skin");
-      E.taper(grid, 54, 98, 27, 11, 29, 9, "skin");
-      E.taper(grid, 54, 98, 90, 11, 89, 9, "skin");
-      E.rect(grid, 26, 94, 12, 3, "skinShadow");
-      E.rect(grid, 90, 94, 12, 3, "skinShadow");
-      E.rect(grid, 26, 98, 10, 7, "skin");
-      E.rect(grid, 92, 98, 10, 7, "skin");
+      bentArmPair(grid, 30, 54, 16, 70, 30, 88, 11, 9, 7, "skin", "skinShadow");
       E.rect(grid, 44, A.legTop, 18, A.legBottom - A.legTop, "skin");
       E.rect(grid, 66, A.legTop, 18, A.legBottom - A.legTop, "skin");
       E.rect(grid, 44, A.footTop, 19, 7, "skin");
@@ -4251,10 +4263,7 @@ function renderDocCategoryPage(workId, category) {
     stocky: bodyPart("stocky", "땅딸막한 체형", "u", function (grid, p) {
       E.rect(grid, A.neck.left - 1, A.neck.top, A.neck.right - A.neck.left + 2, A.neck.bottom - A.neck.top, "skin");
       E.taper(grid, A.shoulder.y, A.waist.y, A.shoulder.left, A.shoulder.right - A.shoulder.left, A.hip.left, A.hip.right - A.hip.left, "skin");
-      E.taper(grid, 54, 98, 30, 9, 31, 8, "skin");
-      E.taper(grid, 54, 98, 89, 9, 88, 8, "skin");
-      E.rect(grid, 29, 94, 9, 6, "skin");
-      E.rect(grid, 89, 94, 9, 6, "skin");
+      bentArmPair(grid, 32, 54, 20, 66, 34, 80, 9, 8, 6, "skin", "skinShadow");
       E.rect(grid, 44, A.legTop, 17, A.legBottom - A.legTop - 4, "skin");
       E.rect(grid, 67, A.legTop, 17, A.legBottom - A.legTop - 4, "skin");
       E.rect(grid, 43, A.footTop - 4, 19, 11, "skin");
@@ -4316,13 +4325,25 @@ function renderDocCategoryPage(workId, category) {
     }
   };
   /* Contour lines only -- drawn after beard, must stay thin so it never covers a
-   * beard/jaw area with opaque fill. */
+   * beard/jaw area with opaque fill. Cheek blush uses dither over "skin" so it only
+   * ever tints pixels the current face shape actually filled -- never spills past it. */
   var HEAD_DETAIL = {
     id: "head_detail", layer: 5,
     draw: function (grid, p) {
       E.rect(grid, h.left + 6, h.bottom - 1, h.right - h.left - 12, 1, "skinShadow");
       E.rect(grid, A.centerX - 1, A.nose.y - 1, 2, A.nose.h, "skinShadow");
       E.rect(grid, A.centerX - 1, A.nose.y + A.nose.h - 1, 3, 1, "skinShadow");
+      E.dither(grid, h.left + 2, A.eye.y + 4, 6, 4, "skinBlush", "skin", "skin");
+      E.dither(grid, h.right - 8, A.eye.y + 4, 6, 4, "skinBlush", "skin", "skin");
+    }
+  };
+  /* Hair highlight: dithered lighter tone over the upper-front of whichever hair mass
+   * is already there (overKey:"hair"), so it works unchanged for every hairstyle
+   * without each one needing its own highlight pass. */
+  var HAIR_HIGHLIGHT = {
+    id: "hair_highlight", layer: 7.2,
+    draw: function (grid, p) {
+      E.dither(grid, h.left + 3, h.top - 10, 12, 6, "hairHighlight", "hair", "hair");
     }
   };
 
@@ -4355,6 +4376,7 @@ function renderDocCategoryPage(workId, category) {
   global.PixelDollParts.faceShapes = FACE_SHAPES;
   global.PixelDollParts.ears = EARS;
   global.PixelDollParts.headDetail = HEAD_DETAIL;
+  global.PixelDollParts.hairHighlight = HAIR_HIGHLIGHT;
   global.PixelDollParts.bustSizes = BUST_SIZES;
 })(typeof window !== "undefined" ? window : this);
 
@@ -5147,6 +5169,7 @@ function buildAppearanceLayers(ap) {
     D.mouths[ap.mouthShape] || D.mouths.smile,
     D.eyes[ap.eyeShape] || D.eyes.basic,
     hairSet.back,
+    D.hairHighlight,
     bottomDef,
     topDef,
     showBust ? (D.bustSizes[ap.bustSize] || D.bustSizes.medium) : null,
@@ -5154,15 +5177,33 @@ function buildAppearanceLayers(ap) {
     D.shoes[ap.shoes] || D.shoes.sneakers
   ];
 }
+/* Derives a highlight/blush tone from a base hex so it always tracks the user's own
+ * color choice instead of a fixed hardcoded tint (e.g. a highlight that stays warm-
+ * brown even when the user picks jet-black or platinum-blonde hair would look wrong). */
+function lightenHex(hex, amt) {
+  var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  function up(c) { return Math.max(0, Math.min(255, Math.round(c + (255 - c) * amt))); }
+  function hx(c) { var s = c.toString(16); return s.length < 2 ? "0" + s : s; }
+  return "#" + hx(up(r)) + hx(up(g)) + hx(up(b));
+}
 function buildAppearancePalette(ap) {
   var topDef = PixelDollParts.tops[ap.top] || PixelDollParts.tops.shirt;
   var palette = Object.assign({}, PixelDoll.DEFAULT_PALETTE, {
-    skin: ap.skinTone, hair: ap.hairColor, top: ap.topColor, bottom: ap.bottomColor
+    skin: ap.skinTone, hair: ap.hairColor, top: ap.topColor, bottom: ap.bottomColor,
+    skinBlush: mixTowardBlush(ap.skinTone),
+    hairHighlight: lightenHex(ap.hairColor, 0.35)
   });
   palette.eyeIrisLeft = ap.oddEye ? (ap.eyeColorLeft || ap.eyeColor) : ap.eyeColor;
   palette.eyeIrisRight = ap.oddEye ? (ap.eyeColorRight || ap.eyeColor) : ap.eyeColor;
   palette.bustColor = topDef.id === "none" ? ap.skinTone : ap.topColor;
   return palette;
+}
+/* A gentle rosy tint on the cheek: nudge red up, blue down a touch, from the skin tone. */
+function mixTowardBlush(hex) {
+  var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  function cl(c) { return Math.max(0, Math.min(255, Math.round(c))); }
+  function hx(c) { var s = c.toString(16); return s.length < 2 ? "0" + s : s; }
+  return "#" + hx(cl(r + 14)) + hx(cl(g - 8)) + hx(cl(b - 14));
 }
 function renderAppearanceSvg(ap) {
   return PixelDoll.renderSvgString(buildAppearanceLayers(ap), buildAppearancePalette(ap));
