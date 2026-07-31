@@ -129,13 +129,13 @@
   .home-hero h1 { font-family:var(--serif); font-size:30px; font-weight:600; line-height:1.36; margin:0 0 10px; text-wrap:balance; color:var(--ink); }
   .home-hero p { margin:0; font-size:14px; color:var(--ink-soft); max-width:480px; line-height:1.65; }
   .home-stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:10px; margin:32px 0; }
-  .home-stat { border:1px solid var(--border); border-radius:10px; background:var(--bg-card); padding:14px 16px; }
+  .home-stat { border:1px solid var(--border); border-radius:11px; background:var(--bg-card); padding:14px 16px; box-shadow:0 1px 3px var(--shadow); }
   .home-stat .n { font-family:var(--serif); font-size:24px; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; }
   .home-stat .l { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
   .home-section-label { font-size:11.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-faint); margin:28px 0 12px; }
   .home-work-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:12px; }
-  .home-work-card { border:1px solid var(--border); border-radius:10px; padding:14px; background:var(--bg-card); cursor:pointer; display:flex; flex-direction:column; gap:6px; }
-  .home-work-card:hover { border-color:var(--accent); background:var(--bg-card-hover); }
+  .home-work-card { border:1px solid var(--border); border-radius:11px; padding:14px; background:var(--bg-card); cursor:pointer; display:flex; flex-direction:column; gap:6px; box-shadow:0 1px 3px var(--shadow); transition:transform .14s, box-shadow .14s, border-color .14s; }
+  .home-work-card:hover { border-color:var(--accent); background:var(--bg-card-hover); transform:translateY(-2px); box-shadow:0 8px 20px var(--shadow); }
   .home-work-card .t { font-family:var(--serif); font-weight:600; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .home-work-card .m { font-size:12px; color:var(--ink-faint); }
   .home-work-card .cta { display:flex; align-items:center; gap:3px; font-size:11.5px; color:var(--tide); margin-top:2px; }
@@ -143,10 +143,10 @@
   .home-empty-card h2 { font-family:var(--serif); font-size:19px; color:var(--ink); margin:0 0 8px; }
   .home-empty-card p { font-size:13.5px; margin:0 0 16px; line-height:1.55; }
 
-  .btn { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:7px; padding:8px 13px; font-size:13px; color:var(--ink); }
-  .btn:hover { border-color:var(--accent); color:var(--accent); }
-  .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
-  .btn.primary:hover { opacity:.9; color:#fff; }
+  .btn { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:9px; padding:8px 13px; font-size:13px; color:var(--ink); transition:border-color .12s, color .12s, background .12s, box-shadow .12s; }
+  .btn:hover { border-color:var(--accent); color:var(--accent); background:var(--bg-card-hover); }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 1px 2px var(--shadow); }
+  .btn.primary:hover { opacity:.92; color:#fff; box-shadow:0 3px 10px var(--shadow); }
 
   /* ---------- Doc page ---------- */
   .doc-head-row { display:flex; align-items:flex-start; gap:10px; margin-bottom:22px; }
@@ -161,8 +161,8 @@
   .doccat-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:12px; margin-top:8px; }
   .doccat-tree { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
   .doc-card-tree { width:100%; box-sizing:border-box; }
-  .doc-card { position:relative; border:1px solid var(--border); border-radius:10px; padding:14px; background:var(--bg-card); cursor:pointer; display:flex; flex-direction:column; gap:8px; }
-  .doc-card:hover { border-color:var(--accent); background:var(--bg-card-hover); }
+  .doc-card { position:relative; border:1px solid var(--border); border-radius:11px; padding:14px; background:var(--bg-card); cursor:pointer; display:flex; flex-direction:column; gap:8px; box-shadow:0 1px 3px var(--shadow); transition:transform .14s, box-shadow .14s, border-color .14s; }
+  .doc-card:hover { border-color:var(--accent); background:var(--bg-card-hover); transform:translateY(-2px); box-shadow:0 8px 20px var(--shadow); }
   .doc-card-top { display:flex; align-items:center; gap:6px; min-height:14px; }
   .doc-card-dot { width:10px; height:10px; border-radius:50%; flex:none; }
   .doc-card-title { font-family:var(--serif); font-weight:600; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -170,10 +170,10 @@
   .doc-card-del { position:absolute; top:10px; right:10px; opacity:0; }
   .doc-card:hover .doc-card-del { opacity:1; }
 
-  .prop-grid { display:flex; flex-direction:column; border:1px solid var(--border); border-radius:10px; margin-bottom:16px; }
+  .prop-grid { display:flex; flex-direction:column; border:1px solid var(--border); border-radius:11px; margin-bottom:16px; background:var(--bg-card); box-shadow:0 1px 3px var(--shadow); }
   .prop-row { display:flex; align-items:flex-start; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); }
-  .prop-row:first-child { border-top-left-radius:10px; border-top-right-radius:10px; }
-  .prop-row:last-child { border-bottom:none; border-bottom-left-radius:10px; border-bottom-right-radius:10px; }
+  .prop-row:first-child { border-top-left-radius:11px; border-top-right-radius:11px; }
+  .prop-row:last-child { border-bottom:none; border-bottom-left-radius:11px; border-bottom-right-radius:11px; }
   .prop-icon { width:22px; flex:none; color:var(--ink-faint); display:flex; align-items:center; height:30px; }
   .prop-label { width:84px; flex:none; font-size:12.5px; color:var(--ink-faint); display:flex; align-items:center; height:30px; }
   .prop-label.editable { cursor:text; border-radius:4px; }
@@ -188,10 +188,10 @@
   .prop-row:hover .prop-remove { opacity:1; }
   .prop-remove:hover { color:var(--rose); background:var(--bg-card); }
 
-  .appear-card { border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:16px; }
+  .appear-card { border:1px solid var(--border); border-radius:11px; padding:14px; margin-bottom:16px; background:var(--bg-card); box-shadow:0 1px 3px var(--shadow); }
   .appear-head { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-faint); margin-bottom:12px; }
   .appear-body { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
-  .appear-preview { flex:none; width:230px; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--bg-card); }
+  .appear-preview { flex:none; width:230px; border:1px solid var(--border); border-radius:11px; overflow:hidden; background:var(--bg-card-hover); }
   .appear-preview svg { display:block; width:100%; height:auto; }
   .appear-fields { flex:1; min-width:240px; display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; }
   .appear-gender-row { grid-column:1 / -1; }
@@ -201,9 +201,9 @@
   .appear-picker-section { display:flex; flex-direction:column; gap:6px; }
   .appear-picker-label { font-size:11px; color:var(--ink-faint); }
   .appear-picker-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(64px,1fr)); gap:6px; }
-  .appear-pick-btn { display:flex; flex-direction:column; align-items:center; gap:3px; padding:5px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; cursor:pointer; }
-  .appear-pick-btn:hover { border-color:var(--border-strong); }
-  .appear-pick-btn.on { border-color:var(--accent); background:var(--accent-soft); }
+  .appear-pick-btn { display:flex; flex-direction:column; align-items:center; gap:3px; padding:5px; background:var(--bg-card); border:1px solid var(--border); border-radius:9px; cursor:pointer; transition:border-color .12s, background .12s, box-shadow .12s; }
+  .appear-pick-btn:hover { border-color:var(--border-strong); background:var(--bg-card-hover); }
+  .appear-pick-btn.on { border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 1px var(--accent); }
   .appear-pick-thumb { display:block; width:100%; aspect-ratio:1/1; background:var(--bg-card-hover); border-radius:5px; overflow:hidden; }
   .appear-pick-thumb svg { display:block; width:100%; height:100%; }
   .appear-pick-name { font-size:10px; color:var(--ink-faint); text-align:center; line-height:1.25; }
@@ -1066,6 +1066,7 @@ function openNameSuggestModal(doc) {
 }
 
 var MAP_TERRAINS = {
+  none:     { label:"없음", color:"#B9B7AC" },
   forest:   { label:"숲",   color:"#3F6B34" },
   plain:    { label:"평원", color:"#8FAE5D" },
   desert:   { label:"사막", color:"#C9A227" },
@@ -2985,11 +2986,17 @@ var KOREA_PROVINCE_SHAPES = {
   "부산광역시":[[312.5,270],[309.9,270.8],[307.2,281.8],[301.3,284.4],[300.4,288.9],[295.6,286.9],[297.8,292.9],[294.6,290.1],[290,294.3],[289,290.7],[281.2,290.5],[282.2,294.3],[279.3,295.4],[281.7,288.3],[278.5,284.1],[283.3,283.4],[284.5,279.5],[292.1,277.8],[293.1,274.6],[299.7,271.7],[305.8,265.2],[309.9,265.3],[312.5,270]],
   "서울특별시":[[143.6,87.1],[146.1,83],[150.8,85],[155.5,78.5],[158.1,80.3],[160.1,75],[165.4,76],[165.8,86.6],[170.6,85],[171.2,86.5],[168.8,93.5],[163.4,97.4],[159.3,94.2],[152.6,97],[150.3,92.1],[147.2,93.5],[147.2,88.2],[143.6,87.1]]
 };
+/* Metro cities (특별시/광역시) are legitimately "city" -- that's what they are.
+ * The 9 provinces (도) are administrative regions, not single-biome landscapes, so
+ * they don't get a specific terrain claim like "mountain" or "forest" (a province
+ * isn't literally a mountain any more than 전라남도 is literally a forest) -- "none"
+ * just shows the province name with no misleading prefix. A real, specific landmark
+ * (e.g. 설악산 in 강원도) can still be added as its own marker/region if wanted. */
 var KOREA_PROVINCE_TERRAIN = {
   "서울특별시":"city", "부산광역시":"city", "대구광역시":"city", "인천광역시":"city", "광주광역시":"city",
   "대전광역시":"city", "울산광역시":"city", "세종특별자치시":"city",
-  "경기도":"plain", "강원도":"mountain", "충청북도":"mountain", "충청남도":"plain",
-  "전라북도":"forest", "전라남도":"forest", "경상북도":"mountain", "경상남도":"forest", "제주특별자치도":"mountain"
+  "경기도":"none", "강원도":"none", "충청북도":"none", "충청남도":"none",
+  "전라북도":"none", "전라남도":"none", "경상북도":"none", "경상남도":"none", "제주특별자치도":"none"
 };
 function createKoreaMapTemplate(workId) {
   var mp = newMap(workId, { title:"현대 한국 지도", mapType:"world", era:"modern", yearLabel:"현재" });
@@ -6302,7 +6309,7 @@ function openRegionListModal(mp) {
   var listHtml = '<div class="preset-list" style="max-height:320px; margin-top:6px">' +
     (mp.regions.length ? mp.regions.map(function(r){
       var kind = MAP_TERRAINS[r.terrain] || MAP_TERRAINS.plain;
-      return '<button type="button" class="preset-row" data-golist="'+r.id+'"><span class="pic" style="color:'+kind.color+'">'+ic("map",14)+'</span><span class="plabel">'+esc(r.label||"이름 없는 지역")+' <span style="color:var(--ink-faint)">· '+esc(kind.label)+'</span></span></button>';
+      return '<button type="button" class="preset-row" data-golist="'+r.id+'"><span class="pic" style="color:'+kind.color+'">'+ic("map",14)+'</span><span class="plabel">'+esc(r.label||"이름 없는 지역")+(r.terrain==="none"?"":' <span style="color:var(--ink-faint)">· '+esc(kind.label)+'</span>')+'</span></button>';
     }).join("") : '<div class="preset-empty">아직 그린 지역이 없습니다. 겹치는 지역도 여기서는 이름으로 바로 찾을 수 있어요.</div>') +
   '</div>';
   titleEl.insertAdjacentHTML("afterend", listHtml);
@@ -6693,7 +6700,7 @@ function drawMap(mp) {
     var isSel = mpState.selected&&mpState.selected.type==="region"&&mpState.selected.id===r.id;
     html += '<g class="map-region '+(isSel?"selected":"")+'" data-region="'+r.id+'">' +
       '<polygon points="'+ptsStr+'" style="fill:'+kind.color+';stroke:'+(houseColor||(isSel?"var(--accent)":"rgba(20,16,10,0.55)"))+';stroke-width:'+(house?3:(isSel?2.6:1.4))+'"></polygon>' +
-      '<text x="'+c[0]+'" y="'+c[1]+'" text-anchor="middle" class="map-region-label">'+esc(kind.label)+(r.label?" · "+esc(r.label):"")+'</text>' +
+      '<text x="'+c[0]+'" y="'+c[1]+'" text-anchor="middle" class="map-region-label">'+(r.terrain==="none"?"":esc(kind.label)+(r.label?" · ":""))+esc(r.label||"")+'</text>' +
       (house ? '<text x="'+c[0]+'" y="'+(c[1]+15)+'" text-anchor="middle" class="map-region-house-label" style="fill:'+houseColor+'">&#9813; '+esc(house.title||"세력")+'</text>' : '') +
       (house ? '<g class="map-region-focus" data-regionfocus="'+r.id+'" transform="translate('+c[0]+','+(c[1]-22)+')" title="이 지역으로 확대"><circle r="9" style="fill:'+houseColor+'"></circle><g transform="translate(-6,-6)" style="color:#fff">'+ic("search",12)+'</g></g>' : '') +
     '</g>';
@@ -10145,7 +10152,7 @@ function buildWorldBuildingData(workId) {
       var org = r.houseId ? workDocs.find(function (d) { return d.id === r.houseId; }) : null;
       locations.push({
         id: r.id, title: r.label,
-        terrain: (MAP_TERRAINS[r.terrain] || {}).label || "",
+        terrain: r.terrain === "none" ? "" : ((MAP_TERRAINS[r.terrain] || {}).label || ""),
         mapTitle: mp.title || "지도", orgName: org ? org.title : "", orgId: org ? org.id : null
       });
     });
