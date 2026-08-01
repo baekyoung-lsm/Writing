@@ -194,8 +194,8 @@
   .appear-body { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
   .appear-preview { flex:none; width:230px; border:1px solid var(--border); border-radius:11px; overflow:hidden; background:var(--bg-card-hover); }
   .appear-preview svg { display:block; width:100%; height:auto; }
-  .appear-preview.raster-mode { height:320px; }
-  .appear-preview-raster-img { display:block; width:100%; height:100%; object-fit:cover; object-position:bottom center; transform-origin:bottom center; }
+  .appear-preview.raster-mode { height:460px; }
+  .appear-preview-raster-img { display:block; width:100%; height:100%; object-fit:contain; object-position:bottom center; transform-origin:bottom center; }
   .appear-render-toggle { display:flex; gap:6px; margin-bottom:8px; }
   .appear-render-toggle button { flex:1; border:1px solid var(--border-strong); background:var(--bg); border-radius:20px; padding:5px 6px; font-size:11px; color:var(--ink-soft); white-space:nowrap; }
   .appear-height-row { display:flex; align-items:center; gap:8px; margin-top:8px; }
@@ -5570,9 +5570,19 @@ function defaultAppearance() {
 /* heightCm is intentionally left unset until the user actually moves the slider, so the
  * displayed default can follow gender (taller default for 남성) without permanently writing
  * a value -- once a race/species system exists, this same fallback can key off race instead. */
-var APPEAR_HEIGHT_MIN = 35, APPEAR_HEIGHT_MAX = 300, APPEAR_HEIGHT_BASELINE = 170;
+var APPEAR_HEIGHT_MIN = 35, APPEAR_HEIGHT_MAX = 300;
 function appearDefaultHeightCm(gender) {
   return gender === "m" ? 178 : gender === "f" ? 163 : 168;
+}
+/* The preview image sits on object-fit:contain (so at scale 1 the whole figure -- head to
+ * feet -- is already guaranteed visible with no cropping). Scaling by heightCm/MAX rather
+ * than against some mid-range baseline means the tallest possible character (300cm) is the
+ * one case that exactly fills the frame; every shorter height is proportionally smaller
+ * within that same fixed frame, like a size-comparison chart, so nothing can ever clip.
+ * A single uniform scale() (not scaleY) keeps arm/leg/head proportions intact instead of
+ * only stretching vertically. */
+function appearHeightScale(cm) {
+  return cm / APPEAR_HEIGHT_MAX;
 }
 function appearEffectiveHeightCm(ap) {
   return ap.heightCm != null ? ap.heightCm : appearDefaultHeightCm(ap.gender);
@@ -5813,7 +5823,7 @@ function renderAppearanceEditor(doc) {
     '</div>' +
     '<div class="appear-preview' + (rasterOn ? " raster-mode" : "") + '" id="appearPreview">' +
     (rasterOn
-      ? '<img class="appear-preview-raster-img" id="appearRasterImg" src="' + rasterSrc + '" alt="체형 미리보기" style="transform:scaleY(' + (appearEffectiveHeightCm(ap) / APPEAR_HEIGHT_BASELINE).toFixed(3) + ')">'
+      ? '<img class="appear-preview-raster-img" id="appearRasterImg" src="' + rasterSrc + '" alt="체형 미리보기" style="transform:scale(' + appearHeightScale(appearEffectiveHeightCm(ap)).toFixed(3) + ')">'
       : renderAppearanceSvg(ap)) +
     '</div>' +
     (rasterOn
@@ -5866,7 +5876,7 @@ function wireAppearanceEditor(doc) {
       var cm = parseInt(heightSlider.value, 10);
       ap.heightCm = cm;
       var img = document.getElementById("appearRasterImg");
-      if (img) img.style.transform = "scaleY(" + (cm / APPEAR_HEIGHT_BASELINE).toFixed(3) + ")";
+      if (img) img.style.transform = "scale(" + appearHeightScale(cm).toFixed(3) + ")";
       var readout = document.getElementById("aHeightValue");
       if (readout) readout.textContent = cm + "cm";
       saveData();
