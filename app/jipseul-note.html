@@ -2291,7 +2291,9 @@ function createGenreTemplateWork() {
     { id: uid(), type: "h", text: "이름 추천 / 지도 축척" },
     { id: uid(), type: "p", text: "아무 문서에서나 상단의 \"이름 추천\" 버튼을 눌러보세요. 지도에서는 \"축척 설정\" 도구로 실제 거리를 입력하면 지역에 마우스를 올렸을 때 대략적인 면적이 함께 표시됩니다." },
     { id: uid(), type: "h", text: "창작 문자(가상 알파벳)" },
-    { id: uid(), type: "p", text: "\"문자\" 폴더의 \"클링온어 pIqaD 참고표\"와 \"텅과르 참고표\"를 열어보세요. 실제 오픈소스 폰트로 글자가 바로 보이고, 미리 써보기 칸에 로마자를 입력하면 그 문자로 바뀌어 나와요. 손으로 직접 그린 나만의 문자를 추가하고 싶으면 같은 폴더에 새 문자 체계를 만들어서 왼쪽 칸에 그려보세요." }
+    { id: uid(), type: "p", text: "\"문자\" 폴더의 \"클링온어 pIqaD 참고표\"와 \"텅과르 참고표\"를 열어보세요. 실제 오픈소스 폰트로 글자가 바로 보이고, 미리 써보기 칸에 로마자를 입력하면 그 문자로 바뀌어 나와요. 손으로 직접 그린 나만의 문자를 추가하고 싶으면 같은 폴더에 새 문자 체계를 만들어서 왼쪽 칸에 그려보세요." },
+    { id: uid(), type: "h", text: "수필·자서전" },
+    { id: uid(), type: "p", text: "\"수필·자서전\" 폴더의 두 글을 확인해보세요. 각 글은 소설 원고와 달리 회차·시점 대신 \"시기\", \"주제 태그\", \"관련 인물\"을 붙일 수 있어요. 첫 번째 글처럼 등장인물을 관련 인물로 지정하면, 그 인물 문서에 \"관련 글\"이라는 역참조 카드가 자동으로 생겨서 인물의 1인칭 회고·에세이를 캐릭터 문서와 연결해 관리할 수 있습니다." }
   ] };
   DOCS.push(readme);
 
@@ -2631,6 +2633,27 @@ function createGenreTemplateWork() {
   NOVELS.push(hunterNovel);
   MANUSCRIPTS.push({ id: uid(), title: "프롤로그", text: '게이트가 무너지던 순간, 하준은 자신이 죽었다고 생각했다.\n\n비명과 굉음이 뒤섞인 잔해 속에서 눈을 떴을 때, 가장 먼저 눈에 들어온 건 자신의 손끝에서 흘러나오는 검은 그림자였다. 마력도, 스킬도 아니었다. 협회의 어떤 각성자 데이터베이스에도 존재하지 않는 형태였다.\n\n"최하급... 판정 오류인가?"\n\n판정관의 중얼거림을 들으며, 하준은 자신의 손을 내려다봤다. 아무도 몰랐다. 이 그림자가 앞으로 얼마나 자라날지는, 하준 자신조차.', format: "general", novelId: hunterNovel.id, previewDark: false, previewFontSize: 16, previewFont: "sans", bookMode: "edit", bookPage: 0, bookSpread: false, editScrollFrac: 0, createdAt: Date.now(), characterIds: [], excludedCharacterIds: [] });
   MANUSCRIPTS.push({ id: uid(), title: "1화", text: '"정하준, 최하급 판정 받고 3년째 게이트 앞에서 뭐 하냐?"\n\n동기 각성자의 비아냥에도 하준은 대답하지 않았다. 대신 강남 게이트 입구를 바라봤다. 붕괴 등급이 상향 조정됐다는 협회 공지가 뜬 지 한 시간. 안에는 아직 대피하지 못한 시민 열두 명이 있었다.\n\n"위험합니다, 최하급 헌터는 대기하라는 지침이..."\n\n하준은 지침을 끝까지 듣지 않았다. 그림자가 발밑에서부터 스멀스멀 피어올라 그의 몸을 감쌌다. 협회 데이터베이스에 없는 능력. 하지만 지금 이 순간, 그를 막을 사람은 아무도 없었다.', format: "general", novelId: hunterNovel.id, previewDark: false, previewFontSize: 16, previewFont: "sans", bookMode: "edit", bookPage: 0, bookSpread: false, editScrollFrac: 0, createdAt: Date.now()+1, characterIds: [], excludedCharacterIds: [] });
+
+  var essayFolder = { id: uid(), workId: wid, title: "[수필·자서전] 회고 예시" };
+  ESSAYS.push(essayFolder);
+  ESSAY_ENTRIES.push({
+    id: uid(), title: "그라운드에 처음 서던 날", text: '중학교 스카우터가 우리 학교 운동장에 찾아온 날을 아직도 또렷이 기억한다. 그날은 비가 조금 왔고, 나는 슬라이딩 태클로 무릎이 다 까진 채로 골을 넣었다.\n\n지금 돌아보면 별것 아닌 순간인데, 그때는 세상이 다 바뀌는 것 같았다. 나를 지켜보는 눈이 있다는 사실 하나만으로 다리에 힘이 들어갔던 게 신기하다.\n\n프로가 된 지금도 가끔 그날의 진흙 냄새가 떠오른다. 결국 나를 여기까지 데려온 건 화려한 슛이 아니라, 그 무릎의 상처였는지도 모른다.',
+    essayId: essayFolder.id, createdAt: Date.now(),
+    period: "중학교 2학년, 초여름", themeTags: ["도전", "첫경험"], relatedCharacterIds: [soccer.id],
+    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: null
+  });
+  ESSAY_ENTRIES.push({
+    id: uid(), title: "부상과 함께 산다는 것", text: '요즘도 무릎에 테이핑을 하지 않으면 잠들기가 힘들다. 재발 위험이 있다는 걸 알면서도 경기에 나가는 이유를 스스로에게 자꾸 묻는다.\n\n주장이 되고 나서는 더 그렇다. 내가 흔들리면 팀 전체가 흔들린다는 걸 알기에, 아픈 티를 낼 수가 없다. 감독님도, 가족도 아직 이 사실을 모른다.\n\n언젠가는 말해야 한다는 걸 안다. 다만 그게 오늘은 아니었으면 좋겠다는 생각을 매일 한다.',
+    essayId: essayFolder.id, createdAt: Date.now()+1,
+    period: "현재", themeTags: ["부담감", "비밀"], relatedCharacterIds: [soccer.id],
+    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: 400
+  });
+  ESSAY_ENTRIES.push({
+    id: uid(), title: "작가의 말: 이 글을 쓰기 시작한 이유", text: '작품 밖 이야기를 남겨두고 싶어서 이 폴더를 만들었다. 등장인물의 회고와 달리, 이런 글에는 \"관련 인물\"을 비워둬도 괜찮다.\n\n집필하며 겪은 고민, 특정 장면을 쓰게 된 계기, 자료 조사 중 알게 된 사실 같은 것들을 편하게 기록해두는 용도로 써보길 추천한다.',
+    essayId: essayFolder.id, createdAt: Date.now()+2,
+    period: "", themeTags: ["작가노트"], relatedCharacterIds: [],
+    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: null
+  });
 
   createMingChinaMapTemplate(wid);
   createKoreaMapTemplate(wid);
