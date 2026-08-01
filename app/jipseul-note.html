@@ -195,9 +195,13 @@
   .appear-preview { flex:none; width:230px; border:1px solid var(--border); border-radius:11px; overflow:hidden; background:var(--bg-card-hover); }
   .appear-preview svg { display:block; width:100%; height:auto; }
   .appear-preview.raster-mode { height:320px; }
-  .appear-preview-raster-img { display:block; width:100%; height:100%; object-fit:cover; object-position:bottom center; }
+  .appear-preview-raster-img { display:block; width:100%; height:100%; object-fit:cover; object-position:bottom center; transform-origin:bottom center; }
   .appear-render-toggle { display:flex; gap:6px; margin-bottom:8px; }
   .appear-render-toggle button { flex:1; border:1px solid var(--border-strong); background:var(--bg); border-radius:20px; padding:5px 6px; font-size:11px; color:var(--ink-soft); white-space:nowrap; }
+  .appear-height-row { display:flex; align-items:center; gap:8px; margin-top:8px; }
+  .appear-height-label { font-size:12px; color:var(--ink-soft); flex:none; }
+  .appear-height-row input[type="range"] { flex:1; accent-color:var(--accent); }
+  .appear-height-value { font-size:12px; color:var(--ink); font-variant-numeric:tabular-nums; flex:none; min-width:44px; text-align:right; }
   .appear-render-toggle button.on { border-color:var(--accent); background:var(--accent-soft); color:var(--ink); font-weight:600; }
   .appear-render-note { font-size:11px; color:var(--ink-faint); line-height:1.5; margin-top:6px; text-align:center; }
   .appear-fields { flex:1; min-width:240px; display:flex; flex-direction:column; gap:10px; }
@@ -5559,8 +5563,19 @@ function defaultAppearance() {
     skinTone: APPEAR_SKIN_TONES[2], hairColor: APPEAR_HAIR_COLORS[1], topColor: APPEAR_OUTFIT_COLORS[0], bottomColor: APPEAR_OUTFIT_COLORS[6],
     bodyType: "normal", faceShape: "oval", hairStyle: "dandy", top: "shirt", bottom: "jeans", shoes: "sneakers", bustSize: "medium",
     eyebrowShape: "normal", eyeShape: "basic", eyeColor: APPEAR_EYE_COLORS[0], oddEye: false, eyeColorLeft: APPEAR_EYE_COLORS[0], eyeColorRight: APPEAR_EYE_COLORS[0],
-    mouthShape: "smile", facialHair: "none", memo: ""
+    mouthShape: "smile", facialHair: "none", memo: "", heightCm: null
   };
+}
+
+/* heightCm is intentionally left unset until the user actually moves the slider, so the
+ * displayed default can follow gender (taller default for 남성) without permanently writing
+ * a value -- once a race/species system exists, this same fallback can key off race instead. */
+var APPEAR_HEIGHT_MIN = 35, APPEAR_HEIGHT_MAX = 300, APPEAR_HEIGHT_BASELINE = 170;
+function appearDefaultHeightCm(gender) {
+  return gender === "m" ? 178 : gender === "f" ? 163 : 168;
+}
+function appearEffectiveHeightCm(ap) {
+  return ap.heightCm != null ? ap.heightCm : appearDefaultHeightCm(ap.gender);
 }
 
 /* Best-effort id remap from the old organic-SVG schema to the nearest pixel-system
@@ -5798,10 +5813,17 @@ function renderAppearanceEditor(doc) {
     '</div>' +
     '<div class="appear-preview' + (rasterOn ? " raster-mode" : "") + '" id="appearPreview">' +
     (rasterOn
-      ? '<img class="appear-preview-raster-img" src="' + rasterSrc + '" alt="체형 미리보기">'
+      ? '<img class="appear-preview-raster-img" id="appearRasterImg" src="' + rasterSrc + '" alt="체형 미리보기" style="transform:scaleY(' + (appearEffectiveHeightCm(ap) / APPEAR_HEIGHT_BASELINE).toFixed(3) + ')">'
       : renderAppearanceSvg(ap)) +
     '</div>' +
-    (rasterOn ? '<div class="appear-render-note">체형 확인용 참고 이미지예요. 옷·머리색 등은 아직 반영 안 돼요.</div>' : "") +
+    (rasterOn
+      ? '<div class="appear-height-row">' +
+        '<span class="appear-height-label">키</span>' +
+        '<input type="range" id="aHeightSlider" min="' + APPEAR_HEIGHT_MIN + '" max="' + APPEAR_HEIGHT_MAX + '" step="1" value="' + appearEffectiveHeightCm(ap) + '">' +
+        '<span class="appear-height-value" id="aHeightValue">' + appearEffectiveHeightCm(ap) + 'cm</span>' +
+        '</div>' +
+        '<div class="appear-render-note">체형 확인용 참고 이미지예요. 옷·머리색 등은 아직 반영 안 돼요.</div>'
+      : "") +
     '<div class="appear-fields">' +
     '<div class="life-pick-row appear-gender-row">' +
     '<button type="button" class="life-pick ' + (g === "f" ? "on" : "") + '" data-agender="f" style="--lc:#B0524D">여성</button>' +
@@ -5838,6 +5860,18 @@ function wireAppearanceEditor(doc) {
       renderDocPage(doc);
     });
   });
+  var heightSlider = document.getElementById("aHeightSlider");
+  if (heightSlider) {
+    heightSlider.addEventListener("input", function () {
+      var cm = parseInt(heightSlider.value, 10);
+      ap.heightCm = cm;
+      var img = document.getElementById("appearRasterImg");
+      if (img) img.style.transform = "scaleY(" + (cm / APPEAR_HEIGHT_BASELINE).toFixed(3) + ")";
+      var readout = document.getElementById("aHeightValue");
+      if (readout) readout.textContent = cm + "cm";
+      saveData();
+    });
+  }
   document.querySelectorAll("[data-atab]").forEach(function (btn) {
     btn.addEventListener("click", function () {
       state.appearTab = state.appearTab || {};
