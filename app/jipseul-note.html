@@ -352,6 +352,16 @@
   .modal-pick.on { border-color:var(--pc); color:var(--ink); background:var(--bg-card); font-weight:600; }
   .modal-pick.no-dot.on { border-color:var(--accent); }
   .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:14px; }
+  .modal-box.wide { width:540px; }
+  .exp-toggle { margin-top:10px; font-weight:600; color:var(--ink); }
+  .exp-tree { border:1px solid var(--border); border-radius:9px; padding:8px 10px; max-height:170px; overflow-y:auto; margin:2px 0 4px; background:var(--bg); }
+  .exp-tree-item { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-soft); padding:3px 0; cursor:pointer; }
+  .exp-tree-item.indent { padding-left:18px; }
+  .exp-tree-item .exp-count { color:var(--ink-faint); font-size:11px; margin-left:auto; }
+  .exp-tree-master { font-weight:600; color:var(--ink); border-bottom:1px solid var(--border); margin-bottom:4px; padding-bottom:6px; }
+  .exp-tree-sub { margin-top:6px; padding-top:6px; border-top:1px dashed var(--border); }
+  .exp-tree-subhead { display:flex; align-items:center; justify-content:space-between; font-size:11px; color:var(--ink-faint); margin-bottom:4px; }
+  .exp-selall-btn { border:none; background:none; color:var(--accent); font-size:11px; cursor:pointer; padding:0; }
   .btn.danger { border-color:var(--rose); color:var(--rose); background:var(--rose-soft); }
   .btn.danger:hover { background:var(--rose); color:#fff; }
 
@@ -10638,7 +10648,13 @@ function buildManuscriptTxt(bodyTitle, chapters) {
   }
 
 /* ---- 이 앱의 데이터 모델 -> 내보내기용 데이터 변환 ---- */
-function buildWorldBuildingData(workId) {
+/* opts: optional { categories: null|Array of "characters"|"organizations"|"locations"|"events"
+ * |"items"|"settingsDocs"|"timelineGroups"|"races", characterIds: null|Array }. null/omitted
+ * means "include everything", identical to the original always-everything behavior. */
+function buildWorldBuildingData(workId, opts) {
+  opts = opts || {};
+  var cats = opts.categories || null;
+  function wantCat(key) { return !cats || cats.indexOf(key) !== -1; }
   var work = WORKS.find(function (w) { return w.id === workId; });
   var workDocs = DOCS.filter(function (d) { return d.workId === workId; });
   var workGraphs = GRAPHS.filter(function (g) { return g.workId === workId; });
@@ -10712,18 +10728,21 @@ function buildWorldBuildingData(workId) {
     return out;
   }
 
-  var characters = workDocs.filter(function (d) { return d.category === "등장인물"; }).map(function (d) {
-    var imageSvg = null;
-    try { if (d.appearance) imageSvg = renderAppearanceSvg(d.appearance.system === "pixel_v1" ? d.appearance : migrateLegacyAppearance(d.appearance)); } catch (e) {}
-    var raceProp = (d.props || []).find(function (p) { return p.key === "종족" && p.value; });
-    return {
-      id: d.id, title: d.title || "제목 없음", aliases: d.aliases || [], summary: d.summary || "",
-      tags: d.tags || [], imageSvg: imageSvg, fields: fieldsForDoc(d), raceName: raceProp ? String(raceProp.value).trim() : null,
-      relationships: relationshipsForDoc(d.id), episodes: episodesForDoc(d.id), blocks: d.blocks || []
-    };
-  });
+  var characterDocs = workDocs.filter(function (d) { return d.category === "등장인물"; });
+  var characters = !wantCat("characters") ? [] : characterDocs
+    .filter(function (d) { return !opts.characterIds || opts.characterIds.indexOf(d.id) !== -1; })
+    .map(function (d) {
+      var imageSvg = null;
+      try { if (d.appearance) imageSvg = renderAppearanceSvg(d.appearance.system === "pixel_v1" ? d.appearance : migrateLegacyAppearance(d.appearance)); } catch (e) {}
+      var raceProp = (d.props || []).find(function (p) { return p.key === "종족" && p.value; });
+      return {
+        id: d.id, title: d.title || "제목 없음", aliases: d.aliases || [], summary: d.summary || "",
+        tags: d.tags || [], imageSvg: imageSvg, fields: fieldsForDoc(d), raceName: raceProp ? String(raceProp.value).trim() : null,
+        relationships: relationshipsForDoc(d.id), episodes: episodesForDoc(d.id), blocks: d.blocks || []
+      };
+    });
 
-  var organizations = workDocs.filter(function (d) { return d.category === "세력"; }).map(function (d) {
+  var organizations = !wantCat("organizations") ? [] : workDocs.filter(function (d) { return d.category === "세력"; }).map(function (d) {
     var mr = orgMembersAndRivals(d);
     return {
       id: d.id, title: d.title || "제목 없음", summary: d.summary || "",
@@ -10733,46 +10752,50 @@ function buildWorldBuildingData(workId) {
   });
 
   var locations = [];
-  workMaps.forEach(function (mp) {
-    (mp.regions || []).forEach(function (r) {
-      if (!r.label) return;
-      var org = r.houseId ? workDocs.find(function (d) { return d.id === r.houseId; }) : null;
-      locations.push({
-        id: r.id, title: r.label,
-        terrain: r.terrain === "none" ? "" : ((MAP_TERRAINS[r.terrain] || {}).label || ""),
-        mapTitle: mp.title || "지도", orgName: org ? org.title : "", orgId: org ? org.id : null
+  if (wantCat("locations")) {
+    workMaps.forEach(function (mp) {
+      (mp.regions || []).forEach(function (r) {
+        if (!r.label) return;
+        var org = r.houseId ? workDocs.find(function (d) { return d.id === r.houseId; }) : null;
+        locations.push({
+          id: r.id, title: r.label,
+          terrain: r.terrain === "none" ? "" : ((MAP_TERRAINS[r.terrain] || {}).label || ""),
+          mapTitle: mp.title || "지도", orgName: org ? org.title : "", orgId: org ? org.id : null
+        });
       });
     });
-  });
+  }
 
-  var events = workDocs.filter(function (d) { return d.category === "사건"; }).map(function (d) {
+  var events = !wantCat("events") ? [] : workDocs.filter(function (d) { return d.category === "사건"; }).map(function (d) {
     return { id: d.id, title: d.title || "제목 없음", summary: d.summary || "", blocks: d.blocks || [], relationships: relationshipsForDoc(d.id) };
   });
 
-  var items = workDocs.filter(function (d) { return d.category === "아이템"; }).map(function (d) {
+  var items = !wantCat("items") ? [] : workDocs.filter(function (d) { return d.category === "아이템"; }).map(function (d) {
     return { id: d.id, title: d.title || "제목 없음", summary: d.summary || "", blocks: d.blocks || [], fields: fieldsForDoc(d), relationships: relationshipsForDoc(d.id) };
   });
 
   var OTHER_CATS = ["세계관", "떡밥", "부·사이드", "기타"];
-  var settingsDocs = workDocs.filter(function (d) { return OTHER_CATS.indexOf(d.category) !== -1; }).map(function (d) {
+  var settingsDocs = !wantCat("settingsDocs") ? [] : workDocs.filter(function (d) { return OTHER_CATS.indexOf(d.category) !== -1; }).map(function (d) {
     return { id: d.id, title: d.title || "제목 없음", category: d.category, summary: d.summary || "", blocks: d.blocks || [] };
   });
 
   /* 종족은 이 앱에 별도 문서 타입이 없어서, 등장인물의 "종족" 속성값을 모아 그룹으로 파생합니다. */
   var raceOrder = [], raceMembers = {};
-  workDocs.filter(function (d) { return d.category === "등장인물"; }).forEach(function (d) {
-    var raceProp = (d.props || []).find(function (p) { return p.key === "종족" && p.value; });
-    if (!raceProp) return;
-    var raceName = String(raceProp.value).trim();
-    if (!raceName) return;
-    if (!raceMembers[raceName]) { raceMembers[raceName] = []; raceOrder.push(raceName); }
-    raceMembers[raceName].push({ id: d.id, title: d.title || "제목 없음" });
-  });
+  if (wantCat("races")) {
+    characterDocs.forEach(function (d) {
+      var raceProp = (d.props || []).find(function (p) { return p.key === "종족" && p.value; });
+      if (!raceProp) return;
+      var raceName = String(raceProp.value).trim();
+      if (!raceName) return;
+      if (!raceMembers[raceName]) { raceMembers[raceName] = []; raceOrder.push(raceName); }
+      raceMembers[raceName].push({ id: d.id, title: d.title || "제목 없음" });
+    });
+  }
   var races = raceOrder.map(function (name, i) {
     return { id: "race" + i, title: name, members: raceMembers[name] };
   });
 
-  var timelineGroups = workTimelines.map(function (tl) {
+  var timelineGroups = !wantCat("timelineGroups") ? [] : workTimelines.map(function (tl) {
     var evs = (tl.events || []).slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
     return { title: tl.title || "연표", events: evs.map(function (e) { return { label: e.label || "", title: e.title || "", description: e.description || "", eventId: e.docId || null }; }) };
   });
@@ -10804,8 +10827,14 @@ function buildWorldBuildingData(workId) {
 }
 
 /* chapters across every novel in a work (used for "전체 원고" combined export), or for one novel */
-function collectExportChapters(workId, novelId) {
-  var novels = NOVELS.filter(function (n) { return n.workId === workId && (!novelId || n.id === novelId); });
+/* selection: optional { novelIds: null|Array, essayIds: null|Array } -- null (or omitted)
+ * means "include all", same as the original always-everything behavior. Passing an
+ * array (even empty) narrows to just those folder ids, powering the selective export UI. */
+function collectExportChapters(workId, selection) {
+  selection = selection || {};
+  var novelIds = selection.novelIds;
+  var essayIds = selection.essayIds;
+  var novels = NOVELS.filter(function (n) { return n.workId === workId && (!novelIds || novelIds.indexOf(n.id) !== -1); });
   var chapters = [];
   novels.forEach(function (n) {
     var eps = MANUSCRIPTS.filter(function (m) { return m.novelId === n.id; })
@@ -10814,16 +10843,13 @@ function collectExportChapters(workId, novelId) {
   });
   /* 수필·자서전 entries flow through the exact same {novelTitle,title,text} shape
    * (novelTitle repurposed as the essay collection's title) so the existing
-   * DOCX/PDF/HWPX/TXT generators don't need a parallel code path -- only included
-   * for a whole-work export (novelId not given), same as novels above. */
-  if (!novelId) {
-    var essayCols = ESSAYS.filter(function (es) { return es.workId === workId; });
-    essayCols.forEach(function (es) {
-      var entries = ESSAY_ENTRIES.filter(function (e) { return e.essayId === es.id; })
-        .sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
-      entries.forEach(function (e) { chapters.push({ novelTitle: es.title || "제목 없는 폴더", title: e.title || "제목 없음", text: e.text || "" }); });
-    });
-  }
+   * DOCX/PDF/HWPX/TXT generators don't need a parallel code path. */
+  var essayCols = ESSAYS.filter(function (es) { return es.workId === workId && (!essayIds || essayIds.indexOf(es.id) !== -1); });
+  essayCols.forEach(function (es) {
+    var entries = ESSAY_ENTRIES.filter(function (e) { return e.essayId === es.id; })
+      .sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+    entries.forEach(function (e) { chapters.push({ novelTitle: es.title || "제목 없는 폴더", title: e.title || "제목 없음", text: e.text || "" }); });
+  });
   return chapters;
 }
 
@@ -10832,6 +10858,50 @@ function safeFileName(s) {
 }
 function pad3(n) { var s = String(n); while (s.length < 3) s = "0" + s; return s; }
 
+/* Real-data-driven list of world-building categories this work actually has content in --
+ * powers the export modal's "설정" checkbox tree. Categories with zero items are omitted
+ * rather than hardcoded, so the list always matches what buildWorldBuildingData() would emit. */
+function exportCategoryDefs(workId) {
+  var workDocs = DOCS.filter(function (d) { return d.workId === workId; });
+  var workMaps = MAPS.filter(function (m) { return m.workId === workId; });
+  var workTimelines = TIMELINES.filter(function (t) { return t.workId === workId; });
+  var charCount = workDocs.filter(function (d) { return d.category === "등장인물"; }).length;
+  var orgCount = workDocs.filter(function (d) { return d.category === "세력"; }).length;
+  var locCount = 0;
+  workMaps.forEach(function (mp) { locCount += (mp.regions || []).filter(function (r) { return r.label; }).length; });
+  var eventCount = workDocs.filter(function (d) { return d.category === "사건"; }).length;
+  var itemCount = workDocs.filter(function (d) { return d.category === "아이템"; }).length;
+  var settingsCount = workDocs.filter(function (d) { return ["세계관", "떡밥", "부·사이드", "기타"].indexOf(d.category) !== -1; }).length;
+  var tlCount = workTimelines.length;
+  var raceNames = {};
+  workDocs.filter(function (d) { return d.category === "등장인물"; }).forEach(function (d) {
+    var p = (d.props || []).find(function (p) { return p.key === "종족" && p.value; });
+    if (p) raceNames[String(p.value).trim()] = true;
+  });
+  var raceCount = Object.keys(raceNames).length;
+  var defs = [];
+  if (charCount) defs.push({ key: "characters", label: "등장인물", count: charCount });
+  if (orgCount) defs.push({ key: "organizations", label: "세력", count: orgCount });
+  if (locCount) defs.push({ key: "locations", label: "지역", count: locCount });
+  if (eventCount) defs.push({ key: "events", label: "사건", count: eventCount });
+  if (itemCount) defs.push({ key: "items", label: "아이템", count: itemCount });
+  if (settingsCount) defs.push({ key: "settingsDocs", label: "설정 문서", count: settingsCount });
+  if (tlCount) defs.push({ key: "timelineGroups", label: "연표", count: tlCount });
+  if (raceCount) defs.push({ key: "races", label: "종족", count: raceCount });
+  return defs;
+}
+
+/* Manuscript folders (소설 + 수필·자서전) this work has, for the export modal's tree. */
+function exportManuscriptFolderDefs(workId) {
+  var novels = NOVELS.filter(function (n) { return n.workId === workId; }).map(function (n) {
+    return { id: n.id, title: n.title || "제목 없는 소설", count: MANUSCRIPTS.filter(function (m) { return m.novelId === n.id; }).length, kind: "novel" };
+  });
+  var essayCols = ESSAYS.filter(function (es) { return es.workId === workId; }).map(function (es) {
+    return { id: es.id, title: es.title || "제목 없는 폴더", count: ESSAY_ENTRIES.filter(function (e) { return e.essayId === es.id; }).length, kind: "essay" };
+  });
+  return novels.concat(essayCols).filter(function (f) { return f.count > 0; });
+}
+
 /* ---------------- ExportService: orchestrator ----------------
  * 작가가 받는 결과물은 최대한 단순해야 한다: ZIP 안에는 원고 파일(들)과 설정집.html만 있고,
  * 폴더 구조나 부속 파일은 만들지 않는다.
@@ -10839,14 +10909,35 @@ function pad3(n) { var s = String(n); while (s.length < 3) s = "0" + s; return s
  *     원고.docx            (scope: combined)
  *     또는 001화.docx, 002화.docx, ...  (scope: perEpisode)
  *     설정집.html
+ * 선택적 내보내기: opts.includeManuscript/includeWorldBuilding으로 두 축을 독립적으로 켜고 끌 수 있고,
+ * opts.novelIds/essayIds, opts.wbCategories/wbCharacterIds로 각 축 내부에서도 세부 항목을 고를 수 있다.
+ * 모두 생략(=null)하면 예전과 동일하게 "전체"를 의미하므로 기존 호출부·기존 동작은 100% 그대로 유지된다.
+ * 설정만 선택하고 원고를 뺀 경우에는 ZIP으로 묶지 않고 설정집.html 하나만 바로 내려받는다(=단일 HTML 내보내기).
  */
 var ExportService = {
-  /* format: 'docx'|'pdf'|'hwpx'|'txt', scope: 'combined'|'perEpisode', includeWorldBuilding: bool */
+  /* format: 'docx'|'pdf'|'hwpx'|'txt', scope: 'combined'|'perEpisode' */
   run: async function (workId, opts) {
     var work = WORKS.find(function (w) { return w.id === workId; });
     var workTitle = (work && work.title) || "작품";
+    var includeManuscript = opts.includeManuscript !== false;
+    var includeWorldBuilding = !!opts.includeWorldBuilding;
+    var chapters = includeManuscript
+      ? collectExportChapters(workId, { novelIds: opts.novelIds || null, essayIds: opts.essayIds || null })
+      : [];
+
+    if (!includeManuscript && includeWorldBuilding) {
+      var wbOnlyData = buildWorldBuildingData(workId, { categories: opts.wbCategories || null, characterIds: opts.wbCharacterIds || null });
+      var htmlOnly = generateSettingsHtml(wbOnlyData);
+      var htmlBlob = new Blob([htmlOnly], { type: "text/html" });
+      var htmlUrl = URL.createObjectURL(htmlBlob);
+      var htmlA = document.createElement("a");
+      htmlA.href = htmlUrl; htmlA.download = safeFileName(workTitle) + "_설정집.html";
+      document.body.appendChild(htmlA); htmlA.click(); document.body.removeChild(htmlA);
+      setTimeout(function () { URL.revokeObjectURL(htmlUrl); }, 1000);
+      return;
+    }
+
     var zip = new MiniZip();
-    var chapters = collectExportChapters(workId, null);
 
     if (chapters.length) {
       if (opts.scope === "perEpisode") {
@@ -10858,11 +10949,13 @@ var ExportService = {
       }
     }
 
-    if (opts.includeWorldBuilding) {
-      var wbData = buildWorldBuildingData(workId);
+    if (includeWorldBuilding) {
+      var wbData = buildWorldBuildingData(workId, { categories: opts.wbCategories || null, characterIds: opts.wbCharacterIds || null });
       var html = generateSettingsHtml(wbData);
       zip.addFile("설정집.html", html);
     }
+
+    if (!chapters.length && !includeWorldBuilding) return;
 
     var zipBytes = zip.generate();
     var blob = new Blob([zipBytes], { type: "application/zip" });
@@ -10891,46 +10984,191 @@ var ExportService = {
   }
 };
 
-/* ---------------- UI: export modal ---------------- */
+/* ---------------- UI: export modal ----------------
+ * 기본값(범위="전체 프로젝트")은 예전 동작과 동일하게 모든 원고+설정을 내보낸다.
+ * "선택 항목만"을 고르면 원고 폴더별/설정 카테고리별(+등장인물은 개별)로 체크박스 트리가 나타난다.
+ * 원고를 빼고 설정만 고르면 ZIP 없이 설정집.html 하나만 바로 내려받는다. */
 function openExportZipModal(workId) {
   var work = WORKS.find(function (w) { return w.id === workId; });
   if (!work) return;
-  var hasNovels = NOVELS.some(function (n) { return n.workId === workId; }) && MANUSCRIPTS.some(function (m) {
-    var n = NOVELS.find(function (n) { return n.id === m.novelId; });
-    return n && n.workId === workId;
+  var manuscriptFolders = exportManuscriptFolderDefs(workId);
+  var hasChapters = manuscriptFolders.length > 0;
+  var wbCats = exportCategoryDefs(workId);
+  var hasWorldBuilding = wbCats.length > 0;
+  var hasCharCat = wbCats.some(function (c) { return c.key === "characters"; });
+  var characterDocs = DOCS.filter(function (d) { return d.workId === workId && d.category === "등장인물"; });
+
+  if (!hasChapters && !hasWorldBuilding) {
+    openModal({ title: '"' + (work.title || "제목 없음") + '" 내보내기', message: "이 작품에는 아직 내보낼 원고나 설정 데이터가 없어요.", confirmLabel: "확인" });
+    return;
+  }
+
+  openModal({ title: '"' + (work.title || "제목 없음") + '" 내보내기' });
+  var overlay = document.getElementById("modalOverlay");
+  if (!overlay) return;
+  var box = overlay.querySelector(".modal-box");
+  box.classList.add("wide");
+  var actionsDiv = box.querySelector(".modal-actions");
+  var defaultOk = document.getElementById("modalOk");
+  if (defaultOk) defaultOk.remove();
+
+  function treeItemHtml(group, id, title, suffix, indent) {
+    return '<label class="exp-tree-item' + (indent ? " indent" : "") + '"><input type="checkbox" class="exp-check" data-expgroup="' + group + '" data-expid="' + esc(id) + '" checked><span>' + esc(title) + '</span>' + (suffix ? '<span class="exp-count">' + esc(suffix) + "</span>" : "") + "</label>";
+  }
+
+  var msTreeHtml = "";
+  if (hasChapters) {
+    msTreeHtml =
+      '<label class="modal-check exp-toggle"><input type="checkbox" id="expIncludeMs" checked> 원고 포함</label>' +
+      '<div class="exp-tree" id="expMsTree">' +
+        '<label class="exp-tree-item exp-tree-master"><input type="checkbox" class="exp-selall" data-expselall="ms" checked><span>전체 선택</span></label>' +
+        manuscriptFolders.map(function (f) { return treeItemHtml("ms", f.id, f.title, "· " + f.count + (f.kind === "novel" ? "화" : "편")); }).join("") +
+      "</div>";
+  }
+
+  var wbTreeHtml = "";
+  if (hasWorldBuilding) {
+    wbTreeHtml =
+      '<label class="modal-check exp-toggle"><input type="checkbox" id="expIncludeWb" checked> 설정(세계관) 포함</label>' +
+      '<div class="exp-tree" id="expWbTree">' +
+        '<label class="exp-tree-item exp-tree-master"><input type="checkbox" class="exp-selall" data-expselall="wb" checked><span>전체 선택</span></label>' +
+        wbCats.map(function (c) { return treeItemHtml("wb", c.key, c.label, "· " + c.count + "개"); }).join("") +
+        (hasCharCat && characterDocs.length ? (
+          '<div class="exp-tree-sub" id="expCharSub">' +
+            '<div class="exp-tree-subhead"><span>등장인물 세부 선택</span><button type="button" class="exp-selall-btn" data-expselallbtn="char">전체 선택</button></div>' +
+            characterDocs.map(function (d) { return treeItemHtml("char", d.id, d.title || "제목 없음", "", true); }).join("") +
+          "</div>"
+        ) : "") +
+      "</div>";
+  }
+
+  var formatHtml = "";
+  if (hasChapters) {
+    formatHtml =
+      '<div class="modal-picker-label">원고 형식</div>' +
+      '<div class="modal-picker-row" id="expFormatRow">' +
+        ["docx", "pdf", "hwpx", "txt"].map(function (v) { return '<button type="button" class="modal-pick no-dot' + (v === "docx" ? " on" : "") + '" data-expformat="' + v + '">' + v.toUpperCase() + "</button>"; }).join("") +
+      "</div>" +
+      '<div class="modal-picker-label">원고 내보내기 방식</div>' +
+      '<div class="modal-picker-row" id="expScopeRow">' +
+        '<button type="button" class="modal-pick no-dot on" data-expmsscope="combined">전체 원고 하나</button>' +
+        '<button type="button" class="modal-pick no-dot" data-expmsscope="perEpisode">회차별 파일</button>' +
+      "</div>";
+  }
+
+  var bodyHtml =
+    '<div class="modal-picker-label">내보낼 범위</div>' +
+    '<div class="modal-picker-row">' +
+      '<button type="button" class="modal-pick no-dot on" data-expscope="all">전체 프로젝트</button>' +
+      '<button type="button" class="modal-pick no-dot" data-expscope="select">선택 항목만</button>' +
+    "</div>" +
+    '<div class="modal-msg" id="expScopeHint">모든 원고와 설정을 그대로 담아 내보내요.</div>' +
+    '<div class="exp-select-area" id="expSelectArea" style="display:none">' + msTreeHtml + wbTreeHtml + "</div>" +
+    formatHtml;
+
+  actionsDiv.insertAdjacentHTML("beforebegin", bodyHtml);
+  actionsDiv.insertAdjacentHTML("beforeend", '<button type="button" class="btn primary" id="expConfirmBtn">내보내기</button>');
+
+  var scope = "all";
+  var selectArea = document.getElementById("expSelectArea");
+  var scopeHint = document.getElementById("expScopeHint");
+  box.querySelectorAll("[data-expscope]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      scope = btn.dataset.expscope;
+      box.querySelectorAll("[data-expscope]").forEach(function (b) { b.classList.toggle("on", b === btn); });
+      selectArea.style.display = scope === "select" ? "" : "none";
+      scopeHint.style.display = scope === "select" ? "none" : "";
+    });
   });
-  var hasEssays = ESSAYS.some(function (es) { return es.workId === workId; }) && ESSAY_ENTRIES.some(function (e) {
-    var es = ESSAYS.find(function (es) { return es.id === e.essayId; });
-    return es && es.workId === workId;
+
+  var msIncludeEl = document.getElementById("expIncludeMs");
+  var msTreeEl = document.getElementById("expMsTree");
+  if (msIncludeEl) msIncludeEl.addEventListener("change", function () { msTreeEl.style.display = msIncludeEl.checked ? "" : "none"; });
+  var wbIncludeEl = document.getElementById("expIncludeWb");
+  var wbTreeEl = document.getElementById("expWbTree");
+  if (wbIncludeEl) wbIncludeEl.addEventListener("change", function () { wbTreeEl.style.display = wbIncludeEl.checked ? "" : "none"; });
+
+  function updateCharSubVisibility() {
+    var sub = document.getElementById("expCharSub");
+    if (!sub) return;
+    var cb = box.querySelector('.exp-check[data-expgroup="wb"][data-expid="characters"]');
+    sub.style.display = cb && cb.checked ? "" : "none";
+  }
+  updateCharSubVisibility();
+  var charCatCb = box.querySelector('.exp-check[data-expgroup="wb"][data-expid="characters"]');
+  if (charCatCb) charCatCb.addEventListener("change", updateCharSubVisibility);
+
+  box.querySelectorAll("[data-expselall]").forEach(function (master) {
+    master.addEventListener("change", function () {
+      var group = master.dataset.expselall;
+      box.querySelectorAll('.exp-check[data-expgroup="' + group + '"]').forEach(function (cb) { cb.checked = master.checked; });
+      updateCharSubVisibility();
+    });
   });
-  var hasChapters = hasNovels || hasEssays;
-  openModal({
-    title: '"' + (work.title || "제목 없음") + '" 내보내기',
-    message: hasChapters ? "원고 파일과 설정집.html, 딱 두 가지만 담긴 ZIP으로 내보냅니다." : "이 작품에는 아직 원고가 없어서 설정집.html만 내보낼 수 있어요.",
-    pickers: [
-      { key: "format", label: "원고 형식", default: "docx", noDot: true, options: [
-        { value: "docx", label: "DOCX" }, { value: "pdf", label: "PDF" }, { value: "hwpx", label: "HWPX" }, { value: "txt", label: "TXT" }
-      ] },
-      { key: "scope", label: "원고 내보내기 방식", default: "combined", noDot: true, options: [
-        { value: "combined", label: "전체 원고 하나" }, { value: "perEpisode", label: "회차별 파일" }
-      ] }
-    ],
-    checkbox: "설정집.html도 함께 포함",
-    checkboxDefault: true,
-    confirmLabel: "ZIP으로 내보내기",
-    onConfirm: function (values, checked, picks) {
-      var opts = { format: picks.format || "docx", scope: picks.scope || "combined", includeWorldBuilding: checked !== false };
-      var btn = document.getElementById("exportZipBtn_" + workId);
-      openModal({ title: "내보내는 중...", message: "잠시만 기다려주세요. 원고 분량이 많으면 몇 초 정도 걸릴 수 있어요.", confirmLabel: "" });
-      var okBtn = document.getElementById("modalOk"); if (okBtn) okBtn.style.display = "none";
-      var cancelBtn = document.getElementById("modalCancel"); if (cancelBtn) cancelBtn.style.display = "none";
-      ExportService.run(workId, opts).then(function () {
-        closeModal();
-      }).catch(function (err) {
-        closeModal();
-        openModal({ title: "내보내기 실패", message: "문제가 발생했어요: " + (err && err.message ? err.message : String(err)), confirmLabel: "확인" });
-      });
+  box.querySelectorAll("[data-expselallbtn]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var group = btn.dataset.expselallbtn;
+      var boxes = box.querySelectorAll('.exp-check[data-expgroup="' + group + '"]');
+      var allOn = Array.prototype.every.call(boxes, function (cb) { return cb.checked; });
+      boxes.forEach(function (cb) { cb.checked = !allOn; });
+    });
+  });
+
+  var pickedFormat = "docx", pickedMsScope = "combined";
+  box.querySelectorAll("[data-expformat]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      pickedFormat = btn.dataset.expformat;
+      box.querySelectorAll("[data-expformat]").forEach(function (b) { b.classList.toggle("on", b === btn); });
+    });
+  });
+  box.querySelectorAll("[data-expmsscope]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      pickedMsScope = btn.dataset.expmsscope;
+      box.querySelectorAll("[data-expmsscope]").forEach(function (b) { b.classList.toggle("on", b === btn); });
+    });
+  });
+
+  document.getElementById("expConfirmBtn").addEventListener("click", function () {
+    var includeManuscript = hasChapters && (scope === "all" || !msIncludeEl || msIncludeEl.checked);
+    var includeWorldBuilding = hasWorldBuilding && (scope === "all" || !wbIncludeEl || wbIncludeEl.checked);
+    var novelIds = null, essayIds = null, wbCategories = null, wbCharacterIds = null;
+
+    if (scope === "select") {
+      if (includeManuscript) {
+        var checkedMs = Array.prototype.filter.call(box.querySelectorAll('.exp-check[data-expgroup="ms"]'), function (cb) { return cb.checked; }).map(function (cb) { return cb.dataset.expid; });
+        novelIds = manuscriptFolders.filter(function (f) { return f.kind === "novel" && checkedMs.indexOf(f.id) !== -1; }).map(function (f) { return f.id; });
+        essayIds = manuscriptFolders.filter(function (f) { return f.kind === "essay" && checkedMs.indexOf(f.id) !== -1; }).map(function (f) { return f.id; });
+        if (!checkedMs.length) includeManuscript = false;
+      }
+      if (includeWorldBuilding) {
+        var checkedWb = Array.prototype.filter.call(box.querySelectorAll('.exp-check[data-expgroup="wb"]'), function (cb) { return cb.checked; }).map(function (cb) { return cb.dataset.expid; });
+        wbCategories = checkedWb;
+        if (!checkedWb.length) includeWorldBuilding = false;
+        if (checkedWb.indexOf("characters") !== -1) {
+          wbCharacterIds = Array.prototype.filter.call(box.querySelectorAll('.exp-check[data-expgroup="char"]'), function (cb) { return cb.checked; }).map(function (cb) { return cb.dataset.expid; });
+        }
+      }
     }
+
+    if (!includeManuscript && !includeWorldBuilding) {
+      openModal({ title: "내보낼 항목을 선택해주세요", message: "원고와 설정 중 최소 한 가지는 포함해야 내보낼 수 있어요.", confirmLabel: "확인" });
+      return;
+    }
+
+    var opts = {
+      format: pickedFormat, scope: pickedMsScope,
+      includeManuscript: includeManuscript, includeWorldBuilding: includeWorldBuilding,
+      novelIds: novelIds, essayIds: essayIds, wbCategories: wbCategories, wbCharacterIds: wbCharacterIds
+    };
+    openModal({ title: "내보내는 중...", message: "잠시만 기다려주세요. 데이터 분량이 많으면 몇 초 정도 걸릴 수 있어요.", confirmLabel: "" });
+    var okBtn2 = document.getElementById("modalOk"); if (okBtn2) okBtn2.style.display = "none";
+    var cancelBtn2 = document.getElementById("modalCancel"); if (cancelBtn2) cancelBtn2.style.display = "none";
+    ExportService.run(workId, opts).then(function () {
+      closeModal();
+    }).catch(function (err) {
+      closeModal();
+      openModal({ title: "내보내기 실패", message: "문제가 발생했어요: " + (err && err.message ? err.message : String(err)), confirmLabel: "확인" });
+    });
   });
 }
 
