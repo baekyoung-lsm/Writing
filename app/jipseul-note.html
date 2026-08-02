@@ -404,6 +404,7 @@
   .modal-pick::before { content:""; width:8px; height:8px; border-radius:50%; background:var(--pc); flex:none; }
   .modal-pick.no-dot::before { display:none; }
   .modal-pick.on { border-color:var(--pc); color:var(--ink); background:var(--bg-card); font-weight:600; }
+  .modal-location-row { display:flex; gap:8px; align-items:center; margin-bottom:10px; }
   .affinity-log-list { display:flex; flex-direction:column; gap:5px; margin-bottom:8px; max-height:160px; overflow-y:auto; }
   .affinity-log-row { display:flex; align-items:center; gap:8px; background:var(--bg-card); border:1px solid var(--border); border-radius:7px; padding:6px 9px; }
   .alr-label { flex:1; font-size:12.5px; color:var(--ink); min-width:0; }
@@ -1002,7 +1003,7 @@ function ic(name, size) {
 }
 
 /* ---------------- data ---------------- */
-var CATS = ["등장인물","세력","세계관","사건","아이템","떡밥","부·사이드","기타"];
+var CATS = ["등장인물","세력","장소","세계관","사건","아이템","떡밥","부·사이드","기타"];
 var HOUSE_TYPES = {
   major: { label:"대세력" },
   vassal: { label:"가신 세력" },
@@ -1011,6 +1012,21 @@ var HOUSE_TYPES = {
   sect: { label:"문파" },
   guild: { label:"길드" },
   outsider: { label:"새외 세력" }
+};
+/* 장소 계층 -- world -> continent -> country -> city -> district -> building ->
+ * floor -> room, mirroring how 세력 already uses parentHouseId for org hierarchy.
+ * A location's type is descriptive only (no structural meaning like houseType has
+ * for factions), so it's a flat picker, not tied to depth. */
+var LOCATION_TYPES = {
+  world: { label:"세계" },
+  continent: { label:"대륙" },
+  country: { label:"국가" },
+  city: { label:"도시" },
+  district: { label:"구역" },
+  building: { label:"건물" },
+  floor: { label:"층" },
+  room: { label:"방" },
+  other: { label:"기타" }
 };
 /* 무협 세력권 -- a second, independent axis from houseType above: houseType is
  * structural ("what kind of org is this"), alignment is political ("whose side").
@@ -1522,6 +1538,16 @@ function pushRecentColor(hex) {
     if (d.traits === undefined) d.traits = [];
   });
 })();
+/* 장소(Location) -- 세력의 parentHouseId 계층과 같은 방식으로 parentLocationId를 쓴다.
+ * "장소" 카테고리가 아닌 문서에도 필드를 defaulting해두는 이유는 기존 skills/traits와
+ * 같은 이유: 카테고리를 나중에 바꿔도(대분류 select) 필드가 이미 존재해서 undefined
+ * 분기를 여기저기 추가할 필요가 없다. */
+(function migrateLocations(){
+  DOCS.forEach(function(d){
+    if (d.locationType === undefined) d.locationType = null;
+    if (d.parentLocationId === undefined) d.parentLocationId = null;
+  });
+})();
 (function migrateWorks(){
   if (WORKS.length === 0 && (DOCS.length || GRAPHS.length || NOVELS.length)) {
     var w = { id: uid(), title: "새 작품" };
@@ -1596,6 +1622,10 @@ function pushRecentColor(hex) {
       if (r.childMapId === undefined) r.childMapId = null;
       if (r.houseId === undefined) r.houseId = null;
       if (r.countryInfo === undefined) r.countryInfo = null;
+      if (r.locationId === undefined) r.locationId = null;
+    });
+    (mp.markers||[]).forEach(function(mk){
+      if (mk.locationId === undefined) mk.locationId = null;
     });
     if (mp.scaleKmPerUnit === undefined) mp.scaleKmPerUnit = null;
     /* 회차(version) system: versionOf groups sibling maps that are different iterations
@@ -2635,7 +2665,7 @@ function openFindReplace(textareaId, triggerEl, onUpdate) {
 }
 
 /* ---------------- state ---------------- */
-var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, focusMode: false, appearTab: {} };
+var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, pendingMapFocusMarker: null, focusMode: false, appearTab: {} };
 function applyFocusModeClass() {
   var appEl = document.querySelector(".app");
   if (!appEl) return;
@@ -3662,7 +3692,7 @@ function deleteMapVersion(mp) {
 
 /* ---------------- sidebar ---------------- */
 function newDoc(workId, category) {
-  var d = { id: uid(), workId: workId, title: "", summary: "", tags: [], aliases: [], category: category || CATS[0], color: "#9C8268", importance: 0, props: [], blocks: [], houseType: null, parentHouseId: null, alignment: null, skills: [], traits: [] };
+  var d = { id: uid(), workId: workId, title: "", summary: "", tags: [], aliases: [], category: category || CATS[0], color: "#9C8268", importance: 0, props: [], blocks: [], houseType: null, parentHouseId: null, alignment: null, skills: [], traits: [], locationType: null, parentLocationId: null };
   DOCS.push(d); saveData();
   state.mode = "doc"; state.activeId = d.id; state.addPropOpen = false; state.colorPickerOpen = false;
   render();
@@ -4095,6 +4125,9 @@ function docMetaHtml(d) {
   if (d.category==="세력" && d.houseType && HOUSE_TYPES[d.houseType]) {
     metaHtml += '<span class="life-badge" style="--lc:'+colorForFaction(d.title||d.id)+'">'+HOUSE_TYPES[d.houseType].label+'</span>';
   }
+  if (d.category==="장소" && d.locationType && LOCATION_TYPES[d.locationType]) {
+    metaHtml += '<span class="life-badge" style="--lc:var(--tide)">'+LOCATION_TYPES[d.locationType].label+'</span>';
+  }
   if (d.importance) metaHtml += starGlyphs(d.importance);
   return metaHtml;
 }
@@ -4103,6 +4136,16 @@ function houseDescendantIds(doc, allDocs) {
   function walk(id) {
     allDocs.forEach(function(d){
       if (d.parentHouseId === id && out.indexOf(d.id) === -1) { out.push(d.id); walk(d.id); }
+    });
+  }
+  walk(doc.id);
+  return out;
+}
+function locationDescendantIds(doc, allDocs) {
+  var out = [];
+  function walk(id) {
+    allDocs.forEach(function(d){
+      if (d.parentLocationId === id && out.indexOf(d.id) === -1) { out.push(d.id); walk(d.id); }
     });
   }
   walk(doc.id);
@@ -6721,6 +6764,36 @@ function renderDocPage(doc) {
       }).join("") +
     '</div>' : '<span class="chip-empty-hint">지도의 지역 편집에서 이 세력을 연결하면 여기에 표시돼요</span>');
   }
+  if (doc.category === "장소") {
+    propsHtml += propRow("map", "장소 유형", '<div class="life-pick-row" id="locationTypePickRow">' +
+      Object.keys(LOCATION_TYPES).map(function(k){
+        return '<button type="button" class="life-pick '+(doc.locationType===k?"on":"")+'" data-locationtypeval="'+k+'" style="--lc:var(--tide)">'+LOCATION_TYPES[k].label+'</button>';
+      }).join("") +
+      '<button type="button" class="life-pick clear '+(!doc.locationType?"on":"")+'" data-locationtypeval="">표시 안 함</button>' +
+    '</div>');
+    var locExcludeIds = [doc.id].concat(locationDescendantIds(doc, DOCS.filter(function(d){ return d.workId===doc.workId && d.category==="장소"; })));
+    var locationOptions = DOCS.filter(function(d){ return d.workId===doc.workId && d.category==="장소" && locExcludeIds.indexOf(d.id)===-1; });
+    propsHtml += propRow("chevron", "상위 장소", '<select class="sel" id="parentLocationSelect" style="max-width:220px">' +
+      '<option value="">없음 (최상위)</option>' +
+      locationOptions.map(function(d){ return '<option value="'+d.id+'" '+(doc.parentLocationId===d.id?"selected":"")+'>'+esc(d.title||"제목 없음")+'</option>'; }).join("") +
+    '</select>');
+    var childLocations = DOCS.filter(function(d){ return d.workId===doc.workId && d.category==="장소" && d.parentLocationId===doc.id; });
+    propsHtml += propRow("building", "하위 장소", childLocations.length ? '<div class="chip-row">' +
+      childLocations.map(function(d){
+        return '<span class="chip" data-gotolocation="'+d.id+'">'+ic("map",10)+' '+esc(d.title||"제목 없음")+(d.locationType&&LOCATION_TYPES[d.locationType]?" · "+esc(LOCATION_TYPES[d.locationType].label):"")+'</span>';
+      }).join("") +
+    '</div>' : '<span class="chip-empty-hint">상위 장소를 이 장소로 지정한 하위 장소가 여기 표시돼요</span>');
+    var linkedMapSpots = [];
+    MAPS.filter(function(mp){ return mp.workId===doc.workId; }).forEach(function(mp){
+      (mp.regions||[]).forEach(function(r){ if (r.locationId===doc.id) linkedMapSpots.push({ mp:mp, kind:"region", id:r.id, label:r.label }); });
+      (mp.markers||[]).forEach(function(mk){ if (mk.locationId===doc.id) linkedMapSpots.push({ mp:mp, kind:"marker", id:mk.id, label:mk.label }); });
+    });
+    propsHtml += propRow("pin", "연결된 지도 위치", linkedMapSpots.length ? '<div class="chip-row">' +
+      linkedMapSpots.map(function(x){
+        return '<span class="chip house-region-chip" data-gotomapspot="'+x.mp.id+'::'+x.kind+'::'+x.id+'">'+ic("map",10)+' '+esc(x.mp.title||"지도")+(x.label?" · "+esc(x.label):"")+'</span>';
+      }).join("") +
+    '</div>' : '<span class="chip-empty-hint">지도의 지역·기호 편집에서 이 장소를 연결하면 여기에 표시돼요</span>');
+  }
 
   propsHtml += propRow("circle", "색상", '<div class="color-dot-sel"><button class="color-trigger" id="colorTrigger" type="button"><span class="color-dot" style="background:'+colorOf(doc.color)+'"></span><span>색상 선택</span></button></div>');
 
@@ -6899,6 +6972,35 @@ function renderDocPage(doc) {
     chip.addEventListener("click", function(){
       var parts = chip.dataset.gotoregion.split("::");
       state.mode = "map"; state.activeId = parts[0]; state.pendingMapFocusRegion = parts[1]; render();
+    });
+  });
+
+  // location type & hierarchy (장소)
+  main.querySelectorAll("[data-locationtypeval]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      doc.locationType = btn.dataset.locationtypeval || null;
+      saveData(); renderDocPage(doc); renderSidebar();
+    });
+  });
+  var parentLocationSelect = document.getElementById("parentLocationSelect");
+  if (parentLocationSelect) {
+    parentLocationSelect.addEventListener("change", function(e){
+      doc.parentLocationId = e.target.value || null;
+      saveData(); renderDocPage(doc); renderSidebar();
+    });
+  }
+  main.querySelectorAll("[data-gotolocation]").forEach(function(chip){
+    chip.addEventListener("click", function(){
+      state.mode = "doc"; state.activeId = chip.dataset.gotolocation; render();
+    });
+  });
+  main.querySelectorAll("[data-gotomapspot]").forEach(function(chip){
+    chip.addEventListener("click", function(){
+      var parts = chip.dataset.gotomapspot.split("::");
+      state.mode = "map"; state.activeId = parts[0];
+      if (parts[1] === "region") state.pendingMapFocusRegion = parts[2];
+      else state.pendingMapFocusMarker = parts[2];
+      render();
     });
   });
 
@@ -7911,6 +8013,43 @@ function openMapLineModal(mp, line, isNew, onDone) {
     }
   });
 }
+/* 지역/기호 편집창에 공용으로 쓰는 "연결된 장소" select + 새 장소 만들기 버튼.
+ * 세력 연결 select와 달리 항상 렌더링한다 -- 작품에 장소 문서가 아직 하나도 없는
+ * 경우가 오히려 흔할 것이므로("+ 새 장소" 버튼으로 그 자리에서 바로 만들 수 있어야
+ * 처음 쓰는 사용자가 막히지 않는다), 목록이 비어 있다고 select 자체를 숨기지 않는다. */
+function quickCreateLocation(workId, title) {
+  var d = { id: uid(), workId: workId, title: title || "새 장소", summary: "", tags: [], aliases: [], category: "장소", color: "#357C82", importance: 0, props: [], blocks: [], houseType: null, parentHouseId: null, alignment: null, skills: [], traits: [], locationType: null, parentLocationId: null };
+  DOCS.push(d); saveData();
+  return d;
+}
+function wireMapSpotLocationPicker(box, actionsDiv, mp, spot, spotKind) {
+  var locationDocs = DOCS.filter(function(d){ return d.workId===mp.workId && d.category==="장소"; });
+  var html = '<div class="modal-picker-label">연결된 장소</div>' +
+    '<div class="modal-location-row">' +
+      '<select class="modal-input" id="spotLocationSelect" style="flex:1;margin-bottom:0"><option value="">연결 안 함</option>' +
+        locationDocs.map(function(d){
+          return '<option value="'+d.id+'" '+(spot.locationId===d.id?"selected":"")+'>'+esc(d.title||"제목 없음")+(d.locationType&&LOCATION_TYPES[d.locationType]?" ("+LOCATION_TYPES[d.locationType].label+")":"")+'</option>';
+        }).join("") +
+      '</select>' +
+      '<button type="button" class="modal-pick no-dot" id="spotNewLocationBtn" style="flex:none">'+ic("plus",11)+' 새 장소</button>' +
+    '</div>';
+  if (actionsDiv) actionsDiv.insertAdjacentHTML("beforebegin", html);
+  var sel = document.getElementById("spotLocationSelect");
+  sel.addEventListener("change", function(e){
+    spot.locationId = e.target.value || null;
+    saveData();
+  });
+  document.getElementById("spotNewLocationBtn").addEventListener("click", function(){
+    var labelInput = document.getElementById("modalField0");
+    var title = (labelInput && labelInput.value.trim()) || spot.label || "새 장소";
+    var d = quickCreateLocation(mp.workId, title);
+    spot.locationId = d.id;
+    saveData();
+    var opt = document.createElement("option");
+    opt.value = d.id; opt.textContent = title; opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
 function openMapRegionModal(mp, region, onDone) {
   openModal({
     title: "지역 편집",
@@ -7962,6 +8101,7 @@ function openMapRegionModal(mp, region, onDone) {
       saveData();
     });
   }
+  wireMapSpotLocationPicker(box, actionsDiv, mp, region, "region");
   var childMap = region.childMapId ? MAPS.find(function(m){ return m.id === region.childMapId; }) : null;
   var drillHtml = '<div class="modal-picker-label">세부 지도</div><div class="modal-picker-row">' +
     '<button type="button" class="modal-pick no-dot" id="mapDrillBtn">' +
@@ -7999,6 +8139,12 @@ function openMapMarkerModal(mp, marker, isNew, onDone) {
       onDone(marker);
     }
   });
+  var overlay = document.getElementById("modalOverlay");
+  if (!overlay) return;
+  var box = overlay.querySelector(".modal-box");
+  var actionsDiv = box.querySelector(".modal-actions");
+  if (marker.locationId === undefined) marker.locationId = null;
+  wireMapSpotLocationPicker(box, actionsDiv, mp, marker, "marker");
 }
 function openMapDangerModal(mp, zone, isNew, onDone) {
   openModal({
@@ -8426,6 +8572,12 @@ function renderMapPage(mp) {
     state.pendingMapFocusRegion = null;
     saveData();
   }
+  if (state.pendingMapFocusMarker) {
+    var focusMk = (mp.markers||[]).find(function(mk){ return mk.id === state.pendingMapFocusMarker; });
+    if (focusMk) { centerMapOnPoint(mp, focusMk.x, focusMk.y); mpState.selected = { type:"marker", id: focusMk.id }; }
+    state.pendingMapFocusMarker = null;
+    saveData();
+  }
 
   drawMap(mp);
 
@@ -8749,7 +8901,7 @@ function renderMapPage(mp) {
         var hint = document.querySelector(".graph-empty-hint");
         if (hint) hint.remove();
         if (mpState.tool === "paint") {
-          mp.regions.push({ id: uid(), points: simplified, terrain: mpState.terrain, label: "", childMapId: null, houseId: null, countryInfo: null });
+          mp.regions.push({ id: uid(), points: simplified, terrain: mpState.terrain, label: "", childMapId: null, houseId: null, countryInfo: null, locationId: null });
           saveData(); drawMap(mp);
         } else if (mpState.tool === "line") {
           var newLine = { id: uid(), points: simplified, kind: "border", label: "" };
