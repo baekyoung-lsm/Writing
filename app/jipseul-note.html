@@ -222,12 +222,14 @@
 
   .appear-card { border:1px solid var(--border); border-radius:11px; padding:14px; margin-bottom:16px; background:var(--bg-card); box-shadow:0 1px 3px var(--shadow); }
   .appear-head { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-faint); margin-bottom:12px; }
+  .relationship-group { margin-bottom:12px; }
+  .relationship-group:last-child { margin-bottom:0; }
+  .relationship-group-label { font-size:11px; letter-spacing:0.04em; color:var(--ink-faint); margin-bottom:6px; font-weight:600; }
   .relationship-list { display:flex; flex-direction:column; gap:6px; }
   .relationship-row { display:flex; align-items:center; gap:8px; padding:7px 9px; border:1px solid var(--border); border-radius:8px; background:var(--bg); }
   .rel-type-chip { flex:none; background:var(--accent-soft); color:var(--accent); font-weight:600; }
   .rel-other-link { flex:1; min-width:0; display:flex; align-items:center; gap:6px; background:none; border:none; text-align:left; font-size:13px; color:var(--ink); padding:2px 4px; border-radius:5px; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .rel-other-link:hover { background:var(--bg-card-hover); text-decoration:underline; text-decoration-style:dotted; }
-  .rel-other-cat { flex:none; font-size:11px; color:var(--ink-faint); font-weight:400; }
   .rel-period { flex:none; font-size:11.5px; color:var(--ink-faint); font-variant-numeric:tabular-nums; }
   .rel-note { flex:none; display:flex; color:var(--ink-faint); cursor:help; }
   .modal-input#relEntitySelect { margin-bottom:4px; }
@@ -4330,24 +4332,44 @@ function relationshipLabelFor(r, doc) {
   if (preset.symmetric) return preset.label;
   return r.fromId === doc.id ? preset.label : preset.labelInverse;
 }
+function relationshipRowHtml(r, doc, other) {
+  var label = relationshipLabelFor(r, doc);
+  var periodTxt = (r.start||r.end) ? ' <span class="rel-period">'+esc(r.start||"")+"~"+esc(r.end||"")+'</span>' : "";
+  return '<div class="relationship-row">' +
+    '<span class="chip rel-type-chip">'+esc(label)+'</span>' +
+    '<button type="button" class="rel-other-link" data-gotorelentity="'+other.id+'">'+esc(other.title||"제목 없음")+'</button>' +
+    periodTxt +
+    (r.note ? '<span class="rel-note" title="'+esc(r.note)+'">'+ic("tag",11)+'</span>' : "") +
+    '<button type="button" class="row-del" data-delrelationship="'+r.id+'">'+ic("close",12)+'</button>' +
+  '</div>';
+}
+/* 요약 패널 -- "관계" 카드를 상대 엔티티의 카테고리별로 묶어서 보여준다. 소속 세력·
+ * 관련 장소·관련 사건·관련 아이템처럼 각기 다른 질문에 한눈에 답하려면 한 줄로 죽
+ * 늘어선 목록보다 카테고리별 소제목이 있는 편이 스캔하기 훨씬 쉽다. 데이터 자체는
+ * 2단계에서 만든 RELATIONSHIPS를 그대로 쓰고, 새 데이터를 추가하지 않는다. */
 function renderRelationshipsCard(doc) {
   var rels = RELATIONSHIPS.filter(function(r){ return r.fromId===doc.id || r.toId===doc.id; });
   var head = '<div class="appear-head">'+ic("link",15)+'<span>관계'+(rels.length?' · '+rels.length+'개':'')+'</span></div>';
-  var rows = rels.map(function(r){
+  var byCat = {};
+  rels.forEach(function(r){
     var otherId = r.fromId===doc.id ? r.toId : r.fromId;
     var other = DOCS.find(function(d){ return d.id===otherId; });
-    if (!other) return "";
-    var label = relationshipLabelFor(r, doc);
-    var periodTxt = (r.start||r.end) ? ' <span class="rel-period">'+esc(r.start||"")+"~"+esc(r.end||"")+'</span>' : "";
-    return '<div class="relationship-row">' +
-      '<span class="chip rel-type-chip">'+esc(label)+'</span>' +
-      '<button type="button" class="rel-other-link" data-gotorelentity="'+other.id+'">'+esc(other.title||"제목 없음")+(other.category?'<span class="rel-other-cat">· '+esc(other.category)+'</span>':"")+'</button>' +
-      periodTxt +
-      (r.note ? '<span class="rel-note" title="'+esc(r.note)+'">'+ic("tag",11)+'</span>' : "") +
-      '<button type="button" class="row-del" data-delrelationship="'+r.id+'">'+ic("close",12)+'</button>' +
-    '</div>';
-  }).join("");
-  var body = rows ? '<div class="relationship-list">'+rows+'</div>' : '<div class="chip-empty-hint">아직 연결된 관계가 없습니다.</div>';
+    if (!other) return;
+    (byCat[other.category] = byCat[other.category] || []).push({ r:r, other:other });
+  });
+  var orderedCats = CATS.filter(function(cat){ return byCat[cat] && byCat[cat].length; });
+  var body;
+  if (!orderedCats.length) {
+    body = '<div class="chip-empty-hint">아직 연결된 관계가 없습니다.</div>';
+  } else {
+    body = orderedCats.map(function(cat){
+      var rows = byCat[cat].map(function(x){ return relationshipRowHtml(x.r, doc, x.other); }).join("");
+      return '<div class="relationship-group">' +
+        '<div class="relationship-group-label">'+esc(cat)+' · '+byCat[cat].length+'</div>' +
+        '<div class="relationship-list">'+rows+'</div>' +
+      '</div>';
+    }).join("");
+  }
   return '<div class="appear-card relationship-card">'+head+body+
     '<button type="button" class="chip-add" id="addRelationshipBtn" style="margin-top:10px">'+ic("plus",11)+' 관계 추가</button>' +
   '</div>';
@@ -7027,6 +7049,12 @@ function renderDocPage(doc) {
       '<option value="">없음 (최상위)</option>' +
       houseOptions.map(function(d){ return '<option value="'+d.id+'" '+(doc.parentHouseId===d.id?"selected":"")+'>'+esc(d.title||"제목 없음")+'</option>'; }).join("") +
     '</select>');
+    var childHouses = DOCS.filter(function(d){ return d.workId===doc.workId && d.category==="세력" && d.parentHouseId===doc.id; });
+    propsHtml += propRow("building", "하위 세력", childHouses.length ? '<div class="chip-row">' +
+      childHouses.map(function(d){
+        return '<span class="chip" data-gotorelentity="'+d.id+'">'+ic("crown",10)+' '+esc(d.title||"제목 없음")+(d.houseType&&HOUSE_TYPES[d.houseType]?" · "+esc(HOUSE_TYPES[d.houseType].label):"")+'</span>';
+      }).join("") +
+    '</div>' : '<span class="chip-empty-hint">상위 세력을 이 세력으로 지정한 하위 세력이 여기 표시돼요</span>');
     var linkedRegions = [];
     MAPS.filter(function(mp){ return mp.workId===doc.workId; }).forEach(function(mp){
       (mp.regions||[]).forEach(function(r){ if (r.houseId===doc.id) linkedRegions.push({ mp:mp, r:r }); });
