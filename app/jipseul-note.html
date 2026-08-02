@@ -405,6 +405,7 @@
   .sb-group-head .add:hover { color:var(--accent); background:var(--bg-card); }
   .ms-sort-btn { font-size:10.5px; color:var(--ink-faint); background:none; border:1px solid var(--border); border-radius:10px; padding:2px 8px; flex:none; }
   .ms-sort-btn:hover { color:var(--accent); border-color:var(--accent); }
+  .ms-sort-btn.on { border-color:var(--accent); background:var(--accent-soft); color:var(--ink); font-weight:600; }
   .novel-subrow { display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:0 8px 6px; }
   .pov-filter-sel { font-size:10.5px; color:var(--ink-faint); background:none; border:1px solid var(--border); border-radius:10px; padding:2px 6px; flex:none; max-width:130px; }
   .pov-badge { margin-left:auto; font-size:10px; color:var(--tide); flex:none; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -672,6 +673,9 @@
   .map-marker.selected .map-marker-bg { stroke:var(--ink); stroke-width:2.6; }
   .map-danger { cursor:pointer; }
   .map-danger-preview { fill:var(--accent-soft); fill-opacity:0.25; stroke:var(--accent); stroke-width:2; stroke-dasharray:5 4; pointer-events:none; }
+  .map-alignment-legend { position:absolute; bottom:14px; left:14px; display:flex; flex-direction:column; gap:4px; background:var(--bg-card); border:1px solid var(--border-strong); border-radius:10px; padding:8px 12px; box-shadow:0 4px 14px var(--shadow); font-size:11.5px; color:var(--ink-soft); z-index:5; }
+  .map-alignment-legend-item { display:flex; align-items:center; gap:6px; }
+  .map-alignment-legend-item .dot { width:9px; height:9px; border-radius:50%; flex:none; }
 
   /* ---------- database table ---------- */
   .db-scroll { overflow-x:auto; padding-bottom:10px; }
@@ -921,6 +925,15 @@ var HOUSE_TYPES = {
   sect: { label:"문파" },
   guild: { label:"길드" },
   outsider: { label:"새외 세력" }
+};
+/* 무협 세력권 -- a second, independent axis from houseType above: houseType is
+ * structural ("what kind of org is this"), alignment is political ("whose side").
+ * A 문파(sect) can be 정파 or 사파 just as easily as an 새외 세력 can be 마교-aligned,
+ * so this stays a separate field rather than folding into HOUSE_TYPES. */
+var HOUSE_ALIGNMENTS = {
+  orthodox:   { label:"정파", color:"#4C6E9A" },
+  unorthodox: { label:"사파", color:"#A6473C" },
+  demonic:    { label:"마교", color:"#5A2340" }
 };
 var PROP_TYPES = [
   { id:"text", label:"텍스트", icon:"lines" },
@@ -1396,6 +1409,7 @@ function pushRecentColor(hex) {
   DOCS.forEach(function(d){
     if (d.houseType === undefined) d.houseType = null;
     if (d.parentHouseId === undefined) d.parentHouseId = null;
+    if (d.alignment === undefined) d.alignment = null;
   });
 })();
 (function migrateWorks(){
@@ -3345,7 +3359,7 @@ function deleteMapVersion(mp) {
 
 /* ---------------- sidebar ---------------- */
 function newDoc(workId, category) {
-  var d = { id: uid(), workId: workId, title: "", summary: "", tags: [], aliases: [], category: category || CATS[0], color: "#9C8268", importance: 0, props: [], blocks: [], houseType: null, parentHouseId: null };
+  var d = { id: uid(), workId: workId, title: "", summary: "", tags: [], aliases: [], category: category || CATS[0], color: "#9C8268", importance: 0, props: [], blocks: [], houseType: null, parentHouseId: null, alignment: null };
   DOCS.push(d); saveData();
   state.mode = "doc"; state.activeId = d.id; state.addPropOpen = false; state.colorPickerOpen = false;
   render();
@@ -6347,6 +6361,12 @@ function renderDocPage(doc) {
       }).join("") +
       '<button type="button" class="life-pick clear '+(!doc.houseType?"on":"")+'" data-housetypeval="">표시 안 함</button>' +
     '</div>');
+    propsHtml += propRow("sword", "진영(무협)", '<div class="life-pick-row" id="alignmentPickRow">' +
+      Object.keys(HOUSE_ALIGNMENTS).map(function(k){
+        return '<button type="button" class="life-pick '+(doc.alignment===k?"on":"")+'" data-alignmentval="'+k+'" style="--lc:'+HOUSE_ALIGNMENTS[k].color+'">'+HOUSE_ALIGNMENTS[k].label+'</button>';
+      }).join("") +
+      '<button type="button" class="life-pick clear '+(!doc.alignment?"on":"")+'" data-alignmentval="">표시 안 함</button>' +
+    '</div>');
     var excludeIds = [doc.id].concat(houseDescendantIds(doc, DOCS.filter(function(d){ return d.workId===doc.workId && d.category==="세력"; })));
     var houseOptions = DOCS.filter(function(d){ return d.workId===doc.workId && d.category==="세력" && excludeIds.indexOf(d.id)===-1; });
     propsHtml += propRow("chevron", "상위 세력", '<select class="sel" id="parentHouseSelect" style="max-width:220px">' +
@@ -6523,6 +6543,12 @@ function renderDocPage(doc) {
       saveData(); renderDocPage(doc); renderSidebar();
     });
   });
+  main.querySelectorAll("[data-alignmentval]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      doc.alignment = btn.dataset.alignmentval || null;
+      saveData(); renderDocPage(doc); renderSidebar();
+    });
+  });
   var parentHouseSelect = document.getElementById("parentHouseSelect");
   if (parentHouseSelect) {
     parentHouseSelect.addEventListener("change", function(e){
@@ -6663,6 +6689,64 @@ function fitGraph(g) {
 
 function nodeWidth(label) { return Math.max(64, Math.min(200, label.length * 7.5 + 26)); }
 
+/* 문파 계보도 -- arranges nodes into a top-down hierarchy using the graph's own
+ * family-kind, forward-direction edges (부모→자식, 사부→제자, etc. -- the same
+ * FAMILY_EDGE_PRESETS already used by "가계도 빠른 채우기"), so a sect's
+ * 장문인→장로→제자 chain (built with the 사부→제자 preset) lays out as a tree with
+ * no new edge vocabulary needed. Nodes with no incoming family edge become roots;
+ * multiple independent roots (e.g. two unrelated sects in one graph) each get their
+ * own column range rather than overlapping. Nodes with no family edges at all just
+ * end up as a single top row -- harmless, since there's no hierarchy to express. */
+function treeLayoutGraph(g) {
+  if (!g.nodes.length) return;
+  var childrenOf = {}, parentOf = {}, hasParent = {};
+  g.edges.forEach(function(e){
+    if (e.kind === "family" && e.direction === "forward" && e.from !== e.to) {
+      (childrenOf[e.from] = childrenOf[e.from] || []).push(e.to);
+      if (parentOf[e.to] === undefined) parentOf[e.to] = e.from;
+      hasParent[e.to] = true;
+    }
+  });
+  var roots = g.nodes.filter(function(n){ return !hasParent[n.id]; });
+  if (!roots.length) roots = g.nodes.slice();
+
+  var depthOf = {}, seen = {};
+  var queue = roots.map(function(n){ return { id: n.id, depth: 0 }; });
+  roots.forEach(function(n){ seen[n.id] = true; });
+  while (queue.length) {
+    var item = queue.shift();
+    if (depthOf[item.id] === undefined) depthOf[item.id] = item.depth;
+    (childrenOf[item.id] || []).forEach(function(cid){
+      if (!seen[cid]) { seen[cid] = true; queue.push({ id: cid, depth: item.depth + 1 }); }
+    });
+  }
+  g.nodes.forEach(function(n){ if (depthOf[n.id] === undefined) depthOf[n.id] = 0; });
+
+  var byDepth = {}, maxDepth = 0;
+  g.nodes.forEach(function(n){
+    var d = depthOf[n.id];
+    maxDepth = Math.max(maxDepth, d);
+    (byDepth[d] = byDepth[d] || []).push(n);
+  });
+
+  var ROW_H = 150, GAP = 150;
+  var xOf = {};
+  for (var d = 0; d <= maxDepth; d++) {
+    var levelNodes = (byDepth[d] || []).slice();
+    levelNodes.sort(function(a, b){
+      var pa = xOf[parentOf[a.id]], pb = xOf[parentOf[b.id]];
+      if (pa === undefined && pb === undefined) return 0;
+      if (pa === undefined) return -1;
+      if (pb === undefined) return 1;
+      return pa - pb;
+    });
+    levelNodes.forEach(function(n, i){ xOf[n.id] = i * GAP; });
+  }
+  g.nodes.forEach(function(n){ n.x = xOf[n.id]; n.y = depthOf[n.id] * ROW_H; });
+  fitGraph(g);
+  saveData();
+}
+
 function renderGraphPage(g) {
   gState = { mode: "idle", connectFrom: null, selected: gState.selected, panStart: null, dragNode: null, justDragged: false };
   var main = document.getElementById("main");
@@ -6679,6 +6763,8 @@ function renderGraphPage(g) {
           '<button class="tb-btn" id="tbAddNode">'+ic("plus",14)+'<span>노드</span></button>' +
           '<div class="tb-sep"></div>' +
           '<button class="tb-btn" id="tbConnect">'+ic("connect",14)+'<span>연결</span></button>' +
+          '<div class="tb-sep"></div>' +
+          '<button class="tb-btn" id="tbTreeLayout" title="가족·사제 관계(부모→자식, 사부→제자 등)를 기준으로 위에서 아래로 자동 정렬 — 문파 계보도에 사용해보세요">'+ic("list",14)+'<span>트리 정렬</span></button>' +
           '<div class="tb-sep"></div>' +
           '<button class="tb-btn" id="tbZoomIn">'+ic("zoomin",14)+'</button>' +
           '<button class="tb-btn" id="tbZoomOut">'+ic("zoomout",14)+'</button>' +
@@ -6722,6 +6808,7 @@ function renderGraphPage(g) {
     e.currentTarget.classList.toggle("active", gState.mode === "connect");
     document.getElementById("graphWrap").classList.toggle("connecting", gState.mode === "connect");
   });
+  document.getElementById("tbTreeLayout").addEventListener("click", function(){ treeLayoutGraph(g); drawGraph(g); });
   document.getElementById("tbZoomIn").addEventListener("click", function(){ zoomGraph(g, 1.2); });
   document.getElementById("tbZoomOut").addEventListener("click", function(){ zoomGraph(g, 1/1.2); });
   document.getElementById("tbFit").addEventListener("click", function(){ fitGraph(g); saveData(); drawGraph(g); });
@@ -6998,7 +7085,7 @@ function drawGraph(g) {
 }
 
 /* ---------------- map page ---------------- */
-var mpState = { tool: "select", terrain: "forest", symbol: "city", drawPoints: null, panStart: null, selected: null, scaleLine: null, scaleLineStart: null };
+var mpState = { tool: "select", terrain: "forest", symbol: "city", drawPoints: null, panStart: null, selected: null, scaleLine: null, scaleLineStart: null, showAlignment: false };
 var _mapWinHandlers = null;
 function currentMap() { return MAPS.find(function(mp){ return mp.id === state.activeId; }); }
 
@@ -7534,8 +7621,14 @@ function drawMap(mp) {
     var house = r.houseId ? DOCS.find(function(d){ return d.id === r.houseId; }) : null;
     var houseColor = house ? colorForFaction(house.title||house.id) : null;
     var isSel = mpState.selected&&mpState.selected.type==="region"&&mpState.selected.id===r.id;
+    /* 세력권 보기 -- one-click swap from per-faction hash color to shared 정파/사파/마교
+     * palette, so regions with the same alignment read as one visual bloc regardless of
+     * which individual faction holds them. Unaffiliated/no-house regions go neutral gray. */
+    var alignInfo = mpState.showAlignment && house && house.alignment ? HOUSE_ALIGNMENTS[house.alignment] : null;
+    var fillColor = mpState.showAlignment ? (alignInfo ? alignInfo.color : "#B9B7AC") : kind.color;
+    var strokeColor = alignInfo ? alignInfo.color : (houseColor||(isSel?"var(--accent)":"rgba(20,16,10,0.55)"));
     html += '<g class="map-region '+(isSel?"selected":"")+'" data-region="'+r.id+'">' +
-      '<polygon points="'+ptsStr+'" style="fill:'+kind.color+';stroke:'+(houseColor||(isSel?"var(--accent)":"rgba(20,16,10,0.55)"))+';stroke-width:'+(house?3:(isSel?2.6:1.4))+'"></polygon>' +
+      '<polygon points="'+ptsStr+'" style="fill:'+fillColor+';stroke:'+strokeColor+';stroke-width:'+(house?3:(isSel?2.6:1.4))+'"></polygon>' +
       '<text x="'+c[0]+'" y="'+c[1]+'" text-anchor="middle" class="map-region-label">'+(r.terrain==="none"?"":esc(kind.label)+(r.label?" · ":""))+esc(r.label||"")+'</text>' +
       (house ? '<text x="'+c[0]+'" y="'+(c[1]+15)+'" text-anchor="middle" class="map-region-house-label" style="fill:'+houseColor+'">&#9813; '+esc(house.title||"세력")+'</text>' : '') +
       (house ? '<g class="map-region-focus" data-regionfocus="'+r.id+'" transform="translate('+c[0]+','+(c[1]-22)+')" title="이 지역으로 확대"><circle r="9" style="fill:'+houseColor+'"></circle><g transform="translate(-6,-6)" style="color:#fff">'+ic("search",12)+'</g></g>' : '') +
@@ -7675,7 +7768,7 @@ function drawMap(mp) {
   });
 }
 function renderMapPage(mp) {
-  mpState = { tool: "select", terrain: mpState.terrain || "forest", symbol: mpState.symbol || "city", drawPoints: null, panStart: null, selected: null, cropRect: null, cropDragStart: null, scaleLine: null, scaleLineStart: null, dangerStart: null, dangerCircle: null };
+  mpState = { tool: "select", terrain: mpState.terrain || "forest", symbol: mpState.symbol || "city", drawPoints: null, panStart: null, selected: null, cropRect: null, cropDragStart: null, scaleLine: null, scaleLineStart: null, dangerStart: null, dangerCircle: null, showAlignment: mpState.showAlignment || false };
   if (mp.bgOpacity === undefined) mp.bgOpacity = 0.4;
   if (mp.bgMode === undefined) mp.bgMode = mp.bgImage ? "original" : "hidden";
   if (!mp.regions) mp.regions = [];
@@ -7743,12 +7836,19 @@ function renderMapPage(mp) {
       '<div class="novel-subrow" style="padding:0 22px 12px">' +
         '<button type="button" class="ms-sort-btn" id="mapYearBtn" title="연도·연표 정보 설정">'+ic("calendar",11)+' '+(esc(mp.yearLabel)||"연도 설정")+'</button>' +
         '<button type="button" class="ms-sort-btn" id="mapRegionListBtn" title="지역이 겹쳐서 클릭하기 어려울 때 이름으로 바로 찾기">'+ic("map",11)+' 지역 목록('+mp.regions.length+')</button>' +
+        '<button type="button" class="ms-sort-btn'+(mpState.showAlignment?" on":"")+'" id="mapAlignmentBtn" title="지역에 연결된 세력의 정파·사파·마교 진영으로 한 번에 색칠해서 보기">'+ic("sword",11)+' 세력권 보기</button>' +
         (linkedEv ? '<button type="button" class="ms-sort-btn" id="mapEventJumpBtn" title="연결된 연표 사건으로 이동">'+ic("map",11)+' '+esc(linkedTl.title||"연표")+' · '+esc(linkedEv.label||linkedEv.title||"사건")+'</button>' : '') +
         '<span class="ms-sort-btn" style="pointer-events:none;background:none;border-style:dashed" title="지역에 마우스를 올리면 면적이 표시돼요 · 단위는 단위·달력 설정에서 바꿀 수 있어요">'+ic("ruler",11)+' '+(mp.scaleKmPerUnit ? fmtMapDistanceLabel(mp) : "축척 미설정 — 도구모음의 자 아이콘으로 설정")+'</span>' +
       '</div>' +
       '<div class="graph-canvas-wrap" id="mapWrap">' +
         '<svg class="graph-svg" id="mapSvg"><g id="mapG"></g></svg>' +
         (mp.regions.length || mp.lines.length || mp.markers.length || mp.dangerZones.length || mp.bgImage ? "" : '<div class="graph-empty-hint">아직 그린 내용이 없습니다<br>아래 도구로 선·지역·기호를 그리거나 이미지를 올려보세요</div>') +
+        (mpState.showAlignment
+          ? '<div class="map-alignment-legend">' +
+            Object.keys(HOUSE_ALIGNMENTS).map(function(k){ return '<span class="map-alignment-legend-item"><span class="dot" style="background:'+HOUSE_ALIGNMENTS[k].color+'"></span>'+HOUSE_ALIGNMENTS[k].label+'</span>'; }).join("") +
+            '<span class="map-alignment-legend-item"><span class="dot" style="background:#B9B7AC"></span>미지정</span>' +
+            '</div>'
+          : "") +
         terrainRowHtml +
         symbolRowHtml +
         cropRowHtml +
@@ -7799,6 +7899,10 @@ function renderMapPage(mp) {
     openMapYearModal(mp, function(){ renderSidebar(); renderMapPage(mp); });
   });
   document.getElementById("mapRegionListBtn").addEventListener("click", function(){ openRegionListModal(mp); });
+  document.getElementById("mapAlignmentBtn").addEventListener("click", function(){
+    mpState.showAlignment = !mpState.showAlignment;
+    renderMapPage(mp);
+  });
   var mapEventJumpBtn = document.getElementById("mapEventJumpBtn");
   if (mapEventJumpBtn) mapEventJumpBtn.addEventListener("click", function(){
     state.mode = "timeline"; state.activeId = mp.linkedTimelineId; render();
