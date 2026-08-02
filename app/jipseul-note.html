@@ -150,6 +150,13 @@
   .btn.primary:hover { opacity:.92; color:#fff; box-shadow:0 3px 10px var(--shadow); }
 
   /* ---------- Doc page ---------- */
+  .breadcrumb-row { display:flex; align-items:center; flex-wrap:wrap; gap:5px; margin-bottom:14px; font-size:12px; }
+  .breadcrumb-item { display:inline-flex; align-items:center; }
+  .breadcrumb-label { color:var(--ink-faint); }
+  .breadcrumb-link { background:none; border:none; padding:2px 4px; margin:-2px -4px; border-radius:5px; color:var(--ink-soft); cursor:pointer; }
+  .breadcrumb-link:hover { color:var(--accent); background:var(--bg-card-hover); text-decoration:underline; text-decoration-style:dotted; }
+  .breadcrumb-current { color:var(--ink); font-weight:600; }
+  .breadcrumb-sep { display:inline-flex; color:var(--ink-faint); opacity:.6; }
   .doc-head-row { display:flex; align-items:flex-start; gap:10px; margin-bottom:22px; }
   .doc-title { font-family:var(--serif); font-size:34px; font-weight:600; border:none; background:none; outline:none; width:100%; padding:0; flex:1; }
   .doc-title::placeholder { color: var(--ink-faint); }
@@ -170,6 +177,20 @@
   .doc-card-summary { font-size:12.5px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; line-height:1.4; }
   .doc-card-del { position:absolute; top:10px; right:10px; opacity:0; }
   .doc-card:hover .doc-card-del { opacity:1; }
+  .doc-card-selected { border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 1px var(--accent) inset; }
+
+  .doccat-viewtoggle { display:flex; gap:6px; flex:none; }
+  .doccat-split-pad { padding-bottom:0; }
+  .doccat-split-wrap { display:flex; gap:20px; align-items:flex-start; height:calc(100vh - 190px); min-height:420px; }
+  .doccat-split-list { flex:0 0 320px; overflow-y:auto; height:100%; padding-right:4px; }
+  .doccat-split-list .doccat-grid { grid-template-columns:1fr; }
+  .doccat-split-detail { flex:1; min-width:0; overflow-y:auto; height:100%; border:1px solid var(--border); border-radius:12px; background:var(--bg-card); }
+  .doccat-split-detail .page-pad { padding:22px; }
+  @media (max-width: 900px) {
+    .doccat-split-wrap { flex-direction:column; height:auto; }
+    .doccat-split-list { flex:none; width:100%; height:auto; max-height:340px; }
+    .doccat-split-detail { width:100%; height:auto; max-height:640px; }
+  }
 
   .prop-grid { display:flex; flex-direction:column; border:1px solid var(--border); border-radius:11px; margin-bottom:16px; background:var(--bg-card); box-shadow:0 1px 3px var(--shadow); }
   .prop-row { display:flex; align-items:flex-start; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); }
@@ -2814,7 +2835,7 @@ function openFindReplace(textareaId, triggerEl, onUpdate) {
 }
 
 /* ---------------- state ---------------- */
-var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, pendingMapFocusMarker: null, focusMode: false, appearTab: {} };
+var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, pendingMapFocusMarker: null, focusMode: false, appearTab: {}, splitView: false, splitSelectedId: null };
 function applyFocusModeClass() {
   var appEl = document.querySelector(".app");
   if (!appEl) return;
@@ -4326,6 +4347,51 @@ function locationDescendantIds(doc, allDocs) {
   walk(doc.id);
   return out;
 }
+function ancestorChain(doc, parentKey) {
+  var chain = [doc];
+  var current = doc;
+  var guard = 0;
+  while (current[parentKey] && guard++ < 50) {
+    var parent = DOCS.find(function(d){ return d.id === current[parentKey]; });
+    if (!parent) break;
+    chain.unshift(parent);
+    current = parent;
+  }
+  return chain;
+}
+/* 브레드크럼 -- 장소·세력은 이미 있는 parentLocationId/parentHouseId 계층을 그대로
+ * 타고 올라가 조상 체인을 만든다. 새 계층 데이터를 만들지 않는다. */
+function renderBreadcrumbHtml(doc) {
+  var work = WORKS.find(function(w){ return w.id === doc.workId; });
+  var chain = doc.category === "장소" ? ancestorChain(doc, "parentLocationId")
+    : doc.category === "세력" ? ancestorChain(doc, "parentHouseId")
+    : [doc];
+  var parts = [
+    '<span class="breadcrumb-item breadcrumb-label">'+esc(work?work.title:"")+'</span>',
+    '<span class="breadcrumb-sep">'+ic("chevR",9)+'</span>',
+    '<button type="button" class="breadcrumb-item breadcrumb-link" data-crumbcat="'+doc.workId+'::'+esc(doc.category)+'">'+esc(doc.category)+'</button>'
+  ];
+  chain.forEach(function(d, i){
+    parts.push('<span class="breadcrumb-sep">'+ic("chevR",9)+'</span>');
+    parts.push(i === chain.length-1
+      ? '<span class="breadcrumb-item breadcrumb-current">'+esc(d.title||"제목 없음")+'</span>'
+      : '<button type="button" class="breadcrumb-item breadcrumb-link" data-crumbdoc="'+d.id+'">'+esc(d.title||"제목 없음")+'</button>');
+  });
+  return '<div class="breadcrumb-row">'+parts.join("")+'</div>';
+}
+function wireBreadcrumb(main) {
+  main.querySelectorAll("[data-crumbcat]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var parts = btn.dataset.crumbcat.split("::");
+      state.mode="doccat"; state.activeId=parts[0]+"::"+parts[1]; render();
+    });
+  });
+  main.querySelectorAll("[data-crumbdoc]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      state.mode="doc"; state.activeId=btn.dataset.crumbdoc; render();
+    });
+  });
+}
 function relationshipLabelFor(r, doc) {
   var preset = RELATIONSHIP_TYPES[r.type];
   if (!preset) return r.type || "관계";
@@ -5023,9 +5089,16 @@ function renderDocCategoryPage(workId, category) {
   var docs = DOCS.filter(function(d){ return d.workId===workId && d.category===category; });
   var main = document.getElementById("main");
   var isHouse = category === "세력";
+  var split = !!state.splitView;
+  if (split) {
+    if (!state.splitSelectedId || !docs.some(function(d){ return d.id===state.splitSelectedId; })) {
+      state.splitSelectedId = docs.length ? docs[0].id : null;
+    }
+  }
   var cardHtml = function(d, depth) {
     var meta = docMetaHtml(d);
-    return '<div class="doc-card'+(isHouse?" doc-card-tree":"")+'" data-opendoccard="'+d.id+'"'+(isHouse?' style="margin-left:'+(depth*26)+'px"':'')+'>' +
+    var selected = split && state.splitSelectedId === d.id;
+    return '<div class="doc-card'+(isHouse?" doc-card-tree":"")+(selected?" doc-card-selected":"")+'" data-opendoccard="'+d.id+'"'+(isHouse?' style="margin-left:'+(depth*26)+'px"':'')+'>' +
       '<button class="row-del doc-card-del" data-deldoccard="'+d.id+'" title="삭제">'+ic("trash",12)+'</button>' +
       '<div class="doc-card-top"><span class="doc-card-dot" style="background:'+colorOf(d.color)+'"></span>'+meta+'</div>' +
       '<div class="doc-card-title">'+esc(d.title||"제목 없음")+'</div>' +
@@ -5038,24 +5111,57 @@ function renderDocCategoryPage(workId, category) {
   } else {
     cardsHtml = docs.map(function(d){ return cardHtml(d, 0); }).join("");
   }
-  main.innerHTML =
-    '<div class="page-pad">' +
-      '<div class="doc-head-row" style="justify-content:space-between;align-items:center">' +
-        '<div><div class="doccat-eyebrow">'+esc(work?work.title:"")+'</div><h2 class="doccat-title">'+esc(category)+'</h2></div>' +
-        '<button class="btn primary" id="doccatAddBtn">'+ic("plus",13)+' 새 문서</button>' +
-      '</div>' +
-      '<div class="'+(isHouse?"doccat-tree":"doccat-grid")+'">' + (cardsHtml || '<div class="sb-empty">아직 문서가 없습니다. "새 문서"로 추가해보세요.</div>') + '</div>' +
+  var breadcrumbHtml = '<div class="breadcrumb-row">' +
+    '<span class="breadcrumb-item breadcrumb-label">'+esc(work?work.title:"")+'</span>' +
+    '<span class="breadcrumb-sep">'+ic("chevR",9)+'</span>' +
+    '<span class="breadcrumb-item breadcrumb-current">'+esc(category)+'</span>' +
+  '</div>';
+  var viewToggleHtml = '<div class="doccat-viewtoggle">' +
+    '<button type="button" class="ms-tab '+(!split?"on":"")+'" id="dcViewList">리스트만</button>' +
+    '<button type="button" class="ms-tab '+(split?"on":"")+'" id="dcViewSplit">스플릿</button>' +
+  '</div>';
+  var headRowHtml =
+    '<div class="doc-head-row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">' +
+      '<div><h2 class="doccat-title" style="margin:0">'+esc(category)+'</h2></div>' +
+      '<div style="display:flex;align-items:center;gap:10px">' + viewToggleHtml + '<button class="btn primary" id="doccatAddBtn">'+ic("plus",13)+' 새 문서</button></div>' +
     '</div>';
+  var listHtml = '<div class="'+(isHouse?"doccat-tree":"doccat-grid")+'">' + (cardsHtml || '<div class="sb-empty">아직 문서가 없습니다. "새 문서"로 추가해보세요.</div>') + '</div>';
+
+  if (split) {
+    main.innerHTML =
+      '<div class="page-pad doccat-split-pad">' + breadcrumbHtml + headRowHtml +
+        '<div class="doccat-split-wrap">' +
+          '<div class="doccat-split-list">' + listHtml + '</div>' +
+          '<div class="doccat-split-detail" id="doccatDetailPane"></div>' +
+        '</div>' +
+      '</div>';
+  } else {
+    main.innerHTML = '<div class="page-pad">' + breadcrumbHtml + headRowHtml + listHtml + '</div>';
+  }
+
   document.getElementById("doccatAddBtn").addEventListener("click", function(){ newDoc(workId, category); });
+  document.getElementById("dcViewList").addEventListener("click", function(){ state.splitView = false; renderDocCategoryPage(workId, category); });
+  document.getElementById("dcViewSplit").addEventListener("click", function(){ state.splitView = true; renderDocCategoryPage(workId, category); });
   main.querySelectorAll("[data-opendoccard]").forEach(function(card){
     card.addEventListener("click", function(e){
       if (e.target.closest(".doc-card-del")) return;
-      state.mode="doc"; state.activeId=card.dataset.opendoccard; state.addPropOpen=false; state.colorPickerOpen=false; render();
+      state.addPropOpen=false; state.colorPickerOpen=false;
+      if (split) { state.splitSelectedId = card.dataset.opendoccard; renderDocCategoryPage(workId, category); return; }
+      state.mode="doc"; state.activeId=card.dataset.opendoccard; render();
     });
   });
   main.querySelectorAll("[data-deldoccard]").forEach(function(btn){
     btn.addEventListener("click", function(e){ e.stopPropagation(); deleteDoc(btn.dataset.deldoccard); });
   });
+
+  if (split) {
+    if (state.splitSelectedId) {
+      var selDoc = DOCS.find(function(d){ return d.id===state.splitSelectedId; });
+      if (selDoc) renderDocPage(selDoc, "doccatDetailPane");
+    } else {
+      document.getElementById("doccatDetailPane").innerHTML = '<div class="sb-empty" style="margin:20px">왼쪽 목록에서 문서를 선택해주세요.</div>';
+    }
+  }
 }
 /* ---------------- appearance builder (등장인물) ----------------
  * Modular pixel-doll engine + part library (see the standalone showcase artifact
@@ -6991,8 +7097,8 @@ function renderStatusWindowCard(doc) {
     '</div>' +
   '</div>';
 }
-function renderDocPage(doc) {
-  var main = document.getElementById("main");
+function renderDocPage(doc, containerId) {
+  var main = document.getElementById(containerId || "main");
   var chipRow = function(field) {
     return '<div class="chip-row" data-chipfield="'+field+'">' +
       doc[field].map(function(v, i){
@@ -7152,6 +7258,7 @@ function renderDocPage(doc) {
 
   main.innerHTML =
     '<div class="page-pad">' +
+    renderBreadcrumbHtml(doc) +
     '<div class="doc-head-row"><button type="button" class="btn" id="docBackBtn" style="flex:none;gap:5px;margin-top:2px">'+ic("chevL",13)+'<span>'+esc(doc.category||"목록")+'</span></button><input class="doc-title" id="docTitle" placeholder="제목 없음" value="'+esc(doc.title)+'"><button type="button" class="btn" id="nameSuggestBtn" style="flex:none;gap:5px;margin-top:2px">'+ic("wand",13)+'<span>이름 추천</span></button><button class="page-del" id="deleteDocBtn">'+ic("trash",13)+'<span>문서 삭제</span></button></div>' +
     '<div class="prop-grid">' + propsHtml + '</div>' +
     (doc.category === "등장인물" ? renderAppearanceEditor(doc) : "") +
@@ -7181,7 +7288,11 @@ function renderDocPage(doc) {
   // title
   document.getElementById("docTitle").addEventListener("input", function(e){ doc.title = e.target.value; saveData(); renderSidebar(); });
   document.getElementById("deleteDocBtn").addEventListener("click", function(){ deleteDoc(doc.id); });
-  document.getElementById("docBackBtn").addEventListener("click", function(){ state.mode="doccat"; state.activeId=doc.workId+"::"+doc.category; render(); });
+  document.getElementById("docBackBtn").addEventListener("click", function(){
+    if (containerId) { state.splitSelectedId = null; renderDocCategoryPage(doc.workId, doc.category); return; }
+    state.mode="doccat"; state.activeId=doc.workId+"::"+doc.category; render();
+  });
+  wireBreadcrumb(main);
   document.getElementById("nameSuggestBtn").addEventListener("click", function(){ openNameSuggestModal(doc); });
 
   // summary
