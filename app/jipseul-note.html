@@ -150,6 +150,13 @@
   .btn.primary:hover { opacity:.92; color:#fff; box-shadow:0 3px 10px var(--shadow); }
 
   /* ---------- Doc page ---------- */
+  .breadcrumb-row { display:flex; align-items:center; flex-wrap:wrap; gap:5px; margin-bottom:14px; font-size:12px; }
+  .breadcrumb-item { display:inline-flex; align-items:center; }
+  .breadcrumb-label { color:var(--ink-faint); }
+  .breadcrumb-link { background:none; border:none; padding:2px 4px; margin:-2px -4px; border-radius:5px; color:var(--ink-soft); cursor:pointer; }
+  .breadcrumb-link:hover { color:var(--accent); background:var(--bg-card-hover); text-decoration:underline; text-decoration-style:dotted; }
+  .breadcrumb-current { color:var(--ink); font-weight:600; }
+  .breadcrumb-sep { display:inline-flex; color:var(--ink-faint); opacity:.6; }
   .doc-head-row { display:flex; align-items:flex-start; gap:10px; margin-bottom:22px; }
   .doc-title { font-family:var(--serif); font-size:34px; font-weight:600; border:none; background:none; outline:none; width:100%; padding:0; flex:1; }
   .doc-title::placeholder { color: var(--ink-faint); }
@@ -170,11 +177,27 @@
   .doc-card-summary { font-size:12.5px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; line-height:1.4; }
   .doc-card-del { position:absolute; top:10px; right:10px; opacity:0; }
   .doc-card:hover .doc-card-del { opacity:1; }
+  .doc-card-selected { border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 1px var(--accent) inset; }
+
+  .doccat-viewtoggle { display:flex; gap:6px; flex:none; }
+  .doccat-split-pad { padding-bottom:0; }
+  .doccat-split-wrap { display:flex; gap:20px; align-items:flex-start; height:calc(100vh - 190px); min-height:420px; }
+  .doccat-split-list { flex:0 0 320px; overflow-y:auto; height:100%; padding-right:4px; }
+  .doccat-split-list .doccat-grid { grid-template-columns:1fr; }
+  .doccat-split-detail { flex:1; min-width:0; overflow-y:auto; height:100%; border:1px solid var(--border); border-radius:12px; background:var(--bg-card); }
+  .doccat-split-detail .page-pad { padding:22px; }
+  @media (max-width: 900px) {
+    .doccat-split-wrap { flex-direction:column; height:auto; }
+    .doccat-split-list { flex:none; width:100%; height:auto; max-height:340px; }
+    .doccat-split-detail { width:100%; height:auto; max-height:640px; }
+  }
 
   .prop-grid { display:flex; flex-direction:column; border:1px solid var(--border); border-radius:11px; margin-bottom:16px; background:var(--bg-card); box-shadow:0 1px 3px var(--shadow); }
   .prop-row { display:flex; align-items:flex-start; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); }
   .prop-row:first-child { border-top-left-radius:11px; border-top-right-radius:11px; }
   .prop-row:last-child { border-bottom:none; border-bottom-left-radius:11px; border-bottom-right-radius:11px; }
+  .prop-row-required-empty { background:var(--rose-soft); box-shadow:inset 3px 0 0 var(--rose); }
+  .prop-required-badge { display:inline-block; font-size:10px; font-weight:700; color:#fff; background:var(--rose); border-radius:8px; padding:1px 6px; vertical-align:middle; }
   .prop-icon { width:22px; flex:none; color:var(--ink-faint); display:flex; align-items:center; height:30px; }
   .prop-label { width:84px; flex:none; font-size:12.5px; color:var(--ink-faint); display:flex; align-items:center; height:30px; }
   .prop-label.editable { cursor:text; border-radius:4px; }
@@ -220,6 +243,17 @@
 
   .appear-card { border:1px solid var(--border); border-radius:11px; padding:14px; margin-bottom:16px; background:var(--bg-card); box-shadow:0 1px 3px var(--shadow); }
   .appear-head { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-faint); margin-bottom:12px; }
+  .relationship-group { margin-bottom:12px; }
+  .relationship-group:last-child { margin-bottom:0; }
+  .relationship-group-label { font-size:11px; letter-spacing:0.04em; color:var(--ink-faint); margin-bottom:6px; font-weight:600; }
+  .relationship-list { display:flex; flex-direction:column; gap:6px; }
+  .relationship-row { display:flex; align-items:center; gap:8px; padding:7px 9px; border:1px solid var(--border); border-radius:8px; background:var(--bg); }
+  .rel-type-chip { flex:none; background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .rel-other-link { flex:1; min-width:0; display:flex; align-items:center; gap:6px; background:none; border:none; text-align:left; font-size:13px; color:var(--ink); padding:2px 4px; border-radius:5px; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rel-other-link:hover { background:var(--bg-card-hover); text-decoration:underline; text-decoration-style:dotted; }
+  .rel-period { flex:none; font-size:11.5px; color:var(--ink-faint); font-variant-numeric:tabular-nums; }
+  .rel-note { flex:none; display:flex; color:var(--ink-faint); cursor:help; }
+  .modal-input#relEntitySelect { margin-bottom:4px; }
   .appear-body { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
   .appear-render-toggle, .appear-panel-toggle { display:flex; gap:6px; margin-bottom:8px; }
   .appear-render-toggle button, .appear-panel-toggle button { flex:1; border:1px solid var(--border-strong); background:var(--bg); border-radius:20px; padding:5px 6px; font-size:11px; color:var(--ink-soft); white-space:nowrap; }
@@ -404,6 +438,7 @@
   .modal-pick::before { content:""; width:8px; height:8px; border-radius:50%; background:var(--pc); flex:none; }
   .modal-pick.no-dot::before { display:none; }
   .modal-pick.on { border-color:var(--pc); color:var(--ink); background:var(--bg-card); font-weight:600; }
+  .modal-location-row { display:flex; gap:8px; align-items:center; margin-bottom:10px; }
   .affinity-log-list { display:flex; flex-direction:column; gap:5px; margin-bottom:8px; max-height:160px; overflow-y:auto; }
   .affinity-log-row { display:flex; align-items:center; gap:8px; background:var(--bg-card); border:1px solid var(--border); border-radius:7px; padding:6px 9px; }
   .alr-label { flex:1; font-size:12.5px; color:var(--ink); min-width:0; }
@@ -787,6 +822,12 @@
   .unit-ratio-hint { font-size:11px; color:var(--ink-faint); flex:none; width:96px; }
   .unit-row .row-del { margin-left:0; opacity:.5; }
   .unit-row:hover .row-del { opacity:1; }
+  .ft-row { display:flex; align-items:center; gap:8px; }
+  .ft-key { flex:1.4; border:1px solid var(--border); border-radius:6px; }
+  .ft-type { flex:none; width:130px; }
+  .ft-required-check { flex:none; white-space:nowrap; margin:0; }
+  .ft-row .row-del { margin-left:0; opacity:.5; flex:none; }
+  .ft-row:hover .row-del { opacity:1; }
   .unit-cat-del { flex:none; }
   .cal-months { display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
   .cal-month-row { display:flex; align-items:center; gap:8px; }
@@ -830,6 +871,31 @@
   .lineup-name-link:hover { background:var(--bg-card-hover); }
   .lineup-pos-sel { flex:none; width:110px; }
   .lineup-num-input { width:52px; flex:none; }
+  .lineup-radar-btn { flex:none; display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:6px; border:1px solid var(--border-strong); background:var(--bg); color:var(--accent); }
+  .lineup-radar-btn:hover { background:var(--accent-soft); border-color:var(--accent); }
+  .radar-chart-wrap { display:flex; justify-content:center; margin:14px 0 6px; }
+  .radar-chart { overflow:visible; }
+  .radar-ring { fill:none; stroke:var(--border); stroke-width:1; }
+  .radar-spoke { stroke:var(--border); stroke-width:1; }
+  .radar-area { fill:var(--accent); fill-opacity:0.22; stroke:var(--accent); stroke-width:1.8; }
+  .radar-dot { fill:var(--accent); stroke:var(--bg-card); stroke-width:1.2; }
+  .radar-label { fill:var(--ink); font-family:var(--sans); font-size:11px; font-weight:600; }
+  .radar-val { fill:var(--accent); font-family:var(--sans); font-size:11px; font-weight:700; }
+  .bracket-scroll { overflow-x:auto; padding-bottom:10px; }
+  .bracket-wrap { display:flex; align-items:stretch; gap:36px; min-width:min-content; }
+  .bracket-round { display:flex; flex-direction:column; justify-content:space-around; gap:18px; flex:none; width:180px; }
+  .bracket-round-label { font-size:11.5px; font-weight:600; color:var(--ink-faint); text-align:center; margin-bottom:4px; letter-spacing:0.02em; }
+  .bracket-match { display:flex; flex-direction:column; border:1px solid var(--border); border-radius:9px; overflow:hidden; background:var(--bg-card); flex:1; justify-content:center; }
+  .bracket-team { display:flex; align-items:center; gap:6px; padding:8px 10px; border-bottom:1px solid var(--border); cursor:pointer; }
+  .bracket-team:last-child { border-bottom:none; }
+  .bracket-team:hover { background:var(--bg-card-hover); }
+  .bracket-team.winner { background:var(--accent-soft); }
+  .bracket-team.winner .bt-name { font-weight:700; color:var(--accent); }
+  .bracket-team.bye { cursor:default; color:var(--ink-faint); font-size:12px; justify-content:center; }
+  .bracket-team.bye:hover { background:none; }
+  .bt-name { flex:1; font-size:12.5px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bracket-score { width:34px; flex:none; text-align:center; border:1px solid var(--border); border-radius:5px; padding:3px 2px; font-size:12px; background:var(--bg); }
+  .bracket-champion { display:flex; align-items:center; gap:8px; font-family:var(--serif); font-size:15px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-radius:10px; padding:10px 16px; margin:12px 0; width:fit-content; }
   .record-cat-tabs { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
   .award-year-card { border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:16px; }
   .award-year-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
@@ -862,6 +928,9 @@
   .tl-ro-label { font-weight:600; font-family:var(--serif); font-size:12.5px; color:var(--ink-soft); }
   .tl-ro-title { font-size:14px; font-weight:600; margin-top:2px; }
   .tl-ro-desc { font-size:13px; color:var(--ink-soft); margin-top:2px; line-height:1.5; }
+  .essay-compare-wrap .tl-col:first-child { flex:1.15; }
+  .essay-compare-title { font-family:var(--serif); font-size:15px; font-weight:600; margin-bottom:8px; }
+  .essay-compare-text { font-size:13.5px; color:var(--ink-soft); line-height:1.7; white-space:pre-wrap; max-height:560px; overflow-y:auto; padding:14px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:10px; }
   @media (max-width: 900px) {
     .tl-parallel-wrap { flex-direction:column; }
     .tl-col { border-left:none; padding-left:0; }
@@ -974,7 +1043,7 @@ function ic(name, size) {
 }
 
 /* ---------------- data ---------------- */
-var CATS = ["등장인물","세력","세계관","사건","아이템","떡밥","부·사이드","기타"];
+var CATS = ["등장인물","세력","장소","세계관","사건","아이템","떡밥","부·사이드","기타"];
 var HOUSE_TYPES = {
   major: { label:"대세력" },
   vassal: { label:"가신 세력" },
@@ -983,6 +1052,42 @@ var HOUSE_TYPES = {
   sect: { label:"문파" },
   guild: { label:"길드" },
   outsider: { label:"새외 세력" }
+};
+/* 장소 계층 -- world -> continent -> country -> city -> district -> building ->
+ * floor -> room, mirroring how 세력 already uses parentHouseId for org hierarchy.
+ * A location's type is descriptive only (no structural meaning like houseType has
+ * for factions), so it's a flat picker, not tied to depth. */
+var LOCATION_TYPES = {
+  world: { label:"세계" },
+  continent: { label:"대륙" },
+  country: { label:"국가" },
+  city: { label:"도시" },
+  district: { label:"구역" },
+  building: { label:"건물" },
+  floor: { label:"층" },
+  room: { label:"방" },
+  other: { label:"기타" }
+};
+/* 구조화된 관계 프리셋 -- 레코드는 fromId가 "행위 주체"(관계를 처음 추가한 쪽), toId가
+ * 상대 엔티티다. label은 fromId 쪽 문서에서 볼 때 toId를 가리키는 말, labelInverse는
+ * toId 쪽 문서에서 볼 때 fromId를 가리키는 말이다. 예: 캐릭터(from)가 아이템(to)의
+ * 소유자로 관계를 추가하면, 캐릭터 문서에는 "소유물: 그 아이템"(label)이, 아이템
+ * 문서에는 "소유자: 그 캐릭터"(labelInverse)가 표시된다. symmetric 타입은 어느
+ * 쪽에서 봐도 같은 라벨. 프리셋에 없는 자유 입력 문자열은 방향을 뒤집을 수 없으므로
+ * 양쪽에서 같은 텍스트로 표시된다. */
+var RELATIONSHIP_TYPES = {
+  family:      { label:"가족", symmetric:true },
+  lover:       { label:"연인", symmetric:true },
+  mentor:      { label:"제자", labelInverse:"사부" },
+  colleague:   { label:"동료", symmetric:true },
+  rival:       { label:"적대", symmetric:true },
+  boss:        { label:"부하", labelInverse:"상사" },
+  member:      { label:"소속 세력", labelInverse:"소속원" },
+  owner:       { label:"소유물", labelInverse:"소유자" },
+  resident:    { label:"거주지", labelInverse:"거주자" },
+  birthplace:  { label:"출생지", labelInverse:"출생 인물" },
+  deathplace:  { label:"사망지", labelInverse:"사망 인물" },
+  participant: { label:"참가 행사", labelInverse:"참가자" }
 };
 /* 무협 세력권 -- a second, independent axis from houseType above: houseType is
  * structural ("what kind of org is this"), alignment is political ("whose side").
@@ -1019,6 +1124,45 @@ var PROP_PRESETS = [
   { key:"영문명", type:"text", icon:"__en" },
   { key:"설명", type:"text", icon:"docIcon" }
 ];
+/* 카테고리별 필드 템플릿의 기본 프리셋 -- 등장인물 쪽은 이미 있는 PROP_PRESETS(속성
+ * 추가하기 자동완성 목록)에서 타입을 그대로 가져와 두 목록이 어긋나지 않게 했다.
+ * type은 새 어휘를 만들지 않고 PROP_TYPES의 6개 타입(text/link/number/date/stat/rank)
+ * 그대로 재사용 -- 필드 템플릿이 결국 doc.props를 미리 채워주는 것뿐이라 값을 담는
+ * 그릇이 하나여야 한다. required는 기본값을 전부 false로 둬서, 이 기능이 배포된
+ * 순간 기존 문서들이 갑자기 "필수 항목 비어있음"으로 뒤덮이지 않게 했다. */
+var DEFAULT_FIELD_TEMPLATES = {
+  "등장인물": [
+    { key:"나이", type:"number", required:false, defaultValue:"" },
+    { key:"성별", type:"text", required:false, defaultValue:"" },
+    { key:"종족", type:"text", required:false, defaultValue:"" },
+    { key:"소속", type:"text", required:false, defaultValue:"" },
+    { key:"직업", type:"text", required:false, defaultValue:"" },
+    { key:"성격", type:"text", required:false, defaultValue:"" },
+    { key:"말투", type:"text", required:false, defaultValue:"" },
+    { key:"첫 등장", type:"link", required:false, defaultValue:"" },
+    { key:"영문명", type:"text", required:false, defaultValue:"" }
+  ],
+  "장소": [
+    { key:"분위기", type:"text", required:false, defaultValue:"" },
+    { key:"기후", type:"text", required:false, defaultValue:"" },
+    { key:"인구", type:"text", required:false, defaultValue:"" }
+  ],
+  "세력": [
+    { key:"수장", type:"text", required:false, defaultValue:"" },
+    { key:"규모", type:"text", required:false, defaultValue:"" },
+    { key:"근거지", type:"text", required:false, defaultValue:"" }
+  ],
+  "아이템": [
+    { key:"분류", type:"text", required:false, defaultValue:"" },
+    { key:"소유자", type:"text", required:false, defaultValue:"" },
+    { key:"희귀도", type:"rank", required:false, defaultValue:"" }
+  ],
+  "사건": [
+    { key:"시기", type:"text", required:false, defaultValue:"" },
+    { key:"장소", type:"text", required:false, defaultValue:"" },
+    { key:"결과", type:"text", required:false, defaultValue:"" }
+  ]
+};
 var LIFE_STATUSES = {
   alive: { label: "생존", color: "var(--moss)" },
   dead: { label: "사망", color: "var(--rose)" },
@@ -1443,10 +1587,10 @@ function loadData() {
     var raw = localStorage.getItem(STORE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (e) {}
-  return { docs: [], graphs: [], manuscripts: [], novels: [], works: [], tables: [], timelines: [], maps: [], recentColors: [], sports: [], scripts: [], essays: [], essayEntries: [] };
+  return { docs: [], graphs: [], manuscripts: [], novels: [], works: [], tables: [], timelines: [], maps: [], recentColors: [], sports: [], scripts: [], essays: [], essayEntries: [], relationships: [] };
 }
 function saveData() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify({ docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES })); } catch (e) {}
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS })); } catch (e) {}
 }
 var _boot = loadData();
 var DOCS = _boot.docs || [];
@@ -1468,6 +1612,14 @@ var SCRIPTS = _boot.scripts || [];
  * drag-reorder, and font/size/dark preview mechanics as episodes. */
 var ESSAYS = _boot.essays || [];
 var ESSAY_ENTRIES = _boot.essayEntries || [];
+/* 구조화된 관계(Relationship) -- 인물-인물뿐 아니라 인물-세력·인물-장소·아이템-소유자·
+ * 사건-참여자까지 모든 DOCS 카테고리 쌍을 다룬다. 기존 "관계도"(GRAPHS/edges)는 캔버스
+ * 위에 수동 배치하는 시각화 도구라 그대로 두고, 이건 각 문서 상세 페이지의 목록형
+ * "관계" 카드를 위한 별도의 가벼운 저장소다. 대칭 레코드를 두 개 만드는 대신 fromId/toId
+ * 단방향 레코드 하나만 저장하고, 두 문서 중 어느 쪽에서 봐도(fromId===doc.id ||
+ * toId===doc.id) 같은 레코드가 보이게 조회 시점에 양방향으로 표시한다 -- 편집·삭제할
+ * 레코드가 하나뿐이라 두 레코드를 동기화할 필요가 없다. */
+var RELATIONSHIPS = _boot.relationships || [];
 function pushRecentColor(hex) {
   RECENT_COLORS = [hex].concat(RECENT_COLORS.filter(function(c){ return c.toLowerCase() !== hex.toLowerCase(); })).slice(0, 12);
   saveData();
@@ -1494,6 +1646,16 @@ function pushRecentColor(hex) {
     if (d.traits === undefined) d.traits = [];
   });
 })();
+/* 장소(Location) -- 세력의 parentHouseId 계층과 같은 방식으로 parentLocationId를 쓴다.
+ * "장소" 카테고리가 아닌 문서에도 필드를 defaulting해두는 이유는 기존 skills/traits와
+ * 같은 이유: 카테고리를 나중에 바꿔도(대분류 select) 필드가 이미 존재해서 undefined
+ * 분기를 여기저기 추가할 필요가 없다. */
+(function migrateLocations(){
+  DOCS.forEach(function(d){
+    if (d.locationType === undefined) d.locationType = null;
+    if (d.parentLocationId === undefined) d.parentLocationId = null;
+  });
+})();
 (function migrateWorks(){
   if (WORKS.length === 0 && (DOCS.length || GRAPHS.length || NOVELS.length)) {
     var w = { id: uid(), title: "새 작품" };
@@ -1504,6 +1666,9 @@ function pushRecentColor(hex) {
     saveData();
   }
   WORKS.forEach(function(w){ if (w.isTemplate === undefined) w.isTemplate = false; });
+})();
+(function migrateFieldTemplates(){
+  WORKS.forEach(function(w){ if (w.fieldTemplates === undefined) w.fieldTemplates = {}; });
 })();
 (function migrateCategoryNames(){
   /* "가문" 대분류 명칭을 "세력"으로 변경 — 이전에 저장된 문서의 category 값도 함께 갱신 */
@@ -1568,6 +1733,10 @@ function pushRecentColor(hex) {
       if (r.childMapId === undefined) r.childMapId = null;
       if (r.houseId === undefined) r.houseId = null;
       if (r.countryInfo === undefined) r.countryInfo = null;
+      if (r.locationId === undefined) r.locationId = null;
+    });
+    (mp.markers||[]).forEach(function(mk){
+      if (mk.locationId === undefined) mk.locationId = null;
     });
     if (mp.scaleKmPerUnit === undefined) mp.scaleKmPerUnit = null;
     /* 회차(version) system: versionOf groups sibling maps that are different iterations
@@ -1727,6 +1896,47 @@ function renderFieldSvg(preset, playersAtPos, ctxId) {
   }).join("");
   return '<div class="field-wrap"><div class="field-svg-shell"><svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">'+shapeHtml+markers+'</svg></div></div>';
 }
+/* 손수 제작 SVG 레이더 차트 -- Chart.js 등 외부 라이브러리 없이, 지도/그래프 엔진과
+ * 같은 원칙(오프라인 file:// 실행, 빌드 과정 없는 단일 파일)으로 구현. stats는
+ * {key, value(0~100)} 배열이며, 능력치(stat) 타입 props를 그대로 그려주는 뷰이므로
+ * 캐릭터 문서의 props가 유일한 입력창으로 남는다(스포츠 전용 스탯 필드를 새로 만들지 않음). */
+function radarChartSvg(stats, size) {
+  size = size || 260;
+  var n = stats.length;
+  if (n < 3) return '<div class="chip-empty-hint">레이더 차트를 그리려면 "능력치(바)" 속성이 3개 이상 있어야 해요 (현재 '+n+'개)</div>';
+  var cx = size/2, cy = size/2, r = size/2 - 40;
+  var angleStep = (Math.PI*2)/n;
+  function angleOf(i) { return -Math.PI/2 + i*angleStep; }
+  function pointAt(i, frac) {
+    var a = angleOf(i);
+    return [cx + r*frac*Math.cos(a), cy + r*frac*Math.sin(a)];
+  }
+  var rings = [0.25,0.5,0.75,1].map(function(f){
+    var pts = stats.map(function(s,i){ var p = pointAt(i, f); return p[0]+","+p[1]; }).join(" ");
+    return '<polygon points="'+pts+'" class="radar-ring"></polygon>';
+  }).join("");
+  var spokes = stats.map(function(s,i){ var p = pointAt(i,1); return '<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0]+'" y2="'+p[1]+'" class="radar-spoke"></line>'; }).join("");
+  var dataPts = stats.map(function(s,i){ var p = pointAt(i, Math.max(0,Math.min(100,parseFloat(s.value)||0))/100); return p[0]+","+p[1]; }).join(" ");
+  var dots = stats.map(function(s,i){ var p = pointAt(i, Math.max(0,Math.min(100,parseFloat(s.value)||0))/100); return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3.2" class="radar-dot"></circle>'; }).join("");
+  var labels = stats.map(function(s,i){
+    var lp = pointAt(i, 1.22);
+    return '<text x="'+lp[0]+'" y="'+lp[1]+'" text-anchor="middle" dy="-2" class="radar-label">'+esc(s.key)+'</text>' +
+      '<text x="'+lp[0]+'" y="'+lp[1]+'" text-anchor="middle" dy="12" class="radar-val">'+esc(String(s.value))+'</text>';
+  }).join("");
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" class="radar-chart">' +
+    rings + spokes +
+    '<polygon points="'+dataPts+'" class="radar-area"></polygon>' + dots + labels +
+  '</svg>';
+}
+function openPlayerRadarModal(doc) {
+  var stats = doc.props.filter(function(p){ return p.type==="stat"; }).map(function(p){ return { key:p.key, value: Math.max(0,Math.min(100,parseFloat(p.value)||0)) }; });
+  openModal({ title: (doc.title||"이름 없음")+" 능력치", confirmLabel: "닫기" });
+  var overlay = document.getElementById("modalOverlay");
+  if (!overlay) return;
+  var box = overlay.querySelector(".modal-box");
+  var titleEl = box.querySelector(".modal-title");
+  titleEl.insertAdjacentHTML("afterend", '<div class="radar-chart-wrap">'+radarChartSvg(stats, 280)+'</div>');
+}
 function renderStandingsTab(sp, preset) {
   var teamRows = sp.teams.map(function(team){
     if (!team.stats) team.stats = {};
@@ -1788,10 +1998,12 @@ function renderLineupTab(sp, preset) {
   var fieldHtml = preset.positions.length ? renderFieldSvg(preset, byPos, "lineup") : "";
   var listHtml = '<div class="lineup-list">' + (teamRoster.length ? teamRoster.map(function(p,i){
     var linkedDoc = findCharacterDocByName(sp.workId, p.name);
+    var hasStats = linkedDoc && linkedDoc.props.some(function(pr){ return pr.type==="stat"; });
     var posLabel = (preset.positions.find(function(ps){ return ps.key===p.posKey; })||{}).label;
     return '<div class="lineup-row">' +
       '<span class="lineup-order">'+(i+1)+'</span>' +
       '<button type="button" class="lineup-name-link '+(linkedDoc?"linked":"")+'" data-gotoplayer="'+p.id+'" title="'+(linkedDoc?"연결된 인물 문서로 이동":"눌러서 인물 문서 만들기")+'">'+esc(p.name||"이름 없음")+'</button>' +
+      (hasStats ? '<button type="button" class="lineup-radar-btn" data-playerradar="'+p.id+'" title="능력치 레이더 차트 보기">'+ic("scale",13)+'</button>' : '') +
       (preset.positions.length ? '<select class="sel lineup-pos-sel" data-playerpos="'+p.id+'">' + preset.positions.map(function(ps){ return '<option value="'+ps.key+'" '+(p.posKey===ps.key?"selected":"")+'>'+esc(ps.label)+'</option>'; }).join("") + '</select>' : '') +
       '<input class="field-input lineup-num-input" data-playernum="'+p.id+'" value="'+esc(p.number||"")+'" placeholder="#">' +
       '<button type="button" class="row-del" data-delplayer="'+p.id+'">'+ic("close",12)+'</button>' +
@@ -1810,6 +2022,14 @@ function wireLineupTab(sp, preset) {
     btn.addEventListener("click", function(){
       var p = sp.roster.find(function(p){ return p.id===btn.dataset.gotoplayer; });
       if (p) goToOrCreateCharacter(sp.workId, p.name);
+    });
+  });
+  main.querySelectorAll("[data-playerradar]").forEach(function(btn){
+    btn.addEventListener("click", function(e){
+      e.stopPropagation();
+      var p = sp.roster.find(function(p){ return p.id===btn.dataset.playerradar; });
+      var doc = p ? findCharacterDocByName(sp.workId, p.name) : null;
+      if (doc) openPlayerRadarModal(doc);
     });
   });
   main.querySelectorAll("[data-fieldpos]").forEach(function(el){
@@ -1861,6 +2081,127 @@ function wireLineupTab(sp, preset) {
         saveData(); renderSportsPage(sp);
       }
     });
+  });
+}
+/* 대진표(단일 토너먼트) -- sp.bracket = { rounds: [[match, ...], ...] }, 라운드 배열의
+ * 마지막이 결승. 각 라운드는 이전 라운드 승자로부터 채워지며(propagateBracket), 부전승은
+ * 생성 시점과 전파 시점 양쪽에서 자동으로 다음 라운드까지 승자 처리된다. */
+function generateBracket(sp) {
+  var teamIds = sp.teams.map(function(t){ return t.id; });
+  if (teamIds.length < 2) return;
+  var size = 2;
+  while (size < teamIds.length) size *= 2;
+  var seeds = teamIds.slice();
+  while (seeds.length < size) seeds.push(null);
+  var numRounds = Math.round(Math.log2(size));
+  var round0 = [];
+  for (var i = 0; i < size; i += 2) {
+    var m = { id: uid(), teamAId: seeds[i], teamBId: seeds[i+1], scoreA: "", scoreB: "", winnerId: null };
+    if (m.teamAId && !m.teamBId) m.winnerId = m.teamAId;
+    else if (!m.teamAId && m.teamBId) m.winnerId = m.teamBId;
+    round0.push(m);
+  }
+  var rounds = [round0];
+  var prevCount = round0.length;
+  for (var r = 1; r < numRounds; r++) {
+    var round = [];
+    for (var j = 0; j < prevCount/2; j++) round.push({ id: uid(), teamAId: null, teamBId: null, scoreA:"", scoreB:"", winnerId: null });
+    rounds.push(round);
+    prevCount = round.length;
+  }
+  sp.bracket = { rounds: rounds };
+  propagateBracket(sp);
+  saveData();
+}
+function propagateBracket(sp) {
+  if (!sp.bracket) return;
+  var rounds = sp.bracket.rounds;
+  for (var r = 0; r < rounds.length - 1; r++) {
+    rounds[r].forEach(function(m, i){
+      var nextMatch = rounds[r+1][Math.floor(i/2)];
+      var slot = i % 2 === 0 ? "teamAId" : "teamBId";
+      if (nextMatch[slot] !== m.winnerId) {
+        nextMatch[slot] = m.winnerId;
+        nextMatch.winnerId = null; nextMatch.scoreA = ""; nextMatch.scoreB = "";
+      }
+    });
+    rounds[r+1].forEach(function(nm){
+      if (!nm.winnerId) {
+        if (nm.teamAId && !nm.teamBId) nm.winnerId = nm.teamAId;
+        else if (!nm.teamAId && nm.teamBId) nm.winnerId = nm.teamBId;
+      }
+    });
+  }
+}
+function findBracketMatch(sp, matchId) {
+  var found = null;
+  sp.bracket.rounds.forEach(function(round){ var m = round.find(function(x){ return x.id===matchId; }); if (m) found = m; });
+  return found;
+}
+function renderBracketTab(sp) {
+  if (sp.teams.length < 2) return '<div class="empty-note">대진표를 만들려면 &ldquo;팀 순위&rdquo; 탭에서 팀을 2개 이상 추가해주세요.</div>';
+  var genBtnHtml = '<button type="button" class="chip-add" id="genBracketBtn">'+ic("wand",11)+(sp.bracket?" 대진표 새로 만들기":" 대진표 만들기")+'</button>';
+  if (!sp.bracket) return genBtnHtml + '<div class="chip-empty-hint" style="margin-top:10px">현재 등록된 팀 '+sp.teams.length+'개로 단일 토너먼트 대진표를 만듭니다.</div>';
+  var teamById = {}; sp.teams.forEach(function(t){ teamById[t.id] = t; });
+  function teamCell(m, side) {
+    var tid = side==="A" ? m.teamAId : m.teamBId;
+    var t = tid ? teamById[tid] : null;
+    var isWinner = !!(m.winnerId && t && m.winnerId===tid);
+    var scoreKey = side==="A" ? "scoreA" : "scoreB";
+    return '<div class="bracket-team '+(isWinner?"winner":"")+' '+(t?"":"bye")+'" data-bracketpick="'+m.id+'::'+side+'">' +
+      (t ? '<span class="sport-team-dot" style="background:'+t.color+'"></span><span class="bt-name">'+esc(t.name)+'</span><input class="bracket-score" data-bracketscore="'+m.id+'::'+scoreKey+'" value="'+esc(m[scoreKey]||"")+'" placeholder="-">' : '<span class="bt-name bt-bye">부전승 대기</span>') +
+    '</div>';
+  }
+  var roundCount = sp.bracket.rounds.length;
+  var roundsHtml = sp.bracket.rounds.map(function(round, ri){
+    var roundLabel = ri===roundCount-1 ? "결승" : ri===roundCount-2 ? "준결승" : (ri+1)+"라운드";
+    return '<div class="bracket-round"><div class="bracket-round-label">'+roundLabel+'</div>' +
+      round.map(function(m){ return '<div class="bracket-match">'+teamCell(m,"A")+teamCell(m,"B")+'</div>'; }).join("") +
+    '</div>';
+  }).join("");
+  var championHtml = "";
+  var finalMatch = sp.bracket.rounds[roundCount-1][0];
+  if (finalMatch && finalMatch.winnerId && teamById[finalMatch.winnerId]) {
+    var champ = teamById[finalMatch.winnerId];
+    championHtml = '<div class="bracket-champion">'+ic("trophy",15)+'<span class="sport-team-dot" style="background:'+champ.color+'"></span>우승: '+esc(champ.name)+'</div>';
+  }
+  return genBtnHtml + championHtml + '<div class="bracket-scroll"><div class="bracket-wrap">'+roundsHtml+'</div></div>';
+}
+function wireBracketTab(sp) {
+  var main = document.getElementById("main");
+  var genBtn = document.getElementById("genBracketBtn");
+  if (genBtn) genBtn.addEventListener("click", function(){
+    if (sp.bracket) {
+      openModal({
+        title: "대진표를 새로 만들까요?",
+        message: "현재 대진표의 모든 진행 결과가 사라지고, 지금 등록된 팀으로 새 대진표가 만들어집니다.",
+        confirmLabel: "새로 만들기", danger: true,
+        onConfirm: function(){ generateBracket(sp); renderSportsPage(sp); }
+      });
+    } else {
+      generateBracket(sp); renderSportsPage(sp);
+    }
+  });
+  main.querySelectorAll("[data-bracketpick]").forEach(function(el){
+    el.addEventListener("click", function(e){
+      if (e.target.closest(".bracket-score")) return;
+      var parts = el.dataset.bracketpick.split("::");
+      var m = findBracketMatch(sp, parts[0]);
+      if (!m) return;
+      var tid = parts[1]==="A" ? m.teamAId : m.teamBId;
+      if (!tid) return;
+      m.winnerId = (m.winnerId===tid) ? null : tid;
+      propagateBracket(sp);
+      saveData(); renderSportsPage(sp);
+    });
+  });
+  main.querySelectorAll("[data-bracketscore]").forEach(function(inp){
+    inp.addEventListener("input", function(){
+      var parts = inp.dataset.bracketscore.split("::");
+      var m = findBracketMatch(sp, parts[0]);
+      if (m) { m[parts[1]] = inp.value; saveData(); }
+    });
+    inp.addEventListener("click", function(e){ e.stopPropagation(); });
   });
 }
 function renderRecordsTab(sp, preset) {
@@ -1987,10 +2328,11 @@ function renderSportsPage(sp) {
   if (!sp.roster) sp.roster = [];
   if (!sp.records) sp.records = [];
   if (!sp.awards) sp.awards = [];
+  if (sp.bracket === undefined) sp.bracket = null;
   var preset = SPORT_PRESETS[sp.sportType] || SPORT_PRESETS.other;
   if (spState.lastId !== sp.id) { spState.tab = "standings"; spState.lineupTeamId = null; spState.recordCat = null; spState.lastId = sp.id; }
   var main = document.getElementById("main");
-  var tabs = [["standings","팀 순위"],["lineup","라인업"],["records","기록"],["awards","수상"]];
+  var tabs = [["standings","팀 순위"],["lineup","라인업"],["bracket","대진표"],["records","기록"],["awards","수상"]];
   var tabsHtml = '<div class="sport-tabs">' + tabs.map(function(t){
     return '<button type="button" class="sport-tab '+(spState.tab===t[0]?"on":"")+'" data-sporttab="'+t[0]+'">'+t[1]+'</button>';
   }).join("") + '</div>';
@@ -1998,6 +2340,7 @@ function renderSportsPage(sp) {
   var bodyHtml = "";
   if (spState.tab === "standings") bodyHtml = renderStandingsTab(sp, preset);
   else if (spState.tab === "lineup") bodyHtml = renderLineupTab(sp, preset);
+  else if (spState.tab === "bracket") bodyHtml = renderBracketTab(sp);
   else if (spState.tab === "records") bodyHtml = renderRecordsTab(sp, preset);
   else if (spState.tab === "awards") bodyHtml = renderAwardsTab(sp, preset);
 
@@ -2016,6 +2359,7 @@ function renderSportsPage(sp) {
 
   if (spState.tab === "standings") wireStandingsTab(sp);
   else if (spState.tab === "lineup") wireLineupTab(sp, preset);
+  else if (spState.tab === "bracket") wireBracketTab(sp);
   else if (spState.tab === "records") wireRecordsTab(sp);
   else if (spState.tab === "awards") wireAwardsTab(sp);
 }
@@ -2091,6 +2435,65 @@ function renderUnitCategoryHtml(catKey, cat, title, removable) {
     '</div>' +
     '<button type="button" class="chip-add" data-addunit="'+catKey+'">'+ic("plus",11)+' 단위 추가</button>' +
   '</div>';
+}
+function renderFieldTemplatesPage(work) {
+  var main = document.getElementById("main");
+  var sectionsHtml = CATS.map(function(cat){
+    var fields = getWorkFieldTemplate(work, cat);
+    var rowsHtml = fields.map(function(f){
+      return '<div class="ft-row">' +
+        '<input class="field-input ft-key" data-ftkey="'+esc(cat)+'::'+f.id+'" value="'+esc(f.key)+'" placeholder="필드 이름">' +
+        '<select class="sel ft-type" data-fttype="'+esc(cat)+'::'+f.id+'">' + PROP_TYPES.map(function(t){ return '<option value="'+t.id+'" '+(f.type===t.id?"selected":"")+'>'+esc(t.label)+'</option>'; }).join("") + '</select>' +
+        '<label class="modal-check ft-required-check"><input type="checkbox" data-ftrequired="'+esc(cat)+'::'+f.id+'" '+(f.required?"checked":"")+'> 필수</label>' +
+        '<button type="button" class="row-del" data-ftdel="'+esc(cat)+'::'+f.id+'" title="삭제">'+ic("close",12)+'</button>' +
+      '</div>';
+    }).join("");
+    return '<div class="unit-cat">' +
+      '<div class="unit-cat-head"><div class="unit-cat-title">'+esc(cat)+'</div></div>' +
+      '<div class="unit-list">' + (rowsHtml || '<div class="sb-empty">아직 필드가 없습니다.</div>') + '</div>' +
+      '<button type="button" class="chip-add" data-ftadd="'+esc(cat)+'">'+ic("plus",11)+' 필드 추가</button>' +
+    '</div>';
+  }).join("");
+  main.innerHTML =
+    '<div class="graph-shell">' +
+      '<div class="graph-title-bar"><div class="graph-title">필드 템플릿</div><span class="graph-hint">'+esc(work.title||"이 작품")+'에서 카테고리별로 새 문서를 만들 때 자동으로 채워질 속성이에요. 필수로 표시해두면 값이 비어 있을 때 문서 화면에서 눈에 띄게 표시됩니다.</span></div>' +
+      '<div class="page-pad" style="padding-top:22px; max-width:760px">' + sectionsHtml + '</div>' +
+    '</div>';
+
+  main.querySelectorAll("[data-ftkey]").forEach(function(inp){
+    inp.addEventListener("input", function(){
+      var parts = inp.dataset.ftkey.split("::");
+      var f = getWorkFieldTemplate(work, parts[0]).find(function(x){ return x.id===parts[1]; });
+      if (f) { f.key = inp.value; saveData(); }
+    });
+  });
+  main.querySelectorAll("[data-fttype]").forEach(function(sel){
+    sel.addEventListener("change", function(){
+      var parts = sel.dataset.fttype.split("::");
+      var f = getWorkFieldTemplate(work, parts[0]).find(function(x){ return x.id===parts[1]; });
+      if (f) { f.type = sel.value; saveData(); }
+    });
+  });
+  main.querySelectorAll("[data-ftrequired]").forEach(function(chk){
+    chk.addEventListener("change", function(){
+      var parts = chk.dataset.ftrequired.split("::");
+      var f = getWorkFieldTemplate(work, parts[0]).find(function(x){ return x.id===parts[1]; });
+      if (f) { f.required = chk.checked; saveData(); }
+    });
+  });
+  main.querySelectorAll("[data-ftdel]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var parts = btn.dataset.ftdel.split("::");
+      work.fieldTemplates[parts[0]] = getWorkFieldTemplate(work, parts[0]).filter(function(x){ return x.id!==parts[1]; });
+      saveData(); renderFieldTemplatesPage(work);
+    });
+  });
+  main.querySelectorAll("[data-ftadd]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      getWorkFieldTemplate(work, btn.dataset.ftadd).push({ id: uid(), key:"새 필드", type:"text", required:false, defaultValue:"" });
+      saveData(); renderFieldTemplatesPage(work);
+    });
+  });
 }
 function renderUnitsPage(work) {
   if (!work.units) work.units = { distance:{primary:null,showDual:false,list:[]}, currency:{primary:null,showDual:false,list:[]}, extra:[] };
@@ -2432,7 +2835,7 @@ function openFindReplace(textareaId, triggerEl, onUpdate) {
 }
 
 /* ---------------- state ---------------- */
-var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, focusMode: false, appearTab: {} };
+var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, pendingMapFocusMarker: null, focusMode: false, appearTab: {}, splitView: false, splitSelectedId: null };
 function applyFocusModeClass() {
   var appEl = document.querySelector(".app");
   if (!appEl) return;
@@ -2542,6 +2945,10 @@ function createGenreTemplateWork() {
   DOCS.push(guild);
   var sect = { id: uid(), workId: wid, title: "청풍문파", summary: "무협 예시 — 세력 유형 \"문파\"", tags: [], aliases: [], category: "세력", color: "#B15A2C", importance: 0, props: [], blocks: [], houseType: "sect", parentHouseId: null };
   DOCS.push(sect);
+  RELATIONSHIPS.push(
+    { id: uid(), workId: wid, fromId: hunter.id, toId: guild.id, type: "member", start: "", end: "", note: "구조 오행길드전에서 스카우트됨" },
+    { id: uid(), workId: wid, fromId: wuxiaChar.id, toId: sect.id, type: "member", start: "12세", end: "", note: "" }
+  );
 
   var romanceGraph = { id: uid(), workId: wid, title: "[로맨스] 관계 예시", nodes: [], edges: [], view: { x: 200, y: 150, scale: 1 } };
   var n1 = { id: uid(), type: "character", label: "서연", x: 150, y: 150, docId: null };
@@ -2817,23 +3224,29 @@ function createGenreTemplateWork() {
 
   var essayFolder = { id: uid(), workId: wid, title: "[수필·자서전] 회고 예시" };
   ESSAYS.push(essayFolder);
-  ESSAY_ENTRIES.push({
+  var essayEarly = {
     id: uid(), title: "그라운드에 처음 서던 날", text: '중학교 스카우터가 우리 학교 운동장에 찾아온 날을 아직도 또렷이 기억한다. 그날은 비가 조금 왔고, 나는 슬라이딩 태클로 무릎이 다 까진 채로 골을 넣었다.\n\n지금 돌아보면 별것 아닌 순간인데, 그때는 세상이 다 바뀌는 것 같았다. 나를 지켜보는 눈이 있다는 사실 하나만으로 다리에 힘이 들어갔던 게 신기하다.\n\n프로가 된 지금도 가끔 그날의 진흙 냄새가 떠오른다. 결국 나를 여기까지 데려온 건 화려한 슛이 아니라, 그 무릎의 상처였는지도 모른다.',
     essayId: essayFolder.id, createdAt: Date.now(),
     period: "중학교 2학년, 초여름", themeTags: ["도전", "첫경험"], relatedCharacterIds: [soccer.id],
-    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: null
-  });
-  ESSAY_ENTRIES.push({
+    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: null,
+    linkedCompareId: null, showCompare: false
+  };
+  var essayNow = {
     id: uid(), title: "부상과 함께 산다는 것", text: '요즘도 무릎에 테이핑을 하지 않으면 잠들기가 힘들다. 재발 위험이 있다는 걸 알면서도 경기에 나가는 이유를 스스로에게 자꾸 묻는다.\n\n주장이 되고 나서는 더 그렇다. 내가 흔들리면 팀 전체가 흔들린다는 걸 알기에, 아픈 티를 낼 수가 없다. 감독님도, 가족도 아직 이 사실을 모른다.\n\n언젠가는 말해야 한다는 걸 안다. 다만 그게 오늘은 아니었으면 좋겠다는 생각을 매일 한다.',
     essayId: essayFolder.id, createdAt: Date.now()+1,
     period: "현재", themeTags: ["부담감", "비밀"], relatedCharacterIds: [soccer.id],
-    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: 400
-  });
+    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: 400,
+    linkedCompareId: null, showCompare: true
+  };
+  essayEarly.linkedCompareId = essayNow.id;
+  essayNow.linkedCompareId = essayEarly.id;
+  ESSAY_ENTRIES.push(essayEarly, essayNow);
   ESSAY_ENTRIES.push({
-    id: uid(), title: "작가의 말: 이 글을 쓰기 시작한 이유", text: '작품 밖 이야기를 남겨두고 싶어서 이 폴더를 만들었다. 등장인물의 회고와 달리, 이런 글에는 \"관련 인물\"을 비워둬도 괜찮다.\n\n집필하며 겪은 고민, 특정 장면을 쓰게 된 계기, 자료 조사 중 알게 된 사실 같은 것들을 편하게 기록해두는 용도로 써보길 추천한다.',
+    id: uid(), title: "작가의 말: 이 글을 쓰기 시작한 이유", text: '작품 밖 이야기를 남겨두고 싶어서 이 폴더를 만들었다. 등장인물의 회고와 달리, 이런 글에는 \"관련 인물\"을 비워둬도 괜찮다.\n\n집필하며 겪은 고민, 특정 장면을 쓰게 된 계기, 자료 조사 중 알게 된 사실 같은 것들을 편하게 기록해두는 용도로 써보길 추천한다. \"생애 비교\" 기능으로 위 두 글처럼 시기가 다른 회고를 나란히 놓고 비교해볼 수도 있다.',
     essayId: essayFolder.id, createdAt: Date.now()+2,
     period: "", themeTags: ["작가노트"], relatedCharacterIds: [],
-    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: null
+    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: null,
+    linkedCompareId: null, showCompare: false
   });
 
   createMingChinaMapTemplate(wid);
@@ -3452,8 +3865,29 @@ function deleteMapVersion(mp) {
 }
 
 /* ---------------- sidebar ---------------- */
+/* work.fieldTemplates[category]는 처음 접근할 때 DEFAULT_FIELD_TEMPLATES를 복제해
+ * 채운다(지연 초기화) -- 마이그레이션 시점에 모든 작품의 모든 카테고리를 미리 복제해
+ * 두면 필드를 하나도 안 쓰는 작품까지 저장 용량만 늘어난다. 한 번 복제된 뒤로는
+ * work마다 독립적으로 편집되는 데이터라, 나중에 DEFAULT_FIELD_TEMPLATES 자체를
+ * 바꿔도 이미 만들어진 작품에는 영향을 주지 않는다. */
+function getWorkFieldTemplate(work, category) {
+  if (!work.fieldTemplates) work.fieldTemplates = {};
+  if (!work.fieldTemplates[category]) {
+    work.fieldTemplates[category] = (DEFAULT_FIELD_TEMPLATES[category] || []).map(function(f){
+      return { id: uid(), key: f.key, type: f.type, required: !!f.required, defaultValue: f.defaultValue||"" };
+    });
+  }
+  return work.fieldTemplates[category];
+}
 function newDoc(workId, category) {
-  var d = { id: uid(), workId: workId, title: "", summary: "", tags: [], aliases: [], category: category || CATS[0], color: "#9C8268", importance: 0, props: [], blocks: [], houseType: null, parentHouseId: null, alignment: null, skills: [], traits: [] };
+  var cat = category || CATS[0];
+  var d = { id: uid(), workId: workId, title: "", summary: "", tags: [], aliases: [], category: cat, color: "#9C8268", importance: 0, props: [], blocks: [], houseType: null, parentHouseId: null, alignment: null, skills: [], traits: [], locationType: null, parentLocationId: null };
+  var work = WORKS.find(function(w){ return w.id === workId; });
+  if (work) {
+    getWorkFieldTemplate(work, cat).forEach(function(f){
+      d.props.push({ id: uid(), key: f.key, type: f.type, value: f.defaultValue||"", templateFieldId: f.id });
+    });
+  }
   DOCS.push(d); saveData();
   state.mode = "doc"; state.activeId = d.id; state.addPropOpen = false; state.colorPickerOpen = false;
   render();
@@ -3647,6 +4081,7 @@ function deleteDoc(id) {
     onConfirm: function(){
       DOCS = DOCS.filter(function(x){ return x.id !== id; });
       GRAPHS.forEach(function(g){ g.nodes.forEach(function(n){ if (n.docId === id) n.docId = null; }); });
+      RELATIONSHIPS = RELATIONSHIPS.filter(function(r){ return r.fromId !== id && r.toId !== id; });
       if (state.mode === "doc" && state.activeId === id) {
         state.mode = "doccat"; state.activeId = d.workId+"::"+d.category;
       }
@@ -3756,7 +4191,8 @@ function createEssayEntry(essayId, createdAt) {
   var e = {
     id: uid(), title: "", text: "", essayId: essayId, createdAt: createdAt,
     period: "", themeTags: [], relatedCharacterIds: [],
-    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: null
+    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: null,
+    linkedCompareId: null, showCompare: false
   };
   ESSAY_ENTRIES.push(e); saveData();
   return e;
@@ -3885,6 +4321,9 @@ function docMetaHtml(d) {
   if (d.category==="세력" && d.houseType && HOUSE_TYPES[d.houseType]) {
     metaHtml += '<span class="life-badge" style="--lc:'+colorForFaction(d.title||d.id)+'">'+HOUSE_TYPES[d.houseType].label+'</span>';
   }
+  if (d.category==="장소" && d.locationType && LOCATION_TYPES[d.locationType]) {
+    metaHtml += '<span class="life-badge" style="--lc:var(--tide)">'+LOCATION_TYPES[d.locationType].label+'</span>';
+  }
   if (d.importance) metaHtml += starGlyphs(d.importance);
   return metaHtml;
 }
@@ -3897,6 +4336,179 @@ function houseDescendantIds(doc, allDocs) {
   }
   walk(doc.id);
   return out;
+}
+function locationDescendantIds(doc, allDocs) {
+  var out = [];
+  function walk(id) {
+    allDocs.forEach(function(d){
+      if (d.parentLocationId === id && out.indexOf(d.id) === -1) { out.push(d.id); walk(d.id); }
+    });
+  }
+  walk(doc.id);
+  return out;
+}
+function ancestorChain(doc, parentKey) {
+  var chain = [doc];
+  var current = doc;
+  var guard = 0;
+  while (current[parentKey] && guard++ < 50) {
+    var parent = DOCS.find(function(d){ return d.id === current[parentKey]; });
+    if (!parent) break;
+    chain.unshift(parent);
+    current = parent;
+  }
+  return chain;
+}
+/* 브레드크럼 -- 장소·세력은 이미 있는 parentLocationId/parentHouseId 계층을 그대로
+ * 타고 올라가 조상 체인을 만든다. 새 계층 데이터를 만들지 않는다. */
+function renderBreadcrumbHtml(doc) {
+  var work = WORKS.find(function(w){ return w.id === doc.workId; });
+  var chain = doc.category === "장소" ? ancestorChain(doc, "parentLocationId")
+    : doc.category === "세력" ? ancestorChain(doc, "parentHouseId")
+    : [doc];
+  var parts = [
+    '<span class="breadcrumb-item breadcrumb-label">'+esc(work?work.title:"")+'</span>',
+    '<span class="breadcrumb-sep">'+ic("chevR",9)+'</span>',
+    '<button type="button" class="breadcrumb-item breadcrumb-link" data-crumbcat="'+doc.workId+'::'+esc(doc.category)+'">'+esc(doc.category)+'</button>'
+  ];
+  chain.forEach(function(d, i){
+    parts.push('<span class="breadcrumb-sep">'+ic("chevR",9)+'</span>');
+    parts.push(i === chain.length-1
+      ? '<span class="breadcrumb-item breadcrumb-current">'+esc(d.title||"제목 없음")+'</span>'
+      : '<button type="button" class="breadcrumb-item breadcrumb-link" data-crumbdoc="'+d.id+'">'+esc(d.title||"제목 없음")+'</button>');
+  });
+  return '<div class="breadcrumb-row">'+parts.join("")+'</div>';
+}
+function wireBreadcrumb(main) {
+  main.querySelectorAll("[data-crumbcat]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var parts = btn.dataset.crumbcat.split("::");
+      state.mode="doccat"; state.activeId=parts[0]+"::"+parts[1]; render();
+    });
+  });
+  main.querySelectorAll("[data-crumbdoc]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      state.mode="doc"; state.activeId=btn.dataset.crumbdoc; render();
+    });
+  });
+}
+function relationshipLabelFor(r, doc) {
+  var preset = RELATIONSHIP_TYPES[r.type];
+  if (!preset) return r.type || "관계";
+  if (preset.symmetric) return preset.label;
+  return r.fromId === doc.id ? preset.label : preset.labelInverse;
+}
+function relationshipRowHtml(r, doc, other) {
+  var label = relationshipLabelFor(r, doc);
+  var periodTxt = (r.start||r.end) ? ' <span class="rel-period">'+esc(r.start||"")+"~"+esc(r.end||"")+'</span>' : "";
+  return '<div class="relationship-row">' +
+    '<span class="chip rel-type-chip">'+esc(label)+'</span>' +
+    '<button type="button" class="rel-other-link" data-gotorelentity="'+other.id+'">'+esc(other.title||"제목 없음")+'</button>' +
+    periodTxt +
+    (r.note ? '<span class="rel-note" title="'+esc(r.note)+'">'+ic("tag",11)+'</span>' : "") +
+    '<button type="button" class="row-del" data-delrelationship="'+r.id+'">'+ic("close",12)+'</button>' +
+  '</div>';
+}
+/* 요약 패널 -- "관계" 카드를 상대 엔티티의 카테고리별로 묶어서 보여준다. 소속 세력·
+ * 관련 장소·관련 사건·관련 아이템처럼 각기 다른 질문에 한눈에 답하려면 한 줄로 죽
+ * 늘어선 목록보다 카테고리별 소제목이 있는 편이 스캔하기 훨씬 쉽다. 데이터 자체는
+ * 2단계에서 만든 RELATIONSHIPS를 그대로 쓰고, 새 데이터를 추가하지 않는다. */
+function renderRelationshipsCard(doc) {
+  var rels = RELATIONSHIPS.filter(function(r){ return r.fromId===doc.id || r.toId===doc.id; });
+  var head = '<div class="appear-head">'+ic("link",15)+'<span>관계'+(rels.length?' · '+rels.length+'개':'')+'</span></div>';
+  var byCat = {};
+  rels.forEach(function(r){
+    var otherId = r.fromId===doc.id ? r.toId : r.fromId;
+    var other = DOCS.find(function(d){ return d.id===otherId; });
+    if (!other) return;
+    (byCat[other.category] = byCat[other.category] || []).push({ r:r, other:other });
+  });
+  var orderedCats = CATS.filter(function(cat){ return byCat[cat] && byCat[cat].length; });
+  var body;
+  if (!orderedCats.length) {
+    body = '<div class="chip-empty-hint">아직 연결된 관계가 없습니다.</div>';
+  } else {
+    body = orderedCats.map(function(cat){
+      var rows = byCat[cat].map(function(x){ return relationshipRowHtml(x.r, doc, x.other); }).join("");
+      return '<div class="relationship-group">' +
+        '<div class="relationship-group-label">'+esc(cat)+' · '+byCat[cat].length+'</div>' +
+        '<div class="relationship-list">'+rows+'</div>' +
+      '</div>';
+    }).join("");
+  }
+  return '<div class="appear-card relationship-card">'+head+body+
+    '<button type="button" class="chip-add" id="addRelationshipBtn" style="margin-top:10px">'+ic("plus",11)+' 관계 추가</button>' +
+  '</div>';
+}
+function openAddRelationshipModal(doc) {
+  var candidates = DOCS.filter(function(d){ return d.workId===doc.workId && d.id!==doc.id; });
+  if (!candidates.length) {
+    openModal({ title:"관계를 추가할 수 없어요", message:"먼저 이 작품에 연결할 다른 문서를 만들어주세요.", confirmLabel:"확인" });
+    return;
+  }
+  var byCat = {};
+  candidates.forEach(function(d){ (byCat[d.category]=byCat[d.category]||[]).push(d); });
+  var orderedCats = CATS.filter(function(cat){ return byCat[cat] && byCat[cat].length; });
+  var entityOptionsHtml = orderedCats.map(function(cat){
+    return '<optgroup label="'+esc(cat)+'">' + byCat[cat].map(function(d){
+      return '<option value="'+d.id+'">'+esc(d.title||"제목 없음")+'</option>';
+    }).join("") + '</optgroup>';
+  }).join("");
+  /* openModal의 confirmIt()은 closeModal()을 먼저 호출한 다음 onConfirm을 실행하므로,
+   * 그 시점엔 우리가 직접 끼워넣은 #relEntitySelect가 이미 DOM에서 사라진 뒤다.
+   * regionHouseSelect 등 기존 모달의 "끼워넣은 select" 들이 change 리스너로 즉시
+   * 상태에 반영하는 것과 같은 이유로, 여기서도 값을 클로저 변수에 미리 담아둔다. */
+  var selectedOtherId = byCat[orderedCats[0]][0].id;
+  openModal({
+    title: "관계 추가",
+    fields: [
+      { placeholder: "관계 (아래 프리셋을 누르거나 직접 입력하세요)" },
+      { placeholder: "시작 시점 (선택, 예: 2020년)" },
+      { placeholder: "종료 시점 (선택)" },
+      { placeholder: "메모 (선택)", multiline: true }
+    ],
+    confirmLabel: "추가",
+    onConfirm: function(values){
+      var typeText = (values[0]||"").trim();
+      if (!selectedOtherId || !typeText) return;
+      var matchedKey = Object.keys(RELATIONSHIP_TYPES).find(function(k){
+        return RELATIONSHIP_TYPES[k].label===typeText || RELATIONSHIP_TYPES[k].labelInverse===typeText;
+      });
+      RELATIONSHIPS.push({
+        id: uid(), workId: doc.workId, fromId: doc.id, toId: selectedOtherId,
+        type: matchedKey || typeText, start: values[1]||"", end: values[2]||"", note: values[3]||""
+      });
+      saveData(); renderDocPage(doc);
+    }
+  });
+  var overlay = document.getElementById("modalOverlay");
+  if (!overlay) return;
+  var box = overlay.querySelector(".modal-box");
+  var titleEl = box.querySelector(".modal-title");
+  var presetHtml = '<div class="modal-picker-row">' +
+    Object.keys(RELATIONSHIP_TYPES).map(function(k){
+      var t = RELATIONSHIP_TYPES[k];
+      var btnLabel = t.symmetric ? t.label : (t.labelInverse+"→"+t.label);
+      return '<button type="button" class="modal-pick no-dot" data-relpreset="'+k+'">'+esc(btnLabel)+'</button>';
+    }).join("") +
+  '</div>';
+  var introHtml =
+    '<div class="modal-picker-label">상대 문서</div>' +
+    '<select class="modal-input" id="relEntitySelect">'+entityOptionsHtml+'</select>' +
+    '<div class="modal-picker-label">관계 프리셋 (눌러서 채우기)</div>' + presetHtml;
+  titleEl.insertAdjacentHTML("afterend", introHtml);
+  document.getElementById("relEntitySelect").addEventListener("change", function(e){
+    selectedOtherId = e.target.value;
+  });
+  box.querySelectorAll("[data-relpreset]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var t = RELATIONSHIP_TYPES[btn.dataset.relpreset];
+      var labelInput = document.getElementById("modalField0");
+      /* doc(현재 문서)가 항상 fromId로 저장되므로, 프리셋의 label(= fromId 쪽에서
+       * 본 toId의 역할)을 그대로 채운다 -- 대칭 타입도 label이 곧 유일한 표시 문구. */
+      if (labelInput) labelInput.value = t.label;
+    });
+  });
 }
 function docMatches(d, q) {
   if (!q) return true;
@@ -4256,6 +4868,7 @@ function renderWorkBody(work, q) {
     html += '</div>';
 
     html += '<div class="sb-section"><div class="doc-row '+(state.mode==="units"&&state.activeId===work.id?"active":"")+'" style="margin-left:18px" data-openunits="'+work.id+'">'+ic("scale",13)+'<span style="flex:1">단위·달력</span></div></div>';
+    html += '<div class="sb-section"><div class="doc-row '+(state.mode==="fieldtemplates"&&state.activeId===work.id?"active":"")+'" style="margin-left:18px" data-openfieldtemplates="'+work.id+'">'+ic("grid",13)+'<span style="flex:1">필드 템플릿</span></div></div>';
   }
   html += '</div>';
   return html;
@@ -4336,6 +4949,7 @@ function renderSidebar() {
   el.querySelectorAll("[data-opentimeline]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="timeline"; state.activeId=b.dataset.opentimeline; render(); }); });
   el.querySelectorAll("[data-openmap]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="map"; state.activeId=b.dataset.openmap; render(); }); });
   el.querySelectorAll("[data-openunits]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="units"; state.activeId=b.dataset.openunits; render(); }); });
+  el.querySelectorAll("[data-openfieldtemplates]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="fieldtemplates"; state.activeId=b.dataset.openfieldtemplates; render(); }); });
   el.querySelectorAll("[data-deldoc]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteDoc(b.dataset.deldoc); }); });
   el.querySelectorAll("[data-delgraph]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteGraph(b.dataset.delgraph); }); });
   el.querySelectorAll("[data-delms]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteManuscript(b.dataset.delms); }); });
@@ -4475,9 +5089,16 @@ function renderDocCategoryPage(workId, category) {
   var docs = DOCS.filter(function(d){ return d.workId===workId && d.category===category; });
   var main = document.getElementById("main");
   var isHouse = category === "세력";
+  var split = !!state.splitView;
+  if (split) {
+    if (!state.splitSelectedId || !docs.some(function(d){ return d.id===state.splitSelectedId; })) {
+      state.splitSelectedId = docs.length ? docs[0].id : null;
+    }
+  }
   var cardHtml = function(d, depth) {
     var meta = docMetaHtml(d);
-    return '<div class="doc-card'+(isHouse?" doc-card-tree":"")+'" data-opendoccard="'+d.id+'"'+(isHouse?' style="margin-left:'+(depth*26)+'px"':'')+'>' +
+    var selected = split && state.splitSelectedId === d.id;
+    return '<div class="doc-card'+(isHouse?" doc-card-tree":"")+(selected?" doc-card-selected":"")+'" data-opendoccard="'+d.id+'"'+(isHouse?' style="margin-left:'+(depth*26)+'px"':'')+'>' +
       '<button class="row-del doc-card-del" data-deldoccard="'+d.id+'" title="삭제">'+ic("trash",12)+'</button>' +
       '<div class="doc-card-top"><span class="doc-card-dot" style="background:'+colorOf(d.color)+'"></span>'+meta+'</div>' +
       '<div class="doc-card-title">'+esc(d.title||"제목 없음")+'</div>' +
@@ -4490,24 +5111,57 @@ function renderDocCategoryPage(workId, category) {
   } else {
     cardsHtml = docs.map(function(d){ return cardHtml(d, 0); }).join("");
   }
-  main.innerHTML =
-    '<div class="page-pad">' +
-      '<div class="doc-head-row" style="justify-content:space-between;align-items:center">' +
-        '<div><div class="doccat-eyebrow">'+esc(work?work.title:"")+'</div><h2 class="doccat-title">'+esc(category)+'</h2></div>' +
-        '<button class="btn primary" id="doccatAddBtn">'+ic("plus",13)+' 새 문서</button>' +
-      '</div>' +
-      '<div class="'+(isHouse?"doccat-tree":"doccat-grid")+'">' + (cardsHtml || '<div class="sb-empty">아직 문서가 없습니다. "새 문서"로 추가해보세요.</div>') + '</div>' +
+  var breadcrumbHtml = '<div class="breadcrumb-row">' +
+    '<span class="breadcrumb-item breadcrumb-label">'+esc(work?work.title:"")+'</span>' +
+    '<span class="breadcrumb-sep">'+ic("chevR",9)+'</span>' +
+    '<span class="breadcrumb-item breadcrumb-current">'+esc(category)+'</span>' +
+  '</div>';
+  var viewToggleHtml = '<div class="doccat-viewtoggle">' +
+    '<button type="button" class="ms-tab '+(!split?"on":"")+'" id="dcViewList">리스트만</button>' +
+    '<button type="button" class="ms-tab '+(split?"on":"")+'" id="dcViewSplit">스플릿</button>' +
+  '</div>';
+  var headRowHtml =
+    '<div class="doc-head-row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">' +
+      '<div><h2 class="doccat-title" style="margin:0">'+esc(category)+'</h2></div>' +
+      '<div style="display:flex;align-items:center;gap:10px">' + viewToggleHtml + '<button class="btn primary" id="doccatAddBtn">'+ic("plus",13)+' 새 문서</button></div>' +
     '</div>';
+  var listHtml = '<div class="'+(isHouse?"doccat-tree":"doccat-grid")+'">' + (cardsHtml || '<div class="sb-empty">아직 문서가 없습니다. "새 문서"로 추가해보세요.</div>') + '</div>';
+
+  if (split) {
+    main.innerHTML =
+      '<div class="page-pad doccat-split-pad">' + breadcrumbHtml + headRowHtml +
+        '<div class="doccat-split-wrap">' +
+          '<div class="doccat-split-list">' + listHtml + '</div>' +
+          '<div class="doccat-split-detail" id="doccatDetailPane"></div>' +
+        '</div>' +
+      '</div>';
+  } else {
+    main.innerHTML = '<div class="page-pad">' + breadcrumbHtml + headRowHtml + listHtml + '</div>';
+  }
+
   document.getElementById("doccatAddBtn").addEventListener("click", function(){ newDoc(workId, category); });
+  document.getElementById("dcViewList").addEventListener("click", function(){ state.splitView = false; renderDocCategoryPage(workId, category); });
+  document.getElementById("dcViewSplit").addEventListener("click", function(){ state.splitView = true; renderDocCategoryPage(workId, category); });
   main.querySelectorAll("[data-opendoccard]").forEach(function(card){
     card.addEventListener("click", function(e){
       if (e.target.closest(".doc-card-del")) return;
-      state.mode="doc"; state.activeId=card.dataset.opendoccard; state.addPropOpen=false; state.colorPickerOpen=false; render();
+      state.addPropOpen=false; state.colorPickerOpen=false;
+      if (split) { state.splitSelectedId = card.dataset.opendoccard; renderDocCategoryPage(workId, category); return; }
+      state.mode="doc"; state.activeId=card.dataset.opendoccard; render();
     });
   });
   main.querySelectorAll("[data-deldoccard]").forEach(function(btn){
     btn.addEventListener("click", function(e){ e.stopPropagation(); deleteDoc(btn.dataset.deldoccard); });
   });
+
+  if (split) {
+    if (state.splitSelectedId) {
+      var selDoc = DOCS.find(function(d){ return d.id===state.splitSelectedId; });
+      if (selDoc) renderDocPage(selDoc, "doccatDetailPane");
+    } else {
+      document.getElementById("doccatDetailPane").innerHTML = '<div class="sb-empty" style="margin:20px">왼쪽 목록에서 문서를 선택해주세요.</div>';
+    }
+  }
 }
 /* ---------------- appearance builder (등장인물) ----------------
  * Modular pixel-doll engine + part library (see the standalone showcase artifact
@@ -6443,8 +7097,8 @@ function renderStatusWindowCard(doc) {
     '</div>' +
   '</div>';
 }
-function renderDocPage(doc) {
-  var main = document.getElementById("main");
+function renderDocPage(doc, containerId) {
+  var main = document.getElementById(containerId || "main");
   var chipRow = function(field) {
     return '<div class="chip-row" data-chipfield="'+field+'">' +
       doc[field].map(function(v, i){
@@ -6501,6 +7155,12 @@ function renderDocPage(doc) {
       '<option value="">없음 (최상위)</option>' +
       houseOptions.map(function(d){ return '<option value="'+d.id+'" '+(doc.parentHouseId===d.id?"selected":"")+'>'+esc(d.title||"제목 없음")+'</option>'; }).join("") +
     '</select>');
+    var childHouses = DOCS.filter(function(d){ return d.workId===doc.workId && d.category==="세력" && d.parentHouseId===doc.id; });
+    propsHtml += propRow("building", "하위 세력", childHouses.length ? '<div class="chip-row">' +
+      childHouses.map(function(d){
+        return '<span class="chip" data-gotorelentity="'+d.id+'">'+ic("crown",10)+' '+esc(d.title||"제목 없음")+(d.houseType&&HOUSE_TYPES[d.houseType]?" · "+esc(HOUSE_TYPES[d.houseType].label):"")+'</span>';
+      }).join("") +
+    '</div>' : '<span class="chip-empty-hint">상위 세력을 이 세력으로 지정한 하위 세력이 여기 표시돼요</span>');
     var linkedRegions = [];
     MAPS.filter(function(mp){ return mp.workId===doc.workId; }).forEach(function(mp){
       (mp.regions||[]).forEach(function(r){ if (r.houseId===doc.id) linkedRegions.push({ mp:mp, r:r }); });
@@ -6510,6 +7170,36 @@ function renderDocPage(doc) {
         return '<span class="chip house-region-chip" data-gotoregion="'+x.mp.id+'::'+x.r.id+'">'+ic("map",10)+' '+esc(x.mp.title||"지도")+(x.r.label?" · "+esc(x.r.label):"")+'</span>';
       }).join("") +
     '</div>' : '<span class="chip-empty-hint">지도의 지역 편집에서 이 세력을 연결하면 여기에 표시돼요</span>');
+  }
+  if (doc.category === "장소") {
+    propsHtml += propRow("map", "장소 유형", '<div class="life-pick-row" id="locationTypePickRow">' +
+      Object.keys(LOCATION_TYPES).map(function(k){
+        return '<button type="button" class="life-pick '+(doc.locationType===k?"on":"")+'" data-locationtypeval="'+k+'" style="--lc:var(--tide)">'+LOCATION_TYPES[k].label+'</button>';
+      }).join("") +
+      '<button type="button" class="life-pick clear '+(!doc.locationType?"on":"")+'" data-locationtypeval="">표시 안 함</button>' +
+    '</div>');
+    var locExcludeIds = [doc.id].concat(locationDescendantIds(doc, DOCS.filter(function(d){ return d.workId===doc.workId && d.category==="장소"; })));
+    var locationOptions = DOCS.filter(function(d){ return d.workId===doc.workId && d.category==="장소" && locExcludeIds.indexOf(d.id)===-1; });
+    propsHtml += propRow("chevron", "상위 장소", '<select class="sel" id="parentLocationSelect" style="max-width:220px">' +
+      '<option value="">없음 (최상위)</option>' +
+      locationOptions.map(function(d){ return '<option value="'+d.id+'" '+(doc.parentLocationId===d.id?"selected":"")+'>'+esc(d.title||"제목 없음")+'</option>'; }).join("") +
+    '</select>');
+    var childLocations = DOCS.filter(function(d){ return d.workId===doc.workId && d.category==="장소" && d.parentLocationId===doc.id; });
+    propsHtml += propRow("building", "하위 장소", childLocations.length ? '<div class="chip-row">' +
+      childLocations.map(function(d){
+        return '<span class="chip" data-gotolocation="'+d.id+'">'+ic("map",10)+' '+esc(d.title||"제목 없음")+(d.locationType&&LOCATION_TYPES[d.locationType]?" · "+esc(LOCATION_TYPES[d.locationType].label):"")+'</span>';
+      }).join("") +
+    '</div>' : '<span class="chip-empty-hint">상위 장소를 이 장소로 지정한 하위 장소가 여기 표시돼요</span>');
+    var linkedMapSpots = [];
+    MAPS.filter(function(mp){ return mp.workId===doc.workId; }).forEach(function(mp){
+      (mp.regions||[]).forEach(function(r){ if (r.locationId===doc.id) linkedMapSpots.push({ mp:mp, kind:"region", id:r.id, label:r.label }); });
+      (mp.markers||[]).forEach(function(mk){ if (mk.locationId===doc.id) linkedMapSpots.push({ mp:mp, kind:"marker", id:mk.id, label:mk.label }); });
+    });
+    propsHtml += propRow("pin", "연결된 지도 위치", linkedMapSpots.length ? '<div class="chip-row">' +
+      linkedMapSpots.map(function(x){
+        return '<span class="chip house-region-chip" data-gotomapspot="'+x.mp.id+'::'+x.kind+'::'+x.id+'">'+ic("map",10)+' '+esc(x.mp.title||"지도")+(x.label?" · "+esc(x.label):"")+'</span>';
+      }).join("") +
+    '</div>' : '<span class="chip-empty-hint">지도의 지역·기호 편집에서 이 장소를 연결하면 여기에 표시돼요</span>');
   }
 
   propsHtml += propRow("circle", "색상", '<div class="color-dot-sel"><button class="color-trigger" id="colorTrigger" type="button"><span class="color-dot" style="background:'+colorOf(doc.color)+'"></span><span>색상 선택</span></button></div>');
@@ -6523,8 +7213,26 @@ function renderDocPage(doc) {
     return '<button type="button" data-starcell="'+n+'" class="'+(full?"on":"")+'">'+inner+'</button>';
   }).join("") + '</div>');
 
+  /* 필수 필드 자동 보정 -- 이 카테고리의 템플릿 중 required 필드인데 대응하는 prop이
+   * 아예 없으면(문서가 템플릿 도입 이전에 만들어졌거나, 사용자가 지웠던 경우) 빈
+   * 값으로 다시 만들어 화면에 보이게 한다. 선택 필드는 이렇게 되살리지 않는다 --
+   * 사용자가 일부러 지운 선택 필드까지 매번 되살아나면 성가시다. */
+  var docWork = WORKS.find(function(w){ return w.id === doc.workId; });
+  if (docWork) {
+    getWorkFieldTemplate(docWork, doc.category).forEach(function(f){
+      if (!f.required) return;
+      var exists = doc.props.some(function(p){ return p.templateFieldId === f.id; });
+      if (!exists) doc.props.push({ id: uid(), key: f.key, type: f.type, value: "", templateFieldId: f.id });
+    });
+  }
+  var templateFieldsById = {};
+  if (docWork) {
+    getWorkFieldTemplate(docWork, doc.category).forEach(function(f){ templateFieldsById[f.id] = f; });
+  }
   doc.props.forEach(function(p){
     var typeInfo = PROP_TYPES.find(function(t){ return t.id===p.type; }) || PROP_TYPES[0];
+    var tf = p.templateFieldId ? templateFieldsById[p.templateFieldId] : null;
+    var isRequiredEmpty = !!(tf && tf.required && !String(p.value||"").trim());
     var valueHtml;
     if (p.type === "stat") {
       var statVal = Math.max(0, Math.min(100, parseFloat(p.value) || 0));
@@ -6535,8 +7243,8 @@ function renderDocPage(doc) {
       var inputType = p.type === "number" ? "number" : p.type === "date" ? "date" : "text";
       valueHtml = '<input class="field-input" type="'+inputType+'" data-propval="'+p.id+'" value="'+esc(p.value)+'" placeholder="값 입력">';
     }
-    propsHtml += '<div class="prop-row"><div class="prop-icon">'+ic(typeInfo.icon)+'</div>' +
-      '<div class="prop-label editable" data-editkey="'+p.id+'">'+esc(p.key)+'</div>' +
+    propsHtml += '<div class="prop-row'+(isRequiredEmpty?" prop-row-required-empty":"")+'"><div class="prop-icon">'+ic(typeInfo.icon)+'</div>' +
+      '<div class="prop-label editable" data-editkey="'+p.id+'">'+esc(p.key)+(isRequiredEmpty?' <span class="prop-required-badge" title="필수 필드가 비어 있어요">필수</span>':"")+'</div>' +
       '<div class="prop-value">'+valueHtml+'</div>' +
       '<button class="prop-remove" data-rmprop="'+p.id+'">'+ic("close",12)+'</button></div>';
   });
@@ -6550,11 +7258,13 @@ function renderDocPage(doc) {
 
   main.innerHTML =
     '<div class="page-pad">' +
+    renderBreadcrumbHtml(doc) +
     '<div class="doc-head-row"><button type="button" class="btn" id="docBackBtn" style="flex:none;gap:5px;margin-top:2px">'+ic("chevL",13)+'<span>'+esc(doc.category||"목록")+'</span></button><input class="doc-title" id="docTitle" placeholder="제목 없음" value="'+esc(doc.title)+'"><button type="button" class="btn" id="nameSuggestBtn" style="flex:none;gap:5px;margin-top:2px">'+ic("wand",13)+'<span>이름 추천</span></button><button class="page-del" id="deleteDocBtn">'+ic("trash",13)+'<span>문서 삭제</span></button></div>' +
     '<div class="prop-grid">' + propsHtml + '</div>' +
     (doc.category === "등장인물" ? renderAppearanceEditor(doc) : "") +
     (doc.category === "등장인물" ? renderStatusWindowCard(doc) : "") +
     (doc.category === "등장인물" ? renderCharacterAppearancesCard(doc) : "") +
+    renderRelationshipsCard(doc) +
     '<div class="two-col">' +
       '<div class="toc-box" id="tocBox"></div>' +
       '<div class="add-prop-box" id="addPropBox">' + addPropBoxHtml + '</div>' +
@@ -6578,7 +7288,11 @@ function renderDocPage(doc) {
   // title
   document.getElementById("docTitle").addEventListener("input", function(e){ doc.title = e.target.value; saveData(); renderSidebar(); });
   document.getElementById("deleteDocBtn").addEventListener("click", function(){ deleteDoc(doc.id); });
-  document.getElementById("docBackBtn").addEventListener("click", function(){ state.mode="doccat"; state.activeId=doc.workId+"::"+doc.category; render(); });
+  document.getElementById("docBackBtn").addEventListener("click", function(){
+    if (containerId) { state.splitSelectedId = null; renderDocCategoryPage(doc.workId, doc.category); return; }
+    state.mode="doccat"; state.activeId=doc.workId+"::"+doc.category; render();
+  });
+  wireBreadcrumb(main);
   document.getElementById("nameSuggestBtn").addEventListener("click", function(){ openNameSuggestModal(doc); });
 
   // summary
@@ -6649,6 +7363,21 @@ function renderDocPage(doc) {
     });
   });
 
+  // relationships (all categories)
+  var addRelBtn = document.getElementById("addRelationshipBtn");
+  if (addRelBtn) addRelBtn.addEventListener("click", function(){ openAddRelationshipModal(doc); });
+  main.querySelectorAll("[data-gotorelentity]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      state.mode = "doc"; state.activeId = btn.dataset.gotorelentity; render();
+    });
+  });
+  main.querySelectorAll("[data-delrelationship]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      RELATIONSHIPS = RELATIONSHIPS.filter(function(r){ return r.id !== btn.dataset.delrelationship; });
+      saveData(); renderDocPage(doc);
+    });
+  });
+
   // foreshadowing resolved (떡밥)
   var resolveToggle = document.getElementById("resolveToggle");
   if (resolveToggle) {
@@ -6689,6 +7418,35 @@ function renderDocPage(doc) {
     chip.addEventListener("click", function(){
       var parts = chip.dataset.gotoregion.split("::");
       state.mode = "map"; state.activeId = parts[0]; state.pendingMapFocusRegion = parts[1]; render();
+    });
+  });
+
+  // location type & hierarchy (장소)
+  main.querySelectorAll("[data-locationtypeval]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      doc.locationType = btn.dataset.locationtypeval || null;
+      saveData(); renderDocPage(doc); renderSidebar();
+    });
+  });
+  var parentLocationSelect = document.getElementById("parentLocationSelect");
+  if (parentLocationSelect) {
+    parentLocationSelect.addEventListener("change", function(e){
+      doc.parentLocationId = e.target.value || null;
+      saveData(); renderDocPage(doc); renderSidebar();
+    });
+  }
+  main.querySelectorAll("[data-gotolocation]").forEach(function(chip){
+    chip.addEventListener("click", function(){
+      state.mode = "doc"; state.activeId = chip.dataset.gotolocation; render();
+    });
+  });
+  main.querySelectorAll("[data-gotomapspot]").forEach(function(chip){
+    chip.addEventListener("click", function(){
+      var parts = chip.dataset.gotomapspot.split("::");
+      state.mode = "map"; state.activeId = parts[0];
+      if (parts[1] === "region") state.pendingMapFocusRegion = parts[2];
+      else state.pendingMapFocusMarker = parts[2];
+      render();
     });
   });
 
@@ -7701,6 +8459,43 @@ function openMapLineModal(mp, line, isNew, onDone) {
     }
   });
 }
+/* 지역/기호 편집창에 공용으로 쓰는 "연결된 장소" select + 새 장소 만들기 버튼.
+ * 세력 연결 select와 달리 항상 렌더링한다 -- 작품에 장소 문서가 아직 하나도 없는
+ * 경우가 오히려 흔할 것이므로("+ 새 장소" 버튼으로 그 자리에서 바로 만들 수 있어야
+ * 처음 쓰는 사용자가 막히지 않는다), 목록이 비어 있다고 select 자체를 숨기지 않는다. */
+function quickCreateLocation(workId, title) {
+  var d = { id: uid(), workId: workId, title: title || "새 장소", summary: "", tags: [], aliases: [], category: "장소", color: "#357C82", importance: 0, props: [], blocks: [], houseType: null, parentHouseId: null, alignment: null, skills: [], traits: [], locationType: null, parentLocationId: null };
+  DOCS.push(d); saveData();
+  return d;
+}
+function wireMapSpotLocationPicker(box, actionsDiv, mp, spot, spotKind) {
+  var locationDocs = DOCS.filter(function(d){ return d.workId===mp.workId && d.category==="장소"; });
+  var html = '<div class="modal-picker-label">연결된 장소</div>' +
+    '<div class="modal-location-row">' +
+      '<select class="modal-input" id="spotLocationSelect" style="flex:1;margin-bottom:0"><option value="">연결 안 함</option>' +
+        locationDocs.map(function(d){
+          return '<option value="'+d.id+'" '+(spot.locationId===d.id?"selected":"")+'>'+esc(d.title||"제목 없음")+(d.locationType&&LOCATION_TYPES[d.locationType]?" ("+LOCATION_TYPES[d.locationType].label+")":"")+'</option>';
+        }).join("") +
+      '</select>' +
+      '<button type="button" class="modal-pick no-dot" id="spotNewLocationBtn" style="flex:none">'+ic("plus",11)+' 새 장소</button>' +
+    '</div>';
+  if (actionsDiv) actionsDiv.insertAdjacentHTML("beforebegin", html);
+  var sel = document.getElementById("spotLocationSelect");
+  sel.addEventListener("change", function(e){
+    spot.locationId = e.target.value || null;
+    saveData();
+  });
+  document.getElementById("spotNewLocationBtn").addEventListener("click", function(){
+    var labelInput = document.getElementById("modalField0");
+    var title = (labelInput && labelInput.value.trim()) || spot.label || "새 장소";
+    var d = quickCreateLocation(mp.workId, title);
+    spot.locationId = d.id;
+    saveData();
+    var opt = document.createElement("option");
+    opt.value = d.id; opt.textContent = title; opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
 function openMapRegionModal(mp, region, onDone) {
   openModal({
     title: "지역 편집",
@@ -7752,6 +8547,7 @@ function openMapRegionModal(mp, region, onDone) {
       saveData();
     });
   }
+  wireMapSpotLocationPicker(box, actionsDiv, mp, region, "region");
   var childMap = region.childMapId ? MAPS.find(function(m){ return m.id === region.childMapId; }) : null;
   var drillHtml = '<div class="modal-picker-label">세부 지도</div><div class="modal-picker-row">' +
     '<button type="button" class="modal-pick no-dot" id="mapDrillBtn">' +
@@ -7789,6 +8585,12 @@ function openMapMarkerModal(mp, marker, isNew, onDone) {
       onDone(marker);
     }
   });
+  var overlay = document.getElementById("modalOverlay");
+  if (!overlay) return;
+  var box = overlay.querySelector(".modal-box");
+  var actionsDiv = box.querySelector(".modal-actions");
+  if (marker.locationId === undefined) marker.locationId = null;
+  wireMapSpotLocationPicker(box, actionsDiv, mp, marker, "marker");
 }
 function openMapDangerModal(mp, zone, isNew, onDone) {
   openModal({
@@ -8216,6 +9018,12 @@ function renderMapPage(mp) {
     state.pendingMapFocusRegion = null;
     saveData();
   }
+  if (state.pendingMapFocusMarker) {
+    var focusMk = (mp.markers||[]).find(function(mk){ return mk.id === state.pendingMapFocusMarker; });
+    if (focusMk) { centerMapOnPoint(mp, focusMk.x, focusMk.y); mpState.selected = { type:"marker", id: focusMk.id }; }
+    state.pendingMapFocusMarker = null;
+    saveData();
+  }
 
   drawMap(mp);
 
@@ -8539,7 +9347,7 @@ function renderMapPage(mp) {
         var hint = document.querySelector(".graph-empty-hint");
         if (hint) hint.remove();
         if (mpState.tool === "paint") {
-          mp.regions.push({ id: uid(), points: simplified, terrain: mpState.terrain, label: "", childMapId: null, houseId: null, countryInfo: null });
+          mp.regions.push({ id: uid(), points: simplified, terrain: mpState.terrain, label: "", childMapId: null, houseId: null, countryInfo: null, locationId: null });
           saveData(); drawMap(mp);
         } else if (mpState.tool === "line") {
           var newLine = { id: uid(), points: simplified, kind: "border", label: "" };
@@ -9366,11 +10174,16 @@ function renderEssayEntryPage(e) {
   if (e.previewDark === undefined) e.previewDark = false;
   if (e.themeTags === undefined) e.themeTags = [];
   if (e.relatedCharacterIds === undefined) e.relatedCharacterIds = [];
+  if (e.linkedCompareId === undefined) e.linkedCompareId = null;
+  if (e.showCompare === undefined) e.showCompare = false;
 
   var main = document.getElementById("main");
   var essayOf = ESSAYS.find(function(es){ return es.id === e.essayId; });
   var esWorkId = essayOf ? essayOf.workId : null;
   var charDocs = DOCS.filter(function(d){ return d.workId===esWorkId && d.category==="등장인물"; });
+  var otherEntries = ESSAY_ENTRIES.filter(function(x){ return x.essayId === e.essayId && x.id !== e.id; });
+  var compareEntry = e.linkedCompareId ? ESSAY_ENTRIES.find(function(x){ return x.id === e.linkedCompareId; }) : null;
+  if (!compareEntry) { e.linkedCompareId = null; e.showCompare = false; }
 
   var metaHtml =
     '<div class="pov-row"><span class="pov-label">'+ic("calendar",13)+'<span>시기</span></span>' +
@@ -9380,7 +10193,14 @@ function renderEssayEntryPage(e) {
     '<div class="chip-row" id="esPeopleChips" style="flex:1"></div>' +
     (charDocs.length ? '<select class="sel" id="esPeoplePicker" style="max-width:150px;flex:none"><option value="">+ 인물 추가</option>' +
       charDocs.map(function(d){ return '<option value="'+d.id+'">'+esc(d.title||"제목 없음")+'</option>'; }).join("") + '</select>' : '') +
-    '</div>';
+    '</div>' +
+    (otherEntries.length ? '<div class="pov-row"><span class="pov-label">'+ic("list",13)+'<span>생애 비교</span></span>' +
+      '<select class="sel" id="esComparePick" style="max-width:220px">' +
+        '<option value="">비교할 글 선택 안 함</option>' +
+        otherEntries.map(function(x){ return '<option value="'+x.id+'" '+(e.linkedCompareId===x.id?"selected":"")+'>'+esc(x.title||"제목 없음")+(x.period?" · "+esc(x.period):"")+'</option>'; }).join("") +
+      '</select>' +
+      (compareEntry ? '<button type="button" class="ms-sort-btn '+(e.showCompare?"on":"")+'" id="esToggleCompare">'+ic("graph",11)+' 나란히 비교</button>' : "") +
+    '</div>' : "");
 
   var statsHtml = '<div class="ms-stats-bar" id="esStatsBar"></div>' +
     '<div class="ms-goal-row">' +
@@ -9390,7 +10210,7 @@ function renderEssayEntryPage(e) {
     '</div>';
 
   var textareaHtml = '<textarea class="ms-textarea ms-doc-textarea" id="esText" spellcheck="true" placeholder="여기에 글을 적어보세요.">'+esc(e.text||"")+'</textarea>';
-  var bodyHtml =
+  var editorHtml =
     '<div class="ms-controls">' +
       '<button type="button" id="esDarkToggle" class="'+(e.previewDark?"on":"")+'">'+ic(e.previewDark?"moon":"sun",13)+'<span>다크 모드</span></button>' +
       '<div class="sep"></div>' +
@@ -9404,6 +10224,24 @@ function renderEssayEntryPage(e) {
     '</div>' +
     '<div class="ms-doc-page"><div class="ms-doc-ruler"></div><div class="ms-doc-screen">' + textareaHtml + '</div></div>';
 
+  var bodyHtml;
+  if (e.showCompare && compareEntry) {
+    bodyHtml =
+      '<div class="tl-parallel-wrap essay-compare-wrap">' +
+        '<div class="tl-col">' +
+          '<div class="tl-col-head">'+(e.period?esc(e.period):esc(e.title||"이 글"))+'</div>' +
+          editorHtml +
+        '</div>' +
+        '<div class="tl-col">' +
+          '<div class="tl-col-head">'+(compareEntry.period?esc(compareEntry.period):esc(compareEntry.title||"비교 글"))+' <button type="button" class="tl-doc-open" data-esopenother="'+compareEntry.id+'" title="이 글 열기">'+ic("link",12)+'</button></div>' +
+          '<div class="essay-compare-title">'+esc(compareEntry.title||"제목 없음")+'</div>' +
+          '<div class="essay-compare-text">'+esc(compareEntry.text||"(아직 내용이 없습니다)")+'</div>' +
+        '</div>' +
+      '</div>';
+  } else {
+    bodyHtml = editorHtml;
+  }
+
   main.innerHTML =
     '<div class="graph-shell">' +
       '<div class="graph-title-bar"><input class="graph-title" id="esTitle" value="'+esc(e.title)+'" placeholder="글 제목"><span class="ms-save-indicator saved" id="esSaveIndicator">저장됨</span><span class="ms-char-count" id="esCharCount">'+fmtNum(charCount(e.text))+'자</span><button class="page-del" id="deleteEsBtn" style="margin-top:0">'+ic("trash",13)+'<span>글 삭제</span></button></div>' +
@@ -9413,6 +10251,21 @@ function renderEssayEntryPage(e) {
   document.getElementById("esTitle").addEventListener("input", function(ev){ e.title = ev.target.value; saveData(); renderSidebar(); updateEsStatsBar(e); flashEsSaveIndicator(); });
   document.getElementById("deleteEsBtn").addEventListener("click", function(){ deleteEssayEntry(e.id); });
   document.getElementById("esPeriod").addEventListener("input", function(ev){ e.period = ev.target.value; saveData(); renderSidebar(); flashEsSaveIndicator(); });
+  var comparePick = document.getElementById("esComparePick");
+  if (comparePick) comparePick.addEventListener("change", function(ev){
+    e.linkedCompareId = ev.target.value || null;
+    if (!e.linkedCompareId) e.showCompare = false;
+    saveData(); renderEssayEntryPage(e);
+  });
+  var toggleCompareBtn = document.getElementById("esToggleCompare");
+  if (toggleCompareBtn) toggleCompareBtn.addEventListener("click", function(){
+    e.showCompare = !e.showCompare;
+    saveData(); renderEssayEntryPage(e);
+  });
+  var openOtherEssayBtn = main.querySelector("[data-esopenother]");
+  if (openOtherEssayBtn) openOtherEssayBtn.addEventListener("click", function(){
+    state.mode = "essayentry"; state.activeId = openOtherEssayBtn.dataset.esopenother; render();
+  });
 
   renderEssayTagChips(e);
   updateEssayPeopleChips(e, esWorkId);
@@ -10000,6 +10853,10 @@ function render() {
   if (state.mode === "units") {
     var uw = WORKS.find(function(w){ return w.id === state.activeId; });
     if (uw) { renderUnitsPage(uw); return; }
+  }
+  if (state.mode === "fieldtemplates") {
+    var ftw = WORKS.find(function(w){ return w.id === state.activeId; });
+    if (ftw) { renderFieldTemplatesPage(ftw); return; }
   }
   if (state.mode === "sports") {
     var sp = SPORTS.find(function(s){ return s.id === state.activeId; });
