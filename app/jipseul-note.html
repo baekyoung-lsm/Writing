@@ -220,6 +220,15 @@
 
   .appear-card { border:1px solid var(--border); border-radius:11px; padding:14px; margin-bottom:16px; background:var(--bg-card); box-shadow:0 1px 3px var(--shadow); }
   .appear-head { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-faint); margin-bottom:12px; }
+  .relationship-list { display:flex; flex-direction:column; gap:6px; }
+  .relationship-row { display:flex; align-items:center; gap:8px; padding:7px 9px; border:1px solid var(--border); border-radius:8px; background:var(--bg); }
+  .rel-type-chip { flex:none; background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .rel-other-link { flex:1; min-width:0; display:flex; align-items:center; gap:6px; background:none; border:none; text-align:left; font-size:13px; color:var(--ink); padding:2px 4px; border-radius:5px; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rel-other-link:hover { background:var(--bg-card-hover); text-decoration:underline; text-decoration-style:dotted; }
+  .rel-other-cat { flex:none; font-size:11px; color:var(--ink-faint); font-weight:400; }
+  .rel-period { flex:none; font-size:11.5px; color:var(--ink-faint); font-variant-numeric:tabular-nums; }
+  .rel-note { flex:none; display:flex; color:var(--ink-faint); cursor:help; }
+  .modal-input#relEntitySelect { margin-bottom:4px; }
   .appear-body { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
   .appear-render-toggle, .appear-panel-toggle { display:flex; gap:6px; margin-bottom:8px; }
   .appear-render-toggle button, .appear-panel-toggle button { flex:1; border:1px solid var(--border-strong); background:var(--bg); border-radius:20px; padding:5px 6px; font-size:11px; color:var(--ink-soft); white-space:nowrap; }
@@ -1028,6 +1037,27 @@ var LOCATION_TYPES = {
   room: { label:"방" },
   other: { label:"기타" }
 };
+/* 구조화된 관계 프리셋 -- 레코드는 fromId가 "행위 주체"(관계를 처음 추가한 쪽), toId가
+ * 상대 엔티티다. label은 fromId 쪽 문서에서 볼 때 toId를 가리키는 말, labelInverse는
+ * toId 쪽 문서에서 볼 때 fromId를 가리키는 말이다. 예: 캐릭터(from)가 아이템(to)의
+ * 소유자로 관계를 추가하면, 캐릭터 문서에는 "소유물: 그 아이템"(label)이, 아이템
+ * 문서에는 "소유자: 그 캐릭터"(labelInverse)가 표시된다. symmetric 타입은 어느
+ * 쪽에서 봐도 같은 라벨. 프리셋에 없는 자유 입력 문자열은 방향을 뒤집을 수 없으므로
+ * 양쪽에서 같은 텍스트로 표시된다. */
+var RELATIONSHIP_TYPES = {
+  family:      { label:"가족", symmetric:true },
+  lover:       { label:"연인", symmetric:true },
+  mentor:      { label:"제자", labelInverse:"사부" },
+  colleague:   { label:"동료", symmetric:true },
+  rival:       { label:"적대", symmetric:true },
+  boss:        { label:"부하", labelInverse:"상사" },
+  member:      { label:"소속 세력", labelInverse:"소속원" },
+  owner:       { label:"소유물", labelInverse:"소유자" },
+  resident:    { label:"거주지", labelInverse:"거주자" },
+  birthplace:  { label:"출생지", labelInverse:"출생 인물" },
+  deathplace:  { label:"사망지", labelInverse:"사망 인물" },
+  participant: { label:"참가 행사", labelInverse:"참가자" }
+};
 /* 무협 세력권 -- a second, independent axis from houseType above: houseType is
  * structural ("what kind of org is this"), alignment is political ("whose side").
  * A 문파(sect) can be 정파 or 사파 just as easily as an 새외 세력 can be 마교-aligned,
@@ -1487,10 +1517,10 @@ function loadData() {
     var raw = localStorage.getItem(STORE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (e) {}
-  return { docs: [], graphs: [], manuscripts: [], novels: [], works: [], tables: [], timelines: [], maps: [], recentColors: [], sports: [], scripts: [], essays: [], essayEntries: [] };
+  return { docs: [], graphs: [], manuscripts: [], novels: [], works: [], tables: [], timelines: [], maps: [], recentColors: [], sports: [], scripts: [], essays: [], essayEntries: [], relationships: [] };
 }
 function saveData() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify({ docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES })); } catch (e) {}
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS })); } catch (e) {}
 }
 var _boot = loadData();
 var DOCS = _boot.docs || [];
@@ -1512,6 +1542,14 @@ var SCRIPTS = _boot.scripts || [];
  * drag-reorder, and font/size/dark preview mechanics as episodes. */
 var ESSAYS = _boot.essays || [];
 var ESSAY_ENTRIES = _boot.essayEntries || [];
+/* 구조화된 관계(Relationship) -- 인물-인물뿐 아니라 인물-세력·인물-장소·아이템-소유자·
+ * 사건-참여자까지 모든 DOCS 카테고리 쌍을 다룬다. 기존 "관계도"(GRAPHS/edges)는 캔버스
+ * 위에 수동 배치하는 시각화 도구라 그대로 두고, 이건 각 문서 상세 페이지의 목록형
+ * "관계" 카드를 위한 별도의 가벼운 저장소다. 대칭 레코드를 두 개 만드는 대신 fromId/toId
+ * 단방향 레코드 하나만 저장하고, 두 문서 중 어느 쪽에서 봐도(fromId===doc.id ||
+ * toId===doc.id) 같은 레코드가 보이게 조회 시점에 양방향으로 표시한다 -- 편집·삭제할
+ * 레코드가 하나뿐이라 두 레코드를 동기화할 필요가 없다. */
+var RELATIONSHIPS = _boot.relationships || [];
 function pushRecentColor(hex) {
   RECENT_COLORS = [hex].concat(RECENT_COLORS.filter(function(c){ return c.toLowerCase() !== hex.toLowerCase(); })).slice(0, 12);
   saveData();
@@ -2775,6 +2813,10 @@ function createGenreTemplateWork() {
   DOCS.push(guild);
   var sect = { id: uid(), workId: wid, title: "청풍문파", summary: "무협 예시 — 세력 유형 \"문파\"", tags: [], aliases: [], category: "세력", color: "#B15A2C", importance: 0, props: [], blocks: [], houseType: "sect", parentHouseId: null };
   DOCS.push(sect);
+  RELATIONSHIPS.push(
+    { id: uid(), workId: wid, fromId: hunter.id, toId: guild.id, type: "member", start: "", end: "", note: "구조 오행길드전에서 스카우트됨" },
+    { id: uid(), workId: wid, fromId: wuxiaChar.id, toId: sect.id, type: "member", start: "12세", end: "", note: "" }
+  );
 
   var romanceGraph = { id: uid(), workId: wid, title: "[로맨스] 관계 예시", nodes: [], edges: [], view: { x: 200, y: 150, scale: 1 } };
   var n1 = { id: uid(), type: "character", label: "서연", x: 150, y: 150, docId: null };
@@ -3886,6 +3928,7 @@ function deleteDoc(id) {
     onConfirm: function(){
       DOCS = DOCS.filter(function(x){ return x.id !== id; });
       GRAPHS.forEach(function(g){ g.nodes.forEach(function(n){ if (n.docId === id) n.docId = null; }); });
+      RELATIONSHIPS = RELATIONSHIPS.filter(function(r){ return r.fromId !== id && r.toId !== id; });
       if (state.mode === "doc" && state.activeId === id) {
         state.mode = "doccat"; state.activeId = d.workId+"::"+d.category;
       }
@@ -4150,6 +4193,104 @@ function locationDescendantIds(doc, allDocs) {
   }
   walk(doc.id);
   return out;
+}
+function relationshipLabelFor(r, doc) {
+  var preset = RELATIONSHIP_TYPES[r.type];
+  if (!preset) return r.type || "관계";
+  if (preset.symmetric) return preset.label;
+  return r.fromId === doc.id ? preset.label : preset.labelInverse;
+}
+function renderRelationshipsCard(doc) {
+  var rels = RELATIONSHIPS.filter(function(r){ return r.fromId===doc.id || r.toId===doc.id; });
+  var head = '<div class="appear-head">'+ic("link",15)+'<span>관계'+(rels.length?' · '+rels.length+'개':'')+'</span></div>';
+  var rows = rels.map(function(r){
+    var otherId = r.fromId===doc.id ? r.toId : r.fromId;
+    var other = DOCS.find(function(d){ return d.id===otherId; });
+    if (!other) return "";
+    var label = relationshipLabelFor(r, doc);
+    var periodTxt = (r.start||r.end) ? ' <span class="rel-period">'+esc(r.start||"")+"~"+esc(r.end||"")+'</span>' : "";
+    return '<div class="relationship-row">' +
+      '<span class="chip rel-type-chip">'+esc(label)+'</span>' +
+      '<button type="button" class="rel-other-link" data-gotorelentity="'+other.id+'">'+esc(other.title||"제목 없음")+(other.category?'<span class="rel-other-cat">· '+esc(other.category)+'</span>':"")+'</button>' +
+      periodTxt +
+      (r.note ? '<span class="rel-note" title="'+esc(r.note)+'">'+ic("tag",11)+'</span>' : "") +
+      '<button type="button" class="row-del" data-delrelationship="'+r.id+'">'+ic("close",12)+'</button>' +
+    '</div>';
+  }).join("");
+  var body = rows ? '<div class="relationship-list">'+rows+'</div>' : '<div class="chip-empty-hint">아직 연결된 관계가 없습니다.</div>';
+  return '<div class="appear-card relationship-card">'+head+body+
+    '<button type="button" class="chip-add" id="addRelationshipBtn" style="margin-top:10px">'+ic("plus",11)+' 관계 추가</button>' +
+  '</div>';
+}
+function openAddRelationshipModal(doc) {
+  var candidates = DOCS.filter(function(d){ return d.workId===doc.workId && d.id!==doc.id; });
+  if (!candidates.length) {
+    openModal({ title:"관계를 추가할 수 없어요", message:"먼저 이 작품에 연결할 다른 문서를 만들어주세요.", confirmLabel:"확인" });
+    return;
+  }
+  var byCat = {};
+  candidates.forEach(function(d){ (byCat[d.category]=byCat[d.category]||[]).push(d); });
+  var orderedCats = CATS.filter(function(cat){ return byCat[cat] && byCat[cat].length; });
+  var entityOptionsHtml = orderedCats.map(function(cat){
+    return '<optgroup label="'+esc(cat)+'">' + byCat[cat].map(function(d){
+      return '<option value="'+d.id+'">'+esc(d.title||"제목 없음")+'</option>';
+    }).join("") + '</optgroup>';
+  }).join("");
+  /* openModal의 confirmIt()은 closeModal()을 먼저 호출한 다음 onConfirm을 실행하므로,
+   * 그 시점엔 우리가 직접 끼워넣은 #relEntitySelect가 이미 DOM에서 사라진 뒤다.
+   * regionHouseSelect 등 기존 모달의 "끼워넣은 select" 들이 change 리스너로 즉시
+   * 상태에 반영하는 것과 같은 이유로, 여기서도 값을 클로저 변수에 미리 담아둔다. */
+  var selectedOtherId = byCat[orderedCats[0]][0].id;
+  openModal({
+    title: "관계 추가",
+    fields: [
+      { placeholder: "관계 (아래 프리셋을 누르거나 직접 입력하세요)" },
+      { placeholder: "시작 시점 (선택, 예: 2020년)" },
+      { placeholder: "종료 시점 (선택)" },
+      { placeholder: "메모 (선택)", multiline: true }
+    ],
+    confirmLabel: "추가",
+    onConfirm: function(values){
+      var typeText = (values[0]||"").trim();
+      if (!selectedOtherId || !typeText) return;
+      var matchedKey = Object.keys(RELATIONSHIP_TYPES).find(function(k){
+        return RELATIONSHIP_TYPES[k].label===typeText || RELATIONSHIP_TYPES[k].labelInverse===typeText;
+      });
+      RELATIONSHIPS.push({
+        id: uid(), workId: doc.workId, fromId: doc.id, toId: selectedOtherId,
+        type: matchedKey || typeText, start: values[1]||"", end: values[2]||"", note: values[3]||""
+      });
+      saveData(); renderDocPage(doc);
+    }
+  });
+  var overlay = document.getElementById("modalOverlay");
+  if (!overlay) return;
+  var box = overlay.querySelector(".modal-box");
+  var titleEl = box.querySelector(".modal-title");
+  var presetHtml = '<div class="modal-picker-row">' +
+    Object.keys(RELATIONSHIP_TYPES).map(function(k){
+      var t = RELATIONSHIP_TYPES[k];
+      var btnLabel = t.symmetric ? t.label : (t.labelInverse+"→"+t.label);
+      return '<button type="button" class="modal-pick no-dot" data-relpreset="'+k+'">'+esc(btnLabel)+'</button>';
+    }).join("") +
+  '</div>';
+  var introHtml =
+    '<div class="modal-picker-label">상대 문서</div>' +
+    '<select class="modal-input" id="relEntitySelect">'+entityOptionsHtml+'</select>' +
+    '<div class="modal-picker-label">관계 프리셋 (눌러서 채우기)</div>' + presetHtml;
+  titleEl.insertAdjacentHTML("afterend", introHtml);
+  document.getElementById("relEntitySelect").addEventListener("change", function(e){
+    selectedOtherId = e.target.value;
+  });
+  box.querySelectorAll("[data-relpreset]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var t = RELATIONSHIP_TYPES[btn.dataset.relpreset];
+      var labelInput = document.getElementById("modalField0");
+      /* doc(현재 문서)가 항상 fromId로 저장되므로, 프리셋의 label(= fromId 쪽에서
+       * 본 toId의 역할)을 그대로 채운다 -- 대칭 타입도 label이 곧 유일한 표시 문구. */
+      if (labelInput) labelInput.value = t.label;
+    });
+  });
 }
 function docMatches(d, q) {
   if (!q) return true;
@@ -6838,6 +6979,7 @@ function renderDocPage(doc) {
     (doc.category === "등장인물" ? renderAppearanceEditor(doc) : "") +
     (doc.category === "등장인물" ? renderStatusWindowCard(doc) : "") +
     (doc.category === "등장인물" ? renderCharacterAppearancesCard(doc) : "") +
+    renderRelationshipsCard(doc) +
     '<div class="two-col">' +
       '<div class="toc-box" id="tocBox"></div>' +
       '<div class="add-prop-box" id="addPropBox">' + addPropBoxHtml + '</div>' +
@@ -6929,6 +7071,21 @@ function renderDocPage(doc) {
   main.querySelectorAll("[data-openessaybacklink]").forEach(function(row){
     row.addEventListener("click", function(){
       state.mode = "essayentry"; state.activeId = row.dataset.openessaybacklink; render();
+    });
+  });
+
+  // relationships (all categories)
+  var addRelBtn = document.getElementById("addRelationshipBtn");
+  if (addRelBtn) addRelBtn.addEventListener("click", function(){ openAddRelationshipModal(doc); });
+  main.querySelectorAll("[data-gotorelentity]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      state.mode = "doc"; state.activeId = btn.dataset.gotorelentity; render();
+    });
+  });
+  main.querySelectorAll("[data-delrelationship]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      RELATIONSHIPS = RELATIONSHIPS.filter(function(r){ return r.id !== btn.dataset.delrelationship; });
+      saveData(); renderDocPage(doc);
     });
   });
 
