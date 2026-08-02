@@ -400,7 +400,7 @@
   .sb-group-head { display:flex; align-items:center; gap:7px; padding:7px 6px; cursor:pointer; }
   .sb-group-head .chev { color:var(--ink-faint); transition:transform .12s; display:flex; }
   .sb-group-head .chev.collapsed { transform:rotate(-90deg); }
-  .sb-group-head .gt { font-family:var(--serif); font-size:13.5px; font-weight:700; color:var(--ink); flex:1; }
+  .sb-group-head .gt { font-family:var(--serif); font-size:13.5px; font-weight:700; color:var(--ink); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .sb-group-head .add { color:var(--ink-faint); display:flex; padding:2px; border-radius:5px; background:none; border:none; }
   .sb-group-head .add:hover { color:var(--accent); background:var(--bg-card); }
   .ms-sort-btn { font-size:10.5px; color:var(--ink-faint); background:none; border:1px solid var(--border); border-radius:10px; padding:2px 8px; flex:none; }
@@ -3930,7 +3930,7 @@ function renderWorkBody(work, q) {
       if (!eps.length) html += '<div class="sb-empty" style="margin-left:26px">'+(povSel?"이 인물이 등장하는 화가 없습니다.":"아직 화가 없습니다.")+'</div>';
       html += '</div>';
     });
-    if (!novelList.length) html += '<div class="sb-empty" style="margin-left:18px">아직 소설이 없습니다. + 를 눌러 만들어보세요.</div>';
+    if (!novelList.length) html += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 소설이 없습니다." : "아직 소설이 없습니다. + 를 눌러 만들어보세요.")+'</div>';
   }
   html += '</div>';
 
@@ -3955,7 +3955,7 @@ function renderWorkBody(work, q) {
       if (!entries.length) html += '<div class="sb-empty" style="margin-left:26px">아직 글이 없습니다.</div>';
       html += '</div>';
     });
-    if (!essayList.length) html += '<div class="sb-empty" style="margin-left:18px">아직 수필·자서전 폴더가 없습니다. + 를 눌러 만들어보세요.</div>';
+    if (!essayList.length) html += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 수필·자서전 글이 없습니다." : "아직 수필·자서전 폴더가 없습니다. + 를 눌러 만들어보세요.")+'</div>';
   }
   html += '</div>';
 
@@ -3976,6 +3976,7 @@ function renderWorkBody(work, q) {
       });
     });
     if (!workDocs.length) html += '<div class="sb-empty" style="margin-left:18px">아직 문서가 없습니다.</div>';
+    else if (q && !Object.keys(byCat).some(function(cat){ return byCat[cat].length; })) html += '<div class="sb-empty" style="margin-left:18px">일치하는 문서가 없습니다.</div>';
     html += '</div>';
 
     html += '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newgraph="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">관계도</span></div>';
@@ -3983,7 +3984,7 @@ function renderWorkBody(work, q) {
     gs.forEach(function(g){
       html += '<div class="graph-row '+(state.mode==="graph"&&state.activeId===g.id?"active":"")+'" style="margin-left:26px" data-opengraph="'+g.id+'">'+ic("graph",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(g.title||"새 관계도")+'</span><button class="row-del" data-delgraph="'+g.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
     });
-    if (!gs.length) html += '<div class="sb-empty" style="margin-left:18px">아직 관계도가 없습니다.</div>';
+    if (!gs.length) html += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 관계도가 없습니다." : "아직 관계도가 없습니다.")+'</div>';
     html += '</div>';
 
     html += '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newmap="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">지도</span></div>';
@@ -4005,7 +4006,7 @@ function renderWorkBody(work, q) {
     tbs.forEach(function(t){
       html += '<div class="graph-row '+(state.mode==="table"&&state.activeId===t.id?"active":"")+'" style="margin-left:26px" data-opentable="'+t.id+'">'+ic("table",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(t.title||"제목 없음")+'</span><button class="row-del" data-deltable="'+t.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
     });
-    if (!tbs.length) html += '<div class="sb-empty" style="margin-left:18px">아직 표가 없습니다.</div>';
+    if (!tbs.length) html += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 표가 없습니다." : "아직 표가 없습니다.")+'</div>';
     html += '</div>';
 
     html += '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newscript="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">문자</span></div>';
@@ -4013,7 +4014,7 @@ function renderWorkBody(work, q) {
     scs.forEach(function(s){
       html += '<div class="graph-row '+(state.mode==="script"&&state.activeId===s.id?"active":"")+'" style="margin-left:26px" data-openscript="'+s.id+'">'+ic("pen",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.title||"제목 없음")+'</span><button class="row-del" data-delscript="'+s.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
     });
-    if (!scs.length) html += '<div class="sb-empty" style="margin-left:18px">아직 문자 체계가 없습니다.</div>';
+    if (!scs.length) html += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 문자 체계가 없습니다." : "아직 문자 체계가 없습니다.")+'</div>';
     html += '</div>';
 
     html += '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newtimeline="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">연표</span></div>';
@@ -4021,7 +4022,7 @@ function renderWorkBody(work, q) {
     tls.forEach(function(tl){
       html += '<div class="graph-row '+(state.mode==="timeline"&&state.activeId===tl.id?"active":"")+'" style="margin-left:26px" data-opentimeline="'+tl.id+'">'+ic("calendar",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(tl.title||"제목 없음")+'</span><button class="row-del" data-deltimeline="'+tl.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
     });
-    if (!tls.length) html += '<div class="sb-empty" style="margin-left:18px">아직 연표가 없습니다.</div>';
+    if (!tls.length) html += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 연표가 없습니다." : "아직 연표가 없습니다.")+'</div>';
     html += '</div>';
 
     html += '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newsports="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">스포츠</span></div>';
@@ -4030,7 +4031,7 @@ function renderWorkBody(work, q) {
       var preset = SPORT_PRESETS[s.sportType] || SPORT_PRESETS.other;
       html += '<div class="graph-row '+(state.mode==="sports"&&state.activeId===s.id?"active":"")+'" style="margin-left:26px" data-opensports="'+s.id+'">'+ic("trophy",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.title||"제목 없음")+'</span><span class="row-meta" style="color:var(--ink-faint);font-size:11px">'+esc(preset.label)+'</span><button class="row-del" data-delsports="'+s.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
     });
-    if (!sps.length) html += '<div class="sb-empty" style="margin-left:18px">아직 스포츠 기록판이 없습니다.</div>';
+    if (!sps.length) html += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 스포츠 기록판이 없습니다." : "아직 스포츠 기록판이 없습니다.")+'</div>';
     html += '</div>';
 
     html += '<div class="sb-section"><div class="doc-row '+(state.mode==="units"&&state.activeId===work.id?"active":"")+'" style="margin-left:18px" data-openunits="'+work.id+'">'+ic("scale",13)+'<span style="flex:1">단위·달력</span></div></div>';
@@ -4064,6 +4065,11 @@ function renderSidebar() {
 
   var normalWorks = visibleWorks.filter(function(w){ return !w.isTemplate; });
   var templateWorks = visibleWorks.filter(function(w){ return w.isTemplate; });
+  /* The toggle button's label must track whether the template actually exists (same
+   * check toggleGenreTemplateWork() uses), not whether it survived the search filter --
+   * otherwise a search query that doesn't match the template shows "보기" (show) while
+   * clicking it would actually find the existing template and remove it. */
+  var templateWorkExists = WORKS.some(function(w){ return w.isTemplate; });
   function renderWorkFolder(work) {
     var wkey = "work:"+work.id, wcollapsed = !!state.collapsed[wkey];
     var out = '<div class="sb-group work-folder'+(work.isTemplate?" template-folder":"")+'"><div class="sb-group-head work-head" data-toggle="'+wkey+'"><span class="chev '+(wcollapsed?"collapsed":"")+'">'+ic("chevron",13)+'</span><span class="gt work-title">'+esc(work.title||"제목 없는 작품")+'</span>'+(work.isTemplate?'<span class="template-badge">예시</span>':'')+'<button class="row-settings" data-exportzip="'+work.id+'" title="원고·설정집 내보내기(ZIP)">'+ic("upload",12)+'</button>'+(work.isTemplate?'':'<button class="row-del" data-delwork="'+work.id+'" title="작품 삭제">'+ic("trash",12)+'</button>')+'</div>';
@@ -4074,7 +4080,7 @@ function renderSidebar() {
   normalWorks.forEach(function(work){ html += renderWorkFolder(work); });
   if (!WORKS.length) html += '<div class="sb-empty">아직 작품이 없습니다. 위 "+ 새 작품"으로 시작하세요.</div>';
   else if (!visibleWorks.length) html += '<div class="sb-empty">일치하는 항목이 없습니다.</div>';
-  html += '<button class="btn" id="genreTemplateBtn" style="width:100%; justify-content:center; margin-top:10px">'+ic("wand",13)+(templateWorks.length ? ' 장르별 기능 템플릿 숨기기' : ' 장르별 기능 템플릿 보기')+'</button>';
+  html += '<button class="btn" id="genreTemplateBtn" style="width:100%; justify-content:center; margin-top:10px">'+ic("wand",13)+(templateWorkExists ? ' 장르별 기능 템플릿 숨기기' : ' 장르별 기능 템플릿 보기')+'</button>';
   if (templateWorks.length) {
     html += '<div class="sb-template-divider">'+ic("ribbon",12)+' 장르별 기능 템플릿</div>';
     templateWorks.forEach(function(work){ html += renderWorkFolder(work); });
