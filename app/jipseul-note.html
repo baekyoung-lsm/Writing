@@ -887,6 +887,9 @@
   .tl-ro-label { font-weight:600; font-family:var(--serif); font-size:12.5px; color:var(--ink-soft); }
   .tl-ro-title { font-size:14px; font-weight:600; margin-top:2px; }
   .tl-ro-desc { font-size:13px; color:var(--ink-soft); margin-top:2px; line-height:1.5; }
+  .essay-compare-wrap .tl-col:first-child { flex:1.15; }
+  .essay-compare-title { font-family:var(--serif); font-size:15px; font-weight:600; margin-bottom:8px; }
+  .essay-compare-text { font-size:13.5px; color:var(--ink-soft); line-height:1.7; white-space:pre-wrap; max-height:560px; overflow-y:auto; padding:14px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:10px; }
   @media (max-width: 900px) {
     .tl-parallel-wrap { flex-direction:column; }
     .tl-col { border-left:none; padding-left:0; }
@@ -3017,23 +3020,29 @@ function createGenreTemplateWork() {
 
   var essayFolder = { id: uid(), workId: wid, title: "[수필·자서전] 회고 예시" };
   ESSAYS.push(essayFolder);
-  ESSAY_ENTRIES.push({
+  var essayEarly = {
     id: uid(), title: "그라운드에 처음 서던 날", text: '중학교 스카우터가 우리 학교 운동장에 찾아온 날을 아직도 또렷이 기억한다. 그날은 비가 조금 왔고, 나는 슬라이딩 태클로 무릎이 다 까진 채로 골을 넣었다.\n\n지금 돌아보면 별것 아닌 순간인데, 그때는 세상이 다 바뀌는 것 같았다. 나를 지켜보는 눈이 있다는 사실 하나만으로 다리에 힘이 들어갔던 게 신기하다.\n\n프로가 된 지금도 가끔 그날의 진흙 냄새가 떠오른다. 결국 나를 여기까지 데려온 건 화려한 슛이 아니라, 그 무릎의 상처였는지도 모른다.',
     essayId: essayFolder.id, createdAt: Date.now(),
     period: "중학교 2학년, 초여름", themeTags: ["도전", "첫경험"], relatedCharacterIds: [soccer.id],
-    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: null
-  });
-  ESSAY_ENTRIES.push({
+    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: null,
+    linkedCompareId: null, showCompare: false
+  };
+  var essayNow = {
     id: uid(), title: "부상과 함께 산다는 것", text: '요즘도 무릎에 테이핑을 하지 않으면 잠들기가 힘들다. 재발 위험이 있다는 걸 알면서도 경기에 나가는 이유를 스스로에게 자꾸 묻는다.\n\n주장이 되고 나서는 더 그렇다. 내가 흔들리면 팀 전체가 흔들린다는 걸 알기에, 아픈 티를 낼 수가 없다. 감독님도, 가족도 아직 이 사실을 모른다.\n\n언젠가는 말해야 한다는 걸 안다. 다만 그게 오늘은 아니었으면 좋겠다는 생각을 매일 한다.',
     essayId: essayFolder.id, createdAt: Date.now()+1,
     period: "현재", themeTags: ["부담감", "비밀"], relatedCharacterIds: [soccer.id],
-    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: 400
-  });
+    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: 400,
+    linkedCompareId: null, showCompare: true
+  };
+  essayEarly.linkedCompareId = essayNow.id;
+  essayNow.linkedCompareId = essayEarly.id;
+  ESSAY_ENTRIES.push(essayEarly, essayNow);
   ESSAY_ENTRIES.push({
-    id: uid(), title: "작가의 말: 이 글을 쓰기 시작한 이유", text: '작품 밖 이야기를 남겨두고 싶어서 이 폴더를 만들었다. 등장인물의 회고와 달리, 이런 글에는 \"관련 인물\"을 비워둬도 괜찮다.\n\n집필하며 겪은 고민, 특정 장면을 쓰게 된 계기, 자료 조사 중 알게 된 사실 같은 것들을 편하게 기록해두는 용도로 써보길 추천한다.',
+    id: uid(), title: "작가의 말: 이 글을 쓰기 시작한 이유", text: '작품 밖 이야기를 남겨두고 싶어서 이 폴더를 만들었다. 등장인물의 회고와 달리, 이런 글에는 \"관련 인물\"을 비워둬도 괜찮다.\n\n집필하며 겪은 고민, 특정 장면을 쓰게 된 계기, 자료 조사 중 알게 된 사실 같은 것들을 편하게 기록해두는 용도로 써보길 추천한다. \"생애 비교\" 기능으로 위 두 글처럼 시기가 다른 회고를 나란히 놓고 비교해볼 수도 있다.',
     essayId: essayFolder.id, createdAt: Date.now()+2,
     period: "", themeTags: ["작가노트"], relatedCharacterIds: [],
-    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: null
+    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: null,
+    linkedCompareId: null, showCompare: false
   });
 
   createMingChinaMapTemplate(wid);
@@ -3956,7 +3965,8 @@ function createEssayEntry(essayId, createdAt) {
   var e = {
     id: uid(), title: "", text: "", essayId: essayId, createdAt: createdAt,
     period: "", themeTags: [], relatedCharacterIds: [],
-    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: null
+    previewDark: false, previewFontSize: 16, previewFont: "sans", goalChars: null,
+    linkedCompareId: null, showCompare: false
   };
   ESSAY_ENTRIES.push(e); saveData();
   return e;
@@ -9566,11 +9576,16 @@ function renderEssayEntryPage(e) {
   if (e.previewDark === undefined) e.previewDark = false;
   if (e.themeTags === undefined) e.themeTags = [];
   if (e.relatedCharacterIds === undefined) e.relatedCharacterIds = [];
+  if (e.linkedCompareId === undefined) e.linkedCompareId = null;
+  if (e.showCompare === undefined) e.showCompare = false;
 
   var main = document.getElementById("main");
   var essayOf = ESSAYS.find(function(es){ return es.id === e.essayId; });
   var esWorkId = essayOf ? essayOf.workId : null;
   var charDocs = DOCS.filter(function(d){ return d.workId===esWorkId && d.category==="등장인물"; });
+  var otherEntries = ESSAY_ENTRIES.filter(function(x){ return x.essayId === e.essayId && x.id !== e.id; });
+  var compareEntry = e.linkedCompareId ? ESSAY_ENTRIES.find(function(x){ return x.id === e.linkedCompareId; }) : null;
+  if (!compareEntry) { e.linkedCompareId = null; e.showCompare = false; }
 
   var metaHtml =
     '<div class="pov-row"><span class="pov-label">'+ic("calendar",13)+'<span>시기</span></span>' +
@@ -9580,7 +9595,14 @@ function renderEssayEntryPage(e) {
     '<div class="chip-row" id="esPeopleChips" style="flex:1"></div>' +
     (charDocs.length ? '<select class="sel" id="esPeoplePicker" style="max-width:150px;flex:none"><option value="">+ 인물 추가</option>' +
       charDocs.map(function(d){ return '<option value="'+d.id+'">'+esc(d.title||"제목 없음")+'</option>'; }).join("") + '</select>' : '') +
-    '</div>';
+    '</div>' +
+    (otherEntries.length ? '<div class="pov-row"><span class="pov-label">'+ic("list",13)+'<span>생애 비교</span></span>' +
+      '<select class="sel" id="esComparePick" style="max-width:220px">' +
+        '<option value="">비교할 글 선택 안 함</option>' +
+        otherEntries.map(function(x){ return '<option value="'+x.id+'" '+(e.linkedCompareId===x.id?"selected":"")+'>'+esc(x.title||"제목 없음")+(x.period?" · "+esc(x.period):"")+'</option>'; }).join("") +
+      '</select>' +
+      (compareEntry ? '<button type="button" class="ms-sort-btn '+(e.showCompare?"on":"")+'" id="esToggleCompare">'+ic("graph",11)+' 나란히 비교</button>' : "") +
+    '</div>' : "");
 
   var statsHtml = '<div class="ms-stats-bar" id="esStatsBar"></div>' +
     '<div class="ms-goal-row">' +
@@ -9590,7 +9612,7 @@ function renderEssayEntryPage(e) {
     '</div>';
 
   var textareaHtml = '<textarea class="ms-textarea ms-doc-textarea" id="esText" spellcheck="true" placeholder="여기에 글을 적어보세요.">'+esc(e.text||"")+'</textarea>';
-  var bodyHtml =
+  var editorHtml =
     '<div class="ms-controls">' +
       '<button type="button" id="esDarkToggle" class="'+(e.previewDark?"on":"")+'">'+ic(e.previewDark?"moon":"sun",13)+'<span>다크 모드</span></button>' +
       '<div class="sep"></div>' +
@@ -9604,6 +9626,24 @@ function renderEssayEntryPage(e) {
     '</div>' +
     '<div class="ms-doc-page"><div class="ms-doc-ruler"></div><div class="ms-doc-screen">' + textareaHtml + '</div></div>';
 
+  var bodyHtml;
+  if (e.showCompare && compareEntry) {
+    bodyHtml =
+      '<div class="tl-parallel-wrap essay-compare-wrap">' +
+        '<div class="tl-col">' +
+          '<div class="tl-col-head">'+(e.period?esc(e.period):esc(e.title||"이 글"))+'</div>' +
+          editorHtml +
+        '</div>' +
+        '<div class="tl-col">' +
+          '<div class="tl-col-head">'+(compareEntry.period?esc(compareEntry.period):esc(compareEntry.title||"비교 글"))+' <button type="button" class="tl-doc-open" data-esopenother="'+compareEntry.id+'" title="이 글 열기">'+ic("link",12)+'</button></div>' +
+          '<div class="essay-compare-title">'+esc(compareEntry.title||"제목 없음")+'</div>' +
+          '<div class="essay-compare-text">'+esc(compareEntry.text||"(아직 내용이 없습니다)")+'</div>' +
+        '</div>' +
+      '</div>';
+  } else {
+    bodyHtml = editorHtml;
+  }
+
   main.innerHTML =
     '<div class="graph-shell">' +
       '<div class="graph-title-bar"><input class="graph-title" id="esTitle" value="'+esc(e.title)+'" placeholder="글 제목"><span class="ms-save-indicator saved" id="esSaveIndicator">저장됨</span><span class="ms-char-count" id="esCharCount">'+fmtNum(charCount(e.text))+'자</span><button class="page-del" id="deleteEsBtn" style="margin-top:0">'+ic("trash",13)+'<span>글 삭제</span></button></div>' +
@@ -9613,6 +9653,21 @@ function renderEssayEntryPage(e) {
   document.getElementById("esTitle").addEventListener("input", function(ev){ e.title = ev.target.value; saveData(); renderSidebar(); updateEsStatsBar(e); flashEsSaveIndicator(); });
   document.getElementById("deleteEsBtn").addEventListener("click", function(){ deleteEssayEntry(e.id); });
   document.getElementById("esPeriod").addEventListener("input", function(ev){ e.period = ev.target.value; saveData(); renderSidebar(); flashEsSaveIndicator(); });
+  var comparePick = document.getElementById("esComparePick");
+  if (comparePick) comparePick.addEventListener("change", function(ev){
+    e.linkedCompareId = ev.target.value || null;
+    if (!e.linkedCompareId) e.showCompare = false;
+    saveData(); renderEssayEntryPage(e);
+  });
+  var toggleCompareBtn = document.getElementById("esToggleCompare");
+  if (toggleCompareBtn) toggleCompareBtn.addEventListener("click", function(){
+    e.showCompare = !e.showCompare;
+    saveData(); renderEssayEntryPage(e);
+  });
+  var openOtherEssayBtn = main.querySelector("[data-esopenother]");
+  if (openOtherEssayBtn) openOtherEssayBtn.addEventListener("click", function(){
+    state.mode = "essayentry"; state.activeId = openOtherEssayBtn.dataset.esopenother; render();
+  });
 
   renderEssayTagChips(e);
   updateEssayPeopleChips(e, esWorkId);
