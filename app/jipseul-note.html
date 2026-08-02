@@ -4074,14 +4074,52 @@ function toggleCollapse(key) { state.collapsed[key] = !state.collapsed[key]; ren
 function deleteDoc(id) {
   var d = DOCS.find(function(d){ return d.id === id; });
   if (!d) return;
+  /* 삭제해도 되는지 판단할 수 있도록, 삭제 전에 이 문서를 참조하는 다른 데이터를
+   * 세어서 보여준다 -- "설정을 믿고 맡길 수 있는가"의 핵심은 삭제가 다른 곳을
+   * 조용히 깨뜨리지 않는다는 확신이다. */
+  var childLocations = DOCS.filter(function(x){ return x.parentLocationId === id; });
+  var childHouses = DOCS.filter(function(x){ return x.parentHouseId === id; });
+  var relCount = RELATIONSHIPS.filter(function(r){ return r.fromId === id || r.toId === id; }).length;
+  var mapLinkCount = 0;
+  MAPS.forEach(function(mp){
+    (mp.regions||[]).forEach(function(r){ if (r.locationId === id) mapLinkCount++; });
+    (mp.markers||[]).forEach(function(mk){ if (mk.locationId === id) mapLinkCount++; });
+  });
+  var msCount = MANUSCRIPTS.filter(function(m){ return (m.characterIds||[]).indexOf(id) !== -1; }).length;
+  var essayCount = ESSAY_ENTRIES.filter(function(e){ return (e.relatedCharacterIds||[]).indexOf(id) !== -1; }).length;
+
+  var refLines = [];
+  if (relCount) refLines.push("· 관계 "+relCount+"건이 함께 삭제됩니다.");
+  if (childLocations.length) refLines.push("· 하위 장소 "+childLocations.length+"개가 최상위로 이동합니다.");
+  if (childHouses.length) refLines.push("· 하위 세력 "+childHouses.length+"개가 최상위로 이동합니다.");
+  if (mapLinkCount) refLines.push("· 연결된 지도 위치 "+mapLinkCount+"곳의 연결이 해제됩니다.");
+  if (msCount) refLines.push("· 원고 "+msCount+"편의 등장인물 목록에서 제거됩니다.");
+  if (essayCount) refLines.push("· 관련 글 "+essayCount+"편의 관련 인물 목록에서 제거됩니다.");
+  var message = '"'+(d.title||"제목 없음")+'"을(를) 삭제하면 되돌릴 수 없습니다.' + (refLines.length ? "\n\n"+refLines.join("\n") : "");
+
   openModal({
     title: "문서를 삭제할까요?",
-    message: '"'+(d.title||"제목 없음")+'"을(를) 삭제하면 되돌릴 수 없습니다.',
+    message: message,
     confirmLabel: "삭제", danger: true,
     onConfirm: function(){
       DOCS = DOCS.filter(function(x){ return x.id !== id; });
+      DOCS.forEach(function(x){
+        if (x.parentLocationId === id) x.parentLocationId = null;
+        if (x.parentHouseId === id) x.parentHouseId = null;
+      });
       GRAPHS.forEach(function(g){ g.nodes.forEach(function(n){ if (n.docId === id) n.docId = null; }); });
       RELATIONSHIPS = RELATIONSHIPS.filter(function(r){ return r.fromId !== id && r.toId !== id; });
+      MAPS.forEach(function(mp){
+        (mp.regions||[]).forEach(function(r){ if (r.locationId === id) r.locationId = null; });
+        (mp.markers||[]).forEach(function(mk){ if (mk.locationId === id) mk.locationId = null; });
+      });
+      MANUSCRIPTS.forEach(function(m){
+        if (m.characterIds) m.characterIds = m.characterIds.filter(function(x){ return x!==id; });
+        if (m.excludedCharacterIds) m.excludedCharacterIds = m.excludedCharacterIds.filter(function(x){ return x!==id; });
+      });
+      ESSAY_ENTRIES.forEach(function(e){
+        if (e.relatedCharacterIds) e.relatedCharacterIds = e.relatedCharacterIds.filter(function(x){ return x!==id; });
+      });
       if (state.mode === "doc" && state.activeId === id) {
         state.mode = "doccat"; state.activeId = d.workId+"::"+d.category;
       }
@@ -5212,10 +5250,10 @@ function removeCustomProp(doc, id) {
   renderDocPage(doc);
 }
 
-function buildHouseTree(docs) {
+function buildDocTree(docs, parentKey) {
   var byParent = {};
   docs.forEach(function(d){
-    var pid = (d.parentHouseId && docs.some(function(x){ return x.id===d.parentHouseId; })) ? d.parentHouseId : "";
+    var pid = (d[parentKey] && docs.some(function(x){ return x.id===d[parentKey]; })) ? d[parentKey] : "";
     (byParent[pid] = byParent[pid] || []).push(d);
   });
   var out = [];
@@ -5228,11 +5266,14 @@ function buildHouseTree(docs) {
   walk("", 0);
   return out;
 }
+function buildHouseTree(docs) { return buildDocTree(docs, "parentHouseId"); }
 function renderDocCategoryPage(workId, category) {
   var work = WORKS.find(function(w){ return w.id === workId; });
   var docs = DOCS.filter(function(d){ return d.workId===workId && d.category===category; });
   var main = document.getElementById("main");
   var isHouse = category === "세력";
+  var isLocation = category === "장소";
+  var isTree = isHouse || isLocation;
   var split = !!state.splitView;
   if (split) {
     if (!state.splitSelectedId || !docs.some(function(d){ return d.id===state.splitSelectedId; })) {
@@ -5242,7 +5283,7 @@ function renderDocCategoryPage(workId, category) {
   var cardHtml = function(d, depth) {
     var meta = docMetaHtml(d);
     var selected = split && state.splitSelectedId === d.id;
-    return '<div class="doc-card'+(isHouse?" doc-card-tree":"")+(selected?" doc-card-selected":"")+'" data-opendoccard="'+d.id+'"'+(isHouse?' style="margin-left:'+(depth*26)+'px"':'')+'>' +
+    return '<div class="doc-card'+(isTree?" doc-card-tree":"")+(selected?" doc-card-selected":"")+'" data-opendoccard="'+d.id+'"'+(isTree?' style="margin-left:'+(depth*26)+'px"':'')+'>' +
       '<button class="row-del doc-card-del" data-deldoccard="'+d.id+'" title="삭제">'+ic("trash",12)+'</button>' +
       '<div class="doc-card-top"><span class="doc-card-dot" style="background:'+colorOf(d.color)+'"></span>'+meta+'</div>' +
       '<div class="doc-card-title">'+esc(d.title||"제목 없음")+'</div>' +
@@ -5251,7 +5292,9 @@ function renderDocCategoryPage(workId, category) {
   };
   var cardsHtml;
   if (isHouse) {
-    cardsHtml = buildHouseTree(docs).map(function(x){ return cardHtml(x.doc, x.depth); }).join("");
+    cardsHtml = buildDocTree(docs, "parentHouseId").map(function(x){ return cardHtml(x.doc, x.depth); }).join("");
+  } else if (isLocation) {
+    cardsHtml = buildDocTree(docs, "parentLocationId").map(function(x){ return cardHtml(x.doc, x.depth); }).join("");
   } else {
     cardsHtml = docs.map(function(d){ return cardHtml(d, 0); }).join("");
   }
@@ -5269,7 +5312,7 @@ function renderDocCategoryPage(workId, category) {
       '<div><h2 class="doccat-title" style="margin:0">'+esc(category)+'</h2></div>' +
       '<div style="display:flex;align-items:center;gap:10px">' + viewToggleHtml + '<button class="btn primary" id="doccatAddBtn">'+ic("plus",13)+' 새 문서</button></div>' +
     '</div>';
-  var listHtml = '<div class="'+(isHouse?"doccat-tree":"doccat-grid")+'">' + (cardsHtml || '<div class="sb-empty">아직 문서가 없습니다. "새 문서"로 추가해보세요.</div>') + '</div>';
+  var listHtml = '<div class="'+(isTree?"doccat-tree":"doccat-grid")+'">' + (cardsHtml || '<div class="sb-empty">아직 문서가 없습니다. "새 문서"로 추가해보세요.</div>') + '</div>';
 
   if (split) {
     main.innerHTML =
