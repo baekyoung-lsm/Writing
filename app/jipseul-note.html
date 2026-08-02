@@ -404,6 +404,16 @@
   .modal-pick::before { content:""; width:8px; height:8px; border-radius:50%; background:var(--pc); flex:none; }
   .modal-pick.no-dot::before { display:none; }
   .modal-pick.on { border-color:var(--pc); color:var(--ink); background:var(--bg-card); font-weight:600; }
+  .affinity-log-list { display:flex; flex-direction:column; gap:5px; margin-bottom:8px; max-height:160px; overflow-y:auto; }
+  .affinity-log-row { display:flex; align-items:center; gap:8px; background:var(--bg-card); border:1px solid var(--border); border-radius:7px; padding:6px 9px; }
+  .alr-label { flex:1; font-size:12.5px; color:var(--ink); min-width:0; }
+  .alr-val { flex:none; font-size:12px; color:var(--accent); font-weight:600; white-space:nowrap; }
+  .affinity-log-add { display:flex; gap:6px; align-items:center; margin-bottom:10px; }
+  .affinity-log-add .modal-input { margin-bottom:0; }
+  .affinity-log-add #affLogLabel { flex:1.6; }
+  .affinity-log-num { flex:0.8; }
+  .affinity-log-add select#affLogStage { flex:1; }
+  .affinity-log-add .chip-add { flex:none; white-space:nowrap; }
   .modal-pick.no-dot.on { border-color:var(--accent); }
   .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:14px; }
   .modal-box.wide { width:540px; }
@@ -653,6 +663,20 @@
   .gedge rect.lbl-bg { fill:var(--bg); stroke:var(--border); }
   .gedge text.lbl-text { fill:var(--ink-soft); font-size:11px; font-family:var(--sans); }
   .gedge { cursor:pointer; }
+  .gnode-pin { display:none; }
+  /* 미스터리 탐정보드 -- pure view reskin over the same node/edge data, so switching it
+   * on/off never touches g.nodes/g.edges; only CSS + the pin dot (always in the markup,
+   * shown/hidden by this class) change. */
+  .graph-canvas-wrap.board-mode { background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 3px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 3px),
+      #b98a55; }
+  .board-mode .gnode rect.gnode-box { fill:#faf3e0; stroke:#8a6a3a; stroke-width:1.4; filter:drop-shadow(2px 3px 3px rgba(0,0,0,0.35)); }
+  .board-mode .gnode text { fill:#2b2318; }
+  .board-mode .gnode-pin { display:block; fill:#a6392e; stroke:#6b1f18; stroke-width:0.8; }
+  .board-mode .gedge line.gedge-line { stroke:#a6392e !important; stroke-width:1.8; }
+  .board-mode .gedge rect.lbl-bg { fill:#fff8ea; stroke:#a6392e; }
+  .board-mode .gedge text.lbl-text { fill:#6b1f18; }
   .gedge-del { opacity:0; cursor:pointer; }
   .gedge:hover .gedge-del { opacity:1; }
   .gedge-del circle { fill:var(--rose); }
@@ -1571,6 +1595,7 @@ function pushRecentColor(hex) {
     (g.edges||[]).forEach(function(ed){
       if (ed.affinity === undefined) ed.affinity = null;
       if (ed.romanceStage === undefined) ed.romanceStage = null;
+      if (ed.affinityLog === undefined) ed.affinityLog = [];
     });
   });
 })();
@@ -2524,9 +2549,14 @@ function createGenreTemplateWork() {
   var n1b = { id: uid(), type: "character", label: "지우", x: 380, y: 320, docId: null };
   var n1c = { id: uid(), type: "character", label: "서연 母", x: 150, y: 320, docId: null };
   romanceGraph.nodes.push(n1, n2, n1b, n1c);
-  romanceGraph.edges.push({ id: uid(), from: n1.id, to: n2.id, label: "첫 만남", memo: "로맨스물 예시 — 호감도 수치와 연애 진행 단계가 함께 표시됩니다. 자세한 흐름은 \"관계 호감도 기록\" 표를 참고하세요.", kind: "basic", direction: "both", style: "solid", affinity: 65, romanceStage: "dating" });
-  romanceGraph.edges.push({ id: uid(), from: n1b.id, to: n2.id, label: "짝사랑", memo: "삼각관계 예시 — 지우는 도윤의 회사 후배로, 도윤을 오래 짝사랑해왔다", kind: "basic", direction: "forward", style: "dashed", affinity: 40, romanceStage: "crush" });
-  romanceGraph.edges.push({ id: uid(), from: n1c.id, to: n1.id, label: "모녀", memo: "가족 관계 예시", kind: "family", direction: "both", style: "solid", affinity: null, romanceStage: null });
+  romanceGraph.edges.push({ id: uid(), from: n1.id, to: n2.id, label: "첫 만남", memo: "로맨스물 예시 — 호감도 수치와 연애 진행 단계가 함께 표시됩니다. 관계선을 눌러 열리는 편집창 아래 \"관계 타임라인\"에서 호감도가 화별로 어떻게 바뀌었는지 기록해보세요.", kind: "basic", direction: "both", style: "solid", affinity: 65, romanceStage: "dating", affinityLog: [
+    { id: uid(), label: "1화 · 우연히 부딪힘", affinity: 10, romanceStage: null },
+    { id: uid(), label: "5화 · 함께 야근", affinity: 30, romanceStage: "interest" },
+    { id: uid(), label: "12화 · 오해로 다툼", affinity: 5, romanceStage: "interest" },
+    { id: uid(), label: "18화 · 고백", affinity: 65, romanceStage: "dating" }
+  ] });
+  romanceGraph.edges.push({ id: uid(), from: n1b.id, to: n2.id, label: "짝사랑", memo: "삼각관계 예시 — 지우는 도윤의 회사 후배로, 도윤을 오래 짝사랑해왔다", kind: "basic", direction: "forward", style: "dashed", affinity: 40, romanceStage: "crush", affinityLog: [] });
+  romanceGraph.edges.push({ id: uid(), from: n1c.id, to: n1.id, label: "모녀", memo: "가족 관계 예시", kind: "family", direction: "both", style: "solid", affinity: null, romanceStage: null, affinityLog: [] });
   GRAPHS.push(romanceGraph);
 
   var wuxiaGraph = { id: uid(), workId: wid, title: "[무협] 사제 관계 예시", nodes: [], edges: [], view: { x: 200, y: 150, scale: 1 } };
@@ -6816,7 +6846,7 @@ function renderDocPage(doc) {
 }
 
 /* ---------------- graph page ---------------- */
-var gState = { mode: "idle", connectFrom: null, selected: null, panStart: null, dragNode: null, justDragged: false };
+var gState = { mode: "idle", connectFrom: null, selected: null, panStart: null, dragNode: null, justDragged: false, boardMode: false };
 
 function currentGraph() { return GRAPHS.find(function(g){ return g.id === state.activeId; }); }
 
@@ -6898,7 +6928,7 @@ function treeLayoutGraph(g) {
 }
 
 function renderGraphPage(g) {
-  gState = { mode: "idle", connectFrom: null, selected: gState.selected, panStart: null, dragNode: null, justDragged: false };
+  gState = { mode: "idle", connectFrom: null, selected: gState.selected, panStart: null, dragNode: null, justDragged: false, boardMode: gState.boardMode || false };
   var main = document.getElementById("main");
   var markerDefs = Object.keys(EDGE_KINDS).map(function(k){
     return '<marker id="arrow-'+k+'" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="'+EDGE_KINDS[k].color+'"/></marker>';
@@ -6906,7 +6936,7 @@ function renderGraphPage(g) {
   main.innerHTML =
     '<div class="graph-shell">' +
       '<div class="graph-title-bar"><input class="graph-title" id="graphTitle" value="'+esc(g.title)+'" placeholder="관계도 이름"><span class="graph-hint">노드를 드래그해서 옮기고, 배경을 드래그하면 화면이 움직여요</span><button class="page-del" id="deleteGraphBtn" style="margin-top:0">'+ic("trash",13)+'<span>관계도 삭제</span></button></div>' +
-      '<div class="graph-canvas-wrap" id="graphWrap">' +
+      '<div class="graph-canvas-wrap '+(gState.boardMode?"board-mode":"")+'" id="graphWrap">' +
         '<svg class="graph-svg" id="graphSvg"><defs>'+markerDefs+'</defs><g id="graphG"></g></svg>' +
         (g.nodes.length ? "" : '<div class="graph-empty-hint">아직 노드가 없습니다<br>아래 &ldquo;+ 노드&rdquo; 버튼으로 시작하세요</div>') +
         '<div class="graph-toolbar">' +
@@ -6915,6 +6945,7 @@ function renderGraphPage(g) {
           '<button class="tb-btn" id="tbConnect">'+ic("connect",14)+'<span>연결</span></button>' +
           '<div class="tb-sep"></div>' +
           '<button class="tb-btn" id="tbTreeLayout" title="가족·사제 관계(부모→자식, 사부→제자 등)를 기준으로 위에서 아래로 자동 정렬 — 문파 계보도에 사용해보세요">'+ic("list",14)+'<span>트리 정렬</span></button>' +
+          '<button class="tb-btn '+(gState.boardMode?"active":"")+'" id="tbBoardMode" title="미스터리·추리물용 탐정보드 스타일 (핀으로 고정된 카드 + 빨간 실선)">'+ic("pin",14)+'<span>탐정보드</span></button>' +
           '<div class="tb-sep"></div>' +
           '<button class="tb-btn" id="tbZoomIn">'+ic("zoomin",14)+'</button>' +
           '<button class="tb-btn" id="tbZoomOut">'+ic("zoomout",14)+'</button>' +
@@ -6959,6 +6990,11 @@ function renderGraphPage(g) {
     document.getElementById("graphWrap").classList.toggle("connecting", gState.mode === "connect");
   });
   document.getElementById("tbTreeLayout").addEventListener("click", function(){ treeLayoutGraph(g); drawGraph(g); });
+  document.getElementById("tbBoardMode").addEventListener("click", function(e){
+    gState.boardMode = !gState.boardMode;
+    document.getElementById("graphWrap").classList.toggle("board-mode", gState.boardMode);
+    e.currentTarget.classList.toggle("active", gState.boardMode);
+  });
   document.getElementById("tbZoomIn").addEventListener("click", function(){ zoomGraph(g, 1.2); });
   document.getElementById("tbZoomOut").addEventListener("click", function(){ zoomGraph(g, 1/1.2); });
   document.getElementById("tbFit").addEventListener("click", function(){ fitGraph(g); saveData(); drawGraph(g); });
@@ -7093,6 +7129,7 @@ function openEdgeModal(g, ed, isNew, onDone) {
   var overlay = document.getElementById("modalOverlay");
   if (!overlay) return;
   var box = overlay.querySelector(".modal-box");
+  var actionsDiv = box.querySelector(".modal-actions");
   var firstPickerLabel = box.querySelector(".modal-picker-label");
   var presetHtml = '<div class="modal-picker-label">가계도 빠른 채우기</div><div class="modal-picker-row">' +
     FAMILY_EDGE_PRESETS.map(function(p, i){ return '<button type="button" class="modal-pick no-dot" data-familypreset="'+i+'">'+esc(p.label)+'</button>'; }).join("") +
@@ -7109,6 +7146,46 @@ function openEdgeModal(g, ed, isNew, onDone) {
       if (dirBtn) dirBtn.click();
     });
   });
+  if (!isNew) {
+    if (!ed.affinityLog) ed.affinityLog = [];
+    var logHtml = '<div class="modal-picker-label">관계 타임라인 (호감도 기록, 로맨스 등)</div>' +
+      '<div class="affinity-log-list" id="affinityLogList"></div>' +
+      '<div class="affinity-log-add">' +
+        '<input type="text" class="modal-input" id="affLogLabel" placeholder="시점 (예: 12화 · 오해로 다툼)">' +
+        '<input type="number" class="modal-input affinity-log-num" id="affLogVal" placeholder="호감도" min="-100" max="100">' +
+        '<select class="modal-input" id="affLogStage"><option value="">단계 없음</option>' +
+          Object.keys(ROMANCE_STAGES).filter(function(k){ return k!=="none"; }).map(function(k){ return '<option value="'+k+'">'+esc(ROMANCE_STAGES[k].label)+'</option>'; }).join("") +
+        '</select>' +
+        '<button type="button" class="chip-add" id="affLogAddBtn">'+ic("plus",11)+' 기록 추가</button>' +
+      '</div>';
+    if (actionsDiv) actionsDiv.insertAdjacentHTML("beforebegin", logHtml);
+    var listEl = document.getElementById("affinityLogList");
+    function renderLog() {
+      listEl.innerHTML = ed.affinityLog.length ? ed.affinityLog.map(function(entry){
+        var stageTxt = entry.romanceStage && ROMANCE_STAGES[entry.romanceStage] ? "["+ROMANCE_STAGES[entry.romanceStage].label+"] " : "";
+        var valTxt = entry.affinity!=null ? (entry.affinity>0?"+":"")+entry.affinity : "";
+        return '<div class="affinity-log-row"><span class="alr-label">'+esc(entry.label)+'</span><span class="alr-val">'+esc(stageTxt+valTxt)+'</span><button type="button" class="row-del" data-affinitylogdel="'+entry.id+'">'+ic("close",11)+'</button></div>';
+      }).join("") : '<div class="chip-empty-hint">아직 기록이 없습니다</div>';
+      listEl.querySelectorAll("[data-affinitylogdel]").forEach(function(btn){
+        btn.addEventListener("click", function(){
+          ed.affinityLog = ed.affinityLog.filter(function(e){ return e.id !== btn.dataset.affinitylogdel; });
+          saveData(); renderLog();
+        });
+      });
+    }
+    renderLog();
+    document.getElementById("affLogAddBtn").addEventListener("click", function(){
+      var labelEl = document.getElementById("affLogLabel");
+      var valEl = document.getElementById("affLogVal");
+      var stageEl = document.getElementById("affLogStage");
+      var label = labelEl.value.trim();
+      if (!label) return;
+      ed.affinityLog.push({ id: uid(), label: label, affinity: valEl.value===""?null:Math.max(-100,Math.min(100,parseFloat(valEl.value)||0)), romanceStage: stageEl.value || null });
+      saveData(); renderLog();
+      labelEl.value = ""; valEl.value = ""; stageEl.value = "";
+      labelEl.focus();
+    });
+  }
 }
 
 function drawGraph(g) {
@@ -7145,6 +7222,7 @@ function drawGraph(g) {
     var dotColor = faction ? colorForFaction(faction.label) : nt.color;
     html += '<g class="gnode '+(n.docId?"linked":"")+' '+(gState.selected&&gState.selected.type==="node"&&gState.selected.id===n.id?"selected":"")+'" data-node="'+n.id+'" transform="translate('+n.x+','+n.y+')">' +
       '<rect class="gnode-box" x="'+(-w/2)+'" y="-17" width="'+w+'" height="34" rx="8" style="stroke:'+nt.color+'"/>' +
+      '<circle class="gnode-pin" cx="0" cy="-17" r="4"></circle>' +
       '<circle class="gnode-dot" cx="'+(-w/2+10)+'" cy="-9" r="3.5" style="fill:'+dotColor+'"/>' +
       '<title>'+esc(nt.label)+': '+esc(n.label)+(faction && faction!==n ? ' ('+esc(faction.label)+' 소속)' : '')+'</title>' +
       '<text text-anchor="middle" dy="4">'+esc(n.label)+'</text>' +
@@ -7170,7 +7248,7 @@ function drawGraph(g) {
         if (!gState.connectFrom) { gState.connectFrom = node.id; nEl.classList.add("selected"); }
         else if (gState.connectFrom !== node.id) {
           var fromId = gState.connectFrom;
-          var newEd = { id: uid(), from: fromId, to: node.id, label: "", memo: "", kind: "basic", direction: "forward", style: "solid", affinity: null, romanceStage: null };
+          var newEd = { id: uid(), from: fromId, to: node.id, label: "", memo: "", kind: "basic", direction: "forward", style: "solid", affinity: null, romanceStage: null, affinityLog: [] };
           openEdgeModal(g, newEd, true, function(finalEd){
             g.edges.push(finalEd);
             gState.connectFrom = null; gState.mode = "idle";
