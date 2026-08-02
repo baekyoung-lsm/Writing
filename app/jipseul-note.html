@@ -143,6 +143,11 @@
   .home-empty-card { border:1px dashed var(--border-strong); border-radius:12px; padding:34px 32px; text-align:left; color:var(--ink-faint); margin-top:28px; max-width:440px; }
   .home-empty-card h2 { font-family:var(--serif); font-size:19px; color:var(--ink); margin:0 0 8px; }
   .home-empty-card p { font-size:13.5px; margin:0 0 16px; line-height:1.55; }
+  .home-onboard-card { border:1px solid var(--border); border-radius:12px; padding:20px 22px; margin-top:16px; max-width:520px; background:var(--bg-card); box-shadow:0 1px 3px var(--shadow); }
+  .home-onboard-title { display:flex; align-items:center; gap:7px; font-size:12px; letter-spacing:0.04em; color:var(--accent); font-weight:600; margin-bottom:12px; }
+  .home-onboard-steps { margin:0; padding-left:19px; display:flex; flex-direction:column; gap:9px; }
+  .home-onboard-steps li { font-size:13px; color:var(--ink-soft); line-height:1.6; }
+  .home-onboard-steps b { color:var(--ink); font-weight:600; }
 
   .btn { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:9px; padding:8px 13px; font-size:13px; color:var(--ink); transition:border-color .12s, color .12s, background .12s, box-shadow .12s; }
   .btn:hover { border-color:var(--accent); color:var(--accent); background:var(--bg-card-hover); }
@@ -11180,7 +11185,20 @@ function renderHomePage() {
   }
 
   html += (noWorks
-    ? '<div class="home-empty-card"><h2>먼저 작품 폴더를 만들어보세요</h2><p>작품 안에 원고(소설·화)와 설정 노트(문서·관계도·지도 등)가 들어갑니다.</p><button class="btn primary" id="es_newwork">'+ic("plus",13)+' 새 작품</button></div>'
+    ? '<div class="home-empty-card"><h2>먼저 작품 폴더를 만들어보세요</h2><p>작품 안에 원고(소설·화)와 설정 노트(문서·관계도·지도 등)가 들어갑니다.</p>' +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:2px">' +
+          '<button class="btn primary" id="es_newwork">'+ic("plus",13)+' 새 작품</button>' +
+          '<button class="btn" id="es_tryexample">'+ic("wand",13)+' 예시 작품으로 먼저 둘러보기</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="home-onboard-card">' +
+        '<div class="home-onboard-title">'+ic("ribbon",13)+'<span>3줄 사용법</span></div>' +
+        '<ol class="home-onboard-steps">' +
+          '<li><b>작품</b> 폴더 하나 안에 <b>원고</b>(소설·화)와 <b>설정 노트</b>(등장인물·장소·세력·사건 등)를 함께 관리합니다.</li>' +
+          '<li>설정 문서끼리는 <b>관계</b>로 연결하고 장소는 <b>상위·하위 위치</b>로 계층을 만들 수 있어요. 원고를 쓰다 "@"를 입력하면 문서를 바로 불러올 수 있습니다.</li>' +
+          '<li>모든 데이터는 이 브라우저에만 저장됩니다 — 사이드바 아래 "내보내기"로 주기적으로 백업 파일(JSON)을 받아두세요.</li>' +
+        '</ol>' +
+      '</div>'
     : '<button class="btn" id="es_newwork2" style="margin-top:22px">'+ic("plus",13)+' 새 작품 추가</button>');
 
   html += '</div>';
@@ -11188,6 +11206,12 @@ function renderHomePage() {
 
   var b0 = document.getElementById("es_newwork"); if (b0) b0.addEventListener("click", newWork);
   var b1 = document.getElementById("es_newwork2"); if (b1) b1.addEventListener("click", newWork);
+  var bEx = document.getElementById("es_tryexample");
+  if (bEx) bEx.addEventListener("click", function(){
+    var w = WORKS.find(function(w){ return w.isTemplate; }) || createGenreTemplateWork();
+    state.collapsed["work:"+w.id] = false;
+    openWorkOverview(w.id);
+  });
   main.querySelectorAll("[data-openwork]").forEach(function(card){
     card.addEventListener("click", function(){ openWorkOverview(card.dataset.openwork); });
   });
