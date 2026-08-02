@@ -670,6 +670,8 @@
   .map-marker { cursor:pointer; }
   .map-marker-bg { fill:var(--mc); stroke:#fff; stroke-width:1.6; }
   .map-marker.selected .map-marker-bg { stroke:var(--ink); stroke-width:2.6; }
+  .map-danger { cursor:pointer; }
+  .map-danger-preview { fill:var(--accent-soft); fill-opacity:0.25; stroke:var(--accent); stroke-width:2; stroke-dasharray:5 4; pointer-events:none; }
 
   /* ---------- database table ---------- */
   .db-scroll { overflow-x:auto; padding-bottom:10px; }
@@ -1237,6 +1239,22 @@ var MAP_SYMBOLS = {
   peak:     { label:"산·봉우리",   icon:"peak",     color:"#6B7A5E" },
   other:    { label:"기타",        icon:"pin",      color:"#8B8579" }
 };
+/* 판타지 위험구역 -- radius overlays, distinct from point markers above. Kind picks
+ * the icon/flavor, dangerLevel picks the color (independent axes: a 저주 지역 can be
+ * 낮음 or 매우높음 same as a 드래곤 레어 can). */
+var MAP_DANGER_KINDS = {
+  barrier:  { label:"마법 장벽",     icon:"tower" },
+  dragon:   { label:"드래곤 레어",   icon:"peak" },
+  orcCamp:  { label:"오크 군락",     icon:"camp" },
+  cursed:   { label:"저주 지역",     icon:"grave" },
+  other:    { label:"기타 위험지역", icon:"pin" }
+};
+var MAP_DANGER_LEVELS = {
+  low:     { label:"낮음",     color:"#C9A227" },
+  medium:  { label:"보통",     color:"#D9791F" },
+  high:    { label:"높음",     color:"#B0392E" },
+  extreme: { label:"매우 높음", color:"#6B2140" }
+};
 function simplifyPoints(points, epsilon) {
   if (points.length < 3) return points.slice();
   function perpDist(p, a, b) {
@@ -1465,6 +1483,7 @@ function pushRecentColor(hex) {
     if (mp.versionOf === undefined) mp.versionOf = null;
     if (mp.versionLabel === undefined) mp.versionLabel = "1회차";
     if (mp.versionOrder === undefined) mp.versionOrder = 0;
+    if (mp.dangerZones === undefined) mp.dangerZones = [];
   });
 })();
 (function migrateTimelines(){
@@ -3225,7 +3244,7 @@ function newMap(workId, opts) {
     linkedTimelineId: null, linkedEventId: null,
     bgImage: null, bgOpacity: 0.35, showBg: true,
     view: { x: 0, y: 0, scale: 1 },
-    regions: [], lines: [], markers: [],
+    regions: [], lines: [], markers: [], dangerZones: [],
     scaleKmPerUnit: null,
     createdAt: Date.now(),
     versionOf: null, versionLabel: "1회차", versionOrder: 0
@@ -3272,9 +3291,9 @@ function addMapVersion(mp) {
   var baseTitle = (mp.title||"새 지도").replace(/\s*·\s*\d+회차$/, "");
   var label = (siblings.length+1)+"회차";
   var clone = JSON.parse(JSON.stringify({
-    regions: mp.regions, lines: mp.lines, markers: mp.markers
+    regions: mp.regions, lines: mp.lines, markers: mp.markers, dangerZones: mp.dangerZones||[]
   }));
-  [clone.regions, clone.lines, clone.markers].forEach(function(list){
+  [clone.regions, clone.lines, clone.markers, clone.dangerZones].forEach(function(list){
     list.forEach(function(item){ item.id = uid(); });
   });
   var nv = {
@@ -3286,7 +3305,7 @@ function addMapVersion(mp) {
     bgImage: mp.bgImage, bgWidth: mp.bgWidth, bgHeight: mp.bgHeight,
     bgOpacity: mp.bgOpacity, bgMode: mp.bgMode, traceImage: mp.traceImage,
     view: Object.assign({}, mp.view),
-    regions: clone.regions, lines: clone.lines, markers: clone.markers,
+    regions: clone.regions, lines: clone.lines, markers: clone.markers, dangerZones: clone.dangerZones,
     scaleKmPerUnit: mp.scaleKmPerUnit,
     createdAt: Date.now(),
     versionOf: groupKey, versionLabel: label, versionOrder: maxOrder+1
@@ -7060,6 +7079,29 @@ function showMarkerTooltip(mk, evt) {
   tip.style.display = "block";
   positionRegionTooltip(evt);
 }
+function showDangerTooltip(mp, dz, evt) {
+  var kind = MAP_DANGER_KINDS[dz.kind] || MAP_DANGER_KINDS.other;
+  var level = MAP_DANGER_LEVELS[dz.dangerLevel] || MAP_DANGER_LEVELS.medium;
+  var tip = document.getElementById("regionTooltip");
+  if (!tip) {
+    tip = document.createElement("div");
+    tip.id = "regionTooltip";
+    tip.className = "region-tooltip";
+    document.body.appendChild(tip);
+  }
+  var radiusRow = "";
+  if (mp.scaleKmPerUnit) {
+    var cat = mapDistanceCat(mp), u = mapDistancePrimary(mp);
+    if (u) radiusRow = '<div class="region-tooltip-row"><span class="rt-k">반경</span><span class="rt-v">'+(Math.round(kmToUnit(dz.radius*mp.scaleKmPerUnit, u)*100)/100)+u.symbol+'</span></div>';
+  }
+  tip.innerHTML = '<div class="region-tooltip-title">'+esc(dz.label||kind.label)+'</div>' +
+    '<div class="region-tooltip-row"><span class="rt-k">종류</span><span class="rt-v">'+esc(kind.label)+'</span></div>' +
+    '<div class="region-tooltip-row"><span class="rt-k">위험도</span><span class="rt-v" style="color:'+level.color+';font-weight:600">'+esc(level.label)+'</span></div>' +
+    radiusRow +
+    '<div class="region-tooltip-row"><span class="rt-v" style="color:var(--ink-faint)">눌러서 편집</span></div>';
+  tip.style.display = "block";
+  positionRegionTooltip(evt);
+}
 function openRegionListModal(mp) {
   openModal({ title: "지역 목록", confirmLabel: "닫기" });
   var overlay = document.getElementById("modalOverlay");
@@ -7215,6 +7257,23 @@ function updateScaleLinePreview(mp) {
 }
 function removeScaleLinePreview() {
   var prev = document.getElementById("mapScaleLinePreview");
+  if (prev) prev.remove();
+}
+function updateDangerPreview(mp) {
+  var gEl = document.getElementById("mapG");
+  if (!gEl || !mpState.dangerCircle) { removeDangerPreview(); return; }
+  var dc = mpState.dangerCircle;
+  var prev = document.getElementById("mapDangerPreview");
+  if (!prev) {
+    prev = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    prev.setAttribute("id", "mapDangerPreview");
+    prev.setAttribute("class", "map-danger-preview");
+    gEl.appendChild(prev);
+  }
+  prev.setAttribute("cx", dc.x); prev.setAttribute("cy", dc.y); prev.setAttribute("r", dc.r);
+}
+function removeDangerPreview() {
+  var prev = document.getElementById("mapDangerPreview");
   if (prev) prev.remove();
 }
 function applyMapCrop(mp, x, y, w, h) {
@@ -7400,6 +7459,23 @@ function openMapMarkerModal(mp, marker, isNew, onDone) {
     }
   });
 }
+function openMapDangerModal(mp, zone, isNew, onDone) {
+  openModal({
+    title: isNew ? "위험구역 정보" : "위험구역 편집",
+    fields: [{ placeholder: "이름 (예: 검은숲 저주지대)", value: zone.label || "" }],
+    pickers: [
+      { key:"kind", label:"종류", default: zone.kind || "other", options: Object.keys(MAP_DANGER_KINDS).map(function(k){ return { value:k, label:MAP_DANGER_KINDS[k].label, color:"var(--ink-faint)" }; }) },
+      { key:"dangerLevel", label:"위험도", default: zone.dangerLevel || "medium", options: Object.keys(MAP_DANGER_LEVELS).map(function(k){ return { value:k, label:MAP_DANGER_LEVELS[k].label, color:MAP_DANGER_LEVELS[k].color }; }) }
+    ],
+    confirmLabel: isNew ? "추가" : "저장",
+    onConfirm: function(values, checked, picks){
+      zone.label = values[0] || "";
+      zone.kind = picks.kind;
+      zone.dangerLevel = picks.dangerLevel;
+      onDone(zone);
+    }
+  });
+}
 function openMapYearModal(mp, onDone) {
   var workTimelines = TIMELINES.filter(function(tl){ return tl.workId === mp.workId; });
   var allEvents = [];
@@ -7463,6 +7539,17 @@ function drawMap(mp) {
       '<text x="'+c[0]+'" y="'+c[1]+'" text-anchor="middle" class="map-region-label">'+(r.terrain==="none"?"":esc(kind.label)+(r.label?" · ":""))+esc(r.label||"")+'</text>' +
       (house ? '<text x="'+c[0]+'" y="'+(c[1]+15)+'" text-anchor="middle" class="map-region-house-label" style="fill:'+houseColor+'">&#9813; '+esc(house.title||"세력")+'</text>' : '') +
       (house ? '<g class="map-region-focus" data-regionfocus="'+r.id+'" transform="translate('+c[0]+','+(c[1]-22)+')" title="이 지역으로 확대"><circle r="9" style="fill:'+houseColor+'"></circle><g transform="translate(-6,-6)" style="color:#fff">'+ic("search",12)+'</g></g>' : '') +
+    '</g>';
+  });
+  (mp.dangerZones||[]).forEach(function(dz){
+    var kind = MAP_DANGER_KINDS[dz.kind] || MAP_DANGER_KINDS.other;
+    var level = MAP_DANGER_LEVELS[dz.dangerLevel] || MAP_DANGER_LEVELS.medium;
+    var isSel = mpState.selected&&mpState.selected.type==="dangerZone"&&mpState.selected.id===dz.id;
+    html += '<g class="map-danger '+(isSel?"selected":"")+'" data-danger="'+dz.id+'" transform="translate('+dz.x+','+dz.y+')">' +
+      '<circle r="'+dz.radius+'" style="fill:'+level.color+';fill-opacity:0.22;stroke:'+level.color+';stroke-width:'+(isSel?2.6:1.6)+'" stroke-dasharray="5 4"></circle>' +
+      '<circle r="11" class="map-marker-bg" style="--mc:'+level.color+'"></circle>' +
+      '<g transform="translate(-7,-7)" style="color:#fff">'+ic(kind.icon,14)+'</g>' +
+      (dz.label ? '<text y="'+(dz.radius+16)+'" text-anchor="middle" class="map-line-label">'+esc(dz.label)+'</text>' : '') +
     '</g>';
   });
   mp.lines.forEach(function(l){
@@ -7561,14 +7648,40 @@ function drawMap(mp) {
     });
     elMk.addEventListener("mouseleave", hideRegionTooltip);
   });
+  gEl.querySelectorAll(".map-danger").forEach(function(elDz){
+    var id = elDz.dataset.danger;
+    var dz = (mp.dangerZones||[]).find(function(dz){ return dz.id===id; });
+    elDz.addEventListener("click", function(e){
+      if (mpState.tool !== "select") return;
+      e.stopPropagation();
+      mpState.selected = { type:"dangerZone", id:id };
+      hideRegionTooltip();
+      drawMap(mp);
+      openMapDangerModal(mp, dz, false, function(finalZone){
+        dz.label = finalZone.label; dz.kind = finalZone.kind; dz.dangerLevel = finalZone.dangerLevel;
+        saveData(); drawMap(mp);
+      });
+    });
+    elDz.addEventListener("dblclick", function(e){ e.stopPropagation(); });
+    elDz.addEventListener("mouseenter", function(e){
+      if (mpState.tool !== "select") return;
+      showDangerTooltip(mp, dz, e);
+    });
+    elDz.addEventListener("mousemove", function(e){
+      if (mpState.tool !== "select") return;
+      positionRegionTooltip(e);
+    });
+    elDz.addEventListener("mouseleave", hideRegionTooltip);
+  });
 }
 function renderMapPage(mp) {
-  mpState = { tool: "select", terrain: mpState.terrain || "forest", symbol: mpState.symbol || "city", drawPoints: null, panStart: null, selected: null, cropRect: null, cropDragStart: null, scaleLine: null, scaleLineStart: null };
+  mpState = { tool: "select", terrain: mpState.terrain || "forest", symbol: mpState.symbol || "city", drawPoints: null, panStart: null, selected: null, cropRect: null, cropDragStart: null, scaleLine: null, scaleLineStart: null, dangerStart: null, dangerCircle: null };
   if (mp.bgOpacity === undefined) mp.bgOpacity = 0.4;
   if (mp.bgMode === undefined) mp.bgMode = mp.bgImage ? "original" : "hidden";
   if (!mp.regions) mp.regions = [];
   if (!mp.lines) mp.lines = [];
   if (!mp.markers) mp.markers = [];
+  if (!mp.dangerZones) mp.dangerZones = [];
   if (mp.mapType === undefined) mp.mapType = "world";
 
   var main = document.getElementById("main");
@@ -7635,7 +7748,7 @@ function renderMapPage(mp) {
       '</div>' +
       '<div class="graph-canvas-wrap" id="mapWrap">' +
         '<svg class="graph-svg" id="mapSvg"><g id="mapG"></g></svg>' +
-        (mp.regions.length || mp.lines.length || mp.markers.length || mp.bgImage ? "" : '<div class="graph-empty-hint">아직 그린 내용이 없습니다<br>아래 도구로 선·지역·기호를 그리거나 이미지를 올려보세요</div>') +
+        (mp.regions.length || mp.lines.length || mp.markers.length || mp.dangerZones.length || mp.bgImage ? "" : '<div class="graph-empty-hint">아직 그린 내용이 없습니다<br>아래 도구로 선·지역·기호를 그리거나 이미지를 올려보세요</div>') +
         terrainRowHtml +
         symbolRowHtml +
         cropRowHtml +
@@ -7647,6 +7760,7 @@ function renderMapPage(mp) {
           '<button class="tb-btn" id="mtLine" title="국경·강 선 그리기">'+ic("pen",14)+'<span>선</span></button>' +
           '<button class="tb-btn" id="mtPaint" title="지형 칠하기">'+ic("fillDrop",14)+'<span>지역</span></button>' +
           '<button class="tb-btn" id="mtSymbol" title="수도·도시 등 기호 찍기">'+ic("pin",14)+'<span>기호</span></button>' +
+          '<button class="tb-btn" id="mtDanger" title="위험구역 그리기 (드래그해서 반경 지정)">'+ic("battle",14)+'<span>위험구역</span></button>' +
           '<div class="tb-sep"></div>' +
           '<button class="tb-btn" id="mtUpload" title="배경 이미지 업로드">'+ic("upload",14)+'</button>' +
           '<button class="tb-btn" id="mtCrop" title="이미지 자르기">'+ic("crop",14)+'</button>' +
@@ -7715,10 +7829,12 @@ function renderMapPage(mp) {
     if (mpState.tool !== "crop") { mpState.cropRect = null; mpState.cropDragStart = null; removeCropPreview(); }
     if (mpState.tool !== "rotate") { resetRotatePreview(); }
     if (mpState.tool !== "scale") { mpState.scaleLine = null; mpState.scaleLineStart = null; removeScaleLinePreview(); }
+    if (mpState.tool !== "danger") { mpState.dangerCircle = null; mpState.dangerStart = null; removeDangerPreview(); }
     document.getElementById("mtSelect").classList.toggle("active", mpState.tool==="select");
     document.getElementById("mtLine").classList.toggle("active", mpState.tool==="line");
     document.getElementById("mtPaint").classList.toggle("active", mpState.tool==="paint");
     document.getElementById("mtSymbol").classList.toggle("active", mpState.tool==="symbol");
+    document.getElementById("mtDanger").classList.toggle("active", mpState.tool==="danger");
     document.getElementById("mtCrop").classList.toggle("active", mpState.tool==="crop");
     document.getElementById("mtRotate").classList.toggle("active", mpState.tool==="rotate");
     document.getElementById("mtScale").classList.toggle("active", mpState.tool==="scale");
@@ -7733,6 +7849,7 @@ function renderMapPage(mp) {
   document.getElementById("mtLine").addEventListener("click", function(){ setTool("line"); });
   document.getElementById("mtPaint").addEventListener("click", function(){ setTool("paint"); });
   document.getElementById("mtSymbol").addEventListener("click", function(){ setTool("symbol"); });
+  document.getElementById("mtDanger").addEventListener("click", function(){ setTool("danger"); });
   document.getElementById("mtCrop").addEventListener("click", function(){
     if (!mp.bgImage) {
       openModal({ title: "이미지가 없습니다", message: "먼저 업로드 버튼으로 배경 이미지를 올려주세요.", confirmLabel: "확인" });
@@ -7879,7 +7996,7 @@ function renderMapPage(mp) {
   wrapEl.addEventListener("mousedown", function(e){
     if (e.target.closest(".graph-toolbar") || e.target.closest(".map-terrain-row")) return;
     if (mpState.tool === "select") {
-      if (e.target.closest(".map-region") || e.target.closest(".map-line") || e.target.closest(".map-marker")) return;
+      if (e.target.closest(".map-region") || e.target.closest(".map-line") || e.target.closest(".map-marker") || e.target.closest(".map-danger")) return;
       mpState.panStart = { x: e.clientX, y: e.clientY, vx: mp.view.x, vy: mp.view.y };
       wrapEl.classList.add("panning");
       mpState.selected = null;
@@ -7909,6 +8026,13 @@ function renderMapPage(mp) {
         var hint = document.querySelector(".graph-empty-hint");
         if (hint) hint.remove();
       });
+      return;
+    }
+    if (mpState.tool === "danger") {
+      var dpt0 = mapScreenToWorld(mp, e.clientX, e.clientY);
+      mpState.dangerStart = dpt0;
+      mpState.dangerCircle = { x: dpt0[0], y: dpt0[1], r: 0 };
+      updateDangerPreview(mp);
       return;
     }
     var pt = mapScreenToWorld(mp, e.clientX, e.clientY);
@@ -7942,6 +8066,10 @@ function renderMapPage(mp) {
       mpState.scaleLine.x1 = smpt[0];
       mpState.scaleLine.y1 = smpt[1];
       updateScaleLinePreview(mp);
+    } else if (mpState.dangerStart) {
+      var dmpt = mapScreenToWorld(mp, e.clientX, e.clientY);
+      mpState.dangerCircle.r = Math.hypot(dmpt[0]-mpState.dangerStart[0], dmpt[1]-mpState.dangerStart[1]);
+      updateDangerPreview(mp);
     }
   };
   var onMapMouseUp = function(){
@@ -7970,6 +8098,21 @@ function renderMapPage(mp) {
         });
       }
       removeScaleLinePreview();
+    }
+    if (mpState.dangerStart) {
+      mpState.dangerStart = null;
+      var dc = mpState.dangerCircle;
+      removeDangerPreview();
+      if (dc && dc.r > 3) {
+        var newZone = { id: uid(), x: dc.x, y: dc.y, radius: dc.r, kind: "other", dangerLevel: "medium", label: "" };
+        openMapDangerModal(mp, newZone, true, function(finalZone){
+          mp.dangerZones.push(finalZone);
+          saveData(); drawMap(mp);
+          var hint = document.querySelector(".graph-empty-hint");
+          if (hint) hint.remove();
+        });
+      }
+      mpState.dangerCircle = null;
     }
     if (mpState.drawPoints) {
       var raw = mpState.drawPoints;
@@ -8000,6 +8143,7 @@ function renderMapPage(mp) {
     if ((e.key === "Delete" || e.key === "Backspace") && mpState.selected && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
       if (mpState.selected.type === "region") mp.regions = mp.regions.filter(function(r){ return r.id !== mpState.selected.id; });
       else if (mpState.selected.type === "line") mp.lines = mp.lines.filter(function(l){ return l.id !== mpState.selected.id; });
+      else if (mpState.selected.type === "dangerZone") mp.dangerZones = mp.dangerZones.filter(function(dz){ return dz.id !== mpState.selected.id; });
       else mp.markers = mp.markers.filter(function(mk){ return mk.id !== mpState.selected.id; });
       mpState.selected = null; saveData(); drawMap(mp);
     }
