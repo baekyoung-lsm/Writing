@@ -500,6 +500,26 @@
   .ms-stats-bar { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--ink-faint); margin-bottom:10px; font-variant-numeric:tabular-nums; }
   .ms-stats-bar b { color:var(--ink-soft); font-weight:600; }
   .ms-spellcheck-hint { font-size:11.5px; color:var(--ink-faint); margin-bottom:16px; line-height:1.5; }
+  .ms-editor-row { display:flex; gap:20px; align-items:flex-start; }
+  .ms-editor-main { flex:1; min-width:0; }
+  .ms-context-panel { width:200px; flex-shrink:0; position:sticky; top:20px; display:flex; flex-direction:column; gap:16px; max-height:calc(100vh - 100px); overflow-y:auto; }
+  .ms-ctx-section { display:flex; flex-direction:column; gap:6px; }
+  .ms-ctx-label { display:flex; align-items:center; gap:6px; font-size:11.5px; letter-spacing:0.05em; color:var(--ink-faint); text-transform:uppercase; }
+  .ms-ctx-item { display:flex; align-items:center; gap:7px; padding:7px 9px; border:1px solid var(--border); border-radius:8px; background:var(--bg-card); font-size:12.5px; color:var(--ink-soft); text-align:left; cursor:pointer; }
+  .ms-ctx-item:hover { border-color:var(--accent); color:var(--accent); }
+  .ms-ctx-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .ms-ctx-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  @media (max-width:1100px) {
+    .ms-editor-row { flex-direction:column; }
+    .ms-context-panel { width:100%; position:static; max-height:none; flex-direction:row; flex-wrap:wrap; }
+    .ms-ctx-section { flex:1; min-width:180px; }
+  }
+  .mention-pop { position:fixed; z-index:220; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:6px; box-shadow:0 12px 30px var(--shadow); width:240px; max-height:260px; overflow-y:auto; }
+  .mention-item { display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:7px; cursor:pointer; font-size:13px; }
+  .mention-item:hover, .mention-item.on { background:var(--bg-card); }
+  .mention-cat { font-size:10.5px; color:var(--ink-faint); background:var(--bg-card); border-radius:5px; padding:2px 6px; flex-shrink:0; }
+  .mention-item.on .mention-cat { background:var(--bg); }
+  .mention-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .findreplace-pop { position:fixed; z-index:200; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:12px; box-shadow:0 12px 30px var(--shadow); width:270px; }
   .fr-row { margin-bottom:8px; }
   .fr-row input { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:6px; padding:7px 9px; font-size:12.5px; outline:none; background:var(--bg); }
@@ -1717,6 +1737,8 @@ function pushRecentColor(hex) {
     if (m.editScrollFrac === undefined) m.editScrollFrac = 0;
     if (m.characterIds === undefined) m.characterIds = m.povId ? [m.povId] : [];
     if (m.excludedCharacterIds === undefined) m.excludedCharacterIds = [];
+    if (m.locationIds === undefined) m.locationIds = [];
+    if (m.excludedLocationIds === undefined) m.excludedLocationIds = [];
   });
 })();
 (function migrateMaps(){
@@ -3962,7 +3984,7 @@ function createManuscript(novelId, createdAt) {
   if (scheme === "chapter") title = (count+1) + "장";
   else if (scheme === "subtitle") title = "";
   else title = count === 0 ? "프롤로그" : count + "화";
-  var m = { id: uid(), title: title, text: "", format: "general", novelId: novelId, previewDark: false, previewFontSize: 16, previewFont: "sans", bookMode: "edit", bookPage: 0, bookSpread: false, editScrollFrac: 0, createdAt: createdAt, characterIds: [], excludedCharacterIds: [] };
+  var m = { id: uid(), title: title, text: "", format: "general", novelId: novelId, previewDark: false, previewFontSize: 16, previewFont: "sans", bookMode: "edit", bookPage: 0, bookSpread: false, editScrollFrac: 0, createdAt: createdAt, characterIds: [], excludedCharacterIds: [], locationIds: [], excludedLocationIds: [] };
   MANUSCRIPTS.push(m); saveData();
   return m;
 }
@@ -4838,6 +4860,164 @@ function detectCharactersInManuscript(m, workId) {
     if (names.some(function(n){ return text.indexOf(n) !== -1; })) { m.characterIds.push(d.id); changed = true; }
   });
   return changed;
+}
+/* detectCharactersInManuscript와 같은 이름-등장 탐지 방식을 "장소" 카테고리에도
+ * 그대로 적용 -- 등장인물 자동 감지와 별개의 필드(locationIds)에 쌓아서, 두 감지
+ * 로직이 서로의 제외 목록을 건드리지 않도록 완전히 분리해둔다. */
+function detectLocationsInManuscript(m, workId) {
+  if (!m.locationIds) m.locationIds = [];
+  if (!m.excludedLocationIds) m.excludedLocationIds = [];
+  var text = m.text || "";
+  if (!text.trim() || !workId) return false;
+  var changed = false;
+  DOCS.filter(function(d){ return d.workId===workId && d.category==="장소"; }).forEach(function(d){
+    if (m.locationIds.indexOf(d.id) !== -1) return;
+    if (m.excludedLocationIds.indexOf(d.id) !== -1) return;
+    var names = [d.title].concat(d.aliases||[]).filter(function(n){ return n && n.trim().length >= 2; });
+    if (names.some(function(n){ return text.indexOf(n) !== -1; })) { m.locationIds.push(d.id); changed = true; }
+  });
+  return changed;
+}
+/* 원고 편집기 옆 "컨텍스트 패널" -- 본문에서 자동 감지된 등장인물·장소를 한 곳에
+ * 모아 보여주고 클릭하면 바로 그 문서로 이동한다. 기존 msCharacterChips(상단 POV
+ * 줄)는 그대로 두고, 이건 별도의 사이드 패널로 추가한다. */
+function updateContextPanel(m, workId) {
+  var container = document.getElementById("msContextPanel");
+  if (!container) return;
+  detectCharactersInManuscript(m, workId);
+  detectLocationsInManuscript(m, workId);
+  function section(label, iconName, ids, cat) {
+    var docs = ids.map(function(id){ return DOCS.find(function(d){ return d.id===id; }); }).filter(Boolean);
+    var body = docs.length
+      ? docs.map(function(d){
+          return '<button type="button" class="ms-ctx-item" data-ctxgoto="'+d.id+'">' +
+            '<span class="ms-ctx-dot" style="background:'+colorOf(d.color)+'"></span>' +
+            '<span class="ms-ctx-title">'+esc(d.title||"제목 없음")+'</span>' +
+          '</button>';
+        }).join("")
+      : '<div class="chip-empty-hint">본문에 '+esc(cat)+' 이름이 나오면 자동으로 여기에 나타나요</div>';
+    return '<div class="ms-ctx-section"><div class="ms-ctx-label">'+ic(iconName,12)+'<span>'+esc(label)+'</span></div>'+body+'</div>';
+  }
+  container.innerHTML =
+    section("등장인물", "person", m.characterIds||[], "등장인물") +
+    section("장소", "map", m.locationIds||[], "장소");
+  container.querySelectorAll("[data-ctxgoto]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      state.mode = "doc"; state.activeId = btn.dataset.ctxgoto; render();
+    });
+  });
+}
+/* ---------------- 원고 @ 자동완성 ----------------
+ * 원고 본문(#msText, #bookEditText)에서 "@"를 입력하면 이 작품의 문서(등장인물·
+ * 장소 등 모든 카테고리)를 이름으로 검색해 바로 삽입할 수 있다. contenteditable
+ * 스프레드 편집 모드(#bookEditFlow)는 캐럿 좌표 계산이 훨씬 까다로워 이번 범위에서
+ * 제외 -- 기본/단일 페이지 편집(textarea 두 종류)에서만 지원한다. */
+function textareaCaretRect(el) {
+  var div = document.createElement("div");
+  var style = getComputedStyle(el);
+  ["boxSizing","width","paddingTop","paddingRight","paddingBottom","paddingLeft",
+   "borderTopWidth","borderRightWidth","borderBottomWidth","borderLeftWidth",
+   "fontFamily","fontSize","fontWeight","fontStyle","letterSpacing","lineHeight",
+   "textTransform","wordSpacing","tabSize"].forEach(function(p){ div.style[p] = style[p]; });
+  div.style.position = "absolute";
+  div.style.visibility = "hidden";
+  div.style.whiteSpace = "pre-wrap";
+  div.style.wordWrap = "break-word";
+  div.style.top = "0";
+  div.style.left = "-9999px";
+  div.textContent = el.value.substring(0, el.selectionStart);
+  var span = document.createElement("span");
+  span.textContent = el.value.substring(el.selectionStart) || ".";
+  div.appendChild(span);
+  document.body.appendChild(div);
+  var elRect = el.getBoundingClientRect();
+  var spanRect = span.getBoundingClientRect();
+  var divRect = div.getBoundingClientRect();
+  var rect = {
+    top: elRect.top + (spanRect.top - divRect.top) - el.scrollTop,
+    left: elRect.left + (spanRect.left - divRect.left) - el.scrollLeft,
+    lineHeight: parseFloat(style.lineHeight) || 20
+  };
+  document.body.removeChild(div);
+  return rect;
+}
+function wireMentionAutocomplete(ta, workId) {
+  if (!ta || ta.dataset.mentionWired) return;
+  ta.dataset.mentionWired = "1";
+  var pop = null, items = [], activeIdx = 0, mentionStart = -1;
+  function closeMentionPop() { if (pop) { pop.remove(); pop = null; } }
+  function currentMentionQuery() {
+    var pos = ta.selectionStart;
+    var text = ta.value;
+    var i = pos - 1;
+    while (i >= 0 && text[i] !== "@" && !/\s/.test(text[i])) i--;
+    if (i >= 0 && text[i] === "@") return { start: i, query: text.slice(i+1, pos) };
+    return null;
+  }
+  function updateActive() {
+    if (!pop) return;
+    var els = pop.querySelectorAll(".mention-item");
+    els.forEach(function(el, i){ el.classList.toggle("on", i===activeIdx); });
+    if (els[activeIdx]) els[activeIdx].scrollIntoView({ block: "nearest" });
+  }
+  function selectMention(idx) {
+    var d = items[idx];
+    if (!d || mentionStart < 0) return;
+    var text = ta.value;
+    var pos = ta.selectionStart;
+    var before = text.slice(0, mentionStart);
+    var after = text.slice(pos);
+    var insertText = (d.title||"제목 없음") + " ";
+    ta.value = before + insertText + after;
+    var newPos = before.length + insertText.length;
+    ta.selectionStart = ta.selectionEnd = newPos;
+    closeMentionPop();
+    ta.focus();
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  function renderMentionPop() {
+    var mq = currentMentionQuery();
+    if (!mq || !workId) { closeMentionPop(); return; }
+    var q = mq.query.toLowerCase();
+    var filtered = DOCS.filter(function(d){ return d.workId===workId; }).filter(function(d){
+      var hay = [d.title].concat(d.aliases||[]).join(" ").toLowerCase();
+      return hay.indexOf(q) !== -1;
+    }).slice(0, 8);
+    if (!filtered.length) { closeMentionPop(); return; }
+    items = filtered; activeIdx = 0; mentionStart = mq.start;
+    if (!pop) {
+      pop = document.createElement("div");
+      pop.className = "mention-pop";
+      document.body.appendChild(pop);
+      pop.addEventListener("mousedown", function(e){ e.preventDefault(); e.stopPropagation(); });
+    }
+    pop.innerHTML = items.map(function(d, i){
+      return '<div class="mention-item'+(i===activeIdx?" on":"")+'" data-mentionidx="'+i+'">' +
+        '<span class="mention-cat">'+esc(d.category||"")+'</span>' +
+        '<span class="mention-title">'+esc(d.title||"제목 없음")+'</span>' +
+      '</div>';
+    }).join("");
+    var rect = textareaCaretRect(ta);
+    var top = rect.top + rect.lineHeight + 4;
+    var left = rect.left;
+    if (top + 230 > window.innerHeight) top = rect.top - 230 - 4;
+    if (left + 248 > window.innerWidth) left = window.innerWidth - 248;
+    pop.style.top = Math.max(8, top) + "px";
+    pop.style.left = Math.max(8, left) + "px";
+    pop.querySelectorAll("[data-mentionidx]").forEach(function(el){
+      el.addEventListener("click", function(){ selectMention(parseInt(el.dataset.mentionidx, 10)); });
+    });
+  }
+  ta.addEventListener("input", renderMentionPop);
+  ta.addEventListener("click", closeMentionPop);
+  ta.addEventListener("blur", function(){ setTimeout(closeMentionPop, 120); });
+  ta.addEventListener("keydown", function(e){
+    if (!pop) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); activeIdx = Math.min(items.length-1, activeIdx+1); updateActive(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); activeIdx = Math.max(0, activeIdx-1); updateActive(); }
+    else if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); selectMention(activeIdx); }
+    else if (e.key === "Escape") { e.preventDefault(); closeMentionPop(); }
+  });
 }
 var _charDetectTimer = null;
 function updateCharacterChips(m, workId, immediate) {
@@ -10071,8 +10251,9 @@ function renderBookArea(m) {
       '<div class="book-outer"><div class="book-shell"><textarea class="book-edit-textarea" id="bookEditText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요.">'+esc(m.text||"")+'</textarea></div></div>' +
       '<div class="book-hint">쓰기 모드는 스크롤로 이어 씁니다 — 미리보기에서 페이지 단위로 넘겨볼 수 있어요</div>';
     var editEl = document.getElementById("bookEditText");
-    editEl.addEventListener("input", function(e){ m.text = e.target.value; m.editScrollFrac = editScrollFraction(); saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); flashSaveIndicator(); });
+    editEl.addEventListener("input", function(e){ m.text = e.target.value; m.editScrollFrac = editScrollFraction(); saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); updateContextPanel(m, bookWorkId); flashSaveIndicator(); });
     editEl.addEventListener("scroll", function(){ m.editScrollFrac = editScrollFraction(); });
+    wireMentionAutocomplete(editEl, bookWorkId);
     requestAnimationFrame(function(){
       var denom = editEl.scrollHeight - editEl.clientHeight;
       if (denom > 0) editEl.scrollTop = (m.editScrollFrac||0) * denom;
@@ -10183,12 +10364,15 @@ function renderManuscriptPage(m) {
   main.innerHTML =
     '<div class="graph-shell">' +
       '<div class="graph-title-bar"><input class="graph-title" id="msTitle" value="'+esc(m.title)+'" placeholder="원고(화) 제목"><span class="ms-save-indicator saved" id="msSaveIndicator">저장됨</span><span class="ms-char-count" id="msCharCount">'+fmtNum(charCount(m.text))+'자</span><button class="page-del" id="deleteMsBtn" style="margin-top:0">'+ic("trash",13)+'<span>원고 삭제</span></button></div>' +
-      '<div class="page-pad" style="padding-top:26px">' + povHtml + statsHtml + tabsHtml + bodyHtml + '</div>' +
+      '<div class="page-pad" style="padding-top:26px">' + povHtml + statsHtml + tabsHtml +
+        '<div class="ms-editor-row"><div class="ms-editor-main">' + bodyHtml + '</div><div class="ms-context-panel" id="msContextPanel"></div></div>' +
+      '</div>' +
     '</div>';
 
   document.getElementById("msTitle").addEventListener("input", function(e){ m.title = e.target.value; saveData(); renderSidebar(); updateMsStatsBar(m); flashSaveIndicator(); });
   document.getElementById("deleteMsBtn").addEventListener("click", function(){ deleteManuscript(m.id); });
   updateCharacterChips(m, msWorkId, true);
+  updateContextPanel(m, msWorkId);
   updateMsStatsBar(m);
   updateMsGoalBar(m);
   main.querySelectorAll("[data-msformat]").forEach(function(btn){
@@ -10228,20 +10412,22 @@ function renderManuscriptPage(m) {
     var findBtnBook = document.getElementById("msFindBtnBook");
     if (findBtnBook) findBtnBook.addEventListener("click", function(e){
       openFindReplace("bookEditText", e.currentTarget, function(newVal){
-        m.text = newVal; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId, true); flashSaveIndicator();
+        m.text = newVal; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId, true); updateContextPanel(m, msWorkId); flashSaveIndicator();
       });
     });
     renderBookArea(m);
   } else {
     applyMsStyle(m);
-    document.getElementById("msText").addEventListener("input", function(e){ m.text = e.target.value; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId); flashSaveIndicator(); });
+    var msTextEl = document.getElementById("msText");
+    msTextEl.addEventListener("input", function(e){ m.text = e.target.value; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId); updateContextPanel(m, msWorkId); flashSaveIndicator(); });
+    wireMentionAutocomplete(msTextEl, msWorkId);
     document.getElementById("msDarkToggle").addEventListener("click", function(){ m.previewDark = !m.previewDark; saveData(); renderManuscriptPage(m); });
     document.getElementById("msFontDec").addEventListener("click", function(){ m.previewFontSize = Math.max(13, m.previewFontSize-1); saveData(); applyMsStyle(m); document.getElementById("msFontVal").textContent = m.previewFontSize+"px"; });
     document.getElementById("msFontInc").addEventListener("click", function(){ m.previewFontSize = Math.min(20, m.previewFontSize+1); saveData(); applyMsStyle(m); document.getElementById("msFontVal").textContent = m.previewFontSize+"px"; });
     document.getElementById("msFontFamily").addEventListener("change", function(e){ m.previewFont = e.target.value; saveData(); applyMsStyle(m); });
     document.getElementById("msFindBtn").addEventListener("click", function(e){
       openFindReplace("msText", e.currentTarget, function(newVal){
-        m.text = newVal; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId, true); flashSaveIndicator();
+        m.text = newVal; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId, true); updateContextPanel(m, msWorkId); flashSaveIndicator();
       });
     });
   }
