@@ -591,6 +591,16 @@
   .graph-title-bar { display:flex; align-items:center; gap:10px; padding:16px 22px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
   .graph-title { font-family:var(--serif); font-size:18px; font-weight:600; border:none; background:none; outline:none; flex:1; }
   .graph-hint { font-size:11.5px; color:var(--ink-faint); }
+  .map-version-bar { display:flex; align-items:center; gap:6px; padding:8px 22px; border-bottom:1px solid var(--border); flex-wrap:wrap; background:var(--bg-card-hover); }
+  .map-version-bar-icon { color:var(--ink-faint); display:flex; flex:none; }
+  .map-version-tab { font-size:12px; color:var(--ink-soft); background:var(--bg); border:1px solid var(--border-strong); border-radius:20px; padding:4px 10px; flex:none; display:flex; align-items:center; gap:4px; }
+  .map-version-tab.on { border-color:var(--accent); background:var(--accent-soft); color:var(--ink); font-weight:600; padding:2px 4px 2px 10px; }
+  .map-version-label-input { font-size:12px; font-weight:600; color:var(--ink); background:none; border:none; outline:none; width:64px; font-family:inherit; }
+  .map-version-move, .map-version-del { color:var(--ink-faint); display:flex; align-items:center; justify-content:center; background:none; border:none; padding:3px; border-radius:50%; flex:none; }
+  .map-version-move:hover { color:var(--ink); background:var(--bg-card); }
+  .map-version-del:hover { color:var(--rose); background:var(--bg-card); }
+  .map-version-add { font-size:11.5px; color:var(--accent-strong); background:none; border:1px dashed var(--border-strong); border-radius:20px; padding:4px 10px; flex:none; display:flex; align-items:center; gap:4px; }
+  .map-version-add:hover { border-color:var(--accent); background:var(--accent-soft); }
   .ms-char-count { font-size:12px; color:var(--ink-faint); flex:none; font-variant-numeric:tabular-nums; }
   .graph-canvas-wrap { position:relative; flex:1; overflow:hidden; background:
       radial-gradient(circle, var(--border) 1px, transparent 1px) 0 0/22px 22px, var(--bg); cursor:grab; }
@@ -1446,6 +1456,15 @@ function pushRecentColor(hex) {
       if (r.countryInfo === undefined) r.countryInfo = null;
     });
     if (mp.scaleKmPerUnit === undefined) mp.scaleKmPerUnit = null;
+    /* 회차(version) system: versionOf groups sibling maps that are different iterations
+     * of "the same" conceptual map (independent borders/factions/routes/landmarks, each
+     * a full separate MAPS entry). Existing maps default to versionOf:null, i.e. each is
+     * the sole member of its own version group -- no behavior change until a user
+     * explicitly branches a new 회차 from one. This is orthogonal to parentMapId, which
+     * already means something else (spatial drill-down into a zoomed-in child map). */
+    if (mp.versionOf === undefined) mp.versionOf = null;
+    if (mp.versionLabel === undefined) mp.versionLabel = "1회차";
+    if (mp.versionOrder === undefined) mp.versionOrder = 0;
   });
 })();
 (function migrateTimelines(){
@@ -3208,7 +3227,8 @@ function newMap(workId, opts) {
     view: { x: 0, y: 0, scale: 1 },
     regions: [], lines: [], markers: [],
     scaleKmPerUnit: null,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    versionOf: null, versionLabel: "1회차", versionOrder: 0
   };
   MAPS.push(mp); saveData();
   state.mode = "map"; state.activeId = mp.id;
@@ -3218,13 +3238,87 @@ function newMap(workId, opts) {
 function deleteMap(id) {
   var mp = MAPS.find(function(mp){ return mp.id === id; });
   if (!mp) return;
+  var siblingCount = mapVersionSiblings(mp).length;
   openModal({
     title: "지도를 삭제할까요?",
-    message: '"'+(mp.title||"제목 없음")+'"을(를) 삭제하면 되돌릴 수 없습니다.',
+    message: '"'+(mp.title||"제목 없음")+'"을(를) 삭제하면 되돌릴 수 없습니다.' + (siblingCount > 1 ? ' 이 지도에 연결된 다른 회차('+(siblingCount-1)+'개)는 그대로 남아요.' : ''),
     confirmLabel: "삭제", danger: true,
     onConfirm: function(){
       MAPS = MAPS.filter(function(x){ return x.id !== id; });
       if (state.activeId === id) { state.mode = "empty"; state.activeId = null; }
+      saveData(); render();
+    }
+  });
+}
+
+/* ---------------- map 회차(version) system ----------------
+ * A map's "version group" is every MAPS entry sharing the same (mp.versionOf || mp.id).
+ * The first map in a group has versionOf:null and is its own group's key; branching a
+ * new 회차 clones the CURRENT version's visual content (borders, factions, routes,
+ * landmarks, background image, scale) into a brand-new MAPS entry so edits from that
+ * point on are fully independent, while intentionally NOT copying the timeline link --
+ * each 회차 usually corresponds to a different point in the story, so that association
+ * should be set fresh per version rather than inherited. */
+function mapVersionGroupKey(mp) { return mp.versionOf || mp.id; }
+function mapVersionSiblings(mp) {
+  var key = mapVersionGroupKey(mp);
+  return MAPS.filter(function(m){ return mapVersionGroupKey(m) === key; })
+    .sort(function(a,b){ return (a.versionOrder-b.versionOrder) || (a.createdAt-b.createdAt); });
+}
+function addMapVersion(mp) {
+  var siblings = mapVersionSiblings(mp);
+  var groupKey = mapVersionGroupKey(mp);
+  var maxOrder = siblings.reduce(function(mx,m){ return Math.max(mx, m.versionOrder); }, 0);
+  var baseTitle = (mp.title||"새 지도").replace(/\s*·\s*\d+회차$/, "");
+  var label = (siblings.length+1)+"회차";
+  var clone = JSON.parse(JSON.stringify({
+    regions: mp.regions, lines: mp.lines, markers: mp.markers
+  }));
+  [clone.regions, clone.lines, clone.markers].forEach(function(list){
+    list.forEach(function(item){ item.id = uid(); });
+  });
+  var nv = {
+    id: uid(), workId: mp.workId,
+    title: baseTitle + " · " + label,
+    mapType: mp.mapType, era: mp.era,
+    parentMapId: mp.parentMapId,
+    yearLabel: "", linkedTimelineId: null, linkedEventId: null,
+    bgImage: mp.bgImage, bgWidth: mp.bgWidth, bgHeight: mp.bgHeight,
+    bgOpacity: mp.bgOpacity, bgMode: mp.bgMode, traceImage: mp.traceImage,
+    view: Object.assign({}, mp.view),
+    regions: clone.regions, lines: clone.lines, markers: clone.markers,
+    scaleKmPerUnit: mp.scaleKmPerUnit,
+    createdAt: Date.now(),
+    versionOf: groupKey, versionLabel: label, versionOrder: maxOrder+1
+  };
+  MAPS.push(nv); saveData();
+  state.mode = "map"; state.activeId = nv.id;
+  render();
+  return nv;
+}
+function renameMapVersion(mp, label) {
+  mp.versionLabel = label; saveData();
+}
+function reorderMapVersion(mp, dir) {
+  var siblings = mapVersionSiblings(mp);
+  var i = siblings.findIndex(function(m){ return m.id === mp.id; });
+  var j = i + dir;
+  if (j < 0 || j >= siblings.length) return;
+  var a = siblings[i].versionOrder, b = siblings[j].versionOrder;
+  siblings[i].versionOrder = b; siblings[j].versionOrder = a;
+  saveData(); render();
+}
+function deleteMapVersion(mp) {
+  var siblings = mapVersionSiblings(mp);
+  if (siblings.length <= 1) { deleteMap(mp.id); return; }
+  openModal({
+    title: '"'+esc(mp.versionLabel||"이 회차")+'"를 삭제할까요?',
+    message: '이 회차의 국경선·세력·이동경로·랜드마크가 모두 함께 삭제되고, 되돌릴 수 없습니다. 다른 회차는 영향받지 않아요.',
+    confirmLabel: "삭제", danger: true,
+    onConfirm: function(){
+      var remaining = siblings.filter(function(m){ return m.id !== mp.id; });
+      MAPS = MAPS.filter(function(x){ return x.id !== mp.id; });
+      if (state.activeId === mp.id) { state.mode = "map"; state.activeId = remaining[0].id; }
       saveData(); render();
     }
   });
@@ -7508,6 +7602,20 @@ function renderMapPage(mp) {
   var parentMap = mp.parentMapId ? MAPS.find(function(m){ return m.id === mp.parentMapId; }) : null;
   var linkedTl = mp.linkedTimelineId ? TIMELINES.find(function(t){ return t.id === mp.linkedTimelineId; }) : null;
   var linkedEv = linkedTl ? linkedTl.events.find(function(e){ return e.id === mp.linkedEventId; }) : null;
+  var versionSiblings = mapVersionSiblings(mp);
+  var versionBarHtml = '<div class="map-version-bar" id="mapVersionBar">' +
+    '<span class="map-version-bar-icon" title="회차(버전) — 국경·세력·경로가 서로 독립된 지도 스냅샷">'+ic("calendar",12)+'</span>' +
+    versionSiblings.map(function(v, vi){
+      if (v.id !== mp.id) return '<button type="button" class="map-version-tab" data-mapversion="'+v.id+'">'+esc(v.versionLabel||"회차")+'</button>';
+      return '<span class="map-version-tab on">' +
+        (vi>0 ? '<button type="button" class="map-version-move" data-mapversionmove="-1" title="왼쪽으로 이동">'+ic("chevL",10)+'</button>' : '') +
+        '<input type="text" class="map-version-label-input" id="mapVersionLabelInput" value="'+esc(v.versionLabel)+'">' +
+        (vi<versionSiblings.length-1 ? '<button type="button" class="map-version-move" data-mapversionmove="1" title="오른쪽으로 이동">'+ic("chevR",10)+'</button>' : '') +
+        (versionSiblings.length>1 ? '<button type="button" class="map-version-del" id="mapVersionDelBtn" title="이 회차만 삭제">'+ic("close",10)+'</button>' : '') +
+      '</span>';
+    }).join("") +
+    '<button type="button" class="map-version-add" id="mapVersionAdd" title="현재 회차의 국경·세력·경로를 복제해 새 회차를 시작해요">'+ic("plus",12)+' 새 회차</button>' +
+  '</div>';
 
   main.innerHTML =
     '<div class="graph-shell">' +
@@ -7518,6 +7626,7 @@ function renderMapPage(mp) {
         '<select class="sel" id="mapEraSelect" style="flex:none" title="시대">' + Object.keys(MAP_ERAS).map(function(k){ return '<option value="'+k+'" '+((mp.era||"")===k?"selected":"")+'>'+MAP_ERAS[k].label+'</option>'; }).join("") + '</select>' +
         '<button class="page-del" id="deleteMapBtn" style="margin-top:0">'+ic("trash",13)+'<span>지도 삭제</span></button>' +
       '</div>' +
+      versionBarHtml +
       '<div class="novel-subrow" style="padding:0 22px 12px">' +
         '<button type="button" class="ms-sort-btn" id="mapYearBtn" title="연도·연표 정보 설정">'+ic("calendar",11)+' '+(esc(mp.yearLabel)||"연도 설정")+'</button>' +
         '<button type="button" class="ms-sort-btn" id="mapRegionListBtn" title="지역이 겹쳐서 클릭하기 어려울 때 이름으로 바로 찾기">'+ic("map",11)+' 지역 목록('+mp.regions.length+')</button>' +
@@ -7561,6 +7670,17 @@ function renderMapPage(mp) {
   document.getElementById("mapEraSelect").addEventListener("change", function(e){ mp.era = e.target.value; saveData(); renderSidebar(); });
   var mapUpBtn = document.getElementById("mapUpBtn");
   if (mapUpBtn) mapUpBtn.addEventListener("click", function(){ state.mode = "map"; state.activeId = mp.parentMapId; render(); });
+  document.querySelectorAll("[data-mapversion]").forEach(function(btn){
+    btn.addEventListener("click", function(){ state.mode = "map"; state.activeId = btn.dataset.mapversion; render(); });
+  });
+  var mapVersionLabelInput = document.getElementById("mapVersionLabelInput");
+  if (mapVersionLabelInput) mapVersionLabelInput.addEventListener("input", function(e){ renameMapVersion(mp, e.target.value); });
+  document.querySelectorAll("[data-mapversionmove]").forEach(function(btn){
+    btn.addEventListener("click", function(){ reorderMapVersion(mp, parseInt(btn.dataset.mapversionmove, 10)); });
+  });
+  var mapVersionDelBtn = document.getElementById("mapVersionDelBtn");
+  if (mapVersionDelBtn) mapVersionDelBtn.addEventListener("click", function(){ deleteMapVersion(mp); });
+  document.getElementById("mapVersionAdd").addEventListener("click", function(){ addMapVersion(mp); });
   document.getElementById("mapYearBtn").addEventListener("click", function(){
     openMapYearModal(mp, function(){ renderSidebar(); renderMapPage(mp); });
   });
