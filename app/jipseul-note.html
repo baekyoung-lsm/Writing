@@ -830,6 +830,31 @@
   .lineup-name-link:hover { background:var(--bg-card-hover); }
   .lineup-pos-sel { flex:none; width:110px; }
   .lineup-num-input { width:52px; flex:none; }
+  .lineup-radar-btn { flex:none; display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:6px; border:1px solid var(--border-strong); background:var(--bg); color:var(--accent); }
+  .lineup-radar-btn:hover { background:var(--accent-soft); border-color:var(--accent); }
+  .radar-chart-wrap { display:flex; justify-content:center; margin:14px 0 6px; }
+  .radar-chart { overflow:visible; }
+  .radar-ring { fill:none; stroke:var(--border); stroke-width:1; }
+  .radar-spoke { stroke:var(--border); stroke-width:1; }
+  .radar-area { fill:var(--accent); fill-opacity:0.22; stroke:var(--accent); stroke-width:1.8; }
+  .radar-dot { fill:var(--accent); stroke:var(--bg-card); stroke-width:1.2; }
+  .radar-label { fill:var(--ink); font-family:var(--sans); font-size:11px; font-weight:600; }
+  .radar-val { fill:var(--accent); font-family:var(--sans); font-size:11px; font-weight:700; }
+  .bracket-scroll { overflow-x:auto; padding-bottom:10px; }
+  .bracket-wrap { display:flex; align-items:stretch; gap:36px; min-width:min-content; }
+  .bracket-round { display:flex; flex-direction:column; justify-content:space-around; gap:18px; flex:none; width:180px; }
+  .bracket-round-label { font-size:11.5px; font-weight:600; color:var(--ink-faint); text-align:center; margin-bottom:4px; letter-spacing:0.02em; }
+  .bracket-match { display:flex; flex-direction:column; border:1px solid var(--border); border-radius:9px; overflow:hidden; background:var(--bg-card); flex:1; justify-content:center; }
+  .bracket-team { display:flex; align-items:center; gap:6px; padding:8px 10px; border-bottom:1px solid var(--border); cursor:pointer; }
+  .bracket-team:last-child { border-bottom:none; }
+  .bracket-team:hover { background:var(--bg-card-hover); }
+  .bracket-team.winner { background:var(--accent-soft); }
+  .bracket-team.winner .bt-name { font-weight:700; color:var(--accent); }
+  .bracket-team.bye { cursor:default; color:var(--ink-faint); font-size:12px; justify-content:center; }
+  .bracket-team.bye:hover { background:none; }
+  .bt-name { flex:1; font-size:12.5px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bracket-score { width:34px; flex:none; text-align:center; border:1px solid var(--border); border-radius:5px; padding:3px 2px; font-size:12px; background:var(--bg); }
+  .bracket-champion { display:flex; align-items:center; gap:8px; font-family:var(--serif); font-size:15px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-radius:10px; padding:10px 16px; margin:12px 0; width:fit-content; }
   .record-cat-tabs { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
   .award-year-card { border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:16px; }
   .award-year-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
@@ -1727,6 +1752,47 @@ function renderFieldSvg(preset, playersAtPos, ctxId) {
   }).join("");
   return '<div class="field-wrap"><div class="field-svg-shell"><svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">'+shapeHtml+markers+'</svg></div></div>';
 }
+/* 손수 제작 SVG 레이더 차트 -- Chart.js 등 외부 라이브러리 없이, 지도/그래프 엔진과
+ * 같은 원칙(오프라인 file:// 실행, 빌드 과정 없는 단일 파일)으로 구현. stats는
+ * {key, value(0~100)} 배열이며, 능력치(stat) 타입 props를 그대로 그려주는 뷰이므로
+ * 캐릭터 문서의 props가 유일한 입력창으로 남는다(스포츠 전용 스탯 필드를 새로 만들지 않음). */
+function radarChartSvg(stats, size) {
+  size = size || 260;
+  var n = stats.length;
+  if (n < 3) return '<div class="chip-empty-hint">레이더 차트를 그리려면 "능력치(바)" 속성이 3개 이상 있어야 해요 (현재 '+n+'개)</div>';
+  var cx = size/2, cy = size/2, r = size/2 - 40;
+  var angleStep = (Math.PI*2)/n;
+  function angleOf(i) { return -Math.PI/2 + i*angleStep; }
+  function pointAt(i, frac) {
+    var a = angleOf(i);
+    return [cx + r*frac*Math.cos(a), cy + r*frac*Math.sin(a)];
+  }
+  var rings = [0.25,0.5,0.75,1].map(function(f){
+    var pts = stats.map(function(s,i){ var p = pointAt(i, f); return p[0]+","+p[1]; }).join(" ");
+    return '<polygon points="'+pts+'" class="radar-ring"></polygon>';
+  }).join("");
+  var spokes = stats.map(function(s,i){ var p = pointAt(i,1); return '<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0]+'" y2="'+p[1]+'" class="radar-spoke"></line>'; }).join("");
+  var dataPts = stats.map(function(s,i){ var p = pointAt(i, Math.max(0,Math.min(100,parseFloat(s.value)||0))/100); return p[0]+","+p[1]; }).join(" ");
+  var dots = stats.map(function(s,i){ var p = pointAt(i, Math.max(0,Math.min(100,parseFloat(s.value)||0))/100); return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3.2" class="radar-dot"></circle>'; }).join("");
+  var labels = stats.map(function(s,i){
+    var lp = pointAt(i, 1.22);
+    return '<text x="'+lp[0]+'" y="'+lp[1]+'" text-anchor="middle" dy="-2" class="radar-label">'+esc(s.key)+'</text>' +
+      '<text x="'+lp[0]+'" y="'+lp[1]+'" text-anchor="middle" dy="12" class="radar-val">'+esc(String(s.value))+'</text>';
+  }).join("");
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" class="radar-chart">' +
+    rings + spokes +
+    '<polygon points="'+dataPts+'" class="radar-area"></polygon>' + dots + labels +
+  '</svg>';
+}
+function openPlayerRadarModal(doc) {
+  var stats = doc.props.filter(function(p){ return p.type==="stat"; }).map(function(p){ return { key:p.key, value: Math.max(0,Math.min(100,parseFloat(p.value)||0)) }; });
+  openModal({ title: (doc.title||"이름 없음")+" 능력치", confirmLabel: "닫기" });
+  var overlay = document.getElementById("modalOverlay");
+  if (!overlay) return;
+  var box = overlay.querySelector(".modal-box");
+  var titleEl = box.querySelector(".modal-title");
+  titleEl.insertAdjacentHTML("afterend", '<div class="radar-chart-wrap">'+radarChartSvg(stats, 280)+'</div>');
+}
 function renderStandingsTab(sp, preset) {
   var teamRows = sp.teams.map(function(team){
     if (!team.stats) team.stats = {};
@@ -1788,10 +1854,12 @@ function renderLineupTab(sp, preset) {
   var fieldHtml = preset.positions.length ? renderFieldSvg(preset, byPos, "lineup") : "";
   var listHtml = '<div class="lineup-list">' + (teamRoster.length ? teamRoster.map(function(p,i){
     var linkedDoc = findCharacterDocByName(sp.workId, p.name);
+    var hasStats = linkedDoc && linkedDoc.props.some(function(pr){ return pr.type==="stat"; });
     var posLabel = (preset.positions.find(function(ps){ return ps.key===p.posKey; })||{}).label;
     return '<div class="lineup-row">' +
       '<span class="lineup-order">'+(i+1)+'</span>' +
       '<button type="button" class="lineup-name-link '+(linkedDoc?"linked":"")+'" data-gotoplayer="'+p.id+'" title="'+(linkedDoc?"연결된 인물 문서로 이동":"눌러서 인물 문서 만들기")+'">'+esc(p.name||"이름 없음")+'</button>' +
+      (hasStats ? '<button type="button" class="lineup-radar-btn" data-playerradar="'+p.id+'" title="능력치 레이더 차트 보기">'+ic("scale",13)+'</button>' : '') +
       (preset.positions.length ? '<select class="sel lineup-pos-sel" data-playerpos="'+p.id+'">' + preset.positions.map(function(ps){ return '<option value="'+ps.key+'" '+(p.posKey===ps.key?"selected":"")+'>'+esc(ps.label)+'</option>'; }).join("") + '</select>' : '') +
       '<input class="field-input lineup-num-input" data-playernum="'+p.id+'" value="'+esc(p.number||"")+'" placeholder="#">' +
       '<button type="button" class="row-del" data-delplayer="'+p.id+'">'+ic("close",12)+'</button>' +
@@ -1810,6 +1878,14 @@ function wireLineupTab(sp, preset) {
     btn.addEventListener("click", function(){
       var p = sp.roster.find(function(p){ return p.id===btn.dataset.gotoplayer; });
       if (p) goToOrCreateCharacter(sp.workId, p.name);
+    });
+  });
+  main.querySelectorAll("[data-playerradar]").forEach(function(btn){
+    btn.addEventListener("click", function(e){
+      e.stopPropagation();
+      var p = sp.roster.find(function(p){ return p.id===btn.dataset.playerradar; });
+      var doc = p ? findCharacterDocByName(sp.workId, p.name) : null;
+      if (doc) openPlayerRadarModal(doc);
     });
   });
   main.querySelectorAll("[data-fieldpos]").forEach(function(el){
@@ -1861,6 +1937,127 @@ function wireLineupTab(sp, preset) {
         saveData(); renderSportsPage(sp);
       }
     });
+  });
+}
+/* 대진표(단일 토너먼트) -- sp.bracket = { rounds: [[match, ...], ...] }, 라운드 배열의
+ * 마지막이 결승. 각 라운드는 이전 라운드 승자로부터 채워지며(propagateBracket), 부전승은
+ * 생성 시점과 전파 시점 양쪽에서 자동으로 다음 라운드까지 승자 처리된다. */
+function generateBracket(sp) {
+  var teamIds = sp.teams.map(function(t){ return t.id; });
+  if (teamIds.length < 2) return;
+  var size = 2;
+  while (size < teamIds.length) size *= 2;
+  var seeds = teamIds.slice();
+  while (seeds.length < size) seeds.push(null);
+  var numRounds = Math.round(Math.log2(size));
+  var round0 = [];
+  for (var i = 0; i < size; i += 2) {
+    var m = { id: uid(), teamAId: seeds[i], teamBId: seeds[i+1], scoreA: "", scoreB: "", winnerId: null };
+    if (m.teamAId && !m.teamBId) m.winnerId = m.teamAId;
+    else if (!m.teamAId && m.teamBId) m.winnerId = m.teamBId;
+    round0.push(m);
+  }
+  var rounds = [round0];
+  var prevCount = round0.length;
+  for (var r = 1; r < numRounds; r++) {
+    var round = [];
+    for (var j = 0; j < prevCount/2; j++) round.push({ id: uid(), teamAId: null, teamBId: null, scoreA:"", scoreB:"", winnerId: null });
+    rounds.push(round);
+    prevCount = round.length;
+  }
+  sp.bracket = { rounds: rounds };
+  propagateBracket(sp);
+  saveData();
+}
+function propagateBracket(sp) {
+  if (!sp.bracket) return;
+  var rounds = sp.bracket.rounds;
+  for (var r = 0; r < rounds.length - 1; r++) {
+    rounds[r].forEach(function(m, i){
+      var nextMatch = rounds[r+1][Math.floor(i/2)];
+      var slot = i % 2 === 0 ? "teamAId" : "teamBId";
+      if (nextMatch[slot] !== m.winnerId) {
+        nextMatch[slot] = m.winnerId;
+        nextMatch.winnerId = null; nextMatch.scoreA = ""; nextMatch.scoreB = "";
+      }
+    });
+    rounds[r+1].forEach(function(nm){
+      if (!nm.winnerId) {
+        if (nm.teamAId && !nm.teamBId) nm.winnerId = nm.teamAId;
+        else if (!nm.teamAId && nm.teamBId) nm.winnerId = nm.teamBId;
+      }
+    });
+  }
+}
+function findBracketMatch(sp, matchId) {
+  var found = null;
+  sp.bracket.rounds.forEach(function(round){ var m = round.find(function(x){ return x.id===matchId; }); if (m) found = m; });
+  return found;
+}
+function renderBracketTab(sp) {
+  if (sp.teams.length < 2) return '<div class="empty-note">대진표를 만들려면 &ldquo;팀 순위&rdquo; 탭에서 팀을 2개 이상 추가해주세요.</div>';
+  var genBtnHtml = '<button type="button" class="chip-add" id="genBracketBtn">'+ic("wand",11)+(sp.bracket?" 대진표 새로 만들기":" 대진표 만들기")+'</button>';
+  if (!sp.bracket) return genBtnHtml + '<div class="chip-empty-hint" style="margin-top:10px">현재 등록된 팀 '+sp.teams.length+'개로 단일 토너먼트 대진표를 만듭니다.</div>';
+  var teamById = {}; sp.teams.forEach(function(t){ teamById[t.id] = t; });
+  function teamCell(m, side) {
+    var tid = side==="A" ? m.teamAId : m.teamBId;
+    var t = tid ? teamById[tid] : null;
+    var isWinner = !!(m.winnerId && t && m.winnerId===tid);
+    var scoreKey = side==="A" ? "scoreA" : "scoreB";
+    return '<div class="bracket-team '+(isWinner?"winner":"")+' '+(t?"":"bye")+'" data-bracketpick="'+m.id+'::'+side+'">' +
+      (t ? '<span class="sport-team-dot" style="background:'+t.color+'"></span><span class="bt-name">'+esc(t.name)+'</span><input class="bracket-score" data-bracketscore="'+m.id+'::'+scoreKey+'" value="'+esc(m[scoreKey]||"")+'" placeholder="-">' : '<span class="bt-name bt-bye">부전승 대기</span>') +
+    '</div>';
+  }
+  var roundCount = sp.bracket.rounds.length;
+  var roundsHtml = sp.bracket.rounds.map(function(round, ri){
+    var roundLabel = ri===roundCount-1 ? "결승" : ri===roundCount-2 ? "준결승" : (ri+1)+"라운드";
+    return '<div class="bracket-round"><div class="bracket-round-label">'+roundLabel+'</div>' +
+      round.map(function(m){ return '<div class="bracket-match">'+teamCell(m,"A")+teamCell(m,"B")+'</div>'; }).join("") +
+    '</div>';
+  }).join("");
+  var championHtml = "";
+  var finalMatch = sp.bracket.rounds[roundCount-1][0];
+  if (finalMatch && finalMatch.winnerId && teamById[finalMatch.winnerId]) {
+    var champ = teamById[finalMatch.winnerId];
+    championHtml = '<div class="bracket-champion">'+ic("trophy",15)+'<span class="sport-team-dot" style="background:'+champ.color+'"></span>우승: '+esc(champ.name)+'</div>';
+  }
+  return genBtnHtml + championHtml + '<div class="bracket-scroll"><div class="bracket-wrap">'+roundsHtml+'</div></div>';
+}
+function wireBracketTab(sp) {
+  var main = document.getElementById("main");
+  var genBtn = document.getElementById("genBracketBtn");
+  if (genBtn) genBtn.addEventListener("click", function(){
+    if (sp.bracket) {
+      openModal({
+        title: "대진표를 새로 만들까요?",
+        message: "현재 대진표의 모든 진행 결과가 사라지고, 지금 등록된 팀으로 새 대진표가 만들어집니다.",
+        confirmLabel: "새로 만들기", danger: true,
+        onConfirm: function(){ generateBracket(sp); renderSportsPage(sp); }
+      });
+    } else {
+      generateBracket(sp); renderSportsPage(sp);
+    }
+  });
+  main.querySelectorAll("[data-bracketpick]").forEach(function(el){
+    el.addEventListener("click", function(e){
+      if (e.target.closest(".bracket-score")) return;
+      var parts = el.dataset.bracketpick.split("::");
+      var m = findBracketMatch(sp, parts[0]);
+      if (!m) return;
+      var tid = parts[1]==="A" ? m.teamAId : m.teamBId;
+      if (!tid) return;
+      m.winnerId = (m.winnerId===tid) ? null : tid;
+      propagateBracket(sp);
+      saveData(); renderSportsPage(sp);
+    });
+  });
+  main.querySelectorAll("[data-bracketscore]").forEach(function(inp){
+    inp.addEventListener("input", function(){
+      var parts = inp.dataset.bracketscore.split("::");
+      var m = findBracketMatch(sp, parts[0]);
+      if (m) { m[parts[1]] = inp.value; saveData(); }
+    });
+    inp.addEventListener("click", function(e){ e.stopPropagation(); });
   });
 }
 function renderRecordsTab(sp, preset) {
@@ -1987,10 +2184,11 @@ function renderSportsPage(sp) {
   if (!sp.roster) sp.roster = [];
   if (!sp.records) sp.records = [];
   if (!sp.awards) sp.awards = [];
+  if (sp.bracket === undefined) sp.bracket = null;
   var preset = SPORT_PRESETS[sp.sportType] || SPORT_PRESETS.other;
   if (spState.lastId !== sp.id) { spState.tab = "standings"; spState.lineupTeamId = null; spState.recordCat = null; spState.lastId = sp.id; }
   var main = document.getElementById("main");
-  var tabs = [["standings","팀 순위"],["lineup","라인업"],["records","기록"],["awards","수상"]];
+  var tabs = [["standings","팀 순위"],["lineup","라인업"],["bracket","대진표"],["records","기록"],["awards","수상"]];
   var tabsHtml = '<div class="sport-tabs">' + tabs.map(function(t){
     return '<button type="button" class="sport-tab '+(spState.tab===t[0]?"on":"")+'" data-sporttab="'+t[0]+'">'+t[1]+'</button>';
   }).join("") + '</div>';
@@ -1998,6 +2196,7 @@ function renderSportsPage(sp) {
   var bodyHtml = "";
   if (spState.tab === "standings") bodyHtml = renderStandingsTab(sp, preset);
   else if (spState.tab === "lineup") bodyHtml = renderLineupTab(sp, preset);
+  else if (spState.tab === "bracket") bodyHtml = renderBracketTab(sp);
   else if (spState.tab === "records") bodyHtml = renderRecordsTab(sp, preset);
   else if (spState.tab === "awards") bodyHtml = renderAwardsTab(sp, preset);
 
@@ -2016,6 +2215,7 @@ function renderSportsPage(sp) {
 
   if (spState.tab === "standings") wireStandingsTab(sp);
   else if (spState.tab === "lineup") wireLineupTab(sp, preset);
+  else if (spState.tab === "bracket") wireBracketTab(sp);
   else if (spState.tab === "records") wireRecordsTab(sp);
   else if (spState.tab === "awards") wireAwardsTab(sp);
 }
