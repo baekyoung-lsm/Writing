@@ -192,23 +192,32 @@
   .appear-card { border:1px solid var(--border); border-radius:11px; padding:14px; margin-bottom:16px; background:var(--bg-card); box-shadow:0 1px 3px var(--shadow); }
   .appear-head { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-faint); margin-bottom:12px; }
   .appear-body { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
-  .appear-render-toggle { display:flex; gap:6px; margin-bottom:8px; }
-  .appear-render-toggle button { flex:1; border:1px solid var(--border-strong); background:var(--bg); border-radius:20px; padding:5px 6px; font-size:11px; color:var(--ink-soft); white-space:nowrap; }
-  .appear-render-toggle button.on { border-color:var(--accent); background:var(--accent-soft); color:var(--ink); font-weight:600; }
+  .appear-render-toggle, .appear-panel-toggle { display:flex; gap:6px; margin-bottom:8px; }
+  .appear-render-toggle button, .appear-panel-toggle button { flex:1; border:1px solid var(--border-strong); background:var(--bg); border-radius:20px; padding:5px 6px; font-size:11px; color:var(--ink-soft); white-space:nowrap; }
+  .appear-render-toggle button.on, .appear-panel-toggle button.on { border-color:var(--accent); background:var(--accent-soft); color:var(--ink); font-weight:600; }
   .appear-render-note { font-size:11px; color:var(--ink-faint); line-height:1.5; margin-top:6px; text-align:center; }
-  .appear-preview-group { flex:none; width:300px; display:flex; flex-direction:column; gap:12px; }
-  .appear-panel-label { font-size:11px; color:var(--ink-faint); font-weight:600; margin-bottom:6px; }
+  .appear-height-row-shared { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .appear-height-row-label { font-size:12px; color:var(--ink-soft); flex:none; }
+  .appear-height-row-shared input[type="range"] { flex:1; accent-color:var(--accent); }
+  .appear-height-row-value { display:flex; align-items:center; gap:3px; font-size:12px; color:var(--ink); font-variant-numeric:tabular-nums; flex:none; min-width:56px; }
+  .appear-height-row-value svg { flex:none; opacity:.6; }
+  .appear-preview-col { flex:none; width:300px; transition:width .15s ease; }
+  .appear-preview-col[data-count="2"] { width:360px; }
+  .appear-preview-col[data-count="1"] { width:420px; }
+  .appear-preview-group { display:flex; flex-direction:column; gap:12px; }
+  .appear-panel-label { font-size:11px; color:var(--ink-faint); font-weight:600; margin-bottom:6px; align-self:stretch; text-align:left; }
   .appear-face-figure { position:relative; width:100%; aspect-ratio:4/5; border:1px solid var(--border); border-radius:11px; overflow:hidden; background:var(--bg-card-hover); }
   .appear-face-figure svg { display:block; width:100%; height:100%; }
   .appear-face-img { position:absolute; left:50%; top:-8.1%; height:316%; width:auto; transform:translateX(-50%); }
-  .appear-compare-panel { border:1px solid var(--border); border-radius:11px; padding:10px; background:var(--bg-card-hover); }
+  .appear-compare-panel, .appear-outfit-panel { border:1px solid var(--border); border-radius:11px; padding:10px; background:var(--bg-card-hover); }
+  .appear-outfit-panel { display:flex; flex-direction:column; align-items:center; }
   .appear-compare-stage { display:flex; align-items:flex-end; justify-content:center; gap:10px; min-height:150px; overflow-x:auto; }
   .appear-compare-col { display:flex; flex-direction:column; align-items:center; gap:6px; flex:none; }
-  .appear-compare-figure { display:flex; align-items:flex-end; flex:none; }
-  .appear-compare-figure svg, .appear-compare-figure img { display:block; height:100%; width:auto; }
-  .appear-compare-tag { font-size:11px; color:var(--ink-soft); font-variant-numeric:tabular-nums; white-space:nowrap; }
-  .appear-height-slider-wrap { display:flex; align-items:flex-end; height:150px; flex:none; padding-bottom:16px; }
-  .appear-height-slider-v { writing-mode:vertical-lr; direction:rtl; width:8px; height:130px; accent-color:var(--accent); cursor:pointer; }
+  .appear-compare-figure, .appear-outfit-figure { display:flex; align-items:flex-end; flex:none; }
+  .appear-compare-figure svg, .appear-compare-figure img, .appear-outfit-figure svg, .appear-outfit-figure img { display:block; height:100%; width:auto; }
+  .appear-compare-tag { font-size:11px; color:var(--ink-soft); font-variant-numeric:tabular-nums; white-space:nowrap; margin-top:6px; }
+  .appear-outfit-placeholder { display:flex; align-items:center; justify-content:center; width:100%; min-height:140px; border:1px dashed var(--border-strong); border-radius:8px; background:var(--bg); padding:14px; box-sizing:border-box; }
+  .appear-outfit-placeholder-text { font-size:11.5px; color:var(--ink-faint); text-align:center; line-height:1.6; }
   .appear-fields { flex:1; min-width:240px; display:flex; flex-direction:column; gap:10px; }
   .appear-gender-row { display:flex; gap:6px; }
   .appear-field { display:flex; flex-direction:column; gap:4px; }
@@ -5618,14 +5627,27 @@ var APPEAR_HEIGHT_MIN = 35, APPEAR_HEIGHT_MAX = 300, APPEAR_HEIGHT_BASELINE = 17
 function appearDefaultHeightCm(gender) {
   return gender === "m" ? 178 : gender === "f" ? 163 : 168;
 }
-/* The height/body-compare panel has its own dedicated frame (unlike the old single
- * shared preview), so there's no more need to clamp or crop for legibility -- both
- * figures render at true relative scale, one cm-per-px ratio for both, feet resting on
- * a shared ground line. Pegged to the 300cm max (not the 175cm baseline) so the tallest
- * possible figure still fits the panel width without a horizontal scrollbar. */
+/* The height/body-compare and outfit-check panels each have their own dedicated frame,
+ * so there's no need to clamp or crop for legibility -- figures render at true relative
+ * scale, one cm-per-px ratio, feet resting on a shared ground line. Pegged to the 300cm
+ * max (not the 175cm baseline) so the tallest possible figure still fits without a
+ * horizontal scrollbar at the default 3-panel width. When fewer of the three panels are
+ * showing, the freed-up space goes toward a taller render (scale factor per active count)
+ * instead of sitting empty -- that's the "자동 확대" behavior for 1-2 active panels. */
 var APPEAR_COMPARE_PX_PER_CM = 220 / APPEAR_HEIGHT_MAX;
-function appearComparePx(cm) {
-  return Math.round(APPEAR_COMPARE_PX_PER_CM * cm);
+var APPEAR_COMPARE_COUNT_SCALE = { 1: 1.6, 2: 1.3, 3: 1 };
+function appearComparePx(cm, activeCount) {
+  var scale = APPEAR_COMPARE_COUNT_SCALE[activeCount] || 1;
+  return Math.round(APPEAR_COMPARE_PX_PER_CM * scale * cm);
+}
+/* Panel visibility is per-doc UI state, not saved character data -- same treatment as
+ * appearRasterMode/appearTab below, reset to the all-on default on reload. */
+function appearPanelVisible(docId) {
+  state.appearPanelVisible = state.appearPanelVisible || {};
+  var v = state.appearPanelVisible[docId];
+  if (!v) { v = { face: true, compare: true, outfit: true }; state.appearPanelVisible[docId] = v; }
+  if (!v.face && !v.compare && !v.outfit) v.face = true;
+  return v;
 }
 /* Both crops share the same horizontal window (centerX +/- 44, wide enough for A-pose
  * arms and the bulkiest hairstyles) so template/current/face renders all line up. The
@@ -5828,6 +5850,10 @@ function renderAppearanceEditor(doc) {
   var rasterSrc = APPEAR_RASTER_PREVIEW[g === "m" ? "m" : "f"];
   var curCm = appearEffectiveHeightCm(ap);
   var templateAp = Object.assign({}, defaultAppearance(), { gender: g });
+  var panelsOn = appearPanelVisible(doc.id);
+  var activeCount = (panelsOn.face ? 1 : 0) + (panelsOn.compare ? 1 : 0) + (panelsOn.outfit ? 1 : 0);
+  var heightRowOn = panelsOn.compare || panelsOn.outfit;
+  var comparePxNow = appearComparePx(curCm, activeCount);
 
   /* Each category is a collapsed-by-default accordion row (small live thumbnail +
    * current selection name), not an always-expanded grid -- this, plus splitting
@@ -5905,43 +5931,69 @@ function renderAppearanceEditor(doc) {
   return '<div class="appear-card">' +
     '<div class="appear-head">' + ic("person", 15) + '<span>외견</span></div>' +
     '<div class="appear-body">' +
+    '<div class="appear-preview-col" data-count="' + activeCount + '">' +
     '<div class="appear-render-toggle">' +
     '<button type="button" class="' + (rasterOn ? "" : "on") + '" data-rendermode="dot">도트(SVG)</button>' +
     '<button type="button" class="' + (rasterOn ? "on" : "") + '" data-rendermode="raster">AI 원화(베타)</button>' +
     '</div>' +
+    '<div class="appear-panel-toggle">' +
+    '<button type="button" class="' + (panelsOn.face ? "on" : "") + '" data-paneltoggle="face">얼굴 확인</button>' +
+    '<button type="button" class="' + (panelsOn.compare ? "on" : "") + '" data-paneltoggle="compare">키·체형 비교</button>' +
+    '<button type="button" class="' + (panelsOn.outfit ? "on" : "") + '" data-paneltoggle="outfit">외형 확인</button>' +
+    '</div>' +
+    (heightRowOn
+      ? '<div class="appear-height-row-shared">' +
+        '<span class="appear-height-row-label">키</span>' +
+        '<input type="range" id="aHeightSlider" min="' + APPEAR_HEIGHT_MIN + '" max="' + APPEAR_HEIGHT_MAX + '" step="1" value="' + curCm + '">' +
+        '<span class="appear-height-row-value">' + ic("ruler", 12) + '<span class="appear-cm-readout">' + curCm + '</span>cm</span>' +
+        '</div>'
+      : "") +
     '<div class="appear-preview-group">' +
-    '<div class="appear-panel appear-face-panel">' +
-    '<div class="appear-panel-label">얼굴 확인</div>' +
-    '<div class="appear-face-figure" id="appearFacePreview">' +
-    (rasterOn
-      ? '<img class="appear-face-img" id="appearFaceImg" src="' + rasterSrc + '" alt="얼굴 미리보기" style="filter:' + appearSkinFilterCss(ap.skinTone) + '">'
-      : renderAppearanceFaceSvg(ap)) +
-    '</div>' +
-    '</div>' +
-    '<div class="appear-panel appear-compare-panel">' +
-    '<div class="appear-panel-label">키·체형 비교</div>' +
-    '<div class="appear-compare-stage">' +
-    '<div class="appear-compare-col">' +
-    '<div class="appear-compare-figure" style="height:' + appearComparePx(APPEAR_HEIGHT_BASELINE) + 'px">' +
-    (rasterOn
-      ? '<img src="' + rasterSrc + '" alt="기준 체형" style="filter:' + appearSkinFilterCss(templateAp.skinTone) + '">'
-      : renderAppearanceBodySvg(templateAp)) +
-    '</div>' +
-    '<div class="appear-compare-tag">기준 ' + APPEAR_HEIGHT_BASELINE + 'cm</div>' +
-    '</div>' +
-    '<div class="appear-height-slider-wrap">' +
-    '<input type="range" id="aHeightSlider" class="appear-height-slider-v" min="' + APPEAR_HEIGHT_MIN + '" max="' + APPEAR_HEIGHT_MAX + '" step="1" value="' + curCm + '">' +
-    '</div>' +
-    '<div class="appear-compare-col">' +
-    '<div class="appear-compare-figure" id="appearCompareFigure" style="height:' + appearComparePx(curCm) + 'px">' +
-    (rasterOn
-      ? '<img id="appearCompareImg" src="' + rasterSrc + '" alt="현재 체형" style="filter:' + appearSkinFilterCss(ap.skinTone) + '">'
-      : renderAppearanceBodySvg(ap)) +
-    '</div>' +
-    '<div class="appear-compare-tag">현재 <span id="aHeightValue">' + curCm + 'cm</span></div>' +
-    '</div>' +
-    '</div>' +
-    (rasterOn ? '<div class="appear-render-note">체형 확인용 참고 이미지예요. 옷·머리색 등은 아직 반영 안 돼요.</div>' : "") +
+    (panelsOn.face
+      ? '<div class="appear-panel appear-face-panel">' +
+        '<div class="appear-panel-label">얼굴 확인</div>' +
+        '<div class="appear-face-figure" id="appearFacePreview">' +
+        (rasterOn
+          ? '<img class="appear-face-img" id="appearFaceImg" src="' + rasterSrc + '" alt="얼굴 미리보기" style="filter:' + appearSkinFilterCss(ap.skinTone) + '">'
+          : renderAppearanceFaceSvg(ap)) +
+        '</div>' +
+        '</div>'
+      : "") +
+    (panelsOn.compare
+      ? '<div class="appear-panel appear-compare-panel">' +
+        '<div class="appear-panel-label">키·체형 비교</div>' +
+        '<div class="appear-compare-stage">' +
+        '<div class="appear-compare-col">' +
+        '<div class="appear-compare-figure" style="height:' + appearComparePx(APPEAR_HEIGHT_BASELINE, activeCount) + 'px">' +
+        (rasterOn
+          ? '<img src="' + rasterSrc + '" alt="기준 체형" style="filter:' + appearSkinFilterCss(templateAp.skinTone) + '">'
+          : renderAppearanceBodySvg(templateAp)) +
+        '</div>' +
+        '<div class="appear-compare-tag">기준 ' + APPEAR_HEIGHT_BASELINE + 'cm</div>' +
+        '</div>' +
+        '<div class="appear-compare-col">' +
+        '<div class="appear-compare-figure" id="appearCompareFigure" style="height:' + comparePxNow + 'px">' +
+        (rasterOn
+          ? '<img id="appearCompareImg" src="' + rasterSrc + '" alt="현재 체형" style="filter:' + appearSkinFilterCss(ap.skinTone) + '">'
+          : renderAppearanceBodySvg(ap)) +
+        '</div>' +
+        '<div class="appear-compare-tag">현재 <span class="appear-cm-readout">' + curCm + '</span>cm</div>' +
+        '</div>' +
+        '</div>' +
+        (rasterOn ? '<div class="appear-render-note">체형 확인용 참고 이미지예요. 옷·머리색 등은 아직 반영 안 돼요.</div>' : "") +
+        '</div>'
+      : "") +
+    (panelsOn.outfit
+      ? '<div class="appear-panel appear-outfit-panel">' +
+        '<div class="appear-panel-label">외형 확인</div>' +
+        (rasterOn
+          ? '<div class="appear-outfit-placeholder" style="height:' + comparePxNow + 'px">' +
+            '<span class="appear-outfit-placeholder-text">AI 원화(베타)는 아직 의상을 표현하지 못해요.<br>도트(SVG) 모드에서 완성된 외형을 확인해보세요.</span>' +
+            '</div>'
+          : '<div class="appear-outfit-figure" id="appearOutfitFigure" style="height:' + comparePxNow + 'px">' + renderAppearanceBodySvg(ap) + '</div>' +
+            '<div class="appear-compare-tag">현재 <span class="appear-cm-readout">' + curCm + '</span>cm</div>') +
+        '</div>'
+      : "") +
     '</div>' +
     '</div>' +
     '<div class="appear-fields">' +
@@ -5967,14 +6019,24 @@ function wireAppearanceEditor(doc) {
   var ap = doc.appearance;
   function refreshPreview() {
     var rasterOn = !!(state.appearRasterMode && state.appearRasterMode[doc.id]);
+    var panelsOn = appearPanelVisible(doc.id);
     if (!rasterOn) {
-      var facePv = document.getElementById("appearFacePreview");
-      if (facePv) facePv.innerHTML = renderAppearanceFaceSvg(ap);
-      var comparePv = document.getElementById("appearCompareFigure");
-      if (comparePv) comparePv.innerHTML = renderAppearanceBodySvg(ap);
+      if (panelsOn.face) {
+        var facePv = document.getElementById("appearFacePreview");
+        if (facePv) facePv.innerHTML = renderAppearanceFaceSvg(ap);
+      }
+      if (panelsOn.compare) {
+        var comparePv = document.getElementById("appearCompareFigure");
+        if (comparePv) comparePv.innerHTML = renderAppearanceBodySvg(ap);
+      }
+      if (panelsOn.outfit) {
+        var outfitPv = document.getElementById("appearOutfitFigure");
+        if (outfitPv) outfitPv.innerHTML = renderAppearanceBodySvg(ap);
+      }
     } else {
       /* AI 원화 미리보기는 옷·머리 등 대부분의 픽커에 반응할 그림이 아직 없으니 그대로 두고,
-       * 유일하게 이 자산이 표현할 수 있는 피부색만 필터로 다시 계산해 반영한다. */
+       * 유일하게 이 자산이 표현할 수 있는 피부색만 필터로 다시 계산해 반영한다. 외형 확인
+       * 패널은 이 모드에서 안내 문구로 대체되므로 갱신할 이미지가 없다. */
       var filter = appearSkinFilterCss(ap.skinTone);
       var faceImg = document.getElementById("appearFaceImg");
       if (faceImg) faceImg.style.filter = filter;
@@ -5993,15 +6055,29 @@ function wireAppearanceEditor(doc) {
       renderDocPage(doc);
     });
   });
+  document.querySelectorAll("[data-paneltoggle]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var panelsOn = appearPanelVisible(doc.id);
+      var key = btn.dataset.paneltoggle;
+      var activeCount = (panelsOn.face ? 1 : 0) + (panelsOn.compare ? 1 : 0) + (panelsOn.outfit ? 1 : 0);
+      if (panelsOn[key] && activeCount <= 1) return; // at least one panel must stay visible
+      panelsOn[key] = !panelsOn[key];
+      renderDocPage(doc);
+    });
+  });
   var heightSlider = document.getElementById("aHeightSlider");
   if (heightSlider) {
     heightSlider.addEventListener("input", function () {
       var cm = parseInt(heightSlider.value, 10);
       ap.heightCm = cm;
-      var fig = document.getElementById("appearCompareFigure");
-      if (fig) fig.style.height = appearComparePx(cm) + "px";
-      var readout = document.getElementById("aHeightValue");
-      if (readout) readout.textContent = cm + "cm";
+      var panelsOn = appearPanelVisible(doc.id);
+      var activeCount = (panelsOn.face ? 1 : 0) + (panelsOn.compare ? 1 : 0) + (panelsOn.outfit ? 1 : 0);
+      var px = appearComparePx(cm, activeCount) + "px";
+      var compareFig = document.getElementById("appearCompareFigure");
+      if (compareFig) compareFig.style.height = px;
+      var outfitFig = document.getElementById("appearOutfitFigure");
+      if (outfitFig) outfitFig.style.height = px;
+      document.querySelectorAll(".appear-cm-readout").forEach(function (el) { el.textContent = cm; });
       saveData();
     });
   }
