@@ -4570,9 +4570,88 @@ function buildScriptSnippet(sc, q) {
   if (g) return highlightMatch(esc((g.mapTo||"") + (g.note ? " · "+g.note : "")), q);
   return null;
 }
+function timelineMatches(tl, q) {
+  if (!q) return true;
+  var hay = [tl.title];
+  (tl.events||[]).forEach(function(e){ hay.push(e.label); hay.push(e.title); hay.push(e.description); });
+  return hay.join(" ").toLowerCase().includes(q);
+}
+function buildTimelineSnippet(tl, q) {
+  var ev = (tl.events||[]).find(function(e){
+    return ((e.title||"")+" "+(e.description||"")+" "+(e.label||"")).toLowerCase().indexOf(q) !== -1;
+  });
+  if (!ev) return null;
+  return highlightMatch(esc((ev.title||ev.label||"")+(ev.description?" · "+ev.description:"")), q);
+}
+function tableMatches(t, q) {
+  if (!q) return true;
+  var hay = [t.title];
+  (t.columns||[]).forEach(function(c){ hay.push(c.name); });
+  (t.rows||[]).forEach(function(r){
+    (t.columns||[]).forEach(function(c){ hay.push(r.cells ? r.cells[c.id] : null); });
+  });
+  return hay.join(" ").toLowerCase().includes(q);
+}
+function buildTableSnippet(t, q) {
+  var cols = t.columns||[];
+  for (var i=0;i<(t.rows||[]).length;i++) {
+    var row = t.rows[i];
+    for (var j=0;j<cols.length;j++) {
+      var val = row.cells ? row.cells[cols[j].id] : null;
+      if (val && String(val).toLowerCase().indexOf(q) !== -1) {
+        return highlightMatch(esc(cols[j].name+": "+val), q);
+      }
+    }
+  }
+  return null;
+}
+function graphMatches(g, q) {
+  if (!q) return true;
+  var hay = [g.title];
+  (g.nodes||[]).forEach(function(n){ hay.push(n.label); });
+  (g.edges||[]).forEach(function(e){ hay.push(e.label); hay.push(e.memo); });
+  return hay.join(" ").toLowerCase().includes(q);
+}
+function buildGraphSnippet(g, q) {
+  var n = (g.nodes||[]).find(function(n){ return (n.label||"").toLowerCase().indexOf(q)!==-1; });
+  if (n) return highlightMatch(esc(n.label||""), q);
+  var e = (g.edges||[]).find(function(e){ return ((e.label||"")+" "+(e.memo||"")).toLowerCase().indexOf(q)!==-1; });
+  if (e) return highlightMatch(esc((e.label||"")+(e.memo?" · "+e.memo:"")), q);
+  return null;
+}
+function sportsMatches(sp, q) {
+  if (!q) return true;
+  var hay = [sp.title];
+  (sp.teams||[]).forEach(function(t){ hay.push(t.name); });
+  (sp.roster||[]).forEach(function(p){ hay.push(p.name); });
+  (sp.records||[]).forEach(function(r){ hay.push(r.name); hay.push(r.value); hay.push(r.note); });
+  (sp.awards||[]).forEach(function(a){ hay.push(a.awardName); hay.push(a.freeform); });
+  return hay.join(" ").toLowerCase().includes(q);
+}
+function buildSportsSnippet(sp, q) {
+  var team = (sp.teams||[]).find(function(t){ return (t.name||"").toLowerCase().indexOf(q)!==-1; });
+  if (team) return highlightMatch(esc(team.name||""), q);
+  var rec = (sp.records||[]).find(function(r){ return ((r.name||"")+" "+(r.value||"")+" "+(r.note||"")).toLowerCase().indexOf(q)!==-1; });
+  if (rec) return highlightMatch(esc((rec.name||"")+": "+(rec.value||"")+(rec.note?" · "+rec.note:"")), q);
+  return null;
+}
+function buildEssaySnippet(e, q) {
+  var text = e.text || "";
+  var idx = text.toLowerCase().indexOf(q);
+  if (idx !== -1) return snippetAround(text, q, idx);
+  var tag = (e.themeTags||[]).find(function(t){ return (t||"").toLowerCase().indexOf(q)!==-1; });
+  if (tag) return highlightMatch(esc("태그: "+tag), q);
+  return null;
+}
+function relationshipMatches(r, q) {
+  if (!q) return true;
+  var typeLabel = (RELATIONSHIP_TYPES[r.type]||{}).label || r.type || "";
+  var hay = [typeLabel, r.note||""];
+  return hay.join(" ").toLowerCase().includes(q);
+}
 function collectSearchResults(rawQuery) {
   var q = (rawQuery || "").trim().toLowerCase();
-  if (!q) return { docs: [], manuscripts: [], scripts: [] };
+  if (!q) return { docs: [], manuscripts: [], scripts: [], timelines: [], tables: [], graphs: [], sports: [], essayEntries: [], relationships: [] };
   var docs = DOCS.filter(function(d){ return docMatches(d, q); }).map(function(d){
     var work = WORKS.find(function(w){ return w.id === d.workId; });
     return { doc: d, work: work, snippet: buildDocSnippet(d, q) };
@@ -4586,49 +4665,109 @@ function collectSearchResults(rawQuery) {
     var work = WORKS.find(function(w){ return w.id === s.workId; });
     return { sc: s, work: work, snippet: buildScriptSnippet(s, q) };
   });
-  return { docs: docs, manuscripts: manuscripts, scripts: scripts };
+  var timelines = TIMELINES.filter(function(tl){ return timelineMatches(tl, q); }).map(function(tl){
+    var work = WORKS.find(function(w){ return w.id === tl.workId; });
+    return { tl: tl, work: work, snippet: buildTimelineSnippet(tl, q) };
+  });
+  var tables = TABLES.filter(function(t){ return tableMatches(t, q); }).map(function(t){
+    var work = WORKS.find(function(w){ return w.id === t.workId; });
+    return { t: t, work: work, snippet: buildTableSnippet(t, q) };
+  });
+  var graphs = GRAPHS.filter(function(g){ return graphMatches(g, q); }).map(function(g){
+    var work = WORKS.find(function(w){ return w.id === g.workId; });
+    return { g: g, work: work, snippet: buildGraphSnippet(g, q) };
+  });
+  var sports = SPORTS.filter(function(sp){ return sportsMatches(sp, q); }).map(function(sp){
+    var work = WORKS.find(function(w){ return w.id === sp.workId; });
+    return { sp: sp, work: work, snippet: buildSportsSnippet(sp, q) };
+  });
+  var essayEntries = ESSAY_ENTRIES.filter(function(e){ return essayEntryMatches(e, q); }).map(function(e){
+    var essay = ESSAYS.find(function(es){ return es.id === e.essayId; });
+    var work = essay ? WORKS.find(function(w){ return w.id === essay.workId; }) : null;
+    return { e: e, essay: essay, work: work, snippet: buildEssaySnippet(e, q) };
+  });
+  var relationships = RELATIONSHIPS.filter(function(r){ return relationshipMatches(r, q); }).map(function(r){
+    var work = WORKS.find(function(w){ return w.id === r.workId; });
+    var fromDoc = DOCS.find(function(d){ return d.id === r.fromId; });
+    var toDoc = DOCS.find(function(d){ return d.id === r.toId; });
+    return { r: r, work: work, fromDoc: fromDoc, toDoc: toDoc };
+  }).filter(function(x){ return x.fromDoc || x.toDoc; });
+  return { docs: docs, manuscripts: manuscripts, scripts: scripts, timelines: timelines, tables: tables, graphs: graphs, sports: sports, essayEntries: essayEntries, relationships: relationships };
 }
 function renderSearchPage(rawQuery) {
   var main = document.getElementById("main");
   var q = (rawQuery || "").trim();
   var results = collectSearchResults(q);
-  var total = results.docs.length + results.manuscripts.length + results.scripts.length;
+  var total = results.docs.length + results.manuscripts.length + results.scripts.length +
+    results.timelines.length + results.tables.length + results.graphs.length + results.sports.length +
+    results.essayEntries.length + results.relationships.length;
   var html = '<div class="page-pad">' +
     '<div class="doccat-eyebrow">검색 결과</div>' +
     '<h1 class="doccat-title">"'+esc(q)+'" · '+total+'건</h1>';
   if (!total) {
-    html += '<p style="color:var(--ink-faint);font-size:13.5px;margin-top:14px">일치하는 설정 문서나 원고가 없어요.</p>';
+    html += '<p style="color:var(--ink-faint);font-size:13.5px;margin-top:14px">일치하는 결과가 없어요.</p>';
   } else {
-    if (results.docs.length) {
-      html += '<div class="home-section-label" style="margin-top:24px">설정 문서 · '+results.docs.length+'건</div><div class="search-result-list">';
-      results.docs.forEach(function(r){
-        html += '<div class="search-result-row" data-openresult="doc:'+r.doc.id+'">' +
-          '<div class="srr-top"><span class="srr-cat">'+esc(r.doc.category||"")+'</span><span class="srr-title">'+esc(r.doc.title||"제목 없음")+'</span>'+(r.work?'<span class="srr-work">'+esc(r.work.title||"")+'</span>':'')+'</div>' +
-          (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
-        '</div>';
-      });
-      html += '</div>';
+    function section(label, count, rowsHtml) {
+      if (!count) return "";
+      return '<div class="home-section-label" style="margin-top:24px">'+esc(label)+' · '+count+'건</div><div class="search-result-list">'+rowsHtml+'</div>';
     }
-    if (results.manuscripts.length) {
-      html += '<div class="home-section-label">원고 · '+results.manuscripts.length+'건</div><div class="search-result-list">';
-      results.manuscripts.forEach(function(r){
-        html += '<div class="search-result-row" data-openresult="ms:'+r.ms.id+'">' +
-          '<div class="srr-top"><span class="srr-cat">'+(r.novel?esc(r.novel.title||""):"")+'</span><span class="srr-title">'+esc(r.ms.title||"제목 없음")+'</span>'+(r.work?'<span class="srr-work">'+esc(r.work.title||"")+'</span>':'')+'</div>' +
-          (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
-        '</div>';
-      });
-      html += '</div>';
-    }
-    if (results.scripts.length) {
-      html += '<div class="home-section-label">문자 · '+results.scripts.length+'건</div><div class="search-result-list">';
-      results.scripts.forEach(function(r){
-        html += '<div class="search-result-row" data-openresult="script:'+r.sc.id+'">' +
-          '<div class="srr-top"><span class="srr-title">'+esc(r.sc.title||"제목 없음")+'</span>'+(r.work?'<span class="srr-work">'+esc(r.work.title||"")+'</span>':'')+'</div>' +
-          (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
-        '</div>';
-      });
-      html += '</div>';
-    }
+    html += section("설정 문서", results.docs.length, results.docs.map(function(r){
+      return '<div class="search-result-row" data-openresult="doc:'+r.doc.id+'">' +
+        '<div class="srr-top"><span class="srr-cat">'+esc(r.doc.category||"")+'</span><span class="srr-title">'+esc(r.doc.title||"제목 없음")+'</span>'+(r.work?'<span class="srr-work">'+esc(r.work.title||"")+'</span>':'')+'</div>' +
+        (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
+      '</div>';
+    }).join(""));
+    html += section("원고", results.manuscripts.length, results.manuscripts.map(function(r){
+      return '<div class="search-result-row" data-openresult="ms:'+r.ms.id+'">' +
+        '<div class="srr-top"><span class="srr-cat">'+(r.novel?esc(r.novel.title||""):"")+'</span><span class="srr-title">'+esc(r.ms.title||"제목 없음")+'</span>'+(r.work?'<span class="srr-work">'+esc(r.work.title||"")+'</span>':'')+'</div>' +
+        (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
+      '</div>';
+    }).join(""));
+    html += section("수필·자서전", results.essayEntries.length, results.essayEntries.map(function(r){
+      return '<div class="search-result-row" data-openresult="essayentry:'+r.e.id+'">' +
+        '<div class="srr-top"><span class="srr-cat">'+(r.essay?esc(r.essay.title||""):"")+'</span><span class="srr-title">'+esc(r.e.title||"제목 없음")+'</span>'+(r.work?'<span class="srr-work">'+esc(r.work.title||"")+'</span>':'')+'</div>' +
+        (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
+      '</div>';
+    }).join(""));
+    html += section("관계", results.relationships.length, results.relationships.map(function(r){
+      var self = r.fromDoc || r.toDoc;
+      var label = relationshipLabelFor(r.r, r.fromDoc || r.toDoc);
+      var otherTitle = r.fromDoc && r.toDoc ? (r.fromDoc.title||"?")+" → "+(r.toDoc.title||"?") : (self ? (self.title||"?") : "?");
+      return '<div class="search-result-row" data-openresult="doc:'+self.id+'">' +
+        '<div class="srr-top"><span class="srr-cat">'+esc(label)+'</span><span class="srr-title">'+esc(otherTitle)+'</span>'+(r.work?'<span class="srr-work">'+esc(r.work.title||"")+'</span>':'')+'</div>' +
+        (r.r.note ? '<div class="srr-snippet">'+esc(r.r.note)+'</div>' : '') +
+      '</div>';
+    }).join(""));
+    html += section("연표", results.timelines.length, results.timelines.map(function(r){
+      return '<div class="search-result-row" data-openresult="timeline:'+r.tl.id+'">' +
+        '<div class="srr-top"><span class="srr-title">'+esc(r.tl.title||"제목 없음")+'</span>'+(r.work?'<span class="srr-work">'+esc(r.work.title||"")+'</span>':'')+'</div>' +
+        (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
+      '</div>';
+    }).join(""));
+    html += section("표", results.tables.length, results.tables.map(function(r){
+      return '<div class="search-result-row" data-openresult="table:'+r.t.id+'">' +
+        '<div class="srr-top"><span class="srr-title">'+esc(r.t.title||"제목 없음")+'</span>'+(r.work?'<span class="srr-work">'+esc(r.work.title||"")+'</span>':'')+'</div>' +
+        (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
+      '</div>';
+    }).join(""));
+    html += section("관계도", results.graphs.length, results.graphs.map(function(r){
+      return '<div class="search-result-row" data-openresult="graph:'+r.g.id+'">' +
+        '<div class="srr-top"><span class="srr-title">'+esc(r.g.title||"제목 없음")+'</span>'+(r.work?'<span class="srr-work">'+esc(r.work.title||"")+'</span>':'')+'</div>' +
+        (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
+      '</div>';
+    }).join(""));
+    html += section("스포츠 기록판", results.sports.length, results.sports.map(function(r){
+      return '<div class="search-result-row" data-openresult="sports:'+r.sp.id+'">' +
+        '<div class="srr-top"><span class="srr-title">'+esc(r.sp.title||"제목 없음")+'</span>'+(r.work?'<span class="srr-work">'+esc(r.work.title||"")+'</span>':'')+'</div>' +
+        (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
+      '</div>';
+    }).join(""));
+    html += section("문자", results.scripts.length, results.scripts.map(function(r){
+      return '<div class="search-result-row" data-openresult="script:'+r.sc.id+'">' +
+        '<div class="srr-top"><span class="srr-title">'+esc(r.sc.title||"제목 없음")+'</span>'+(r.work?'<span class="srr-work">'+esc(r.work.title||"")+'</span>':'')+'</div>' +
+        (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
+      '</div>';
+    }).join(""));
   }
   html += '</div>';
   main.innerHTML = html;
@@ -4638,6 +4777,11 @@ function renderSearchPage(rawQuery) {
       var kind = parts[0], id = parts.slice(1).join(":");
       if (kind === "doc") { state.mode = "doc"; state.activeId = id; }
       else if (kind === "script") { state.mode = "script"; state.activeId = id; }
+      else if (kind === "timeline") { state.mode = "timeline"; state.activeId = id; }
+      else if (kind === "table") { state.mode = "table"; state.activeId = id; }
+      else if (kind === "graph") { state.mode = "graph"; state.activeId = id; }
+      else if (kind === "sports") { state.mode = "sports"; state.activeId = id; }
+      else if (kind === "essayentry") { state.mode = "essayentry"; state.activeId = id; }
       else { state.mode = "manuscript"; state.activeId = id; }
       render();
     });
@@ -10884,7 +11028,7 @@ function render() {
 
 /* ---------------- backup / restore ---------------- */
 function exportData() {
-  var data = { docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, exportedAt: new Date().toISOString(), appVersion: 1 };
+  var data = { docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS, exportedAt: new Date().toISOString(), appVersion: 1 };
   var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   var url = URL.createObjectURL(blob);
   var a = document.createElement("a");
@@ -10918,6 +11062,7 @@ function importDataFile(file) {
         SCRIPTS = parsed.scripts || [];
         ESSAYS = parsed.essays || [];
         ESSAY_ENTRIES = parsed.essayEntries || [];
+        RELATIONSHIPS = parsed.relationships || [];
         state.mode = "empty"; state.activeId = null; state.collapsed = {};
         saveData(); render();
       }
@@ -12503,6 +12648,13 @@ function buildWorldBuildingData(workId, opts) {
         rels.push({ name: other.label || "?", kind: kindLabel, memo: e.label || "", targetId: other.docId || null });
       });
     });
+    var selfDoc = workDocs.find(function (d) { return d.id === docId; });
+    RELATIONSHIPS.filter(function (r) { return r.workId === workId && (r.fromId === docId || r.toId === docId); }).forEach(function (r) {
+      var otherId = r.fromId === docId ? r.toId : r.fromId;
+      var other = workDocs.find(function (d) { return d.id === otherId; });
+      if (!other || !selfDoc) return;
+      rels.push({ name: other.title || "?", kind: relationshipLabelFor(r, selfDoc), memo: r.note || "", targetId: other.id });
+    });
     return rels;
   }
   function nodeIdsForDoc(g, docId) {
@@ -12574,9 +12726,27 @@ function buildWorldBuildingData(workId, opts) {
 
   var locations = [];
   if (wantCat("locations")) {
+    var promotedRegionIds = {};
+    workDocs.filter(function (d) { return d.category === "장소"; }).forEach(function (d) {
+      var chain = ancestorChain(d, "parentLocationId");
+      var parentLabel = chain.length > 1 ? chain.slice(0, -1).map(function (a) { return a.title || "?"; }).join(" › ") : "";
+      var linkedMap = null;
+      workMaps.some(function (mp) {
+        var hit = (mp.regions || []).some(function (r) { if (r.locationId === d.id) { promotedRegionIds[r.id] = true; return true; } return false; }) ||
+          (mp.markers || []).some(function (mk) { return mk.locationId === d.id; });
+        if (hit) { linkedMap = mp; return true; }
+        return false;
+      });
+      locations.push({
+        id: d.id, title: d.title || "제목 없음",
+        terrain: (LOCATION_TYPES[d.locationType] || {}).label || "",
+        mapTitle: parentLabel || (linkedMap ? (linkedMap.title || "지도") : ""),
+        orgName: "", orgId: null
+      });
+    });
     workMaps.forEach(function (mp) {
       (mp.regions || []).forEach(function (r) {
-        if (!r.label) return;
+        if (!r.label || promotedRegionIds[r.id]) return;
         var org = r.houseId ? workDocs.find(function (d) { return d.id === r.houseId; }) : null;
         locations.push({
           id: r.id, title: r.label,
