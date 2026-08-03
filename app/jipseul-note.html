@@ -849,8 +849,20 @@
   .map-crop-hint { font-size:12px; color:var(--ink-soft); padding:5px 4px; white-space:nowrap; }
   .map-crop-preview { fill:var(--accent-soft); fill-opacity:0.28; stroke:var(--accent); stroke-width:1.5; stroke-dasharray:6 4; pointer-events:none; }
   .map-scale-line-preview { stroke:var(--accent); stroke-width:2.5; stroke-dasharray:4 3; pointer-events:none; }
-  .map-rotate-val { font-size:12px; color:var(--ink-soft); min-width:40px; text-align:center; font-variant-numeric:tabular-nums; }
-  #mapRotateSlider { width:120px; accent-color:var(--accent); }
+  /* ---- 회전 UI: 포토샵/피그마/그림판 스타일 드래그 핸들 (각도 슬라이더 대체) ---- */
+  .map-rotate-readout { font-size:15px; font-weight:700; color:var(--accent); min-width:52px; text-align:center; font-variant-numeric:tabular-nums; padding:5px 4px; }
+  .map-rotate-quick { display:flex; gap:4px; }
+  .map-rotate-num-label { display:inline-flex; align-items:center; gap:4px; font-size:12px; color:var(--ink-faint); padding:0 4px; }
+  .map-rotate-num { width:56px; border:1px solid var(--border-strong); background:var(--bg); border-radius:6px; padding:4px 6px; font-size:12px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .map-rotate-quick .map-symbol-btn[id*="CCW"] svg { transform:scaleX(-1); }
+  .map-rotate-pivot { color:var(--accent); cursor:move; }
+  .map-rotate-pivot circle { fill:var(--bg-card); stroke:var(--accent); stroke-width:1.6; }
+  .map-rotate-pivot line { stroke:var(--accent); stroke-width:1.4; }
+  .map-rotate-pivot.dragging circle { fill:var(--accent-soft); }
+  .map-rotate-guide { stroke:var(--accent); stroke-width:1.4; stroke-dasharray:3 3; opacity:0.7; pointer-events:none; }
+  .map-rotate-handle { fill:var(--accent); stroke:var(--bg-card); stroke-width:2; cursor:grab; }
+  .map-rotate-handle.dragging { cursor:grabbing; fill:var(--accent-strong); }
+  .map-rotate-angle-text { fill:var(--ink); font-family:var(--sans); font-size:12px; font-weight:700; paint-order:stroke; stroke:var(--bg-card); stroke-width:3px; pointer-events:none; }
   .map-terrain-btn::before { content:""; width:9px; height:9px; border-radius:50%; background:var(--tc); flex:none; }
   .map-terrain-btn.on { border-color:var(--tc); color:var(--ink); background:var(--bg-card-hover); font-weight:600; }
   .map-region polygon { fill-opacity:0.42; stroke-width:1.6; stroke-opacity:0.85; cursor:pointer; }
@@ -9571,7 +9583,7 @@ function drawGraph(g) {
 }
 
 /* ---------------- map page ---------------- */
-var mpState = { tool: "select", terrain: "forest", symbol: "city", regionKind: "country", drawPoints: null, panStart: null, selected: null, scaleLine: null, scaleLineStart: null, showAlignment: false, dragObj: null };
+var mpState = { tool: "select", terrain: "forest", symbol: "city", regionKind: "country", drawPoints: null, panStart: null, selected: null, scaleLine: null, scaleLineStart: null, showAlignment: false, dragObj: null, rotateDeg: 0, rotatePivot: null, rotateHandleDrag: null, rotatePivotDrag: null };
 var _mapWinHandlers = null;
 var _mapBeforeUnload = null;
 function currentMap() { return MAPS.find(function(mp){ return mp.id === state.activeId; }); }
@@ -9585,8 +9597,14 @@ function currentMap() { return MAPS.find(function(mp){ return mp.id === state.ac
  * 같으면(선택만 바뀌었거나 세력권 보기 토글 등) 아무 것도 쌓지 않아
  * 실제 데이터 변경만 히스토리에 남는다. */
 var mapHistory = { mapId: null, past: [], future: [], limit: 60 };
+/* 배경 이미지 필드(bgImage 등)도 스냅샷에 포함한다 -- 그래야 이미지 회전(크기가
+ * 바뀌고 좌표가 재투영되는 확정적 편집)도 다른 편집과 동일하게 Ctrl+Z 대상이
+ * 된다. 배경 이미지가 큰 데이터 URL이라 스냅샷 하나당 메모리 비용이 커질 수는
+ * 있지만, 이 앱의 히스토리는 애초에 전체 상태를 통째로 복사하는 단순한
+ * 구조(증분 diff가 아님)를 택했으므로 일관성을 위해 그대로 따른다 -- 실제
+ * 변경이 없으면(선택만 바뀌는 등) mapHistoryCommit의 dedup이 걸러내 준다. */
 function mapSnapshot(mp) {
-  return JSON.stringify({ regions: mp.regions, lines: mp.lines, markers: mp.markers, dangerZones: mp.dangerZones||[], gates: mp.gates||[] });
+  return JSON.stringify({ regions: mp.regions, lines: mp.lines, markers: mp.markers, dangerZones: mp.dangerZones||[], gates: mp.gates||[], bgImage: mp.bgImage||null, bgWidth: mp.bgWidth||0, bgHeight: mp.bgHeight||0, bgMode: mp.bgMode||"hidden", traceImage: mp.traceImage||null });
 }
 function mapHistoryEnsure(mp) {
   if (mapHistory.mapId !== mp.id) {
@@ -9595,8 +9613,15 @@ function mapHistoryEnsure(mp) {
     mapHistory.future = [];
   }
 }
+/* 배경 이미지 교체(크롭/회전) 후 자동으로 다시 도는 선 감지 재생성은 사용자
+ * 입장에서 "같은 편집의 후속 처리"일 뿐 별도 undo 단계가 아니다. bgImage가
+ * 스냅샷에 포함된 뒤로는 이걸 그대로 두면 Ctrl+Z 한 번으로는 trace 모드만
+ * 되돌아가고 실제 회전/자르기는 그대로 남는 어색한 2단계 undo가 생기므로,
+ * 이 재생성 단계의 drawMap()만 히스토리에 안 쌓이게 억제한다. */
+var mapHistorySuppressed = false;
 function mapHistoryCommit(mp) {
   mapHistoryEnsure(mp);
+  if (mapHistorySuppressed) { updateMapSaveIndicator(mp); return; }
   var snap = mapSnapshot(mp);
   if (snap === mapHistory.past[mapHistory.past.length-1]) { updateMapSaveIndicator(mp); return; }
   mapHistory.past.push(snap);
@@ -9630,6 +9655,10 @@ function mapApplySnapshot(mp, json) {
   var snap = JSON.parse(json);
   mp.regions = snap.regions; mp.lines = snap.lines; mp.markers = snap.markers;
   mp.dangerZones = snap.dangerZones; mp.gates = snap.gates;
+  if (snap.bgImage !== undefined) {
+    mp.bgImage = snap.bgImage; mp.bgWidth = snap.bgWidth; mp.bgHeight = snap.bgHeight;
+    mp.bgMode = snap.bgMode; mp.traceImage = snap.traceImage;
+  }
   mpState.selected = null;
   saveData();
   drawMap(mp);
@@ -9949,6 +9978,110 @@ function removeDangerPreview() {
   var prev = document.getElementById("mapDangerPreview");
   if (prev) prev.remove();
 }
+function normalizeRotateDeg(deg) {
+  deg = deg % 360;
+  if (deg > 180) deg -= 360;
+  if (deg <= -180) deg += 360;
+  return deg;
+}
+var MAP_ROTATE_SNAP_ANGLES = [0, 15, 30, 45, 60, 90, 120, 135, 180, -15, -30, -45, -60, -90, -120, -135, -180];
+function snapRotateAngle(deg) {
+  var best = deg, bestDiff = Infinity;
+  MAP_ROTATE_SNAP_ANGLES.forEach(function (a) {
+    var diff = Math.abs(deg - a);
+    if (diff < bestDiff) { bestDiff = diff; best = a; }
+  });
+  return best;
+}
+var MAP_ROTATE_HANDLE_R = 70;
+/* 포토샵/피그마 스타일 드래그 회전 UI. 배경 이미지(#mapBgImageEl)에는 직접
+ * rotate(deg,px,py) 속성을 얹어 실시간 미리보기를 하고(그리기 도구 대비
+ * 훨씬 가벼운 갱신 -- drawMap 재호출 없음), 중심점 십자·안내선·핸들·각도
+ * 표시는 이 함수가 관리하는 별도 SVG 요소들로 그린다(mapCrop/DangerPreview와
+ * 같은 "필요할 때 만들고 속성만 갱신" 패턴). 실제 데이터(이미지 래스터화 +
+ * 지역/마커 좌표 재투영)는 여기서 건드리지 않고, "적용" 버튼을 눌러야
+ * applyMapRotation이 커밋한다 -- 드래그 중에는 미리보기일 뿐이다. */
+function updateRotateOverlay(mp) {
+  var gEl = document.getElementById("mapG");
+  if (!gEl || !mp.bgImage || mpState.tool !== "rotate") { removeRotateOverlay(); return; }
+  if (!mpState.rotatePivot) mpState.rotatePivot = [mp.bgWidth / 2, mp.bgHeight / 2];
+  var pivot = mpState.rotatePivot;
+  var deg = mpState.rotateDeg || 0;
+  var rad = deg * Math.PI / 180;
+  var hx = pivot[0] + Math.sin(rad) * MAP_ROTATE_HANDLE_R;
+  var hy = pivot[1] - Math.cos(rad) * MAP_ROTATE_HANDLE_R;
+
+  var imgEl = document.getElementById("mapBgImageEl");
+  if (imgEl) imgEl.setAttribute("transform", "rotate(" + deg + "," + pivot[0] + "," + pivot[1] + ")");
+
+  var guide = document.getElementById("mapRotateGuide");
+  if (!guide) {
+    guide = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    guide.setAttribute("id", "mapRotateGuide");
+    guide.setAttribute("class", "map-rotate-guide");
+    gEl.appendChild(guide);
+  }
+  guide.setAttribute("x1", pivot[0]); guide.setAttribute("y1", pivot[1]);
+  guide.setAttribute("x2", hx); guide.setAttribute("y2", hy);
+
+  var pivotEl = document.getElementById("mapRotatePivot");
+  if (!pivotEl) {
+    pivotEl = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    pivotEl.setAttribute("id", "mapRotatePivot");
+    pivotEl.setAttribute("class", "map-rotate-pivot");
+    pivotEl.innerHTML = '<circle r="5"></circle><line x1="-9" y1="0" x2="9" y2="0"></line><line x1="0" y1="-9" x2="0" y2="9"></line>';
+    pivotEl.addEventListener("mousedown", function (e) {
+      e.stopPropagation(); e.preventDefault();
+      mpState.rotatePivotDrag = true;
+    });
+    gEl.appendChild(pivotEl);
+  }
+  pivotEl.setAttribute("transform", "translate(" + pivot[0] + "," + pivot[1] + ")");
+  pivotEl.classList.toggle("dragging", !!mpState.rotatePivotDrag);
+
+  var handleEl = document.getElementById("mapRotateHandle");
+  if (!handleEl) {
+    handleEl = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    handleEl.setAttribute("id", "mapRotateHandle");
+    handleEl.setAttribute("class", "map-rotate-handle");
+    handleEl.setAttribute("r", 9);
+    handleEl.addEventListener("mousedown", function (e) {
+      e.stopPropagation(); e.preventDefault();
+      var mp2 = currentMap();
+      var mouseWorld = mapScreenToWorld(mp2, e.clientX, e.clientY);
+      var pv = mpState.rotatePivot;
+      var startAngle = Math.atan2(mouseWorld[1] - pv[1], mouseWorld[0] - pv[0]) * 180 / Math.PI;
+      mpState.rotateHandleDrag = { startAngle: startAngle, startDeg: mpState.rotateDeg || 0 };
+    });
+    gEl.appendChild(handleEl);
+  }
+  handleEl.setAttribute("cx", hx); handleEl.setAttribute("cy", hy);
+  handleEl.classList.toggle("dragging", !!mpState.rotateHandleDrag);
+
+  var txt = document.getElementById("mapRotateAngleText");
+  if (!txt) {
+    txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    txt.setAttribute("id", "mapRotateAngleText");
+    txt.setAttribute("class", "map-rotate-angle-text");
+    txt.setAttribute("text-anchor", "middle");
+    gEl.appendChild(txt);
+  }
+  txt.setAttribute("x", hx); txt.setAttribute("y", hy - 14);
+  txt.textContent = (Math.round(deg * 10) / 10) + "°";
+
+  var readout = document.getElementById("mapRotateReadout");
+  if (readout) readout.textContent = (Math.round(deg * 10) / 10) + "°";
+  var numInput = document.getElementById("mapRotateNumInput");
+  if (numInput && document.activeElement !== numInput) numInput.value = Math.round(deg * 10) / 10;
+}
+function removeRotateOverlay() {
+  ["mapRotateGuide", "mapRotatePivot", "mapRotateHandle", "mapRotateAngleText"].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.remove();
+  });
+  var imgEl = document.getElementById("mapBgImageEl");
+  if (imgEl) imgEl.removeAttribute("transform");
+}
 function applyMapCrop(mp, x, y, w, h) {
   function cropDataUrl(dataUrl, callback) {
     if (!dataUrl) { callback(null); return; }
@@ -9976,18 +10109,34 @@ function applyMapCrop(mp, x, y, w, h) {
       traceMapImage(newBg, 60, function(traceUrl){
         mp.traceImage = traceUrl;
         mp.bgMode = "trace";
-        saveData(); drawMap(mp);
+        saveData();
+        mapHistorySuppressed = true;
+        drawMap(mp);
+        mapHistorySuppressed = false;
       });
     }
   });
 }
-function applyMapRotation(mp, deg) {
-  if (!mp.bgImage || !deg) return;
+/* pivot(회전 중심)을 이미지 좌표계(0..bgWidth, 0..bgHeight) 기준 [x,y]로 받는다.
+ * 생략하면 기존과 같이 이미지 정중앙을 기준으로 돈다. onDone은 배경 이미지
+ * 래스터화 + 좌표 재투영이 끝나고 첫 drawMap이 반영된 직후 호출된다(트레이스
+ * 이미지 재생성은 그 뒤에도 비동기로 이어지지만, 화면상으로는 이미 회전이
+ * 끝난 상태이므로 회전 UI 오버레이를 다시 그려도 되는 시점이다). */
+function applyMapRotation(mp, deg, pivot, onDone) {
+  if (!mp.bgImage || !deg) { if (onDone) onDone(); return; }
   var rad = deg * Math.PI / 180;
   var W = mp.bgWidth, H = mp.bgHeight;
+  var px = (pivot && pivot.length===2) ? pivot[0] : W/2, py = (pivot && pivot.length===2) ? pivot[1] : H/2;
   var cos = Math.cos(rad), sin = Math.sin(rad);
-  var newW = Math.abs(W*cos) + Math.abs(H*sin);
-  var newH = Math.abs(W*sin) + Math.abs(H*cos);
+  function rot(x, y) {
+    var dx = x - px, dy = y - py;
+    return [px + dx*cos - dy*sin, py + dx*sin + dy*cos];
+  }
+  var corners = [rot(0,0), rot(W,0), rot(W,H), rot(0,H)];
+  var xs = corners.map(function(c){ return c[0]; }), ys = corners.map(function(c){ return c[1]; });
+  var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+  var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+  var newW = maxX - minX, newH = maxY - minY;
   function rotateDataUrl(dataUrl, callback) {
     if (!dataUrl) { callback(null); return; }
     var img = new Image();
@@ -9995,17 +10144,18 @@ function applyMapRotation(mp, deg) {
       var canvas = document.createElement("canvas");
       canvas.width = newW; canvas.height = newH;
       var ctx = canvas.getContext("2d");
-      ctx.translate(newW/2, newH/2);
+      ctx.translate(-minX, -minY);
+      ctx.translate(px, py);
       ctx.rotate(rad);
-      ctx.drawImage(img, -W/2, -H/2, W, H);
+      ctx.translate(-px, -py);
+      ctx.drawImage(img, 0, 0, W, H);
       callback(canvas.toDataURL("image/png"));
     };
     img.src = dataUrl;
   }
-  function rotatePoint(px, py) {
-    var dx = px - W/2, dy = py - H/2;
-    var rx = dx*cos - dy*sin, ry = dx*sin + dy*cos;
-    return [rx + newW/2, ry + newH/2];
+  function rotatePoint(x, y) {
+    var r = rot(x, y);
+    return [r[0] - minX, r[1] - minY];
   }
   rotateDataUrl(mp.bgImage, function(newBg){
     mp.bgImage = newBg;
@@ -10015,13 +10165,19 @@ function applyMapRotation(mp, deg) {
     mp.regions.forEach(function(r){ r.points = r.points.map(function(p){ return rotatePoint(p[0], p[1]); }); });
     mp.lines.forEach(function(l){ l.points = l.points.map(function(p){ return rotatePoint(p[0], p[1]); }); });
     mp.markers.forEach(function(mk){ var np = rotatePoint(mk.x, mk.y); mk.x = np[0]; mk.y = np[1]; });
+    (mp.dangerZones||[]).forEach(function(dz){ var np = rotatePoint(dz.x, dz.y); dz.x = np[0]; dz.y = np[1]; });
+    (mp.gates||[]).forEach(function(g){ var np = rotatePoint(g.x, g.y); g.x = np[0]; g.y = np[1]; });
     fitMap(mp);
     saveData(); drawMap(mp);
+    if (onDone) onDone();
     if (newBg) {
       traceMapImage(newBg, 60, function(traceUrl){
         mp.traceImage = traceUrl;
         mp.bgMode = "trace";
-        saveData(); drawMap(mp);
+        saveData();
+        mapHistorySuppressed = true;
+        drawMap(mp);
+        mapHistorySuppressed = false;
       });
     }
   });
@@ -10564,7 +10720,7 @@ function drawMap(mp) {
   mapHistoryCommit(mp);
 }
 function renderMapPage(mp) {
-  mpState = { tool: "select", terrain: mpState.terrain || "forest", symbol: mpState.symbol || "city", regionKind: mpState.regionKind || "country", drawPoints: null, panStart: null, selected: null, cropRect: null, cropDragStart: null, scaleLine: null, scaleLineStart: null, dangerStart: null, dangerCircle: null, showAlignment: mpState.showAlignment || false, dragObj: null };
+  mpState = { tool: "select", terrain: mpState.terrain || "forest", symbol: mpState.symbol || "city", regionKind: mpState.regionKind || "country", drawPoints: null, panStart: null, selected: null, cropRect: null, cropDragStart: null, scaleLine: null, scaleLineStart: null, dangerStart: null, dangerCircle: null, showAlignment: mpState.showAlignment || false, dragObj: null, rotateDeg: 0, rotatePivot: null, rotateHandleDrag: null, rotatePivotDrag: null };
   mapHistoryEnsure(mp);
   if (mp.bgOpacity === undefined) mp.bgOpacity = 0.4;
   if (mp.bgMode === undefined) mp.bgMode = mp.bgImage ? "original" : "hidden";
@@ -10598,10 +10754,17 @@ function renderMapPage(mp) {
     '<button type="button" class="map-symbol-btn" id="mapCropCancel">'+ic("close",13)+' 취소</button>' +
   '</div>';
   var rotateRowHtml = '<div class="map-terrain-row" id="mapRotateRow" style="display:none">' +
-    '<span class="map-crop-hint">슬라이더로 기울기를 맞추세요</span>' +
-    '<input type="range" id="mapRotateSlider" min="-180" max="180" step="0.5" value="0">' +
-    '<span class="map-rotate-val" id="mapRotateVal">0.0&deg;</span>' +
-    '<button type="button" class="map-symbol-btn" id="mapRotate90">'+ic("rotate",13)+' 90&deg; 회전</button>' +
+    '<span class="map-rotate-readout" id="mapRotateReadout">0&deg;</span>' +
+    '<span class="map-crop-hint">이미지 위 핸들을 드래그해서 회전하세요 &middot; Shift: 각도 스냅 &middot; 십자 표시(중심점)도 드래그로 옮길 수 있어요</span>' +
+    '<div class="map-rotate-quick">' +
+      '<button type="button" class="map-symbol-btn" id="mapRotateCCW90" title="반시계 방향 90&deg;">'+ic("rotate",13)+' -90&deg;</button>' +
+      '<button type="button" class="map-symbol-btn" id="mapRotateCCW45" title="반시계 방향 45&deg;">'+ic("rotate",13)+' -45&deg;</button>' +
+      '<button type="button" class="map-symbol-btn" id="mapRotate180" title="180&deg; 회전">'+ic("rotate",13)+' 180&deg;</button>' +
+      '<button type="button" class="map-symbol-btn" id="mapRotateCW45" title="시계 방향 45&deg;">'+ic("rotate",13)+' +45&deg;</button>' +
+      '<button type="button" class="map-symbol-btn" id="mapRotateCW90" title="시계 방향 90&deg;">'+ic("rotate",13)+' +90&deg;</button>' +
+    '</div>' +
+    '<label class="map-rotate-num-label">정밀 입력 <input type="number" id="mapRotateNumInput" class="map-rotate-num" value="0" step="0.5">&deg;</label>' +
+    '<button type="button" class="map-symbol-btn" id="mapRotatePivotReset" title="회전 중심을 이미지 가운데로 되돌리기">'+ic("fit",13)+' 중심점 재설정</button>' +
     '<button type="button" class="map-symbol-btn" id="mapRotateApply">'+ic("check",13)+' 적용</button>' +
     '<button type="button" class="map-symbol-btn" id="mapRotateCancel">'+ic("close",13)+' 취소</button>' +
   '</div>';
@@ -10767,12 +10930,15 @@ function renderMapPage(mp) {
   drawMap(mp);
 
   function resetRotatePreview() {
-    var slider = document.getElementById("mapRotateSlider");
-    if (slider) slider.value = 0;
-    var val = document.getElementById("mapRotateVal");
-    if (val) val.textContent = "0.0°";
-    var imgEl = document.getElementById("mapBgImageEl");
-    if (imgEl) imgEl.removeAttribute("transform");
+    mpState.rotateDeg = 0;
+    mpState.rotatePivot = null;
+    mpState.rotateHandleDrag = null;
+    mpState.rotatePivotDrag = null;
+    removeRotateOverlay();
+    var readout = document.getElementById("mapRotateReadout");
+    if (readout) readout.textContent = "0°";
+    var numInput = document.getElementById("mapRotateNumInput");
+    if (numInput) numInput.value = 0;
   }
   function setTool(t) {
     mpState.tool = mpState.tool === t ? "select" : t;
@@ -10843,25 +11009,39 @@ function renderMapPage(mp) {
       return;
     }
     setTool("rotate");
+    if (mpState.tool === "rotate") updateRotateOverlay(mp);
   });
   document.getElementById("mtScale").addEventListener("click", function(){ setTool("scale"); });
   document.getElementById("mapScaleCancel").addEventListener("click", function(){
     mpState.scaleLine = null; mpState.scaleLineStart = null; removeScaleLinePreview();
     setTool("select");
   });
-  document.getElementById("mapRotateSlider").addEventListener("input", function(e){
-    var deg = parseFloat(e.target.value) || 0;
-    document.getElementById("mapRotateVal").textContent = deg.toFixed(1) + "°";
-    var imgEl = document.getElementById("mapBgImageEl");
-    if (imgEl) imgEl.setAttribute("transform", "rotate("+deg+","+(mp.bgWidth/2)+","+(mp.bgHeight/2)+")");
+  document.getElementById("mapRotateNumInput").addEventListener("input", function(e){
+    var deg = normalizeRotateDeg(parseFloat(e.target.value) || 0);
+    mpState.rotateDeg = deg;
+    updateRotateOverlay(mp);
   });
-  document.getElementById("mapRotate90").addEventListener("click", function(){
-    applyMapRotation(mp, 90);
-    resetRotatePreview();
+  function quickRotate(amount) {
+    var pivot = mpState.rotatePivot;
+    applyMapRotation(mp, amount, pivot, function(){
+      mpState.rotateDeg = 0;
+      mpState.rotatePivot = null;
+      if (mpState.tool === "rotate") updateRotateOverlay(mp);
+    });
+  }
+  document.getElementById("mapRotateCCW90").addEventListener("click", function(){ quickRotate(-90); });
+  document.getElementById("mapRotateCCW45").addEventListener("click", function(){ quickRotate(-45); });
+  document.getElementById("mapRotate180").addEventListener("click", function(){ quickRotate(180); });
+  document.getElementById("mapRotateCW45").addEventListener("click", function(){ quickRotate(45); });
+  document.getElementById("mapRotateCW90").addEventListener("click", function(){ quickRotate(90); });
+  document.getElementById("mapRotatePivotReset").addEventListener("click", function(){
+    mpState.rotatePivot = [mp.bgWidth/2, mp.bgHeight/2];
+    updateRotateOverlay(mp);
   });
   document.getElementById("mapRotateApply").addEventListener("click", function(){
-    var deg = parseFloat(document.getElementById("mapRotateSlider").value) || 0;
-    if (deg) applyMapRotation(mp, deg);
+    var deg = mpState.rotateDeg || 0;
+    var pivot = mpState.rotatePivot;
+    if (deg) applyMapRotation(mp, deg, pivot);
     resetRotatePreview();
     setTool("select");
   });
@@ -11008,6 +11188,12 @@ function renderMapPage(mp) {
       });
       return;
     }
+    if (mpState.tool === "rotate") {
+      /* 회전 핸들·중심점은 각자 mousedown에서 stopPropagation하므로 여기까지
+       * 오는 건 빈 캔버스 클릭뿐 -- 예전에는 이게 실수로 자유 그리기(drawPoints)를
+       * 시작시켰다. 회전 도구에서는 캔버스 자체 클릭은 아무 동작도 하지 않는다. */
+      return;
+    }
     var pt = mapScreenToWorld(mp, e.clientX, e.clientY);
     mpState.drawPoints = [pt];
     updateMapDrawPreview(mp);
@@ -11066,11 +11252,28 @@ function renderMapPage(mp) {
         updateMapSaveIndicator(mp);
       }
       d.el.setAttribute("transform", "translate("+d.obj.x+","+d.obj.y+")"+(d.moved?" scale(1.08)":""));
+    } else if (mpState.rotateHandleDrag) {
+      /* 핸들을 잡고 도는 동안은 각도만 갱신하고 SVG 속성만 직접 바꾼다(drawMap
+       * 재호출 없음 -- 다른 드래그 최적화와 동일한 패턴). Shift를 누르고 있으면
+       * 15/30/45/60/90/120/135/180도 격자에 스냅한다. */
+      var mouseWorld = mapScreenToWorld(mp, e.clientX, e.clientY);
+      var pivot = mpState.rotatePivot;
+      var curAngle = Math.atan2(mouseWorld[1]-pivot[1], mouseWorld[0]-pivot[0]) * 180/Math.PI;
+      var deltaAngle = curAngle - mpState.rotateHandleDrag.startAngle;
+      var newDeg = normalizeRotateDeg(mpState.rotateHandleDrag.startDeg + deltaAngle);
+      if (e.shiftKey) newDeg = snapRotateAngle(newDeg);
+      mpState.rotateDeg = newDeg;
+      updateRotateOverlay(mp);
+    } else if (mpState.rotatePivotDrag) {
+      mpState.rotatePivot = mapScreenToWorld(mp, e.clientX, e.clientY);
+      updateRotateOverlay(mp);
     }
   };
   var onMapMouseUp = function(){
     if (mpState.panStart) { mpState.panStart = null; wrapEl.classList.remove("panning"); saveData(); }
     if (mpState.cropDragStart) { mpState.cropDragStart = null; }
+    if (mpState.rotateHandleDrag) { mpState.rotateHandleDrag = null; updateRotateOverlay(mp); }
+    if (mpState.rotatePivotDrag) { mpState.rotatePivotDrag = null; updateRotateOverlay(mp); }
     if (mpState.dragObj) {
       /* 실제로 움직였으면 이동을 확정 저장하고, 움직이지 않았으면(그냥 클릭) 기존
        * 동작 그대로 선택 + 편집 모달을 연다 -- 드래그 도입 전 클릭 동작을 그대로 보존. */
