@@ -1555,6 +1555,15 @@ function polygonArea(points) {
   }
   return Math.abs(a/2);
 }
+function pointInPolygon(x, y, poly) {
+  var inside = false;
+  for (var i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    var xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+    var intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
 var TABLE_COL_TYPES = {
   text:   { label:"텍스트", icon:"lines" },
   number: { label:"숫자", icon:"hash" },
@@ -3755,6 +3764,7 @@ function createMingChinaMapTemplate(workId) {
     }).filter(Boolean);
     if (pts.length >= 2) mp.lines.push({ id: uid(), points: pts, kind:"river", label: rd.name });
   });
+  detectAndFillMapGaps(mp);
   saveData();
   fitMap(mp);
   saveData();
@@ -3800,6 +3810,7 @@ function createKoreaMapTemplate(workId) {
   });
   var seoul = mp.regions.find(function(r){ return r.label === "서울특별시"; });
   if (seoul) { var sc = polygonCentroid(seoul.points); mp.markers.push({ id: uid(), x: sc[0], y: sc[1], kind:"capital", label:"서울" }); }
+  detectAndFillMapGaps(mp);
   saveData();
   fitMap(mp);
   saveData();
@@ -3994,6 +4005,7 @@ function createWorldCountriesMapTemplate(workId) {
   Object.keys(WORLD_COUNTRY_SHAPES).forEach(function(name){
     mp.regions.push({ id: uid(), points: WORLD_COUNTRY_SHAPES[name].map(function(p){ return [p[0], p[1]]; }), terrain: WORLD_COUNTRY_TERRAIN[name] || "plain", label: name, childMapId: null, houseId: null, countryInfo: null, locationId: null });
   });
+  detectAndFillMapGaps(mp);
   saveData();
   fitMap(mp);
   saveData();
@@ -4141,7 +4153,8 @@ function blobContains(blob, x, y) {
   blob.harmonics.forEach(function (h) { r += h.amp * Math.sin(h.freq * angle + h.phase); });
   return dist <= Math.max(blob.r * 0.35, r);
 }
-function proceduralTraceComponent(mask, cols, rows, step, compId, compGrid) {
+function proceduralTraceComponent(mask, cols, rows, step, compId, compGrid, offsetX, offsetY) {
+  offsetX = offsetX || 0; offsetY = offsetY || 0;
   var edgeMap = new Map();
   function addEdge(x1, y1, x2, y2) {
     var a = x1 + "," + y1, b = x2 + "," + y2;
@@ -4153,7 +4166,7 @@ function proceduralTraceComponent(mask, cols, rows, step, compId, compGrid) {
   for (var gy = 0; gy < rows; gy++) {
     for (var gx = 0; gx < cols; gx++) {
       if (compGrid[gy * cols + gx] !== compId) continue;
-      var x0 = gx * step, y0 = gy * step, x1 = x0 + step, y1 = y0 + step;
+      var x0 = offsetX + gx * step, y0 = offsetY + gy * step, x1 = x0 + step, y1 = y0 + step;
       var up = gy > 0 ? compGrid[(gy - 1) * cols + gx] : -1;
       var down = gy < rows - 1 ? compGrid[(gy + 1) * cols + gx] : -1;
       var left = gx > 0 ? compGrid[gy * cols + gx - 1] : -1;
@@ -4371,8 +4384,90 @@ function generateProceduralWorldMap(workId, style, seedInput) {
   regions.forEach(function (r) {
     mp.regions.push({ id: uid(), points: r.points, terrain: r.terrain, label: r.label, childMapId: null, houseId: null, countryInfo: null, locationId: null });
   });
+  detectAndFillMapGaps(mp);
   saveData(); fitMap(mp); saveData(); render();
   return mp;
+}
+/* ---------------- 지도 영역 공백 금지 규칙 ----------------
+ * "대륙 내부의 정체불명의 빈 공간은 버그"라는 원칙을 강제하기 위한 검사·자동 채우기.
+ * 이미 그려진 모든 지역을 래스터화해서 -> 캔버스 테두리에서 flood fill로 도달 가능한
+ * 빈 셀은 "바깥(바다/여백)"으로 인정하고 -> 그 외 빈 셀(=기존 지역들에게 완전히
+ * 둘러싸인 빈틈)만 "공백"으로 판정한다. 공백이 있으면 명시적인 "미개척지" 지역을
+ * 새로 만들어 채운다 -- 지도 생성기(절차적/실세계 템플릿) 마지막 단계와, 사용자가
+ * 손으로 그리다가 툴바에서 수동으로 눌러 검사할 때 양쪽에서 재사용. */
+function detectAndFillMapGaps(mp) {
+  var landRegions = mp.regions.filter(function (r) { return r.points && r.points.length >= 3; });
+  if (landRegions.length < 2) return { filled: 0, regions: [] };
+  var xs = [], ys = [];
+  landRegions.forEach(function (r) { r.points.forEach(function (p) { xs.push(p[0]); ys.push(p[1]); }); });
+  var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+  var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+  var margin = Math.max(10, (maxX - minX) * 0.02);
+  minX -= margin; minY -= margin; maxX += margin; maxY += margin;
+  var STEP = Math.max(2, Math.round((maxX - minX) / 260));
+  var cols = Math.max(1, Math.ceil((maxX - minX) / STEP));
+  var rows = Math.max(1, Math.ceil((maxY - minY) / STEP));
+  if (cols * rows > 400000) return { filled: 0, regions: [] }; // safety cap for absurdly large/degenerate maps
+  var mask = new Uint8Array(cols * rows);
+  for (var gy = 0; gy < rows; gy++) {
+    for (var gx = 0; gx < cols; gx++) {
+      var px = minX + gx * STEP + STEP / 2, py = minY + gy * STEP + STEP / 2;
+      for (var ri = 0; ri < landRegions.length; ri++) {
+        if (pointInPolygon(px, py, landRegions[ri].points)) { mask[gy * cols + gx] = 1; break; }
+      }
+    }
+  }
+  // flood fill from the raster border through non-land cells -> these are legitimate
+  // "outside" (ocean/void beyond the landmass), not gaps that need filling.
+  var outside = new Uint8Array(cols * rows);
+  var stack = [];
+  function seedOutside(idx) { if (!mask[idx] && !outside[idx]) { outside[idx] = 1; stack.push(idx); } }
+  for (var bx = 0; bx < cols; bx++) { seedOutside(bx); seedOutside((rows - 1) * cols + bx); }
+  for (var by = 0; by < rows; by++) { seedOutside(by * cols); seedOutside(by * cols + cols - 1); }
+  while (stack.length) {
+    var cur = stack.pop();
+    var cx = cur % cols, cy = (cur - cx) / cols;
+    if (cx > 0) seedOutside(cur - 1);
+    if (cx < cols - 1) seedOutside(cur + 1);
+    if (cy > 0) seedOutside(cur - cols);
+    if (cy < rows - 1) seedOutside(cur + cols);
+  }
+  // remaining non-land, non-outside cells are enclosed pockets fully surrounded by
+  // already-defined regions -- exactly the "공백" this rule forbids.
+  var gapGrid = new Int32Array(cols * rows).fill(-1);
+  var visited = new Uint8Array(cols * rows);
+  var components = [];
+  for (var i2 = 0; i2 < cols * rows; i2++) {
+    if (mask[i2] || outside[i2] || visited[i2]) continue;
+    var compId = components.length;
+    var cells = [];
+    var st2 = [i2]; visited[i2] = 1; gapGrid[i2] = compId;
+    while (st2.length) {
+      var c0 = st2.pop(); cells.push(c0);
+      var cx0 = c0 % cols, cy0 = (c0 - cx0) / cols;
+      [[cx0 - 1, cy0], [cx0 + 1, cy0], [cx0, cy0 - 1], [cx0, cy0 + 1]].forEach(function (nb) {
+        var nx = nb[0], ny = nb[1];
+        if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) return;
+        var nidx = ny * cols + nx;
+        if (!mask[nidx] && !outside[nidx] && !visited[nidx]) { visited[nidx] = 1; gapGrid[nidx] = compId; st2.push(nidx); }
+      });
+    }
+    components.push(cells);
+  }
+  var MIN_GAP_CELLS = 10; // ignore sub-pixel simplification slivers, not real gaps
+  var filled = 0, newRegions = [];
+  components.forEach(function (cells, compId) {
+    if (cells.length < MIN_GAP_CELLS) return;
+    var outline = proceduralTraceComponent(mask, cols, rows, STEP, compId, gapGrid, minX, minY);
+    if (!outline.length) return;
+    outline = proceduralDecimate(proceduralChaikin(proceduralRemoveCollinear(outline), 2), 24).map(function (p) { return [Math.round(p[0] * 10) / 10, Math.round(p[1] * 10) / 10]; });
+    filled++;
+    var label = filled === 1 ? "미개척지" : "미개척지 " + filled;
+    var region = { id: uid(), points: outline, terrain: "plain", label: label, childMapId: null, houseId: null, countryInfo: null, locationId: null };
+    mp.regions.push(region);
+    newRegions.push(region);
+  });
+  return { filled: filled, regions: newRegions };
 }
 function deleteMap(id) {
   var mp = MAPS.find(function(mp){ return mp.id === id; });
@@ -9881,6 +9976,7 @@ function renderMapPage(mp) {
         '<button type="button" class="ms-sort-btn" id="mapYearBtn" title="연도·연표 정보 설정">'+ic("calendar",11)+' '+(esc(mp.yearLabel)||"연도 설정")+'</button>' +
         '<button type="button" class="ms-sort-btn" id="mapRegionListBtn" title="지역이 겹쳐서 클릭하기 어려울 때 이름으로 바로 찾기">'+ic("map",11)+' 지역 목록('+mp.regions.length+')</button>' +
         '<button type="button" class="ms-sort-btn'+(mpState.showAlignment?" on":"")+'" id="mapAlignmentBtn" title="지역에 연결된 세력의 정파·사파·마교 진영으로 한 번에 색칠해서 보기">'+ic("sword",11)+' 세력권 보기</button>' +
+        '<button type="button" class="ms-sort-btn" id="mapGapFillBtn" title="이미 그려진 지역들에 완전히 둘러싸인 빈틈을 찾아서 \'미개척지\' 지역으로 자동으로 채워요">'+ic("fillDrop",11)+' 빈틈 채우기</button>' +
         (linkedEv ? '<button type="button" class="ms-sort-btn" id="mapEventJumpBtn" title="연결된 연표 사건으로 이동">'+ic("map",11)+' '+esc(linkedTl.title||"연표")+' · '+esc(linkedEv.label||linkedEv.title||"사건")+'</button>' : '') +
         '<span class="ms-sort-btn" style="pointer-events:none;background:none;border-style:dashed" title="지역에 마우스를 올리면 면적이 표시돼요 · 단위는 단위·달력 설정에서 바꿀 수 있어요">'+ic("ruler",11)+' '+(mp.scaleKmPerUnit ? fmtMapDistanceLabel(mp) : "축척 미설정 — 도구모음의 자 아이콘으로 설정")+'</span>' +
       '</div>' +
@@ -9947,6 +10043,17 @@ function renderMapPage(mp) {
   document.getElementById("mapAlignmentBtn").addEventListener("click", function(){
     mpState.showAlignment = !mpState.showAlignment;
     renderMapPage(mp);
+  });
+  document.getElementById("mapGapFillBtn").addEventListener("click", function(){
+    var result = detectAndFillMapGaps(mp);
+    if (result.filled) { saveData(); renderMapPage(mp); }
+    openModal({
+      title: "빈틈 채우기",
+      message: result.filled
+        ? '이미 그려진 지역들에 완전히 둘러싸인 빈틈 '+result.filled+'곳을 찾아 "미개척지" 지역으로 채웠습니다.'
+        : "지역들에 둘러싸인 빈틈이 없습니다.",
+      confirmLabel: "확인"
+    });
   });
   var mapEventJumpBtn = document.getElementById("mapEventJumpBtn");
   if (mapEventJumpBtn) mapEventJumpBtn.addEventListener("click", function(){
