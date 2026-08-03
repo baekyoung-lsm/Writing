@@ -54,6 +54,54 @@
     --moss:#3F6B34; --moss-soft:rgba(63,107,52,0.14);
     --shadow:rgba(20,20,15,0.08);
   }
+  /* RGB 테마 4종 -- 각각 고유한 accent를 함께 지정해 톤이 일관되게 어울리도록 한다.
+   * 어두운 배경 위에 채도 높은 accent를 쓰되, 본문 텍스트(--ink)는 항상 충분한
+   * 명도 대비를 확보해 가독성을 해치지 않도록 한다(무협·지도 등 SVG 라벨도 이
+   * 토큰들을 그대로 물려받는다). */
+  :root[data-theme="rgb"][data-rgbvariant="cyber"] {
+    --bg:#0a0e14; --bg-panel:#0d1219; --bg-card:#111823; --bg-card-hover:#16202c;
+    --ink:#e6f6ff; --ink-soft:#a9c4d6; --ink-faint:#6c8494;
+    --border:#1e2a38; --border-strong:#2c4256;
+    --accent:#00e5ff; --accent-soft:color-mix(in srgb, #00e5ff 16%, transparent);
+    --accent-strong:color-mix(in srgb, #00e5ff 80%, white);
+    --tide:#39d3c6; --tide-soft:rgba(57,211,198,0.16);
+    --rose:#ff5c7a; --rose-soft:rgba(255,92,122,0.16);
+    --moss:#7CFFB2; --moss-soft:rgba(124,255,178,0.16);
+    --shadow:rgba(0,0,0,0.55);
+  }
+  :root[data-theme="rgb"][data-rgbvariant="neon"] {
+    --bg:#0c0710; --bg-panel:#120a18; --bg-card:#180f20; --bg-card-hover:#20142b;
+    --ink:#f5e6ff; --ink-soft:#cba9dc; --ink-faint:#8a6b9c;
+    --border:#2a1a38; --border-strong:#3d2650;
+    --accent:#ff2ec4; --accent-soft:color-mix(in srgb, #ff2ec4 16%, transparent);
+    --accent-strong:color-mix(in srgb, #ff2ec4 80%, white);
+    --tide:#7df9ff; --tide-soft:rgba(125,249,255,0.16);
+    --rose:#ff4d6d; --rose-soft:rgba(255,77,109,0.16);
+    --moss:#39ff88; --moss-soft:rgba(57,255,136,0.16);
+    --shadow:rgba(0,0,0,0.55);
+  }
+  :root[data-theme="rgb"][data-rgbvariant="aurora"] {
+    --bg:#070d12; --bg-panel:#0a131a; --bg-card:#0e1a22; --bg-card-hover:#13232d;
+    --ink:#e3fff6; --ink-soft:#9fd9c9; --ink-faint:#5f9284;
+    --border:#16323a; --border-strong:#1f4650;
+    --accent:#2ee6a8; --accent-soft:color-mix(in srgb, #2ee6a8 16%, transparent);
+    --accent-strong:color-mix(in srgb, #2ee6a8 80%, white);
+    --tide:#48c9ff; --tide-soft:rgba(72,201,255,0.16);
+    --rose:#ff7a9d; --rose-soft:rgba(255,122,157,0.16);
+    --moss:#9dffb0; --moss-soft:rgba(157,255,176,0.16);
+    --shadow:rgba(0,0,0,0.55);
+  }
+  :root[data-theme="rgb"][data-rgbvariant="synthwave"] {
+    --bg:#120522; --bg-panel:#170a2c; --bg-card:#1e0f38; --bg-card-hover:#271349;
+    --ink:#ffe9fb; --ink-soft:#e2a6e0; --ink-faint:#9a6ba0;
+    --border:#3a1856; --border-strong:#52216f;
+    --accent:#ff5da2; --accent-soft:color-mix(in srgb, #ff5da2 16%, transparent);
+    --accent-strong:color-mix(in srgb, #ff5da2 80%, white);
+    --tide:#4de3ff; --tide-soft:rgba(77,227,255,0.16);
+    --rose:#ff6b4a; --rose-soft:rgba(255,107,74,0.16);
+    --moss:#4dffb8; --moss-soft:rgba(77,255,184,0.16);
+    --shadow:rgba(0,0,0,0.55);
+  }
 
   * { box-sizing: border-box; }
   html, body { height: 100%; }
@@ -70,11 +118,13 @@
 
   /* ---------- Sidebar ---------- */
   .sidebar { background:var(--bg-panel); border-right:1px solid var(--border); padding:24px 16px 16px; display:flex; flex-direction:column; gap:16px; position:sticky; top:0; height:100vh; overflow-y:auto; }
-  .brand { display:flex; flex-direction:column; gap:6px; padding: 0 4px; }
-  .brand-row { display:flex; align-items:center; gap:8px; color:var(--accent); cursor:pointer; }
+  .brand { display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:6px; padding: 0 4px; }
+  .brand-row { display:flex; align-items:center; gap:8px; color:var(--accent); cursor:pointer; min-width:0; }
   .brand-logo { flex:none; }
   .brand-row:hover .brand-title { text-decoration:underline; text-underline-offset:3px; }
-  .brand-title { font-family:var(--serif); font-size:19px; font-weight:600; }
+  .brand-title { font-family:var(--serif); font-size:19px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .brand-theme-btn { flex:none; display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; border:1px solid transparent; background:none; color:var(--ink-faint); }
+  .brand-theme-btn:hover { color:var(--accent); background:var(--bg-card-hover); border-color:var(--border); }
   .brand-sub { font-size:11px; color:var(--ink-faint); letter-spacing:0.04em; padding-left:16px; }
 
   .search-wrap { position:relative; }
@@ -982,11 +1032,13 @@
     .two-col { grid-template-columns:1fr; }
   }
 </style>
+<script>(function(){try{var t=JSON.parse(localStorage.getItem("jipseul_theme_v1")||"{}");var mode=t.mode||"auto";if(mode==="light"||mode==="dark"){document.documentElement.setAttribute("data-theme",mode);}else if(mode==="rgb"){document.documentElement.setAttribute("data-theme","rgb");document.documentElement.setAttribute("data-rgbvariant",t.rgbVariant||"cyber");}}catch(e){}})();</script>
 
 <div class="app">
   <aside class="sidebar">
     <div class="brand">
       <div class="brand-row" id="brandHome" title="홈으로"><svg class="brand-logo" width="20" height="20" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><mask id="brandLogoDots"><rect x="0" y="0" width="22" height="22" fill="#fff"/><circle cx="7" cy="12.6" r="1.15" fill="#000"/><circle cx="11" cy="12.6" r="1.15" fill="#000"/><circle cx="15" cy="12.6" r="1.15" fill="#000"/></mask></defs><g mask="url(#brandLogoDots)"><polygon points="11,1 20,8 2,8" fill="currentColor"/><rect x="2" y="8" width="18" height="9" rx="3" fill="currentColor"/><polygon points="6,17 6,21 10,17" fill="currentColor"/></g></svg><span class="brand-title">집썰</span></div>
+      <button type="button" class="brand-theme-btn" id="themeSettingsBtn" title="테마 설정(라이트·다크·RGB)"><svg class="icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5a5.5 5.5 0 100 11c.9 0 1.4-.6 1.4-1.3 0-.35-.15-.65-.35-.9-.2-.25-.35-.55-.35-.9 0-.7.55-1.2 1.2-1.2h1.4A2.7 2.7 0 0014 6.5C14 4 11.3 2.5 8 2.5z"/><circle cx="5.2" cy="6.6" r="0.9" fill="currentColor" stroke="none"/><circle cx="8" cy="4.9" r="0.9" fill="currentColor" stroke="none"/><circle cx="10.8" cy="6.6" r="0.9" fill="currentColor" stroke="none"/><circle cx="5.6" cy="9.8" r="0.9" fill="currentColor" stroke="none"/></svg></button>
     </div>
     <div class="search-wrap">
       <span class="search-icon" id="searchIcon"></span>
@@ -1076,10 +1128,94 @@ function ic(name, size) {
     magic: '<path d="M8 2v3.5M8 10.5v3.5M2 8h3.5M10.5 8H14M4.3 4.3l2.5 2.5M9.2 9.2l2.5 2.5M11.7 4.3L9.2 6.8M6.8 9.2l-2.5 2.5"/><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/>',
     crown: '<path d="M2.5 12.5h11v-1.2h-11z"/><path d="M2.5 11.3L2 5.3l3.2 2.6L8 4l2.8 3.9 3.2-2.6-.5 6z"/>',
     crop: '<path d="M4.5 1.5v9a1 1 0 001 1h9"/><path d="M11.5 14.5v-9a1 1 0 00-1-1h-9"/>',
-    rotate: '<path d="M12.8 8A4.8 4.8 0 114 5"/><path d="M4 1.8V5h3.2"/>'
+    rotate: '<path d="M12.8 8A4.8 4.8 0 114 5"/><path d="M4 1.8V5h3.2"/>',
+    gear: '<circle cx="8" cy="8" r="2.2"/><path d="M8 2.2v1.6M8 12.2v1.6M13.8 8h-1.6M3.8 8H2.2M12 4l-1.1 1.1M5.1 10.9 4 12M12 12l-1.1-1.1M5.1 5.1 4 4"/>',
+    palette: '<path d="M8 2.5a5.5 5.5 0 100 11c.9 0 1.4-.6 1.4-1.3 0-.35-.15-.65-.35-.9-.2-.25-.35-.55-.35-.9 0-.7.55-1.2 1.2-1.2h1.4A2.7 2.7 0 0014 6.5C14 4 11.3 2.5 8 2.5z"/><circle cx="5.2" cy="6.6" r="0.9" fill="currentColor" stroke="none"/><circle cx="8" cy="4.9" r="0.9" fill="currentColor" stroke="none"/><circle cx="10.8" cy="6.6" r="0.9" fill="currentColor" stroke="none"/><circle cx="5.6" cy="9.8" r="0.9" fill="currentColor" stroke="none"/>'
   };
   return '<svg class="icon" width="'+size+'" height="'+size+'" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+(P[name]||'')+'</svg>';
 }
+
+/* ---------------- 전역 테마 엔진 ----------------
+ * 라이트/다크/RGB(사이버·네온·오로라·신스웨이브) -- 전부 :root의 CSS 커스텀 프로퍼티
+ * (--bg, --ink, --accent 등, <style> 상단 :root[data-theme=...] 블록 참고) 교체만으로
+ * 동작한다. 개별 컴포넌트가 색을 직접 하드코딩하지 않고 이 토큰들을 참조하는 한,
+ * 사이드바·모달·툴팁·드롭다운·지도까지 전부 한 번에 테마가 바뀐다.
+ * "auto"는 data-theme 속성을 아예 지워서 OS의 prefers-color-scheme을 그대로 따른다. */
+var THEME_KEY = "jipseul_theme_v1";
+var RGB_VARIANTS = {
+  cyber:     { label: "사이버",     swatch: "#00e5ff" },
+  neon:      { label: "네온",       swatch: "#ff2ec4" },
+  aurora:    { label: "오로라",     swatch: "#2ee6a8" },
+  synthwave: { label: "신스웨이브", swatch: "#ff5da2" }
+};
+function loadThemePref() {
+  try { var raw = localStorage.getItem(THEME_KEY); if (raw) { var t = JSON.parse(raw); if (t && t.mode) return t; } } catch (e) {}
+  return { mode: "auto", rgbVariant: "cyber" };
+}
+var THEME_PREF = loadThemePref();
+function applyThemePref() {
+  var root = document.documentElement;
+  if (THEME_PREF.mode === "light" || THEME_PREF.mode === "dark") {
+    root.setAttribute("data-theme", THEME_PREF.mode);
+    root.removeAttribute("data-rgbvariant");
+  } else if (THEME_PREF.mode === "rgb") {
+    root.setAttribute("data-theme", "rgb");
+    root.setAttribute("data-rgbvariant", THEME_PREF.rgbVariant || "cyber");
+  } else {
+    root.removeAttribute("data-theme");
+    root.removeAttribute("data-rgbvariant");
+  }
+}
+function setThemePref(mode, rgbVariant) {
+  THEME_PREF.mode = mode;
+  if (rgbVariant) THEME_PREF.rgbVariant = rgbVariant;
+  try { localStorage.setItem(THEME_KEY, JSON.stringify(THEME_PREF)); } catch (e) {}
+  applyThemePref();
+}
+function openThemeSettingsModal() {
+  closeModal();
+  var overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.id = "modalOverlay";
+  document.body.appendChild(overlay);
+  var MODES = [
+    { key: "auto", label: "자동(시스템 설정)" },
+    { key: "light", label: "라이트" },
+    { key: "dark", label: "다크" },
+    { key: "rgb", label: "RGB" }
+  ];
+  function paint() {
+    overlay.innerHTML =
+      '<div class="modal-box">' +
+        '<div class="modal-title">테마 설정</div>' +
+        '<div class="modal-msg">선택하면 화면 전체(사이드바·모달·지도 포함)에 바로 적용되고, 다음에 열 때도 그대로 기억됩니다.</div>' +
+        '<div class="modal-picker-label">모드</div>' +
+        '<div class="modal-picker-row">' +
+          MODES.map(function(m){ return '<button type="button" class="modal-pick no-dot'+(THEME_PREF.mode===m.key?" on":"")+'" data-thememode="'+m.key+'">'+esc(m.label)+'</button>'; }).join("") +
+        '</div>' +
+        (THEME_PREF.mode === "rgb" ? (
+          '<div class="modal-picker-label">RGB 색상</div>' +
+          '<div class="modal-picker-row">' +
+            Object.keys(RGB_VARIANTS).map(function(k){
+              var v = RGB_VARIANTS[k];
+              return '<button type="button" class="modal-pick'+(THEME_PREF.rgbVariant===k?" on":"")+'" data-themergb="'+k+'" style="--pc:'+v.swatch+'">'+esc(v.label)+'</button>';
+            }).join("") +
+          '</div>'
+        ) : "") +
+        '<div class="modal-actions"><button type="button" class="btn primary" id="themeModalClose">닫기</button></div>' +
+      '</div>';
+    overlay.querySelectorAll("[data-thememode]").forEach(function(btn){
+      btn.addEventListener("click", function(){ setThemePref(btn.dataset.thememode); paint(); });
+    });
+    overlay.querySelectorAll("[data-themergb]").forEach(function(btn){
+      btn.addEventListener("click", function(){ setThemePref("rgb", btn.dataset.themergb); paint(); });
+    });
+    overlay.querySelector("#themeModalClose").addEventListener("click", closeModal);
+  }
+  paint();
+  overlay.addEventListener("mousedown", function(e){ if (e.target === overlay) closeModal(); });
+}
+applyThemePref();
 
 /* ---------------- data ---------------- */
 var CATS = ["등장인물","세력","장소","세계관","사건","아이템","떡밥","부·사이드","기타"];
@@ -14186,6 +14322,7 @@ function openExportZipModal(workId) {
   });
 }
 
+document.getElementById("themeSettingsBtn").addEventListener("click", openThemeSettingsModal);
 render();
 </script>
 
