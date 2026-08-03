@@ -9655,11 +9655,13 @@ function seedChildMapFromRegion(childMap, parentRegion) {
   var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
   var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
   var w = Math.max(1, maxX - minX), h = Math.max(1, maxY - minY);
-  var targetW = 900, targetH = 620, margin = 40;
-  var scale = Math.min((targetW - margin * 2) / w, (targetH - margin * 2) / h);
-  var offsetX = margin - minX * scale + (targetW - margin * 2 - w * scale) / 2;
-  var offsetY = margin - minY * scale + (targetH - margin * 2 - h * scale) / 2;
-  var scaled = pts.map(function(p){ return [Math.round((p[0] * scale + offsetX) * 10) / 10, Math.round((p[1] * scale + offsetY) * 10) / 10]; });
+  /* 새 지도는 아직 비어 있을 때 map-space (0,0)이 화면 중앙에 오도록 자동으로
+   * 뷰가 맞춰진다(renderMapPage 참고) -- 그래서 시드 도형도 원점(0,0)을 중심으로
+   * 배치해야 실제로 화면 가운데에 보인다(구석으로 잘려나가지 않도록). */
+  var targetW = 700, targetH = 480;
+  var scale = Math.min(targetW / w, targetH / h);
+  var cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+  var scaled = pts.map(function(p){ return [Math.round((p[0] - cx) * scale * 10) / 10, Math.round((p[1] - cy) * scale * 10) / 10]; });
   childMap.regions.push({ id: uid(), points: scaled, terrain: parentRegion.terrain || "plain", label: parentRegion.label || "", childMapId: null, houseId: null, countryInfo: null, locationId: null });
 }
 /* "지도 영역 공백 금지 규칙"은 하위 지도 생성 시점에도 적용된다 -- 새로 만든 세부 지도가
@@ -9679,7 +9681,7 @@ function openMapDrillLevelModal(mp, region, regionLabel) {
       seedChildMapFromRegion(newChild, region);
       region.childMapId = newChild.id;
       saveData();
-      drawMap(newChild);
+      render();
     }
   });
 }
