@@ -505,10 +505,19 @@
   .ms-stats-bar { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--ink-faint); margin-bottom:10px; font-variant-numeric:tabular-nums; }
   .ms-stats-bar b { color:var(--ink-soft); font-weight:600; }
   .ms-spellcheck-hint { font-size:11.5px; color:var(--ink-faint); margin-bottom:16px; line-height:1.5; }
+  /* "일반(양장본)" book 위젯은 728px(두 쪽)/410px(한 쪽) 고정 폭이라 이 옆에 패널을
+   * 나란히 두면 좁은 화면에서 폭을 빼앗겨 book-outer의 overflow-x:auto + 가운데
+   * 정렬 조합이 양쪽 다 잘려 보이는 문제가 생긴다(스크롤로도 잘린 부분에 닿지 않음).
+   * 그래서 book 포맷은 항상 패널을 아래로 내리고(.ms-editor-stack), 폭이 자유로운
+   * 나머지 포맷(조아라/문피아/네이버/일반 집필창)만 좁은 화면에서 아래로 내리는
+   * 옆배치(.ms-editor-row)를 쓴다. */
   .ms-editor-row { display:flex; gap:20px; align-items:flex-start; }
   .ms-editor-main { flex:1; min-width:0; }
+  .ms-editor-stack { display:flex; flex-direction:column; gap:16px; }
   .ms-context-panel { width:200px; flex-shrink:0; position:sticky; top:20px; display:flex; flex-direction:column; gap:16px; max-height:calc(100vh - 100px); overflow-y:auto; }
+  .ms-context-panel.stacked { width:100%; position:static; max-height:none; flex-direction:row; flex-wrap:wrap; }
   .ms-ctx-section { display:flex; flex-direction:column; gap:6px; }
+  .ms-context-panel.stacked .ms-ctx-section { flex:1; min-width:180px; }
   .ms-ctx-label { display:flex; align-items:center; gap:6px; font-size:11.5px; letter-spacing:0.05em; color:var(--ink-faint); text-transform:uppercase; }
   .ms-ctx-item { display:flex; align-items:center; gap:7px; padding:7px 9px; border:1px solid var(--border); border-radius:8px; background:var(--bg-card); font-size:12.5px; color:var(--ink-soft); text-align:left; cursor:pointer; }
   .ms-ctx-item:hover { border-color:var(--accent); color:var(--accent); }
@@ -516,8 +525,8 @@
   .ms-ctx-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   @media (max-width:1100px) {
     .ms-editor-row { flex-direction:column; }
-    .ms-context-panel { width:100%; position:static; max-height:none; flex-direction:row; flex-wrap:wrap; }
-    .ms-ctx-section { flex:1; min-width:180px; }
+    .ms-editor-row .ms-context-panel { width:100%; position:static; max-height:none; flex-direction:row; flex-wrap:wrap; }
+    .ms-editor-row .ms-ctx-section { flex:1; min-width:180px; }
   }
   .mention-pop { position:fixed; z-index:220; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:6px; box-shadow:0 12px 30px var(--shadow); width:240px; max-height:260px; overflow-y:auto; }
   .mention-item { display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:7px; cursor:pointer; font-size:13px; }
@@ -10370,7 +10379,9 @@ function renderManuscriptPage(m) {
     '<div class="graph-shell">' +
       '<div class="graph-title-bar"><input class="graph-title" id="msTitle" value="'+esc(m.title)+'" placeholder="원고(화) 제목"><span class="ms-save-indicator saved" id="msSaveIndicator">저장됨</span><span class="ms-char-count" id="msCharCount">'+fmtNum(charCount(m.text))+'자</span><button class="page-del" id="deleteMsBtn" style="margin-top:0">'+ic("trash",13)+'<span>원고 삭제</span></button></div>' +
       '<div class="page-pad" style="padding-top:26px">' + povHtml + statsHtml + tabsHtml +
-        '<div class="ms-editor-row"><div class="ms-editor-main">' + bodyHtml + '</div><div class="ms-context-panel" id="msContextPanel"></div></div>' +
+        (isBook
+          ? '<div class="ms-editor-stack">' + bodyHtml + '<div class="ms-context-panel stacked" id="msContextPanel"></div></div>'
+          : '<div class="ms-editor-row"><div class="ms-editor-main">' + bodyHtml + '</div><div class="ms-context-panel" id="msContextPanel"></div></div>') +
       '</div>' +
     '</div>';
 
