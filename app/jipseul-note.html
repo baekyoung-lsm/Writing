@@ -559,6 +559,8 @@
   .sb-group-head .add:hover { color:var(--accent); background:var(--bg-card); }
   .ms-sort-btn { font-size:10.5px; color:var(--ink-faint); background:none; border:1px solid var(--border); border-radius:10px; padding:2px 8px; flex:none; }
   .ms-sort-btn:hover { color:var(--accent); border-color:var(--accent); }
+  .ms-sort-btn:disabled { opacity:0.4; cursor:not-allowed; }
+  .ms-sort-btn:disabled:hover { color:var(--ink-faint); border-color:var(--border); }
   .ms-sort-btn.on { border-color:var(--accent); background:var(--accent-soft); color:var(--ink); font-weight:600; }
   .novel-subrow { display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:0 8px 6px; }
   .pov-filter-sel { font-size:10.5px; color:var(--ink-faint); background:none; border:1px solid var(--border); border-radius:10px; padding:2px 6px; flex:none; max-width:130px; }
@@ -853,6 +855,23 @@
   .map-terrain-btn.on { border-color:var(--tc); color:var(--ink); background:var(--bg-card-hover); font-weight:600; }
   .map-region polygon { fill-opacity:0.42; stroke-width:1.6; stroke-opacity:0.85; cursor:pointer; }
   .map-region.selected polygon { stroke-width:3; fill-opacity:0.55; }
+  /* 선택 시 시각 피드백 -- 외곽선 강조는 각 타입 CSS에서 이미 하고 있으니, 여기서는
+   * 모든 선택 가능 요소에 공통으로 글로우를 더한다. 점 객체(마커/게이트/위험구역)는
+   * drawMap에서 transform 속성 자체에 scale(1.08)을 얹어 확대까지 겸한다(SVG는 transform
+   * 속성과 CSS transform 프로퍼티가 같이 있으면 CSS가 속성을 완전히 덮어써서 위치가
+   * 틀어지므로, 확대는 CSS가 아니라 속성 문자열에 직접 넣는다). */
+  .map-region.selected, .map-line.selected, .map-marker.selected, .map-gate.selected, .map-danger.selected {
+    filter: drop-shadow(0 0 5px var(--accent)) drop-shadow(0 0 2px var(--accent));
+    transition: filter .12s ease;
+  }
+  .map-marker.dragging, .map-gate.dragging, .map-danger.dragging { cursor:grabbing; }
+  /* 줌 수준에 따라 표시 방식 변경 -- 많이 축소했을 때는 부차적인 라벨(문파/마커/
+   * 게이트/위험구역/선 이름)을 옅게 줄여 핵심 지역명만 도드라지게 하고, 확대하면
+   * 전부 정상적으로 다시 보인다. */
+  #mapG[data-zoom="low"] .map-line-label,
+  #mapG[data-zoom="low"] .map-region-house-label,
+  #mapG[data-zoom="low"] .map-gate-grade { opacity:0.4; }
+  #mapG[data-zoom="low"] .map-region-label { font-size:10px; }
   .map-region-label { fill:var(--ink); font-family:var(--sans); font-size:12px; font-weight:600; paint-order:stroke; stroke:var(--bg-card); stroke-width:3px; pointer-events:none; }
   .map-region-house-label { font-family:var(--sans); font-size:11px; font-weight:600; paint-order:stroke; stroke:var(--bg-card); stroke-width:3px; pointer-events:none; }
   .region-tooltip { position:fixed; z-index:200; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:12px 14px; box-shadow:0 8px 24px var(--shadow); max-width:240px; pointer-events:none; display:none; }
@@ -870,12 +889,12 @@
   .map-draw-preview.fill-preview { fill:var(--accent-soft); }
   .map-symbol-btn { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border-strong); background:var(--bg); border-radius:20px; padding:5px 11px; font-size:12px; color:var(--ink-soft); }
   .map-symbol-btn.on { border-color:var(--tc); color:var(--ink); background:var(--bg-card-hover); font-weight:600; }
-  .map-marker { cursor:pointer; }
+  .map-marker { cursor:grab; }
   .map-marker-bg { fill:var(--mc); stroke:#fff; stroke-width:1.6; }
   .map-marker.selected .map-marker-bg { stroke:var(--ink); stroke-width:2.6; }
-  .map-danger { cursor:pointer; }
+  .map-danger { cursor:grab; }
   .map-danger-preview { fill:var(--accent-soft); fill-opacity:0.25; stroke:var(--accent); stroke-width:2; stroke-dasharray:5 4; pointer-events:none; }
-  .map-gate { cursor:pointer; }
+  .map-gate { cursor:grab; }
   .map-gate:not(.cleared) .map-marker-bg { stroke-dasharray:2.6 2.2; opacity:0.78; }
   .map-gate-grade { font-family:var(--sans); font-size:10.5px; font-weight:700; paint-order:stroke; stroke:var(--bg-card); stroke-width:3px; pointer-events:none; }
   .map-gate-clear-badge circle { fill:#3F6B34; stroke:#fff; stroke-width:1.2; }
@@ -9390,9 +9409,89 @@ function drawGraph(g) {
 }
 
 /* ---------------- map page ---------------- */
-var mpState = { tool: "select", terrain: "forest", symbol: "city", drawPoints: null, panStart: null, selected: null, scaleLine: null, scaleLineStart: null, showAlignment: false };
+var mpState = { tool: "select", terrain: "forest", symbol: "city", drawPoints: null, panStart: null, selected: null, scaleLine: null, scaleLineStart: null, showAlignment: false, dragObj: null };
 var _mapWinHandlers = null;
+var _mapBeforeUnload = null;
 function currentMap() { return MAPS.find(function(mp){ return mp.id === state.activeId; }); }
+
+/* ---------------- 지도 편집 Undo/Redo ----------------
+ * DOM 복원이 아니라 state-history 방식: regions/lines/markers/dangerZones/gates
+ * 스냅샷(JSON 문자열)을 과거/미래 스택에 쌓는다. 개별 편집 지점마다 일일이
+ * "지금 편집한다"는 신호를 넣는 대신, 이 지도 코드가 이미 모든 편집을 마친
+ * 뒤 예외 없이 drawMap(mp)를 호출한다는 사실(선택 변경 같은 순수 UI 변경도
+ * 포함)을 이용해 drawMap 끝에서 한 번만 커밋한다. 직전 스냅샷과 내용이
+ * 같으면(선택만 바뀌었거나 세력권 보기 토글 등) 아무 것도 쌓지 않아
+ * 실제 데이터 변경만 히스토리에 남는다. */
+var mapHistory = { mapId: null, past: [], future: [], limit: 60 };
+function mapSnapshot(mp) {
+  return JSON.stringify({ regions: mp.regions, lines: mp.lines, markers: mp.markers, dangerZones: mp.dangerZones||[], gates: mp.gates||[] });
+}
+function mapHistoryEnsure(mp) {
+  if (mapHistory.mapId !== mp.id) {
+    mapHistory.mapId = mp.id;
+    mapHistory.past = [mapSnapshot(mp)];
+    mapHistory.future = [];
+  }
+}
+function mapHistoryCommit(mp) {
+  mapHistoryEnsure(mp);
+  var snap = mapSnapshot(mp);
+  if (snap === mapHistory.past[mapHistory.past.length-1]) { updateMapSaveIndicator(mp); return; }
+  mapHistory.past.push(snap);
+  if (mapHistory.past.length > mapHistory.limit + 1) mapHistory.past.shift();
+  mapHistory.future = [];
+  mapSaveTimes[mp.id] = Date.now();
+  updateMapUndoRedoButtons();
+  updateMapSaveIndicator(mp);
+}
+function mapCanUndo() { return mapHistory.past.length > 1; }
+function mapCanRedo() { return mapHistory.future.length > 0; }
+/* ---------------- 지도 저장 상태 UX ----------------
+ * 지도 편집은 saveData()가 매 편집마다 동기적으로 localStorage에 기록하므로
+ * 사실상 항상 "자동 저장" 상태다 -- 유일하게 진짜 "아직 저장 안 됨" 구간은
+ * 드래그 중(mousedown~mouseup 사이, mp.markers[i].x/y 등이 메모리에서만 바뀌고
+ * 아직 saveData()가 안 불린 시점)이므로 그 구간만 정직하게 표시한다. */
+var mapSaveTimes = {};
+function updateMapSaveIndicator(mp) {
+  var el = document.getElementById("mapSaveIndicator");
+  if (!el) return;
+  if (mpState.dragObj && mpState.dragObj.moved) {
+    el.textContent = "● 저장 안 됨"; el.classList.remove("saved");
+    return;
+  }
+  var t = mapSaveTimes[mp.id];
+  var timeStr = t ? new Date(t).toLocaleTimeString("ko-KR", { hour:"2-digit", minute:"2-digit", second:"2-digit" }) : "";
+  el.textContent = "✓ 저장됨" + (timeStr ? " · "+timeStr : "");
+  el.classList.add("saved");
+}
+function mapApplySnapshot(mp, json) {
+  var snap = JSON.parse(json);
+  mp.regions = snap.regions; mp.lines = snap.lines; mp.markers = snap.markers;
+  mp.dangerZones = snap.dangerZones; mp.gates = snap.gates;
+  mpState.selected = null;
+  saveData();
+  drawMap(mp);
+  updateMapUndoRedoButtons();
+}
+function mapUndo(mp) {
+  mapHistoryEnsure(mp);
+  if (!mapCanUndo()) return;
+  var cur = mapHistory.past.pop();
+  mapHistory.future.push(cur);
+  mapApplySnapshot(mp, mapHistory.past[mapHistory.past.length-1]);
+}
+function mapRedo(mp) {
+  mapHistoryEnsure(mp);
+  if (!mapCanRedo()) return;
+  var next = mapHistory.future.pop();
+  mapHistory.past.push(next);
+  mapApplySnapshot(mp, next);
+}
+function updateMapUndoRedoButtons() {
+  var u = document.getElementById("mapUndoBtn"), r = document.getElementById("mapRedoBtn");
+  if (u) u.disabled = !mapCanUndo();
+  if (r) r.disabled = !mapCanRedo();
+}
 
 function mapViewBox(mp) { return "translate(" + mp.view.x + "," + mp.view.y + ") scale(" + mp.view.scale + ")"; }
 function fitMap(mp) {
@@ -9570,9 +9669,13 @@ function zoomMapAt(mp, factor, mx, my) {
   saveData();
   applyMapTransform(mp);
 }
+function mapZoomBucket(mp) { return mp.view.scale < 0.55 ? "low" : (mp.view.scale > 1.6 ? "high" : "mid"); }
 function applyMapTransform(mp) {
   var gEl = document.getElementById("mapG");
-  if (gEl) gEl.setAttribute("transform", mapViewBox(mp));
+  if (gEl) {
+    gEl.setAttribute("transform", mapViewBox(mp));
+    gEl.setAttribute("data-zoom", mapZoomBucket(mp));
+  }
 }
 function mapScreenToWorld(mp, clientX, clientY) {
   var wrap = document.getElementById("mapWrap");
@@ -10022,11 +10125,60 @@ function openMapYearModal(mp, onDone) {
     if (actionsDiv) actionsDiv.insertAdjacentHTML("beforebegin", noteHtml);
   }
 }
+function mapLabelEstWidth(text, fontSize) {
+  var w = 0;
+  for (var i = 0; i < text.length; i++) {
+    w += (text.charCodeAt(i) > 0x2E80) ? fontSize * 0.98 : fontSize * 0.56;
+  }
+  return w;
+}
+/* 라벨(지역명·문파명·마커/게이트/위험구역 이름) 충돌 감지 + 자동 위치 보정.
+ * 완전한 force-directed 레이아웃 대신, 그리는 순서대로 이미 배치된 라벨들과
+ * 겹치면 위/아래로 점점 더 크게 밀어내는 그리디 방식(Smart Label Placement의
+ * 단순화 버전) -- 이 지도 편집기가 매 편집마다 전체 재렌더(drawMap)를 한 번만
+ * 하는 구조라, 수백 개 라벨에서도 O(n^2) 비교면 충분히 빠르다. */
+function layoutMapLabels(entries) {
+  var placed = [];
+  var offsets = {};
+  entries.forEach(function(e){
+    var w = mapLabelEstWidth(e.text, e.fontSize), h = e.fontSize * 1.35;
+    var x0 = e.x - w/2, x1 = e.x + w/2;
+    var baseY0 = e.y - h*0.78, baseY1 = e.y + h*0.32;
+    var dy = 0, attempt = 0;
+    function hits(oy0, oy1) {
+      return placed.some(function(p){ return !(x1 < p.x0 || x0 > p.x1 || oy1 < p.y0 || oy0 > p.y1); });
+    }
+    while (hits(baseY0+dy, baseY1+dy) && attempt < 10) {
+      attempt++;
+      var dir = attempt % 2 === 1 ? 1 : -1;
+      dy = dir * Math.ceil(attempt/2) * (h + 2);
+    }
+    offsets[e.key] = dy;
+    placed.push({ x0:x0, y0:baseY0+dy, x1:x1, y1:baseY1+dy });
+  });
+  return offsets;
+}
 function drawMap(mp) {
   var gEl = document.getElementById("mapG");
   if (!gEl) return;
   gEl.setAttribute("transform", mapViewBox(mp));
+  gEl.setAttribute("data-zoom", mapZoomBucket(mp));
   var html = "";
+  var labelEntries = [];
+  mp.regions.forEach(function(r){
+    if (!r.label) return;
+    var c0 = polygonCentroid(r.points);
+    labelEntries.push({ key:"region:"+r.id, x:c0[0], y:c0[1], text:r.label, fontSize:12 });
+    if (r.houseId) {
+      var house0 = DOCS.find(function(d){ return d.id === r.houseId; });
+      if (house0) labelEntries.push({ key:"regionhouse:"+r.id, x:c0[0], y:c0[1]+15, text:"⚑ "+(house0.title||"세력"), fontSize:11 });
+    }
+  });
+  (mp.dangerZones||[]).forEach(function(dz){ if (dz.label) labelEntries.push({ key:"danger:"+dz.id, x:dz.x, y:dz.y+dz.radius+16, text:dz.label, fontSize:11.5 }); });
+  mp.lines.forEach(function(l){ if (l.label) { var mid0 = l.points[Math.floor(l.points.length/2)]; labelEntries.push({ key:"line:"+l.id, x:mid0[0], y:mid0[1]-6, text:l.label, fontSize:11.5 }); } });
+  mp.markers.forEach(function(mk){ if (mk.label) labelEntries.push({ key:"marker:"+mk.id, x:mk.x, y:mk.y+20, text:mk.label, fontSize:11.5 }); });
+  (mp.gates||[]).forEach(function(gt){ if (gt.label) labelEntries.push({ key:"gate:"+gt.id, x:gt.x, y:gt.y+22, text:gt.label, fontSize:11.5 }); });
+  var labelOffsets = layoutMapLabels(labelEntries);
   if (mp.bgMode !== "hidden") {
     var src = mp.bgMode === "trace" ? mp.traceImage : mp.bgImage;
     if (src) html += '<image id="mapBgImageEl" href="'+src+'" x="0" y="0" width="'+mp.bgWidth+'" height="'+mp.bgHeight+'" opacity="'+mp.bgOpacity+'" style="pointer-events:none"></image>';
@@ -10046,8 +10198,8 @@ function drawMap(mp) {
     var strokeColor = alignInfo ? alignInfo.color : (houseColor||(isSel?"var(--accent)":"rgba(20,16,10,0.55)"));
     html += '<g class="map-region '+(isSel?"selected":"")+'" data-region="'+r.id+'">' +
       '<polygon points="'+ptsStr+'" style="fill:'+fillColor+';stroke:'+strokeColor+';stroke-width:'+(house?3:(isSel?2.6:1.4))+'"></polygon>' +
-      '<text x="'+c[0]+'" y="'+c[1]+'" text-anchor="middle" class="map-region-label">'+esc(r.label||"")+'</text>' +
-      (house ? '<text x="'+c[0]+'" y="'+(c[1]+15)+'" text-anchor="middle" class="map-region-house-label" style="fill:'+houseColor+'">&#9813; '+esc(house.title||"세력")+'</text>' : '') +
+      '<text x="'+c[0]+'" y="'+(c[1]+(labelOffsets["region:"+r.id]||0))+'" text-anchor="middle" class="map-region-label">'+esc(r.label||"")+'</text>' +
+      (house ? '<text x="'+c[0]+'" y="'+(c[1]+15+(labelOffsets["regionhouse:"+r.id]||0))+'" text-anchor="middle" class="map-region-house-label" style="fill:'+houseColor+'">&#9813; '+esc(house.title||"세력")+'</text>' : '') +
       (house ? '<g class="map-region-focus" data-regionfocus="'+r.id+'" transform="translate('+c[0]+','+(c[1]-22)+')" title="이 지역으로 확대"><circle r="9" style="fill:'+houseColor+'"></circle><g transform="translate(-6,-6)" style="color:#fff">'+ic("search",12)+'</g></g>' : '') +
     '</g>';
   });
@@ -10055,11 +10207,11 @@ function drawMap(mp) {
     var kind = MAP_DANGER_KINDS[dz.kind] || MAP_DANGER_KINDS.other;
     var level = MAP_DANGER_LEVELS[dz.dangerLevel] || MAP_DANGER_LEVELS.medium;
     var isSel = mpState.selected&&mpState.selected.type==="dangerZone"&&mpState.selected.id===dz.id;
-    html += '<g class="map-danger '+(isSel?"selected":"")+'" data-danger="'+dz.id+'" transform="translate('+dz.x+','+dz.y+')">' +
+    html += '<g class="map-danger '+(isSel?"selected":"")+'" data-danger="'+dz.id+'" transform="translate('+dz.x+','+dz.y+')'+(isSel?" scale(1.08)":"")+'">' +
       '<circle r="'+dz.radius+'" style="fill:'+level.color+';fill-opacity:0.22;stroke:'+level.color+';stroke-width:'+(isSel?2.6:1.6)+'" stroke-dasharray="5 4"></circle>' +
       '<circle r="11" class="map-marker-bg" style="--mc:'+level.color+'"></circle>' +
       '<g transform="translate(-7,-7)" style="color:#fff">'+ic(kind.icon,14)+'</g>' +
-      (dz.label ? '<text y="'+(dz.radius+16)+'" text-anchor="middle" class="map-line-label">'+esc(dz.label)+'</text>' : '') +
+      (dz.label ? '<text y="'+(dz.radius+16+(labelOffsets["danger:"+dz.id]||0))+'" text-anchor="middle" class="map-line-label">'+esc(dz.label)+'</text>' : '') +
     '</g>';
   });
   mp.lines.forEach(function(l){
@@ -10070,26 +10222,27 @@ function drawMap(mp) {
     var baseWidth = l.width||3;
     html += '<g class="map-line '+(lineSelected?"selected":"")+'" data-line="'+l.id+'">' +
       '<polyline points="'+ptsStr+'" style="stroke:'+kind.color+';stroke-width:'+(lineSelected?baseWidth+1.5:baseWidth)+'" stroke-dasharray="'+kind.dash+'"></polyline>' +
-      (l.label ? '<text x="'+mid[0]+'" y="'+(mid[1]-6)+'" text-anchor="middle" class="map-line-label">'+esc(l.label)+'</text>' : '') +
+      (l.label ? '<text x="'+mid[0]+'" y="'+(mid[1]-6+(labelOffsets["line:"+l.id]||0))+'" text-anchor="middle" class="map-line-label">'+esc(l.label)+'</text>' : '') +
     '</g>';
   });
   mp.markers.forEach(function(mk){
     var sym = MAP_SYMBOLS[mk.kind] || MAP_SYMBOLS.other;
-    html += '<g class="map-marker '+(mpState.selected&&mpState.selected.type==="marker"&&mpState.selected.id===mk.id?"selected":"")+'" data-marker="'+mk.id+'" transform="translate('+mk.x+','+mk.y+')">' +
+    var isSelMk = mpState.selected&&mpState.selected.type==="marker"&&mpState.selected.id===mk.id;
+    html += '<g class="map-marker '+(isSelMk?"selected":"")+'" data-marker="'+mk.id+'" transform="translate('+mk.x+','+mk.y+')'+(isSelMk?" scale(1.08)":"")+'">' +
       '<circle r="10" class="map-marker-bg" style="--mc:'+sym.color+'"></circle>' +
       '<g transform="translate(-7,-7)" style="color:#fff">'+ic(sym.icon,14)+'</g>' +
-      (mk.label ? '<text y="20" text-anchor="middle" class="map-line-label">'+esc(mk.label)+'</text>' : '') +
+      (mk.label ? '<text y="'+(20+(labelOffsets["marker:"+mk.id]||0))+'" text-anchor="middle" class="map-line-label">'+esc(mk.label)+'</text>' : '') +
     '</g>';
   });
   (mp.gates||[]).forEach(function(gt){
     var grade = MAP_GATE_GRADES[gt.grade] || MAP_GATE_GRADES.f;
     var isSel = mpState.selected&&mpState.selected.type==="gate"&&mpState.selected.id===gt.id;
-    html += '<g class="map-gate '+(gt.cleared?"cleared":"")+' '+(isSel?"selected":"")+'" data-gate="'+gt.id+'" transform="translate('+gt.x+','+gt.y+')">' +
+    html += '<g class="map-gate '+(gt.cleared?"cleared":"")+' '+(isSel?"selected":"")+'" data-gate="'+gt.id+'" transform="translate('+gt.x+','+gt.y+')'+(isSel?" scale(1.08)":"")+'">' +
       '<circle r="11" class="map-marker-bg" style="--mc:'+grade.color+'"></circle>' +
       '<g transform="translate(-7,-7)" style="color:#fff">'+ic("magic",14)+'</g>' +
       '<text y="-15" text-anchor="middle" class="map-gate-grade" style="fill:'+grade.color+'">'+esc(grade.label)+'</text>' +
       (gt.cleared ? '<g class="map-gate-clear-badge" transform="translate(8,-8)"><circle r="6"></circle><path d="M-2.6 0l1.8 1.9L2.8 -2.2"></path></g>' : '') +
-      (gt.label ? '<text y="22" text-anchor="middle" class="map-line-label">'+esc(gt.label)+'</text>' : '') +
+      (gt.label ? '<text y="'+(22+(labelOffsets["gate:"+gt.id]||0))+'" text-anchor="middle" class="map-line-label">'+esc(gt.label)+'</text>' : '') +
     '</g>';
   });
   gEl.innerHTML = html;
@@ -10146,17 +10299,11 @@ function drawMap(mp) {
   gEl.querySelectorAll(".map-marker").forEach(function(elMk){
     var id = elMk.dataset.marker;
     var mk = mp.markers.find(function(mk){ return mk.id===id; });
-    elMk.addEventListener("click", function(e){
+    elMk.addEventListener("mousedown", function(e){
       if (mpState.tool !== "select") return;
       e.stopPropagation();
-      mpState.selected = { type:"marker", id:id };
       hideRegionTooltip();
-      centerMapOnPoint(mp, mk.x, mk.y);
-      drawMap(mp);
-      openMapMarkerModal(mp, mk, false, function(finalMarker){
-        mk.label = finalMarker.label; mk.kind = finalMarker.kind;
-        saveData(); drawMap(mp);
-      });
+      mpState.dragObj = { type:"marker", id:id, obj:mk, el:elMk, startX:mk.x, startY:mk.y, startMouseX:e.clientX, startMouseY:e.clientY, moved:false };
     });
     elMk.addEventListener("dblclick", function(e){ e.stopPropagation(); });
     elMk.addEventListener("mouseenter", function(e){
@@ -10172,17 +10319,11 @@ function drawMap(mp) {
   gEl.querySelectorAll(".map-gate").forEach(function(elGt){
     var id = elGt.dataset.gate;
     var gt = (mp.gates||[]).find(function(gt){ return gt.id===id; });
-    elGt.addEventListener("click", function(e){
+    elGt.addEventListener("mousedown", function(e){
       if (mpState.tool !== "select") return;
       e.stopPropagation();
-      mpState.selected = { type:"gate", id:id };
       hideRegionTooltip();
-      centerMapOnPoint(mp, gt.x, gt.y);
-      drawMap(mp);
-      openMapGateModal(mp, gt, false, function(finalGate){
-        gt.label = finalGate.label; gt.grade = finalGate.grade; gt.cleared = finalGate.cleared;
-        saveData(); drawMap(mp);
-      });
+      mpState.dragObj = { type:"gate", id:id, obj:gt, el:elGt, startX:gt.x, startY:gt.y, startMouseX:e.clientX, startMouseY:e.clientY, moved:false };
     });
     elGt.addEventListener("dblclick", function(e){ e.stopPropagation(); });
     elGt.addEventListener("mouseenter", function(e){
@@ -10198,16 +10339,11 @@ function drawMap(mp) {
   gEl.querySelectorAll(".map-danger").forEach(function(elDz){
     var id = elDz.dataset.danger;
     var dz = (mp.dangerZones||[]).find(function(dz){ return dz.id===id; });
-    elDz.addEventListener("click", function(e){
+    elDz.addEventListener("mousedown", function(e){
       if (mpState.tool !== "select") return;
       e.stopPropagation();
-      mpState.selected = { type:"dangerZone", id:id };
       hideRegionTooltip();
-      drawMap(mp);
-      openMapDangerModal(mp, dz, false, function(finalZone){
-        dz.label = finalZone.label; dz.kind = finalZone.kind; dz.dangerLevel = finalZone.dangerLevel;
-        saveData(); drawMap(mp);
-      });
+      mpState.dragObj = { type:"dangerZone", id:id, obj:dz, el:elDz, startX:dz.x, startY:dz.y, startMouseX:e.clientX, startMouseY:e.clientY, moved:false };
     });
     elDz.addEventListener("dblclick", function(e){ e.stopPropagation(); });
     elDz.addEventListener("mouseenter", function(e){
@@ -10220,9 +10356,11 @@ function drawMap(mp) {
     });
     elDz.addEventListener("mouseleave", hideRegionTooltip);
   });
+  mapHistoryCommit(mp);
 }
 function renderMapPage(mp) {
-  mpState = { tool: "select", terrain: mpState.terrain || "forest", symbol: mpState.symbol || "city", drawPoints: null, panStart: null, selected: null, cropRect: null, cropDragStart: null, scaleLine: null, scaleLineStart: null, dangerStart: null, dangerCircle: null, showAlignment: mpState.showAlignment || false };
+  mpState = { tool: "select", terrain: mpState.terrain || "forest", symbol: mpState.symbol || "city", drawPoints: null, panStart: null, selected: null, cropRect: null, cropDragStart: null, scaleLine: null, scaleLineStart: null, dangerStart: null, dangerCircle: null, showAlignment: mpState.showAlignment || false, dragObj: null };
+  mapHistoryEnsure(mp);
   if (mp.bgOpacity === undefined) mp.bgOpacity = 0.4;
   if (mp.bgMode === undefined) mp.bgMode = mp.bgImage ? "original" : "hidden";
   if (!mp.regions) mp.regions = [];
@@ -10302,6 +10440,9 @@ function renderMapPage(mp) {
       '</div>' +
       versionBarHtml +
       '<div class="novel-subrow" style="padding:0 22px 12px">' +
+        '<button type="button" class="ms-sort-btn" id="mapUndoBtn" title="실행 취소 (Ctrl/Cmd+Z)"'+(mapCanUndo()?"":" disabled")+'>'+ic("chevL",11)+' 실행 취소</button>' +
+        '<button type="button" class="ms-sort-btn" id="mapRedoBtn" title="다시 실행 (Ctrl/Cmd+Shift+Z)"'+(mapCanRedo()?"":" disabled")+'>'+ic("chevR",11)+' 다시 실행</button>' +
+        '<span class="ms-save-indicator saved" id="mapSaveIndicator" style="padding:2px 4px">✓ 저장됨</span>' +
         '<button type="button" class="ms-sort-btn" id="mapYearBtn" title="연도·연표 정보 설정">'+ic("calendar",11)+' '+(esc(mp.yearLabel)||"연도 설정")+'</button>' +
         '<button type="button" class="ms-sort-btn" id="mapRegionListBtn" title="지역이 겹쳐서 클릭하기 어려울 때 이름으로 바로 찾기">'+ic("map",11)+' 지역 목록('+mp.regions.length+')</button>' +
         '<button type="button" class="ms-sort-btn'+(mpState.showAlignment?" on":"")+'" id="mapAlignmentBtn" title="지역에 연결된 세력의 정파·사파·마교 진영으로 한 번에 색칠해서 보기">'+ic("sword",11)+' 세력권 보기</button>' +
@@ -10368,6 +10509,8 @@ function renderMapPage(mp) {
   var mapVersionDelBtn = document.getElementById("mapVersionDelBtn");
   if (mapVersionDelBtn) mapVersionDelBtn.addEventListener("click", function(){ deleteMapVersion(mp); });
   document.getElementById("mapVersionAdd").addEventListener("click", function(){ addMapVersion(mp); });
+  document.getElementById("mapUndoBtn").addEventListener("click", function(){ mapUndo(mp); });
+  document.getElementById("mapRedoBtn").addEventListener("click", function(){ mapRedo(mp); });
   document.getElementById("mapYearBtn").addEventListener("click", function(){
     openMapYearModal(mp, function(){ renderSidebar(); renderMapPage(mp); });
   });
@@ -10652,6 +10795,14 @@ function renderMapPage(mp) {
     window.removeEventListener("mousemove", _mapWinHandlers.move);
     window.removeEventListener("mouseup", _mapWinHandlers.up);
   }
+  if (_mapBeforeUnload) window.removeEventListener("beforeunload", _mapBeforeUnload);
+  /* 지도 편집은 편집 하나가 끝날 때마다 saveData()가 동기적으로 실행되어 사실상
+   * 항상 저장된 상태다. 유일하게 진짜 저장 전인 구간은 드래그 도중(아직 mouseup
+   * 전) 뿐이라, 그때만 브라우저 이탈 경고를 띄운다. */
+  _mapBeforeUnload = function(e){
+    if (mpState.dragObj && mpState.dragObj.moved) { e.preventDefault(); e.returnValue = ""; }
+  };
+  window.addEventListener("beforeunload", _mapBeforeUnload);
   var onMapMouseMove = function(e){
     if (mpState.panStart) {
       mp.view.x = mpState.panStart.vx + (e.clientX - mpState.panStart.x);
@@ -10678,11 +10829,58 @@ function renderMapPage(mp) {
       var dmpt = mapScreenToWorld(mp, e.clientX, e.clientY);
       mpState.dangerCircle.r = Math.hypot(dmpt[0]-mpState.dangerStart[0], dmpt[1]-mpState.dangerStart[1]);
       updateDangerPreview(mp);
+    } else if (mpState.dragObj) {
+      /* 마커/게이트/위험구역 드래그 이동 -- 매 픽셀마다 drawMap 전체 재렌더를 하면
+       * 지도 요소가 많을 때 버벅이므로, pan과 같은 방식으로 해당 요소의
+       * transform 속성만 직접 갱신하고 mouseup에서 한 번만 최종 반영한다. */
+      var d = mpState.dragObj;
+      var dx = (e.clientX - d.startMouseX) / mp.view.scale;
+      var dy = (e.clientY - d.startMouseY) / mp.view.scale;
+      d.obj.x = d.startX + dx;
+      d.obj.y = d.startY + dy;
+      if (!d.moved && Math.hypot(e.clientX-d.startMouseX, e.clientY-d.startMouseY) > 3) {
+        d.moved = true;
+        d.el.classList.add("dragging");
+        updateMapSaveIndicator(mp);
+      }
+      d.el.setAttribute("transform", "translate("+d.obj.x+","+d.obj.y+")"+(d.moved?" scale(1.08)":""));
     }
   };
   var onMapMouseUp = function(){
     if (mpState.panStart) { mpState.panStart = null; wrapEl.classList.remove("panning"); saveData(); }
     if (mpState.cropDragStart) { mpState.cropDragStart = null; }
+    if (mpState.dragObj) {
+      /* 실제로 움직였으면 이동을 확정 저장하고, 움직이지 않았으면(그냥 클릭) 기존
+       * 동작 그대로 선택 + 편집 모달을 연다 -- 드래그 도입 전 클릭 동작을 그대로 보존. */
+      var d = mpState.dragObj;
+      mpState.dragObj = null;
+      if (d.moved) {
+        saveData(); drawMap(mp);
+      } else if (d.type === "marker") {
+        mpState.selected = { type:"marker", id:d.id };
+        centerMapOnPoint(mp, d.obj.x, d.obj.y);
+        drawMap(mp);
+        openMapMarkerModal(mp, d.obj, false, function(finalMarker){
+          d.obj.label = finalMarker.label; d.obj.kind = finalMarker.kind;
+          saveData(); drawMap(mp);
+        });
+      } else if (d.type === "gate") {
+        mpState.selected = { type:"gate", id:d.id };
+        centerMapOnPoint(mp, d.obj.x, d.obj.y);
+        drawMap(mp);
+        openMapGateModal(mp, d.obj, false, function(finalGate){
+          d.obj.label = finalGate.label; d.obj.grade = finalGate.grade; d.obj.cleared = finalGate.cleared;
+          saveData(); drawMap(mp);
+        });
+      } else if (d.type === "dangerZone") {
+        mpState.selected = { type:"dangerZone", id:d.id };
+        drawMap(mp);
+        openMapDangerModal(mp, d.obj, false, function(finalZone){
+          d.obj.label = finalZone.label; d.obj.kind = finalZone.kind; d.obj.dangerLevel = finalZone.dangerLevel;
+          saveData(); drawMap(mp);
+        });
+      }
+    }
     if (mpState.scaleLineStart) {
       mpState.scaleLineStart = null;
       var sl = mpState.scaleLine;
@@ -10748,7 +10946,13 @@ function renderMapPage(mp) {
   _mapWinHandlers = { move: onMapMouseMove, up: onMapMouseUp };
 
   window.onkeydown = function(e){
-    if ((e.key === "Delete" || e.key === "Backspace") && mpState.selected && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
+    var inField = document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA";
+    if ((e.ctrlKey || e.metaKey) && !inField && (e.key === "z" || e.key === "Z")) {
+      e.preventDefault();
+      if (e.shiftKey) mapRedo(mp); else mapUndo(mp);
+      return;
+    }
+    if ((e.key === "Delete" || e.key === "Backspace") && mpState.selected && !inField) {
       if (mpState.selected.type === "region") mp.regions = mp.regions.filter(function(r){ return r.id !== mpState.selected.id; });
       else if (mpState.selected.type === "line") mp.lines = mp.lines.filter(function(l){ return l.id !== mpState.selected.id; });
       else if (mpState.selected.type === "dangerZone") mp.dangerZones = mp.dangerZones.filter(function(dz){ return dz.id !== mpState.selected.id; });
