@@ -700,6 +700,11 @@
   .graph-title-bar { display:flex; align-items:center; gap:10px; padding:16px 22px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
   .graph-title { font-family:var(--serif); font-size:18px; font-weight:600; border:none; background:none; outline:none; flex:1; }
   .graph-hint { font-size:11.5px; color:var(--ink-faint); }
+  .map-breadcrumb { display:flex; align-items:center; gap:4px; padding:8px 22px 0; flex-wrap:wrap; font-size:12px; }
+  .map-breadcrumb-crumb { color:var(--ink-faint); background:none; border:none; padding:2px 2px; font-family:inherit; font-size:12px; }
+  .map-breadcrumb-crumb:not(.current):hover { color:var(--accent); text-decoration:underline; }
+  .map-breadcrumb-crumb.current { color:var(--ink); font-weight:600; }
+  .map-breadcrumb-sep { color:var(--ink-faint); display:inline-flex; opacity:0.6; }
   .map-version-bar { display:flex; align-items:center; gap:6px; padding:8px 22px; border-bottom:1px solid var(--border); flex-wrap:wrap; background:var(--bg-card-hover); }
   .map-version-bar-icon { color:var(--ink-faint); display:flex; flex:none; }
   .map-version-tab { font-size:12px; color:var(--ink-soft); background:var(--bg); border:1px solid var(--border-strong); border-radius:20px; padding:4px 10px; flex:none; display:flex; align-items:center; gap:4px; }
@@ -1407,6 +1412,29 @@ var MAP_ERAS = {
   early:    { label:"근대" },
   modern:   { label:"현대" }
 };
+/* 계층형 지도 구조: 세계 전도 -> 대륙 -> 지역 -> 국가 -> 도시 -> 세부구역.
+ * mapType(지도의 "종류")과 별개로, 지도가 계층에서 어느 깊이에 있는지를 나타낸다. */
+var MAP_LEVELS = ["world", "continent", "region", "country", "city", "district"];
+var MAP_LEVEL_LABELS = {
+  world: "세계 전도", continent: "대륙", region: "지역", country: "국가", city: "도시", district: "세부구역"
+};
+function nextMapLevel(level) {
+  var idx = MAP_LEVELS.indexOf(level);
+  if (idx === -1 || idx === MAP_LEVELS.length - 1) return MAP_LEVELS[MAP_LEVELS.length - 1];
+  return MAP_LEVELS[idx + 1];
+}
+function ancestorMapChain(mp) {
+  var chain = [mp];
+  var current = mp;
+  var guard = 0;
+  while (current.parentMapId && guard++ < 50) {
+    var parent = MAPS.find(function(m){ return m.id === current.parentMapId; });
+    if (!parent) break;
+    chain.unshift(parent);
+    current = parent;
+  }
+  return chain;
+}
 var SPORT_PRESETS = {
   baseball: {
     label: "야구", fieldShape: "diamond",
@@ -1795,6 +1823,10 @@ function pushRecentColor(hex) {
     if (mp.versionOrder === undefined) mp.versionOrder = 0;
     if (mp.dangerZones === undefined) mp.dangerZones = [];
     if (mp.gates === undefined) mp.gates = [];
+    /* 계층형 지도 레벨(세계전도/대륙/지역/국가/도시/세부구역) -- mapType(전도/상세도/지형/기후/기타,
+     * "어떤 종류의 지도인가")과는 별개 축으로, "이 지도가 계층에서 어느 깊이인가"를 나타낸다.
+     * 기존 데이터는 parentMapId 유무로 최선의 추정값을 채워 넣는다. */
+    if (mp.level === undefined) mp.level = mp.parentMapId ? "region" : "world";
   });
 })();
 (function migrateTimelines(){
@@ -4101,6 +4133,7 @@ function newMap(workId, opts) {
     mapType: opts.mapType || (opts.parentMapId ? "region" : "world"),
     era: opts.era || "",
     parentMapId: opts.parentMapId || null,
+    level: opts.level || (opts.parentMapId ? "region" : "world"),
     yearLabel: opts.yearLabel || "",
     linkedTimelineId: null, linkedEventId: null,
     bgImage: null, bgOpacity: 0.35, showBg: true,
@@ -4478,6 +4511,10 @@ function deleteMap(id) {
     message: '"'+(mp.title||"제목 없음")+'"을(를) 삭제하면 되돌릴 수 없습니다.' + (siblingCount > 1 ? ' 이 지도에 연결된 다른 회차('+(siblingCount-1)+'개)는 그대로 남아요.' : ''),
     confirmLabel: "삭제", danger: true,
     onConfirm: function(){
+      MAPS.forEach(function(m){
+        if (m.parentMapId === id) m.parentMapId = null;
+        (m.regions||[]).forEach(function(r){ if (r.childMapId === id) r.childMapId = null; });
+      });
       MAPS = MAPS.filter(function(x){ return x.id !== id; });
       if (state.activeId === id) { state.mode = "empty"; state.activeId = null; }
       saveData(); render();
@@ -4515,7 +4552,7 @@ function addMapVersion(mp) {
     id: uid(), workId: mp.workId,
     title: baseTitle + " · " + label,
     mapType: mp.mapType, era: mp.era,
-    parentMapId: mp.parentMapId,
+    parentMapId: mp.parentMapId, level: mp.level,
     yearLabel: "", linkedTimelineId: null, linkedEventId: null,
     bgImage: mp.bgImage, bgWidth: mp.bgWidth, bgHeight: mp.bgHeight,
     bgOpacity: mp.bgOpacity, bgMode: mp.bgMode, traceImage: mp.traceImage,
@@ -9606,9 +9643,43 @@ function openMapRegionModal(mp, region, onDone) {
       saveData();
       state.mode = "map"; state.activeId = childMap.id; render();
     } else {
-      var newChild = newMap(mp.workId, { parentMapId: mp.id, mapType: "region", title: currentLabel || (mp.title+" - 세부") });
+      saveData();
+      openMapDrillLevelModal(mp, region, currentLabel);
+    }
+  });
+}
+function seedChildMapFromRegion(childMap, parentRegion) {
+  var pts = parentRegion.points;
+  if (!pts || pts.length < 3) return;
+  var xs = pts.map(function(p){ return p[0]; }), ys = pts.map(function(p){ return p[1]; });
+  var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+  var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+  var w = Math.max(1, maxX - minX), h = Math.max(1, maxY - minY);
+  var targetW = 900, targetH = 620, margin = 40;
+  var scale = Math.min((targetW - margin * 2) / w, (targetH - margin * 2) / h);
+  var offsetX = margin - minX * scale + (targetW - margin * 2 - w * scale) / 2;
+  var offsetY = margin - minY * scale + (targetH - margin * 2 - h * scale) / 2;
+  var scaled = pts.map(function(p){ return [Math.round((p[0] * scale + offsetX) * 10) / 10, Math.round((p[1] * scale + offsetY) * 10) / 10]; });
+  childMap.regions.push({ id: uid(), points: scaled, terrain: parentRegion.terrain || "plain", label: parentRegion.label || "", childMapId: null, houseId: null, countryInfo: null, locationId: null });
+}
+/* "지도 영역 공백 금지 규칙"은 하위 지도 생성 시점에도 적용된다 -- 새로 만든 세부 지도가
+ * 빈 캔버스인 채로 남으면 그 자체가 "미정의 지역"이므로, 드릴다운한 지역의 폴리곤을
+ * 캔버스에 맞게 재투영한 시작 지역을 자동으로 하나 채워 넣는다. */
+function openMapDrillLevelModal(mp, region, regionLabel) {
+  var suggested = nextMapLevel(mp.level);
+  openModal({
+    title: "세부 지도 만들기",
+    message: '"'+esc(regionLabel || region.label || "")+'" 영역의 세부 지도를 어느 계층으로 만들까요?',
+    fields: [{ placeholder: "세부 지도 이름", value: regionLabel || (mp.title + " - 세부") }],
+    pickers: [{ key: "level", label: "계층", default: suggested, options: MAP_LEVELS.map(function(k){ return { value: k, label: MAP_LEVEL_LABELS[k] }; }) }],
+    confirmLabel: "만들기",
+    onConfirm: function(values, checked, picks){
+      var title = (values[0] || "").trim() || (regionLabel || (mp.title + " - 세부"));
+      var newChild = newMap(mp.workId, { parentMapId: mp.id, level: picks.level, title: title });
+      seedChildMapFromRegion(newChild, region);
       region.childMapId = newChild.id;
       saveData();
+      drawMap(newChild);
     }
   });
 }
@@ -9944,7 +10015,19 @@ function renderMapPage(mp) {
     '<span class="map-crop-hint">지도 위에 실제 거리를 아는 구간을 선으로 그어보세요</span>' +
     '<button type="button" class="map-symbol-btn" id="mapScaleCancel">'+ic("close",13)+' 취소</button>' +
   '</div>';
-  var parentMap = mp.parentMapId ? MAPS.find(function(m){ return m.id === mp.parentMapId; }) : null;
+  var mapAncestors = ancestorMapChain(mp);
+  var breadcrumbHtml = mapAncestors.length > 1 ? (
+    '<div class="map-breadcrumb" id="mapBreadcrumb">' +
+      mapAncestors.map(function(m, i){
+        var isLast = i === mapAncestors.length - 1;
+        var levelLabel = MAP_LEVEL_LABELS[m.level] || "";
+        return (i > 0 ? '<span class="map-breadcrumb-sep">'+ic("chevR",10)+'</span>' : "") +
+          (isLast
+            ? '<span class="map-breadcrumb-crumb current" title="'+esc(levelLabel)+'">'+esc(m.title||"지도")+'</span>'
+            : '<button type="button" class="map-breadcrumb-crumb" data-mapbreadcrumb="'+m.id+'" title="'+esc(levelLabel)+'">'+esc(m.title||"지도")+'</button>');
+      }).join("") +
+    '</div>'
+  ) : "";
   var linkedTl = mp.linkedTimelineId ? TIMELINES.find(function(t){ return t.id === mp.linkedTimelineId; }) : null;
   var linkedEv = linkedTl ? linkedTl.events.find(function(e){ return e.id === mp.linkedEventId; }) : null;
   var versionSiblings = mapVersionSiblings(mp);
@@ -9964,9 +10047,10 @@ function renderMapPage(mp) {
 
   main.innerHTML =
     '<div class="graph-shell">' +
+      breadcrumbHtml +
       '<div class="graph-title-bar">' +
-        (parentMap ? '<button type="button" class="btn" id="mapUpBtn" style="flex:none;gap:5px">'+ic("chevL",13)+'<span>'+esc(parentMap.title||"상위 지도")+'</span></button>' : '') +
         '<input class="graph-title" id="mapTitle" value="'+esc(mp.title)+'" placeholder="지도 이름">' +
+        '<select class="sel" id="mapLevelSelect" style="flex:none" title="계층 — 세계 전도부터 세부구역까지 이 지도가 어느 깊이인지">' + MAP_LEVELS.map(function(k){ return '<option value="'+k+'" '+(mp.level===k?"selected":"")+'>'+MAP_LEVEL_LABELS[k]+'</option>'; }).join("") + '</select>' +
         '<select class="sel" id="mapTypeSelect" style="flex:none" title="지도 종류">' + Object.keys(MAP_TYPES).map(function(k){ return '<option value="'+k+'" '+(mp.mapType===k?"selected":"")+'>'+MAP_TYPES[k].label+'</option>'; }).join("") + '</select>' +
         '<select class="sel" id="mapEraSelect" style="flex:none" title="시대">' + Object.keys(MAP_ERAS).map(function(k){ return '<option value="'+k+'" '+((mp.era||"")===k?"selected":"")+'>'+MAP_ERAS[k].label+'</option>'; }).join("") + '</select>' +
         '<button class="page-del" id="deleteMapBtn" style="margin-top:0">'+ic("trash",13)+'<span>지도 삭제</span></button>' +
@@ -10023,8 +10107,11 @@ function renderMapPage(mp) {
   document.getElementById("deleteMapBtn").addEventListener("click", function(){ deleteMap(mp.id); });
   document.getElementById("mapTypeSelect").addEventListener("change", function(e){ mp.mapType = e.target.value; saveData(); renderSidebar(); });
   document.getElementById("mapEraSelect").addEventListener("change", function(e){ mp.era = e.target.value; saveData(); renderSidebar(); });
-  var mapUpBtn = document.getElementById("mapUpBtn");
-  if (mapUpBtn) mapUpBtn.addEventListener("click", function(){ state.mode = "map"; state.activeId = mp.parentMapId; render(); });
+  document.getElementById("mapLevelSelect").addEventListener("change", function(e){ mp.level = e.target.value; saveData(); });
+  var breadcrumbEl = document.getElementById("mapBreadcrumb");
+  if (breadcrumbEl) breadcrumbEl.querySelectorAll("[data-mapbreadcrumb]").forEach(function(btn){
+    btn.addEventListener("click", function(){ state.mode = "map"; state.activeId = btn.dataset.mapbreadcrumb; render(); });
+  });
   document.querySelectorAll("[data-mapversion]").forEach(function(btn){
     btn.addEventListener("click", function(){ state.mode = "map"; state.activeId = btn.dataset.mapversion; render(); });
   });
