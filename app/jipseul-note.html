@@ -137,6 +137,9 @@
   .sb-head { display:flex; align-items:center; gap:6px; padding:6px 6px 6px 4px; }
   .sb-head .chev { color:var(--ink-faint); transition:transform .12s; cursor:pointer; display:flex; }
   .sb-head .chev.collapsed { transform:rotate(-90deg); }
+  .advanced-head { cursor:pointer; }
+  .advanced-head .t { color:var(--ink-faint); font-size:12.5px; }
+  .advanced-head:hover .t { color:var(--ink-soft); }
   .sb-head .t { font-size:11.5px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); cursor:pointer; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .sb-head .add { color:var(--ink-faint); display:flex; padding:2px; border-radius:5px; background:none; border:none; }
   .sb-head .add:hover { color:var(--accent); background:var(--bg-card); }
@@ -166,6 +169,13 @@
   .sb-empty { font-size:12px; color:var(--ink-faint); padding:4px 8px 10px; }
 
   .sidebar-foot { margin-top:auto; padding-top:12px; border-top:1px solid var(--border); font-size:11px; color:var(--ink-faint); line-height:1.6; }
+  .sidebar-adv-details { margin-bottom:8px; }
+  .sidebar-adv-details summary { cursor:pointer; font-size:12px; color:var(--ink-faint); list-style:none; display:flex; align-items:center; gap:4px; padding:2px 0; }
+  .sidebar-adv-details summary:hover { color:var(--ink-soft); }
+  .sidebar-adv-details summary::-webkit-details-marker { display:none; }
+  .sidebar-adv-details summary::before { content:"\25B8"; font-size:9px; transition:transform .12s; display:inline-block; }
+  .sidebar-adv-details[open] summary::before { transform:rotate(90deg); }
+  .sidebar-adv-details .backup-row { margin:8px 0 2px; }
   .backup-row { display:flex; gap:6px; margin-bottom:8px; }
   .backup-btn { flex:1; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:7px; padding:6px 4px; font-size:11.5px; color:var(--ink-soft); }
   .backup-btn:hover { border-color:var(--accent); color:var(--accent); }
@@ -174,7 +184,7 @@
   main { padding:0; max-width:900px; margin: 0 auto; width: 100%; }
   .page-pad { padding:44px 48px 90px; }
 
-  .home-view { padding:56px 48px 90px; max-width:720px; margin:0 auto; }
+  .home-view { padding:48px 48px 90px; max-width:1080px; margin:0 auto; }
   .home-eyebrow { display:flex; align-items:center; gap:8px; font-size:11.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:16px; }
   .home-eyebrow .diamond { color:var(--accent); }
   .home-hero h1 { font-family:var(--serif); font-size:30px; font-weight:600; line-height:1.36; margin:0 0 10px; text-wrap:balance; color:var(--ink); }
@@ -1038,7 +1048,7 @@
   <aside class="sidebar">
     <div class="brand">
       <div class="brand-row" id="brandHome" title="홈으로"><svg class="brand-logo" width="20" height="20" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><mask id="brandLogoDots"><rect x="0" y="0" width="22" height="22" fill="#fff"/><circle cx="7" cy="12.6" r="1.15" fill="#000"/><circle cx="11" cy="12.6" r="1.15" fill="#000"/><circle cx="15" cy="12.6" r="1.15" fill="#000"/></mask></defs><g mask="url(#brandLogoDots)"><polygon points="11,1 20,8 2,8" fill="currentColor"/><rect x="2" y="8" width="18" height="9" rx="3" fill="currentColor"/><polygon points="6,17 6,21 10,17" fill="currentColor"/></g></svg><span class="brand-title">집썰</span></div>
-      <button type="button" class="brand-theme-btn" id="themeSettingsBtn" title="테마 설정(라이트·다크·RGB)"><svg class="icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5a5.5 5.5 0 100 11c.9 0 1.4-.6 1.4-1.3 0-.35-.15-.65-.35-.9-.2-.25-.35-.55-.35-.9 0-.7.55-1.2 1.2-1.2h1.4A2.7 2.7 0 0014 6.5C14 4 11.3 2.5 8 2.5z"/><circle cx="5.2" cy="6.6" r="0.9" fill="currentColor" stroke="none"/><circle cx="8" cy="4.9" r="0.9" fill="currentColor" stroke="none"/><circle cx="10.8" cy="6.6" r="0.9" fill="currentColor" stroke="none"/><circle cx="5.6" cy="9.8" r="0.9" fill="currentColor" stroke="none"/></svg></button>
+      <button type="button" class="brand-theme-btn" id="themeSettingsBtn" title="환경 설정(테마·사이드바 표시)"><svg class="icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5a5.5 5.5 0 100 11c.9 0 1.4-.6 1.4-1.3 0-.35-.15-.65-.35-.9-.2-.25-.35-.55-.35-.9 0-.7.55-1.2 1.2-1.2h1.4A2.7 2.7 0 0014 6.5C14 4 11.3 2.5 8 2.5z"/><circle cx="5.2" cy="6.6" r="0.9" fill="currentColor" stroke="none"/><circle cx="8" cy="4.9" r="0.9" fill="currentColor" stroke="none"/><circle cx="10.8" cy="6.6" r="0.9" fill="currentColor" stroke="none"/><circle cx="5.6" cy="9.8" r="0.9" fill="currentColor" stroke="none"/></svg></button>
     </div>
     <div class="search-wrap">
       <span class="search-icon" id="searchIcon"></span>
@@ -1046,11 +1056,14 @@
     </div>
     <div id="sbBody" style="display:flex; flex-direction:column; gap:10px; overflow-y:auto;"></div>
     <div class="sidebar-foot">
-      <div class="backup-row">
-        <button type="button" class="backup-btn" id="exportBtn">내보내기</button>
-        <button type="button" class="backup-btn" id="importBtn">가져오기</button>
-        <input type="file" id="importFile" accept="application/json" style="display:none">
-      </div>
+      <details class="sidebar-adv-details">
+        <summary>데이터 관리</summary>
+        <div class="backup-row">
+          <button type="button" class="backup-btn" id="exportBtn">내보내기</button>
+          <button type="button" class="backup-btn" id="importBtn">가져오기</button>
+          <input type="file" id="importFile" accept="application/json" style="display:none">
+        </div>
+      </details>
       작품 폴더 안에 원고(소설·화)와 설정 노트(문서·관계도·지도·표·연표·문자)가 들어갑니다.
     </div>
   </aside>
@@ -1172,7 +1185,35 @@ function setThemePref(mode, rgbVariant) {
   try { localStorage.setItem(THEME_KEY, JSON.stringify(THEME_PREF)); } catch (e) {}
   applyThemePref();
 }
-function openThemeSettingsModal() {
+/* ---------------- 사이드바 섹션 표시 설정 ----------------
+ * "설정 노트" 하위 섹션 중 자주 쓰지 않는 것들을 작품 폴더 안 "고급 기능"
+ * 접이식 그룹으로 몰아넣을지, 기본 위치에 그대로 펼쳐둘지를 사용자가 직접
+ * 체크박스로 고른다(renderWorkBody에서 소비). 기본값은 문서·관계도·지도만
+ * 핵심으로 두고 나머지는 고급으로 시작 -- 이후 언제든 되돌릴 수 있다. */
+var SIDEBAR_PREFS_KEY = "jipseul_sidebar_prefs_v1";
+var SIDEBAR_SECTIONS = [
+  { key: "docs", label: "문서" },
+  { key: "graphs", label: "관계도" },
+  { key: "maps", label: "지도" },
+  { key: "tables", label: "표" },
+  { key: "scripts", label: "문자" },
+  { key: "timelines", label: "연표" },
+  { key: "sports", label: "스포츠" },
+  { key: "units", label: "단위·달력" },
+  { key: "fieldtemplates", label: "필드 템플릿" }
+];
+var SIDEBAR_DEFAULT_PINNED = { docs:true, graphs:true, maps:true, tables:false, scripts:false, timelines:false, sports:false, units:false, fieldtemplates:false };
+function loadSidebarPrefs() {
+  try { var raw = localStorage.getItem(SIDEBAR_PREFS_KEY); if (raw) { var p = JSON.parse(raw); return Object.assign({}, SIDEBAR_DEFAULT_PINNED, p); } } catch (e) {}
+  return Object.assign({}, SIDEBAR_DEFAULT_PINNED);
+}
+var SIDEBAR_PREFS = loadSidebarPrefs();
+function setSidebarSectionPinned(key, pinned) {
+  SIDEBAR_PREFS[key] = pinned;
+  try { localStorage.setItem(SIDEBAR_PREFS_KEY, JSON.stringify(SIDEBAR_PREFS)); } catch (e) {}
+  renderSidebar();
+}
+function openPreferencesModal() {
   closeModal();
   var overlay = document.createElement("div");
   overlay.className = "modal-overlay";
@@ -1187,9 +1228,9 @@ function openThemeSettingsModal() {
   function paint() {
     overlay.innerHTML =
       '<div class="modal-box">' +
-        '<div class="modal-title">테마 설정</div>' +
+        '<div class="modal-title">환경 설정</div>' +
         '<div class="modal-msg">선택하면 화면 전체(사이드바·모달·지도 포함)에 바로 적용되고, 다음에 열 때도 그대로 기억됩니다.</div>' +
-        '<div class="modal-picker-label">모드</div>' +
+        '<div class="modal-picker-label">테마</div>' +
         '<div class="modal-picker-row">' +
           MODES.map(function(m){ return '<button type="button" class="modal-pick no-dot'+(THEME_PREF.mode===m.key?" on":"")+'" data-thememode="'+m.key+'">'+esc(m.label)+'</button>'; }).join("") +
         '</div>' +
@@ -1202,6 +1243,10 @@ function openThemeSettingsModal() {
             }).join("") +
           '</div>'
         ) : "") +
+        '<div class="modal-picker-label" style="margin-top:14px">사이드바 표시 — 체크 해제하면 작품 폴더 안 "고급 기능"으로 접어둡니다</div>' +
+        SIDEBAR_SECTIONS.map(function(s){
+          return '<label class="modal-check"><input type="checkbox" data-sidebarpref="'+s.key+'" '+(SIDEBAR_PREFS[s.key]?"checked":"")+'> '+esc(s.label)+'</label>';
+        }).join("") +
         '<div class="modal-actions"><button type="button" class="btn primary" id="themeModalClose">닫기</button></div>' +
       '</div>';
     overlay.querySelectorAll("[data-thememode]").forEach(function(btn){
@@ -1209,6 +1254,9 @@ function openThemeSettingsModal() {
     });
     overlay.querySelectorAll("[data-themergb]").forEach(function(btn){
       btn.addEventListener("click", function(){ setThemePref("rgb", btn.dataset.themergb); paint(); });
+    });
+    overlay.querySelectorAll("[data-sidebarpref]").forEach(function(cb){
+      cb.addEventListener("change", function(){ setSidebarSectionPinned(cb.dataset.sidebarpref, cb.checked); });
     });
     overlay.querySelector("#themeModalClose").addEventListener("click", closeModal);
   }
@@ -6003,79 +6051,105 @@ function renderWorkBody(work, q) {
   var settingCollapsed = !!state.collapsed[settingKey];
   html += '<div class="sb-group"><div class="sb-group-head" style="margin-left:10px" data-toggle="'+settingKey+'"><span class="chev '+(settingCollapsed?"collapsed":"")+'">'+ic("chevron",12)+'</span><span class="gt">설정 노트</span></div>';
   if (!settingCollapsed) {
-    html += '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newdoc="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">문서</span></div>';
+    /* "고급 기능"으로 접어둘지는 사용자가 환경설정(SIDEBAR_PREFS)에서 섹션별로
+     * 직접 고른다 -- 핵심 섹션은 기존처럼 바로 펼쳐 보이고, 고급 섹션은 한데
+     * 모아 접이식 그룹 하나로 묶는다(둘 다 완전히 같은 마크업, 배치만 다르다). */
+    var sectionsHtml = {};
+
+    var docsHtml = '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newdoc="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">문서</span></div>';
     Object.keys(byCat).forEach(function(cat){
       var list = byCat[cat];
       if (!list.length) return;
       var key = "doc:"+work.id+":"+cat, collapsed = !!state.collapsed[key];
-      html += '<div class="sb-head" style="margin-left:18px"><span class="chev '+(collapsed?"collapsed":"")+'" data-toggle="'+key+'">'+ic("chevron",12)+'</span><span class="t" data-opendoccat="'+work.id+'::'+esc(cat)+'" title="폴더로 열기">'+esc(cat)+' · '+list.length+'</span></div>';
+      docsHtml += '<div class="sb-head" style="margin-left:18px"><span class="chev '+(collapsed?"collapsed":"")+'" data-toggle="'+key+'">'+ic("chevron",12)+'</span><span class="t" data-opendoccat="'+work.id+'::'+esc(cat)+'" title="폴더로 열기">'+esc(cat)+' · '+list.length+'</span></div>';
       if (!collapsed) list.forEach(function(d){
         var isActive = state.mode==="doc" && state.activeId===d.id;
         var metaHtml = docMetaHtml(d);
-        html += '<div class="doc-row '+(isActive?"active":"")+'" style="margin-left:26px" data-opendoc="'+d.id+'"><span class="status-dot small '+(isActive?"on":"")+'"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.title||"제목 없음")+'</span>'+(metaHtml?'<span class="row-meta">'+metaHtml+'</span>':'')+'<button class="row-del" data-deldoc="'+d.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
+        docsHtml += '<div class="doc-row '+(isActive?"active":"")+'" style="margin-left:26px" data-opendoc="'+d.id+'"><span class="status-dot small '+(isActive?"on":"")+'"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.title||"제목 없음")+'</span>'+(metaHtml?'<span class="row-meta">'+metaHtml+'</span>':'')+'<button class="row-del" data-deldoc="'+d.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
       });
     });
-    if (!workDocs.length) html += '<div class="sb-empty" style="margin-left:18px">아직 문서가 없습니다.</div>';
-    else if (q && !Object.keys(byCat).some(function(cat){ return byCat[cat].length; })) html += '<div class="sb-empty" style="margin-left:18px">일치하는 문서가 없습니다.</div>';
-    html += '</div>';
+    if (!workDocs.length) docsHtml += '<div class="sb-empty" style="margin-left:18px">아직 문서가 없습니다.</div>';
+    else if (q && !Object.keys(byCat).some(function(cat){ return byCat[cat].length; })) docsHtml += '<div class="sb-empty" style="margin-left:18px">일치하는 문서가 없습니다.</div>';
+    docsHtml += '</div>';
+    sectionsHtml.docs = docsHtml;
 
-    html += '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newgraph="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">관계도</span></div>';
+    var graphsHtml = '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newgraph="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">관계도</span></div>';
     var gs = workGraphs.filter(function(g){ return !q || g.title.toLowerCase().includes(q); });
     gs.forEach(function(g){
-      html += '<div class="graph-row '+(state.mode==="graph"&&state.activeId===g.id?"active":"")+'" style="margin-left:26px" data-opengraph="'+g.id+'">'+ic("graph",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(g.title||"새 관계도")+'</span><button class="row-del" data-delgraph="'+g.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
+      graphsHtml += '<div class="graph-row '+(state.mode==="graph"&&state.activeId===g.id?"active":"")+'" style="margin-left:26px" data-opengraph="'+g.id+'">'+ic("graph",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(g.title||"새 관계도")+'</span><button class="row-del" data-delgraph="'+g.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
     });
-    if (!gs.length) html += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 관계도가 없습니다." : "아직 관계도가 없습니다.")+'</div>';
-    html += '</div>';
+    if (!gs.length) graphsHtml += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 관계도가 없습니다." : "아직 관계도가 없습니다.")+'</div>';
+    graphsHtml += '</div>';
+    sectionsHtml.graphs = graphsHtml;
 
-    html += '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newmap="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">지도</span></div>';
+    var mapsHtml = '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newmap="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">지도</span></div>';
     var workMaps = MAPS.filter(function(mp){ return mp.workId===work.id; });
     if (q) {
       var matchedMaps = workMaps.filter(function(mp){ return mp.title.toLowerCase().includes(q); });
       matchedMaps.forEach(function(mp){
-        html += '<div class="graph-row '+(state.mode==="map"&&state.activeId===mp.id?"active":"")+'" style="margin-left:26px" data-openmap="'+mp.id+'">'+ic("map",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(mp.title||"제목 없음")+'</span><button class="row-del" data-delmap="'+mp.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
+        mapsHtml += '<div class="graph-row '+(state.mode==="map"&&state.activeId===mp.id?"active":"")+'" style="margin-left:26px" data-openmap="'+mp.id+'">'+ic("map",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(mp.title||"제목 없음")+'</span><button class="row-del" data-delmap="'+mp.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
       });
-      if (!matchedMaps.length) html += '<div class="sb-empty" style="margin-left:18px">일치하는 지도가 없습니다.</div>';
+      if (!matchedMaps.length) mapsHtml += '<div class="sb-empty" style="margin-left:18px">일치하는 지도가 없습니다.</div>';
     } else {
-      html += renderMapTree(workMaps, null, 0);
-      if (!workMaps.length) html += '<div class="sb-empty" style="margin-left:18px">아직 지도가 없습니다.</div>';
+      mapsHtml += renderMapTree(workMaps, null, 0);
+      if (!workMaps.length) mapsHtml += '<div class="sb-empty" style="margin-left:18px">아직 지도가 없습니다.</div>';
     }
-    html += '</div>';
+    mapsHtml += '</div>';
+    sectionsHtml.maps = mapsHtml;
 
-    html += '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newtable="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">표</span></div>';
+    var tablesHtml = '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newtable="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">표</span></div>';
     var tbs = TABLES.filter(function(t){ return t.workId===work.id && (!q || t.title.toLowerCase().includes(q)); });
     tbs.forEach(function(t){
-      html += '<div class="graph-row '+(state.mode==="table"&&state.activeId===t.id?"active":"")+'" style="margin-left:26px" data-opentable="'+t.id+'">'+ic("table",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(t.title||"제목 없음")+'</span><button class="row-del" data-deltable="'+t.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
+      tablesHtml += '<div class="graph-row '+(state.mode==="table"&&state.activeId===t.id?"active":"")+'" style="margin-left:26px" data-opentable="'+t.id+'">'+ic("table",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(t.title||"제목 없음")+'</span><button class="row-del" data-deltable="'+t.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
     });
-    if (!tbs.length) html += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 표가 없습니다." : "아직 표가 없습니다.")+'</div>';
-    html += '</div>';
+    if (!tbs.length) tablesHtml += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 표가 없습니다." : "아직 표가 없습니다.")+'</div>';
+    tablesHtml += '</div>';
+    sectionsHtml.tables = tablesHtml;
 
-    html += '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newscript="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">문자</span></div>';
+    var scriptsHtml = '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newscript="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">문자</span></div>';
     var scs = SCRIPTS.filter(function(s){ return s.workId===work.id && (!q || scriptMatches(s, q)); });
     scs.forEach(function(s){
-      html += '<div class="graph-row '+(state.mode==="script"&&state.activeId===s.id?"active":"")+'" style="margin-left:26px" data-openscript="'+s.id+'">'+ic("pen",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.title||"제목 없음")+'</span><button class="row-del" data-delscript="'+s.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
+      scriptsHtml += '<div class="graph-row '+(state.mode==="script"&&state.activeId===s.id?"active":"")+'" style="margin-left:26px" data-openscript="'+s.id+'">'+ic("pen",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.title||"제목 없음")+'</span><button class="row-del" data-delscript="'+s.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
     });
-    if (!scs.length) html += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 문자 체계가 없습니다." : "아직 문자 체계가 없습니다.")+'</div>';
-    html += '</div>';
+    if (!scs.length) scriptsHtml += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 문자 체계가 없습니다." : "아직 문자 체계가 없습니다.")+'</div>';
+    scriptsHtml += '</div>';
+    sectionsHtml.scripts = scriptsHtml;
 
-    html += '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newtimeline="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">연표</span></div>';
+    var timelinesHtml = '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newtimeline="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">연표</span></div>';
     var tls = TIMELINES.filter(function(tl){ return tl.workId===work.id && (!q || tl.title.toLowerCase().includes(q) || tl.events.some(function(ev){ return ((ev.label||"")+" "+(ev.title||"")+" "+(ev.description||"")).toLowerCase().includes(q); })); });
     tls.forEach(function(tl){
-      html += '<div class="graph-row '+(state.mode==="timeline"&&state.activeId===tl.id?"active":"")+'" style="margin-left:26px" data-opentimeline="'+tl.id+'">'+ic("calendar",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(tl.title||"제목 없음")+'</span><button class="row-del" data-deltimeline="'+tl.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
+      timelinesHtml += '<div class="graph-row '+(state.mode==="timeline"&&state.activeId===tl.id?"active":"")+'" style="margin-left:26px" data-opentimeline="'+tl.id+'">'+ic("calendar",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(tl.title||"제목 없음")+'</span><button class="row-del" data-deltimeline="'+tl.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
     });
-    if (!tls.length) html += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 연표가 없습니다." : "아직 연표가 없습니다.")+'</div>';
-    html += '</div>';
+    if (!tls.length) timelinesHtml += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 연표가 없습니다." : "아직 연표가 없습니다.")+'</div>';
+    timelinesHtml += '</div>';
+    sectionsHtml.timelines = timelinesHtml;
 
-    html += '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newsports="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">스포츠</span></div>';
+    var sportsHtml = '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newsports="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">스포츠</span></div>';
     var sps = SPORTS.filter(function(s){ return s.workId===work.id && (!q || s.title.toLowerCase().includes(q)); });
     sps.forEach(function(s){
       var preset = SPORT_PRESETS[s.sportType] || SPORT_PRESETS.other;
-      html += '<div class="graph-row '+(state.mode==="sports"&&state.activeId===s.id?"active":"")+'" style="margin-left:26px" data-opensports="'+s.id+'">'+ic("trophy",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.title||"제목 없음")+'</span><span class="row-meta" style="color:var(--ink-faint);font-size:11px">'+esc(preset.label)+'</span><button class="row-del" data-delsports="'+s.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
+      sportsHtml += '<div class="graph-row '+(state.mode==="sports"&&state.activeId===s.id?"active":"")+'" style="margin-left:26px" data-opensports="'+s.id+'">'+ic("trophy",13)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.title||"제목 없음")+'</span><span class="row-meta" style="color:var(--ink-faint);font-size:11px">'+esc(preset.label)+'</span><button class="row-del" data-delsports="'+s.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
     });
-    if (!sps.length) html += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 스포츠 기록판이 없습니다." : "아직 스포츠 기록판이 없습니다.")+'</div>';
-    html += '</div>';
+    if (!sps.length) sportsHtml += '<div class="sb-empty" style="margin-left:18px">'+(q ? "일치하는 스포츠 기록판이 없습니다." : "아직 스포츠 기록판이 없습니다.")+'</div>';
+    sportsHtml += '</div>';
+    sectionsHtml.sports = sportsHtml;
 
-    html += '<div class="sb-section"><div class="doc-row '+(state.mode==="units"&&state.activeId===work.id?"active":"")+'" style="margin-left:18px" data-openunits="'+work.id+'">'+ic("scale",13)+'<span style="flex:1">단위·달력</span></div></div>';
-    html += '<div class="sb-section"><div class="doc-row '+(state.mode==="fieldtemplates"&&state.activeId===work.id?"active":"")+'" style="margin-left:18px" data-openfieldtemplates="'+work.id+'">'+ic("grid",13)+'<span style="flex:1">필드 템플릿</span></div></div>';
+    sectionsHtml.units = '<div class="sb-section"><div class="doc-row '+(state.mode==="units"&&state.activeId===work.id?"active":"")+'" style="margin-left:18px" data-openunits="'+work.id+'">'+ic("scale",13)+'<span style="flex:1">단위·달력</span></div></div>';
+    sectionsHtml.fieldtemplates = '<div class="sb-section"><div class="doc-row '+(state.mode==="fieldtemplates"&&state.activeId===work.id?"active":"")+'" style="margin-left:18px" data-openfieldtemplates="'+work.id+'">'+ic("grid",13)+'<span style="flex:1">필드 템플릿</span></div></div>';
+
+    var advancedHtml = "";
+    SIDEBAR_SECTIONS.forEach(function(s){
+      if (SIDEBAR_PREFS[s.key]) html += sectionsHtml[s.key];
+      else advancedHtml += sectionsHtml[s.key];
+    });
+    if (advancedHtml) {
+      var advKey = "advanced:"+work.id;
+      if (state.collapsed[advKey] === undefined) state.collapsed[advKey] = true;
+      var advCollapsed = !!state.collapsed[advKey];
+      html += '<div class="sb-section"><div class="sb-head advanced-head" style="margin-left:18px" data-toggle="'+advKey+'"><span class="chev '+(advCollapsed?"collapsed":"")+'">'+ic("chevron",12)+'</span><span class="t" style="flex:1">고급 기능</span></div>';
+      if (!advCollapsed) html += advancedHtml;
+      html += '</div>';
+    }
   }
   html += '</div>';
   return html;
@@ -14322,7 +14396,7 @@ function openExportZipModal(workId) {
   });
 }
 
-document.getElementById("themeSettingsBtn").addEventListener("click", openThemeSettingsModal);
+document.getElementById("themeSettingsBtn").addEventListener("click", openPreferencesModal);
 render();
 </script>
 
