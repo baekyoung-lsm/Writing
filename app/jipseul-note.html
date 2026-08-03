@@ -1629,6 +1629,31 @@ var MAP_TERRAINS = {
   swamp:    { label:"늪지", color:"#5E6B3A" },
   city:     { label:"도시", color:"#A6473C" }
 };
+/* 영역 유형 -- "의도되지 않은 빈 땅"만 금지하고, 사용자가 명시적으로 만든
+ * 영역(무주지 포함)은 전부 정상으로 인정하는 정책의 분류 체계. 지역의
+ * 실제 채우기 색(fillColor)은 여전히 terrain/customColor/세력권 보기가
+ * 결정하고, 이 유형은 "이 영역이 누구의 소유인가/어떤 성격인가"를 나타내는
+ * 별도 축이다(지형·소속 세력과 독립적으로 자유롭게 조합 가능). */
+var REGION_KINDS = {
+  country:         { label:"국가",           color:"#A6473C" },
+  cityState:       { label:"도시국가",       color:"#C97C4B" },
+  sectTerritory:   { label:"문파 영토",      color:"#6E4FA3" },
+  religiousDomain: { label:"종교 세력권",    color:"#C9A227" },
+  tribalTerritory: { label:"부족 영역",      color:"#7A8B4A" },
+  demonicSect:     { label:"마교 영역",      color:"#7A1F2B" },
+  guildTerritory:  { label:"길드 영역",      color:"#3A6E8F" },
+  neutralZone:     { label:"중립지대",       color:"#8A8C94" },
+  lawlessZone:     { label:"무법지대",       color:"#5A4632" },
+  frontier:        { label:"미개척지",       color:"#B9B7AC" },
+  voidZone:        { label:"공백지대",       color:"#9C9C9C" },
+  wasteland:       { label:"황무지",         color:"#8B7355" },
+  dungeonZone:     { label:"던전 구역",      color:"#4B2E5C" },
+  otherworldRift:  { label:"이계 침식지",    color:"#2E7D6B" },
+  custom:          { label:"사용자 정의 영역", color:"#4B4D55" }
+};
+/* 정의상 보통 소유자가 없는 유형들 -- 강제하지는 않고(소속 세력은 여전히
+ * 독립적으로 자유롭게 지정 가능), "무주지로 전환" 버튼의 기본값 추천에만 쓰인다. */
+var REGION_UNOWNED_KINDS = ["neutralZone","lawlessZone","frontier","voidZone","wasteland","dungeonZone","otherworldRift"];
 var MAP_LINE_KINDS = {
   border: { label:"국경", color:"#A6473C", dash:"6 4" },
   river:  { label:"강",   color:"#357C82", dash:"" },
@@ -2043,6 +2068,8 @@ function pushRecentColor(hex) {
       if (r.houseId === undefined) r.houseId = null;
       if (r.countryInfo === undefined) r.countryInfo = null;
       if (r.locationId === undefined) r.locationId = null;
+      if (r.customColor === undefined) r.customColor = null;
+      if (r.regionKind === undefined) r.regionKind = /^미개척지/.test(r.label||"") ? "frontier" : "country";
     });
     (mp.markers||[]).forEach(function(mk){
       if (mk.locationId === undefined) mk.locationId = null;
@@ -3994,7 +4021,7 @@ function createMingChinaMapTemplate(workId) {
     return (MING_PROVINCE_CENTERS && MING_PROVINCE_CENTERS[name]) || polygonCentroid(region.points);
   }
   Object.keys(MING_PROVINCE_SHAPES).forEach(function(name){
-    var region = { id: uid(), points: MING_PROVINCE_SHAPES[name].map(function(p){ return [p[0], p[1]]; }), terrain: MING_PROVINCE_TERRAIN[name] || "plain", label: name, childMapId: null, houseId: null, countryInfo: null };
+    var region = { id: uid(), points: MING_PROVINCE_SHAPES[name].map(function(p){ return [p[0], p[1]]; }), terrain: MING_PROVINCE_TERRAIN[name] || "plain", label: name, childMapId: null, houseId: null, countryInfo: null, regionKind: "country", customColor: null };
     mp.regions.push(region);
     regionByProvince[name] = region;
   });
@@ -4074,7 +4101,7 @@ function createKoreaMapTemplate(workId) {
   var mp = newMap(workId, { title:"현대 한국 지도", mapType:"world", era:"modern", yearLabel:"현재" });
   mp.scaleKmPerUnit = 1.3542642165509138;
   Object.keys(KOREA_PROVINCE_SHAPES).forEach(function(name){
-    mp.regions.push({ id: uid(), points: KOREA_PROVINCE_SHAPES[name].map(function(p){ return [p[0], p[1]]; }), terrain: KOREA_PROVINCE_TERRAIN[name] || "plain", label: name, childMapId: null, houseId: null, countryInfo: null });
+    mp.regions.push({ id: uid(), points: KOREA_PROVINCE_SHAPES[name].map(function(p){ return [p[0], p[1]]; }), terrain: KOREA_PROVINCE_TERRAIN[name] || "plain", label: name, childMapId: null, houseId: null, countryInfo: null, regionKind: "country", customColor: null });
   });
   var seoul = mp.regions.find(function(r){ return r.label === "서울특별시"; });
   if (seoul) { var sc = polygonCentroid(seoul.points); mp.markers.push({ id: uid(), x: sc[0], y: sc[1], kind:"capital", label:"서울" }); }
@@ -4271,7 +4298,7 @@ function createWorldCountriesMapTemplate(workId) {
   var mp = newMap(workId, { title:"현실 세계 지도", mapType:"world", era:"modern", yearLabel:"현재" });
   mp.scaleKmPerUnit = 30;
   Object.keys(WORLD_COUNTRY_SHAPES).forEach(function(name){
-    mp.regions.push({ id: uid(), points: WORLD_COUNTRY_SHAPES[name].map(function(p){ return [p[0], p[1]]; }), terrain: WORLD_COUNTRY_TERRAIN[name] || "plain", label: name, childMapId: null, houseId: null, countryInfo: null, locationId: null });
+    mp.regions.push({ id: uid(), points: WORLD_COUNTRY_SHAPES[name].map(function(p){ return [p[0], p[1]]; }), terrain: WORLD_COUNTRY_TERRAIN[name] || "plain", label: name, childMapId: null, houseId: null, countryInfo: null, locationId: null, regionKind: "country", customColor: null });
   });
   detectAndFillMapGaps(mp);
   saveData();
@@ -4603,7 +4630,7 @@ function generateProceduralWorldMap(workId, style, seedInput) {
     var targetSubregions = Math.max(1, Math.min(9, Math.round(lm.size / 900)));
     if (targetSubregions <= 1) {
       var pts1 = proceduralDecimate(proceduralChaikin(proceduralRemoveCollinear(outline), 2), 34).map(function (p) { return [Math.round(p[0] * 10) / 10, Math.round(p[1] * 10) / 10]; });
-      regions.push({ points: pts1, terrain: PROCEDURAL_TERRAIN_POOL[Math.floor(rng() * PROCEDURAL_TERRAIN_POOL.length)], label: lmName });
+      regions.push({ points: pts1, terrain: PROCEDURAL_TERRAIN_POOL[Math.floor(rng() * PROCEDURAL_TERRAIN_POOL.length)], label: lmName, regionKind: "country" });
       return;
     }
     var seeds = [];
@@ -4643,7 +4670,7 @@ function generateProceduralWorldMap(workId, style, seedInput) {
       } else {
         usedLabels[label] = 1;
       }
-      regions.push({ points: pts2, terrain: PROCEDURAL_TERRAIN_POOL[Math.floor(rng() * PROCEDURAL_TERRAIN_POOL.length)], label: label });
+      regions.push({ points: pts2, terrain: PROCEDURAL_TERRAIN_POOL[Math.floor(rng() * PROCEDURAL_TERRAIN_POOL.length)], label: label, regionKind: "country" });
     });
   });
 
@@ -4651,7 +4678,7 @@ function generateProceduralWorldMap(workId, style, seedInput) {
   var mp = newMap(workId, { title: (styleLabels[actualStyle] || "절차적") + " 세계 (시드 " + seedLabel + ")", mapType: "world", era: "", yearLabel: "" });
   mp.scaleKmPerUnit = 4;
   regions.forEach(function (r) {
-    mp.regions.push({ id: uid(), points: r.points, terrain: r.terrain, label: r.label, childMapId: null, houseId: null, countryInfo: null, locationId: null });
+    mp.regions.push({ id: uid(), points: r.points, terrain: r.terrain, label: r.label, childMapId: null, houseId: null, countryInfo: null, locationId: null, regionKind: r.regionKind || "country", customColor: null });
   });
   detectAndFillMapGaps(mp);
   saveData(); fitMap(mp); saveData(); render();
@@ -4732,11 +4759,146 @@ function detectAndFillMapGaps(mp) {
     outline = proceduralDecimate(proceduralChaikin(proceduralRemoveCollinear(outline), 2), 24).map(function (p) { return [Math.round(p[0] * 10) / 10, Math.round(p[1] * 10) / 10]; });
     filled++;
     var label = filled === 1 ? "미개척지" : "미개척지 " + filled;
-    var region = { id: uid(), points: outline, terrain: "plain", label: label, childMapId: null, houseId: null, countryInfo: null, locationId: null };
+    var region = { id: uid(), points: outline, terrain: "plain", label: label, childMapId: null, houseId: null, countryInfo: null, locationId: null, regionKind: "frontier", customColor: null };
     mp.regions.push(region);
     newRegions.push(region);
   });
   return { filled: filled, regions: newRegions };
+}
+/* "국가 분리" 기능이 쓰는 범용 래스터 연결요소(connected-component) 헬퍼 --
+ * detectAndFillMapGaps와 같은 방식(격자화 -> flood fill -> 경계 추적)을 예/아니오
+ * 마스크 하나에 대해 재사용할 수 있게 뽑아낸 것. */
+function ccComponents(predMask, cols, rows) {
+  var grid = new Int32Array(cols * rows).fill(-1);
+  var visited = new Uint8Array(cols * rows);
+  var comps = [];
+  for (var i = 0; i < cols * rows; i++) {
+    if (!predMask[i] || visited[i]) continue;
+    var compId = comps.length;
+    var cells = [];
+    var st = [i]; visited[i] = 1; grid[i] = compId;
+    while (st.length) {
+      var c0 = st.pop(); cells.push(c0);
+      var cx0 = c0 % cols, cy0 = (c0 - cx0) / cols;
+      [[cx0 - 1, cy0], [cx0 + 1, cy0], [cx0, cy0 - 1], [cx0, cy0 + 1]].forEach(function (nb) {
+        var nx = nb[0], ny = nb[1];
+        if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) return;
+        var nidx = ny * cols + nx;
+        if (predMask[nidx] && !visited[nidx]) { visited[nidx] = 1; grid[nidx] = compId; st.push(nidx); }
+      });
+    }
+    comps.push(cells);
+  }
+  return { grid: grid, comps: comps };
+}
+/* 기존 지역 폴리곤을 사용자가 그린 절단 폴리곤으로 둘로 나눈다 (raster boolean
+ * subtraction). "잔여분(remainder)"은 원래 지역에서 절단 부분을 뺀 나머지,
+ * "절단분(carved)"은 원래 지역과 절단 폴리곤이 겹치는 부분이다. 절단선이 지역을
+ * 여러 조각으로 나누는 경우까지 대비해 각각 연결요소별로 다각형을 따로 만들어
+ * 반환한다 -- "지도 영역 공백 금지 규칙" 상 어느 한 조각도 유실되면 안 되기 때문. */
+var MIN_SPLIT_CELLS = 6;
+function splitRegionMask(region, cutPoints) {
+  var allPts = region.points.concat(cutPoints);
+  var xs = allPts.map(function (p) { return p[0]; }), ys = allPts.map(function (p) { return p[1]; });
+  var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+  var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+  var margin = Math.max(4, (maxX - minX) * 0.02);
+  minX -= margin; minY -= margin; maxX += margin; maxY += margin;
+  /* STEP은 반드시 정수여야 한다 -- offsetX+gx*step 계산이 인접 셀 경계에서
+   * 부동소수점 오차로 어긋나면(예: 400.436363...4 vs ...5) proceduralTraceComponent의
+   * 경계 추적이 같은 좌표를 다른 노드로 오인해 루프가 조각나 버린다(실제로 겪은 버그 --
+   * detectAndFillMapGaps/generateProceduralWorldMap도 같은 이유로 정수 STEP을 쓴다). */
+  var STEP = Math.max(2, Math.round((maxX - minX) / 220));
+  var cols = Math.max(1, Math.ceil((maxX - minX) / STEP));
+  var rows = Math.max(1, Math.ceil((maxY - minY) / STEP));
+  if (cols * rows > 400000) return null; // 안전 상한 -- 지나치게 크거나 비정상적인 폴리곤
+  var regionMask = new Uint8Array(cols * rows);
+  var cutMask = new Uint8Array(cols * rows);
+  for (var gy = 0; gy < rows; gy++) {
+    for (var gx = 0; gx < cols; gx++) {
+      var px = minX + gx * STEP + STEP / 2, py = minY + gy * STEP + STEP / 2;
+      var idx = gy * cols + gx;
+      if (pointInPolygon(px, py, region.points)) regionMask[idx] = 1;
+      if (pointInPolygon(px, py, cutPoints)) cutMask[idx] = 1;
+    }
+  }
+  var remainderMask = new Uint8Array(cols * rows);
+  var carvedMask = new Uint8Array(cols * rows);
+  for (var i = 0; i < cols * rows; i++) {
+    if (!regionMask[i]) continue;
+    if (cutMask[i]) carvedMask[i] = 1; else remainderMask[i] = 1;
+  }
+  /* 여기서는 proceduralChaikin/proceduralDecimate 대신 simplifyPoints(Douglas-Peucker)를
+   * 쓴다 -- 절단 결과는 국경 등 원래 직선·직각 모서리(reflex corner 포함)를 그대로
+   * 유지해야 하는데, 지형 생성용으로 만들어진 chaikin(모서리 뭉개기)+단순 보폭 decimate
+   * 조합은 오목한 모서리가 있는 다각형에서 실제로 꼭짓점을 잘못 솎아내 다각형이
+   * 찌그러지는 문제가 있었다(실측: 면적이 1/3 이하로 줄어듦). RDP는 각 변의 직선성만
+   * 보고 솎아내므로 실제 모서리를 안전하게 보존한다. */
+  function traceComponents(predMask) {
+    var cc = ccComponents(predMask, cols, rows);
+    var out = [];
+    cc.comps.forEach(function (cells, compId) {
+      if (cells.length < MIN_SPLIT_CELLS) return;
+      var outline = proceduralTraceComponent(null, cols, rows, STEP, compId, cc.grid, minX, minY);
+      if (!outline.length) return;
+      var simplified = simplifyPoints(outline, STEP * 1.5);
+      if (simplified.length > 1) {
+        var first = simplified[0], last = simplified[simplified.length - 1];
+        if (Math.hypot(first[0] - last[0], first[1] - last[1]) < 1e-6) simplified = simplified.slice(0, -1);
+      }
+      simplified = simplified.map(function (p) { return [Math.round(p[0] * 10) / 10, Math.round(p[1] * 10) / 10]; });
+      if (simplified.length < 3) return;
+      out.push({ points: simplified, cellCount: cells.length });
+    });
+    out.sort(function (a, b) { return b.cellCount - a.cellCount; });
+    return out;
+  }
+  return { remainderComponents: traceComponents(remainderMask), carvedComponents: traceComponents(carvedMask) };
+}
+/* 사용자가 지도 위에 그린 절단 다각형(cutPoints)과 가장 많이 겹치는 기존 지역을
+ * 찾아 splitRegionMask로 분리한다. 잔여 조각이 여럿이면(절단선이 지역을 완전히
+ * 관통해 둘로 쪼개는 경우 등) 가장 큰 조각을 원본 지역이 계속 차지하고, 나머지는
+ * 원본과 같은 소속/유형을 물려받은 별도 지역으로 남겨서 빈틈이 생기지 않게 한다.
+ * 절단 결과도 마찬가지로 가장 큰 조각을 새 국가 정보 입력에 쓰고, 나머지 조각은
+ * 확정 후 같은 정보로 복제한다. */
+function mapPerformTerritorySplit(mp, cutPoints) {
+  function bboxOf(pts) {
+    var xs = pts.map(function (p) { return p[0]; }), ys = pts.map(function (p) { return p[1]; });
+    return { minX: Math.min.apply(null, xs), maxX: Math.max.apply(null, xs), minY: Math.min.apply(null, ys), maxY: Math.max.apply(null, ys) };
+  }
+  var cutBox = bboxOf(cutPoints);
+  var candidates = mp.regions.filter(function (r) {
+    if (!r.points || r.points.length < 3) return false;
+    var rb = bboxOf(r.points);
+    return rb.minX < cutBox.maxX && rb.maxX > cutBox.minX && rb.minY < cutBox.maxY && rb.maxY > cutBox.minY;
+  });
+  var best = null, bestResult = null, bestCells = 0;
+  candidates.forEach(function (r) {
+    var result = splitRegionMask(r, cutPoints);
+    if (!result || !result.carvedComponents.length) return;
+    var cells = result.carvedComponents[0].cellCount;
+    if (cells > bestCells) { bestCells = cells; best = r; bestResult = result; }
+  });
+  if (!best) {
+    openModal({ title: "분리할 영역을 찾을 수 없습니다", message: "그린 다각형이 기존 지역과 충분히 겹치지 않았습니다. 분리하려는 지역 위에 다시 그려주세요.", confirmLabel: "확인" });
+    return;
+  }
+  var newNation = { id: uid(), points: bestResult.carvedComponents[0].points, terrain: best.terrain, label: "", childMapId: null, houseId: null, countryInfo: null, locationId: null, regionKind: "country", customColor: null };
+  openMapRegionModal(mp, newNation, true, function (finalRegion) {
+    if (bestResult.remainderComponents.length) {
+      best.points = bestResult.remainderComponents[0].points;
+      for (var i = 1; i < bestResult.remainderComponents.length; i++) {
+        mp.regions.push(Object.assign({}, best, { id: uid(), points: bestResult.remainderComponents[i].points, label: (best.label || "지역") + " " + (i + 1) }));
+      }
+    } else {
+      mp.regions = mp.regions.filter(function (r) { return r.id !== best.id; });
+    }
+    mp.regions.push(finalRegion);
+    for (var j = 1; j < bestResult.carvedComponents.length; j++) {
+      mp.regions.push(Object.assign({}, finalRegion, { id: uid(), points: bestResult.carvedComponents[j].points }));
+    }
+    saveData(); drawMap(mp);
+  });
 }
 function deleteMap(id) {
   var mp = MAPS.find(function(mp){ return mp.id === id; });
@@ -9409,7 +9571,7 @@ function drawGraph(g) {
 }
 
 /* ---------------- map page ---------------- */
-var mpState = { tool: "select", terrain: "forest", symbol: "city", drawPoints: null, panStart: null, selected: null, scaleLine: null, scaleLineStart: null, showAlignment: false, dragObj: null };
+var mpState = { tool: "select", terrain: "forest", symbol: "city", regionKind: "country", drawPoints: null, panStart: null, selected: null, scaleLine: null, scaleLineStart: null, showAlignment: false, dragObj: null };
 var _mapWinHandlers = null;
 var _mapBeforeUnload = null;
 function currentMap() { return MAPS.find(function(mp){ return mp.id === state.activeId; }); }
@@ -9721,9 +9883,9 @@ function updateMapDrawPreview(mp) {
   var ptsStr = mpState.drawPoints.map(function(p){ return p[0]+","+p[1]; }).join(" ");
   var prev = document.getElementById("mapDrawPreview");
   if (!prev) {
-    prev = document.createElementNS("http://www.w3.org/2000/svg", mpState.tool==="paint" ? "polygon" : "polyline");
+    prev = document.createElementNS("http://www.w3.org/2000/svg", (mpState.tool==="paint"||mpState.tool==="split") ? "polygon" : "polyline");
     prev.setAttribute("id", "mapDrawPreview");
-    prev.setAttribute("class", "map-draw-preview" + (mpState.tool==="paint" ? " fill-preview" : ""));
+    prev.setAttribute("class", "map-draw-preview" + ((mpState.tool==="paint"||mpState.tool==="split") ? " fill-preview" : ""));
     gEl.appendChild(prev);
   }
   prev.setAttribute("points", ptsStr);
@@ -9918,22 +10080,65 @@ function wireMapSpotLocationPicker(box, actionsDiv, mp, spot, spotKind) {
     sel.appendChild(opt);
   });
 }
-function openMapRegionModal(mp, region, onDone) {
+function openMapRegionModal(mp, region, isNew, onDone) {
+  if (region.regionKind === undefined) region.regionKind = "country";
+  if (region.customColor === undefined) region.customColor = null;
   openModal({
-    title: "지역 편집",
+    title: isNew ? "새 영역 만들기" : "지역 편집",
     fields: [{ placeholder: "지역 이름 (예: 어둠숲, 붉은사막)", value: region.label || "" }],
-    pickers: [{ key:"terrain", label:"지형", default: region.terrain || "plain", options: Object.keys(MAP_TERRAINS).map(function(k){ return { value:k, label:MAP_TERRAINS[k].label, color:MAP_TERRAINS[k].color }; }) }],
-    confirmLabel: "저장",
+    pickers: [
+      { key:"terrain", label:"지형", default: region.terrain || "plain", options: Object.keys(MAP_TERRAINS).map(function(k){ return { value:k, label:MAP_TERRAINS[k].label, color:MAP_TERRAINS[k].color }; }) },
+      { key:"regionKind", label:"영역 유형", default: region.regionKind || "country", options: Object.keys(REGION_KINDS).map(function(k){ return { value:k, label:REGION_KINDS[k].label, color:REGION_KINDS[k].color }; }) }
+    ],
+    confirmLabel: isNew ? "생성 완료" : "저장",
     onConfirm: function(values, checked, picks){
       region.label = values[0] || "";
       region.terrain = picks.terrain;
-      onDone();
+      region.regionKind = picks.regionKind;
+      onDone(region);
     }
   });
   var overlay = document.getElementById("modalOverlay");
   if (!overlay) return;
   var box = overlay.querySelector(".modal-box");
   var actionsDiv = box.querySelector(".modal-actions");
+  /* 색상: 지정 안 하면 지형 기본색을 그대로 쓰고(customColor:null), 사용자가 직접
+   * 고르면 그 색이 지형/세력 색보다 우선한다(drawMap의 fillColor 계산 참고). */
+  var kindDef = MAP_TERRAINS[region.terrain] || MAP_TERRAINS.plain;
+  var colorHtml = '<div class="modal-picker-label">색상</div><div class="modal-location-row">' +
+    '<button type="button" class="modal-pick no-dot" id="regionColorSwatchBtn" style="--pc:'+(region.customColor||kindDef.color)+'"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+(region.customColor||kindDef.color)+'"></span> '+(region.customColor?"직접 지정한 색":"지형 기본색 사용 중")+'</button>' +
+    (region.customColor ? '<button type="button" class="modal-pick no-dot" id="regionColorResetBtn">'+ic("close",11)+' 기본색으로</button>' : '') +
+  '</div>';
+  if (actionsDiv) actionsDiv.insertAdjacentHTML("beforebegin", colorHtml);
+  var colorTarget = { color: region.customColor || kindDef.color };
+  document.getElementById("regionColorSwatchBtn").addEventListener("click", function(e){
+    openColorPicker(colorTarget, e.currentTarget, function(){
+      region.customColor = colorTarget.color;
+      if (!isNew) { saveData(); drawMap(mp); }
+      openMapRegionModal(mp, region, isNew, onDone);
+    });
+  });
+  var resetBtn = document.getElementById("regionColorResetBtn");
+  if (resetBtn) resetBtn.addEventListener("click", function(){
+    region.customColor = null;
+    if (!isNew) { saveData(); drawMap(mp); }
+    openMapRegionModal(mp, region, isNew, onDone);
+  });
+  /* 영토 공백화(무주지 전환) -- 소속 세력을 즉시 해제하고 유형을 대표적인
+   * "무주지" 성격 유형(미개척지)으로 바꾼다. 유형/소속은 위 피커·드롭다운에서도
+   * 각자 독립적으로 자유롭게 바꿀 수 있으니 이 버튼은 "한 번에" 하는 지름길일 뿐. */
+  if (region.houseId) {
+    var voidHtml = '<div class="modal-picker-row" style="margin-top:-4px">' +
+      '<button type="button" class="modal-pick no-dot" id="regionVoidifyBtn" title="소속 세력을 해제하고 무주지(미개척지)로 바꿉니다 — 전쟁 후 폐허, 재앙 발생 지역 등을 표현할 때">'+ic("close",11)+' 무주지로 전환</button>' +
+    '</div>';
+    if (actionsDiv) actionsDiv.insertAdjacentHTML("beforebegin", voidHtml);
+    document.getElementById("regionVoidifyBtn").addEventListener("click", function(){
+      region.houseId = null;
+      region.regionKind = "frontier";
+      saveData(); drawMap(mp);
+      openMapRegionModal(mp, region, isNew, onDone);
+    });
+  }
   var ci = region.countryInfo || {};
   var CI_FIELDS = [
     { key:"population", label:"인구", placeholder:"예: 전성기 약 3천만, 현재 약 1800만" },
@@ -10008,7 +10213,7 @@ function seedChildMapFromRegion(childMap, parentRegion) {
   var scale = Math.min(targetW / w, targetH / h);
   var cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
   var scaled = pts.map(function(p){ return [Math.round((p[0] - cx) * scale * 10) / 10, Math.round((p[1] - cy) * scale * 10) / 10]; });
-  childMap.regions.push({ id: uid(), points: scaled, terrain: parentRegion.terrain || "plain", label: parentRegion.label || "", childMapId: null, houseId: null, countryInfo: null, locationId: null });
+  childMap.regions.push({ id: uid(), points: scaled, terrain: parentRegion.terrain || "plain", label: parentRegion.label || "", childMapId: null, houseId: null, countryInfo: null, locationId: null, regionKind: parentRegion.regionKind || "country", customColor: parentRegion.customColor || null });
 }
 /* "지도 영역 공백 금지 규칙"은 하위 지도 생성 시점에도 적용된다 -- 새로 만든 세부 지도가
  * 빈 캔버스인 채로 남으면 그 자체가 "미정의 지역"이므로, 드릴다운한 지역의 폴리곤을
@@ -10194,7 +10399,7 @@ function drawMap(mp) {
      * palette, so regions with the same alignment read as one visual bloc regardless of
      * which individual faction holds them. Unaffiliated/no-house regions go neutral gray. */
     var alignInfo = mpState.showAlignment && house && house.alignment ? HOUSE_ALIGNMENTS[house.alignment] : null;
-    var fillColor = mpState.showAlignment ? (alignInfo ? alignInfo.color : "#B9B7AC") : kind.color;
+    var fillColor = mpState.showAlignment ? (alignInfo ? alignInfo.color : "#B9B7AC") : (r.customColor || kind.color);
     var strokeColor = alignInfo ? alignInfo.color : (houseColor||(isSel?"var(--accent)":"rgba(20,16,10,0.55)"));
     html += '<g class="map-region '+(isSel?"selected":"")+'" data-region="'+r.id+'">' +
       '<polygon points="'+ptsStr+'" style="fill:'+fillColor+';stroke:'+strokeColor+';stroke-width:'+(house?3:(isSel?2.6:1.4))+'"></polygon>' +
@@ -10258,7 +10463,7 @@ function drawMap(mp) {
     });
     elReg.addEventListener("dblclick", function(e){
       e.stopPropagation();
-      openMapRegionModal(mp, r, function(){ saveData(); drawMap(mp); });
+      openMapRegionModal(mp, r, false, function(){ saveData(); drawMap(mp); });
     });
     elReg.addEventListener("mouseenter", function(e){
       if (mpState.tool !== "select") return;
@@ -10359,7 +10564,7 @@ function drawMap(mp) {
   mapHistoryCommit(mp);
 }
 function renderMapPage(mp) {
-  mpState = { tool: "select", terrain: mpState.terrain || "forest", symbol: mpState.symbol || "city", drawPoints: null, panStart: null, selected: null, cropRect: null, cropDragStart: null, scaleLine: null, scaleLineStart: null, dangerStart: null, dangerCircle: null, showAlignment: mpState.showAlignment || false, dragObj: null };
+  mpState = { tool: "select", terrain: mpState.terrain || "forest", symbol: mpState.symbol || "city", regionKind: mpState.regionKind || "country", drawPoints: null, panStart: null, selected: null, cropRect: null, cropDragStart: null, scaleLine: null, scaleLineStart: null, dangerStart: null, dangerCircle: null, showAlignment: mpState.showAlignment || false, dragObj: null };
   mapHistoryEnsure(mp);
   if (mp.bgOpacity === undefined) mp.bgOpacity = 0.4;
   if (mp.bgMode === undefined) mp.bgMode = mp.bgImage ? "original" : "hidden";
@@ -10379,6 +10584,12 @@ function renderMapPage(mp) {
   var symbolRowHtml = '<div class="map-terrain-row" id="mapSymbolRow" style="display:none">' +
     Object.keys(MAP_SYMBOLS).map(function(k){
       return '<button type="button" class="map-symbol-btn '+(mpState.symbol===k?"on":"")+'" data-mapsymbol="'+k+'" style="--tc:'+MAP_SYMBOLS[k].color+'"><span style="display:inline-flex;color:'+MAP_SYMBOLS[k].color+'">'+ic(MAP_SYMBOLS[k].icon,13)+'</span>'+MAP_SYMBOLS[k].label+'</button>';
+    }).join("") +
+  '</div>';
+  var regionKindRowHtml = '<div class="map-terrain-row" id="mapRegionKindRow" style="display:none">' +
+    '<span class="map-crop-hint" style="margin-right:2px">영역 유형:</span>' +
+    Object.keys(REGION_KINDS).map(function(k){
+      return '<button type="button" class="map-terrain-btn '+(mpState.regionKind===k?"on":"")+'" data-mapregionkind="'+k+'" style="--tc:'+REGION_KINDS[k].color+'">'+REGION_KINDS[k].label+'</button>';
     }).join("") +
   '</div>';
   var cropRowHtml = '<div class="map-terrain-row" id="mapCropRow" style="display:none">' +
@@ -10460,6 +10671,7 @@ function renderMapPage(mp) {
             '</div>'
           : "") +
         terrainRowHtml +
+        regionKindRowHtml +
         symbolRowHtml +
         cropRowHtml +
         rotateRowHtml +
@@ -10469,6 +10681,7 @@ function renderMapPage(mp) {
           '<div class="tb-sep"></div>' +
           '<button class="tb-btn" id="mtLine" title="국경·강 선 그리기">'+ic("pen",14)+'<span>선</span></button>' +
           '<button class="tb-btn" id="mtPaint" title="지형 칠하기">'+ic("fillDrop",14)+'<span>지역</span></button>' +
+          '<button class="tb-btn" id="mtSplit" title="기존 영토 일부를 다각형으로 그려서 새 지역/국가로 분리">'+ic("scale",14)+'<span>영토 분리</span></button>' +
           '<button class="tb-btn" id="mtSymbol" title="수도·도시 등 기호 찍기">'+ic("pin",14)+'<span>기호</span></button>' +
           '<button class="tb-btn" id="mtDanger" title="위험구역 그리기 (드래그해서 반경 지정)">'+ic("battle",14)+'<span>위험구역</span></button>' +
           '<button class="tb-btn" id="mtGate" title="게이트 찍기 (등급·공략 여부 지정)">'+ic("magic",14)+'<span>게이트</span></button>' +
@@ -10570,6 +10783,7 @@ function renderMapPage(mp) {
     document.getElementById("mtSelect").classList.toggle("active", mpState.tool==="select");
     document.getElementById("mtLine").classList.toggle("active", mpState.tool==="line");
     document.getElementById("mtPaint").classList.toggle("active", mpState.tool==="paint");
+    document.getElementById("mtSplit").classList.toggle("active", mpState.tool==="split");
     document.getElementById("mtSymbol").classList.toggle("active", mpState.tool==="symbol");
     document.getElementById("mtDanger").classList.toggle("active", mpState.tool==="danger");
     document.getElementById("mtGate").classList.toggle("active", mpState.tool==="gate");
@@ -10577,6 +10791,7 @@ function renderMapPage(mp) {
     document.getElementById("mtRotate").classList.toggle("active", mpState.tool==="rotate");
     document.getElementById("mtScale").classList.toggle("active", mpState.tool==="scale");
     document.getElementById("mapTerrainRow").style.display = mpState.tool==="paint" ? "flex" : "none";
+    document.getElementById("mapRegionKindRow").style.display = mpState.tool==="paint" ? "flex" : "none";
     document.getElementById("mapSymbolRow").style.display = mpState.tool==="symbol" ? "flex" : "none";
     document.getElementById("mapCropRow").style.display = mpState.tool==="crop" ? "flex" : "none";
     document.getElementById("mapRotateRow").style.display = mpState.tool==="rotate" ? "flex" : "none";
@@ -10586,6 +10801,7 @@ function renderMapPage(mp) {
   document.getElementById("mtSelect").addEventListener("click", function(){ setTool("select"); });
   document.getElementById("mtLine").addEventListener("click", function(){ setTool("line"); });
   document.getElementById("mtPaint").addEventListener("click", function(){ setTool("paint"); });
+  document.getElementById("mtSplit").addEventListener("click", function(){ setTool("split"); });
   document.getElementById("mtSymbol").addEventListener("click", function(){ setTool("symbol"); });
   document.getElementById("mtDanger").addEventListener("click", function(){ setTool("danger"); });
   document.getElementById("mtGate").addEventListener("click", function(){ setTool("gate"); });
@@ -10664,6 +10880,12 @@ function renderMapPage(mp) {
     btn.addEventListener("click", function(){
       mpState.symbol = btn.dataset.mapsymbol;
       main.querySelectorAll("[data-mapsymbol]").forEach(function(b){ b.classList.toggle("on", b===btn); });
+    });
+  });
+  main.querySelectorAll("[data-mapregionkind]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      mpState.regionKind = btn.dataset.mapregionkind;
+      main.querySelectorAll("[data-mapregionkind]").forEach(function(b){ b.classList.toggle("on", b===btn); });
     });
   });
 
@@ -10928,8 +11150,13 @@ function renderMapPage(mp) {
         var hint = document.querySelector(".graph-empty-hint");
         if (hint) hint.remove();
         if (mpState.tool === "paint") {
-          mp.regions.push({ id: uid(), points: simplified, terrain: mpState.terrain, label: "", childMapId: null, houseId: null, countryInfo: null, locationId: null });
-          saveData(); drawMap(mp);
+          var newRegion = { id: uid(), points: simplified, terrain: mpState.terrain, label: "", childMapId: null, houseId: null, countryInfo: null, locationId: null, regionKind: mpState.regionKind || "country", customColor: null };
+          openMapRegionModal(mp, newRegion, true, function(finalRegion){
+            mp.regions.push(finalRegion);
+            saveData(); drawMap(mp);
+          });
+        } else if (mpState.tool === "split") {
+          mapPerformTerritorySplit(mp, simplified);
         } else if (mpState.tool === "line") {
           var newLine = { id: uid(), points: simplified, kind: "border", label: "" };
           openMapLineModal(mp, newLine, true, function(finalLine){
