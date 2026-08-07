@@ -812,6 +812,18 @@
   .book-nav button:disabled { opacity:.35; }
   .book-hint { text-align:center; font-size:11.5px; color:var(--ink-faint); margin-top:8px; }
 
+  /* ---------- 원고지 (manuscript grid paper) mode ---------- */
+  .paper-size-toggle { display:flex; gap:2px; background:var(--bg); border-radius:6px; padding:2px; }
+  .paper-size-toggle button { border:none; background:none; border-radius:5px; padding:5px 9px; font-size:11.5px; color:var(--ink-soft); }
+  .paper-size-toggle button.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .paper-outer { display:flex; justify-content:center; padding:6px 0 22px; overflow-x:auto; }
+  .paper-edit-shell { flex:none; width:530px; max-width:100%; height:620px; background:#FBF9F2; border:1px solid var(--border-strong); box-shadow:0 4px 18px var(--shadow); }
+  .paper-edit-shell .book-edit-textarea { color:#2A2015; }
+  .paper-sheet { flex:none; background:#FBF9F2; border:1px solid var(--border-strong); box-shadow:0 4px 18px var(--shadow); padding:18px; }
+  .paper-row { position:relative; display:grid; grid-template-columns:repeat(20, 25px); }
+  .paper-cell { width:25px; height:25px; box-sizing:border-box; border:1px solid #C9C2AE; margin:-1px 0 0 -1px; display:flex; align-items:center; justify-content:center; font-family:var(--serif); font-size:14px; color:#2A2015; }
+  .paper-hang { position:absolute; right:-8px; bottom:2px; font-size:10px; color:#2A2015; pointer-events:none; }
+
   /* body blocks */
   .blocks { display:flex; flex-direction:column; }
   .block { display:flex; align-items:flex-start; gap:6px; position:relative; padding: 3px 0; }
@@ -1543,12 +1555,69 @@ var LIFE_STATUSES = {
   unknown: { label: "행방불명", color: "var(--ink-faint)" }
 };
 var MS_FORMATS = {
-  general: { label:"일반(양장본)" },
+  general: { label:"양장본" },
   plain:   { label:"일반 집필창", lineHeight:"1.9", pad:"56px 64px", bg:"#FFFFFF", color:"#1A1A1A", spacing:"0" },
+  paper:   { label:"원고지" },
   joara:   { label:"조아라", lineHeight:"1.55", pad:"14px 12px", bg:"#F4F4F1", color:"#222222", spacing:"-0.01em" },
   munpia:  { label:"문피아", lineHeight:"1.9", pad:"18px 16px", bg:"#FFFFFF", color:"#1E1E1E", spacing:"0" },
   naver:   { label:"네이버시리즈", lineHeight:"1.95", pad:"22px 18px", bg:"#FFFFFF", color:"#191919", spacing:"-0.01em" }
 };
+/* ---------------- 원고지(manuscript paper) ----------------
+ * 실제 종이 원고지의 핵심 두 가지를 구현한다: (1) 한 칸에 한 글자씩 채워지는
+ * 격자, (2) 국립국어원 등에서 공통적으로 가르치는 작성 규칙 -- 문단 시작 시
+ * 첫 칸 들여쓰기, 물음표·느낌표 뒤 한 칸 띄어쓰기(마침표·쉼표는 붙여씀), 문장
+ * 부호가 줄 맨 앞에 오지 않도록 이전 줄 끝에 "밀어쓰기"하는 행두 금지 규칙.
+ * 200자/400자/1000자는 실제 시판되는 원고지 규격과 동일하게 전부 20칸을 고정
+ * 폭으로 쓰고 줄 수만 다르게 한다(200자=10줄, 400자=20줄, 1000자=50줄) --
+ * 400자 원고지가 한국 출판·문단에서 원고량을 세는 표준 단위("원고지 매수")라
+ * 20칸 고정이 실제 규격과 맞다. */
+var MANUSCRIPT_PAPER_SIZES = {
+  200:  { cols: 20, rows: 10 },
+  400:  { cols: 20, rows: 20 },
+  1000: { cols: 20, rows: 50 }
+};
+var PAPER_HANG_CHARS = ".,?!)]}」』〉》\"'”’…·;:";
+var PAPER_SPACE_AFTER = "?!";
+function layoutManuscriptPaper(text, cols) {
+  var rows = [];
+  var lines = (text || "").split("\n");
+  lines.forEach(function (line) {
+    if (line.length === 0) { rows.push({ cells: [], hang: null, blank: true }); return; }
+    var cur, firstRowOfParagraph = true;
+    function freshRow() {
+      cur = { cells: [], hang: null };
+      if (firstRowOfParagraph) { cur.cells.push(""); firstRowOfParagraph = false; }
+    }
+    freshRow();
+    var chars = Array.from(line);
+    for (var i = 0; i < chars.length; i++) {
+      var ch = chars[i];
+      if (cur.cells.length === 0) {
+        if (ch === " ") continue; // 줄 맨 앞의 공백은 들여쓰기처럼 보이므로 버림
+        if (rows.length > 0 && PAPER_HANG_CHARS.indexOf(ch) !== -1) {
+          var prevRow = rows[rows.length - 1];
+          if (!prevRow.blank && !prevRow.hang) { prevRow.hang = ch; continue; }
+        }
+      }
+      cur.cells.push(ch);
+      if (PAPER_SPACE_AFTER.indexOf(ch) !== -1 && i < chars.length - 1) {
+        cur.cells.push(" ");
+        while (i + 1 < chars.length && chars[i + 1] === " ") i++; // 사용자가 이미 띄어썼다면 중복 삽입 방지
+      }
+      if (cur.cells.length >= cols) { rows.push(cur); freshRow(); }
+    }
+    if (cur.cells.length > 0) rows.push(cur);
+  });
+  return rows;
+}
+function paginateManuscriptPaper(m) {
+  var size = MANUSCRIPT_PAPER_SIZES[m.paperSize] || MANUSCRIPT_PAPER_SIZES[400];
+  var rows = layoutManuscriptPaper(m.text, size.cols);
+  var pages = [];
+  for (var i = 0; i < rows.length; i += size.rows) pages.push(rows.slice(i, i + size.rows));
+  if (!pages.length) pages.push([]);
+  return { pages: pages, rows: rows, size: size };
+}
 var MS_FONTS = {
   nanumMyeongjo: { label:"나눔명조", family:'"Nanum Myeongjo","Noto Serif KR","Batang",serif' },
   nanumGothic:   { label:"나눔고딕", family:'"Nanum Gothic","Noto Sans KR","Malgun Gothic",sans-serif' },
@@ -7298,17 +7367,27 @@ function renderDocCategoryPage(workId, category) {
   var VY = { headTop: 18, headBottom: 66, neckTop: 66, neckBottom: 80, shoulder: 84, chest: 112, waist: 164, hip: 190, crotch: 196, knee: 254, ankle: 306, footBottom: 320 };
   var BASE_HALF = { neck: 12, shoulder: 46, chest: 40, waist: 30, hip: 40, thigh: 20, calf: 13, ankle: 9 };
 
-  function vdBodyMetrics(bodyType, gender) {
+  var VD_BUST_SIZE_MULT = { none: 0.74, small: 0.88, medium: 1.0, large: 1.16, xlarge: 1.32 };
+  function vdBodyMetrics(bodyType, gender, bustSize) {
     var pr = BODY_PRESETS[bodyType] || BODY_PRESETS.normal;
-    var bustBoost = gender === "f" ? 1.10 : gender === "m" ? 0.94 : 1.0;
+    var bustSizeMult = gender === "f" ? (VD_BUST_SIZE_MULT[bustSize] || 1.0) : 1.0;
+    var bustBoost = (gender === "f" ? 1.10 : gender === "m" ? 0.94 : 1.0) * bustSizeMult;
     var hipBoost = gender === "f" ? 1.08 : gender === "m" ? 0.92 : 1.0;
     var waistPinch = gender === "f" ? 0.94 : 1.0;
+    var chestVal = BASE_HALF.chest * pr.chest * bustBoost;
+    var hipVal = BASE_HALF.hip * pr.hip * hipBoost;
+    var waistRaw = BASE_HALF.waist * pr.waist * waistPinch;
+    // anatomical floor: even an extreme hourglass figure keeps the waist within a
+    // human ratio of the bust/hip either side of it -- without this, a large bust
+    // size stacked on the "curvy" body preset pinches the waist so far below both
+    // neighbors that the torso spline reads as a sharp notch instead of a curve
+    var waistVal = Math.max(waistRaw, chestVal * 0.62, hipVal * 0.55);
     return {
       neck: BASE_HALF.neck * pr.neckW,
       shoulder: BASE_HALF.shoulder * pr.shoulder,
-      chest: BASE_HALF.chest * pr.chest * bustBoost,
-      waist: BASE_HALF.waist * pr.waist * waistPinch,
-      hip: BASE_HALF.hip * pr.hip * hipBoost,
+      chest: chestVal,
+      waist: waistVal,
+      hip: hipVal,
       thigh: BASE_HALF.thigh * pr.limbW,
       calf: BASE_HALF.calf * pr.limbW,
       ankle: BASE_HALF.ankle * pr.limbW,
@@ -7477,10 +7556,13 @@ function renderDocCategoryPage(workId, category) {
     var pr = TOP_PRESETS[style] || TOP_PRESETS.shirt;
     var off = pr.off;
     var hemY = VY.hip + 20;
+    // underarm tracks whichever of shoulder/chest is wider so a large bust never
+    // bulges out past a narrower fixed underarm point and notches the sleeve
+    var underarmX = Math.max(m.shoulder * 0.98, m.chest * 0.88);
     var right = [
       pt(CX + m.neck + off, VY.neckTop),
       pt(CX + m.shoulder + off * 1.3, VY.shoulder - 2),
-      pt(CX + m.shoulder * 0.98 + off, VY.shoulder + pr.sleeve), // sleeve reach
+      pt(CX + underarmX + off, VY.shoulder + pr.sleeve), // sleeve reach
       pt(CX + m.chest + off, VY.chest + 6),
       pt(CX + m.waist + off, VY.waist + 2),
       pt(CX + m.hip + off, VY.hip),           // full hip width -- matches vdTorsoPath exactly
@@ -7690,7 +7772,7 @@ function renderDocCategoryPage(workId, category) {
 
   function vdRenderCharacterSvg(ap, opts) {
     opts = opts || {};
-    var m = vdBodyMetrics(ap.bodyType || "normal", ap.gender || "u");
+    var m = vdBodyMetrics(ap.bodyType || "normal", ap.gender || "u", ap.bustSize || "medium");
     var pal = vdPalette(ap);
     var uid = "vd" + (VD_GRAD_ID++);
     var defs = [];
@@ -8933,7 +9015,7 @@ var VECTOR_COVERAGE = {
   eyeShape: ["basic"],
   mouthShape: ["smile"],
   facialHair: ["none"],
-  bustSize: ["medium"]
+  bustSize: ["none", "small", "medium", "large", "xlarge"]
 };
 function appearanceUsesVectorEngine(ap) {
   return Object.keys(VECTOR_COVERAGE).every(function (key) {
@@ -12983,6 +13065,69 @@ function turnBookPage(m, dir) {
   setTimeout(function(){ m.bookPage = next; saveData(); renderBookArea(m); }, 150);
 }
 
+function paperRowHtml(row, cols) {
+  var cellsHtml = "";
+  for (var i = 0; i < cols; i++) {
+    var ch = row.cells[i];
+    cellsHtml += '<div class="paper-cell">' + (ch && ch !== " " ? esc(ch) : "") + '</div>';
+  }
+  var hangHtml = row.hang ? '<span class="paper-hang">'+esc(row.hang)+'</span>' : "";
+  return '<div class="paper-row">' + cellsHtml + hangHtml + '</div>';
+}
+function paperScrollFraction() {
+  var el = document.getElementById("paperEditText");
+  if (!el) return 0;
+  var denom = el.scrollHeight - el.clientHeight;
+  return denom > 0 ? Math.max(0, Math.min(1, el.scrollTop / denom)) : 0;
+}
+function renderManuscriptPaperArea(m) {
+  var area = document.getElementById("paperArea");
+  if (!area) return;
+  var novelForPaper = NOVELS.find(function(n){ return n.id === m.novelId; });
+  var paperWorkId = novelForPaper ? novelForPaper.workId : null;
+  if (m.paperMode === "view") {
+    var result = paginateManuscriptPaper(m);
+    var pages = result.pages, size = result.size;
+    if (m.paperPage >= pages.length) m.paperPage = pages.length - 1;
+    if (m.paperPage < 0) m.paperPage = 0;
+    var page = pages[m.paperPage] || [];
+    var rowsHtml = "";
+    for (var r = 0; r < size.rows; r++) {
+      rowsHtml += paperRowHtml(page[r] || { cells: [] }, size.cols);
+    }
+    area.innerHTML =
+      '<div class="paper-outer"><div class="paper-sheet">' + rowsHtml + '</div></div>' +
+      '<div class="book-nav">' +
+        '<button id="paperPrev" '+(m.paperPage<=0?"disabled":"")+'>'+ic("chevL",13)+'</button>' +
+        '<span>'+(m.paperPage+1)+' / '+pages.length+' 매</span>' +
+        '<button id="paperNext" '+(m.paperPage>=pages.length-1?"disabled":"")+'>'+ic("chevR",13)+'</button>' +
+      '</div>' +
+      '<div class="book-hint">원고지 '+m.paperSize+'자 기준 (한 줄 '+size.cols+'자 × '+size.rows+'행) · 총 '+pages.length+'매</div>';
+    var pv = document.getElementById("paperPrev"), nv = document.getElementById("paperNext");
+    if (pv) pv.addEventListener("click", function(){ m.paperPage = Math.max(0, (m.paperPage||0)-1); saveData(); renderManuscriptPaperArea(m); });
+    if (nv) nv.addEventListener("click", function(){
+      var pg = paginateManuscriptPaper(m);
+      m.paperPage = Math.min(pg.pages.length-1, (m.paperPage||0)+1);
+      saveData(); renderManuscriptPaperArea(m);
+    });
+  } else {
+    area.innerHTML =
+      '<div class="paper-outer"><div class="paper-edit-shell"><textarea class="book-edit-textarea" id="paperEditText" spellcheck="true" placeholder="여기에 원고지에 쓸 본문을 적어보세요.">'+esc(m.text||"")+'</textarea></div></div>' +
+      '<div class="book-hint">쓰기 모드는 일반 텍스트로 입력합니다 — 미리보기에서 원고지 형식(첫 칸 들여쓰기·행두 금지·물음표·느낌표 뒤 띄어쓰기)이 자동 적용돼요</div>';
+    var editEl = document.getElementById("paperEditText");
+    editEl.addEventListener("input", function(e){
+      m.text = e.target.value; m.paperScrollFrac = paperScrollFraction();
+      saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, paperWorkId); updateContextPanel(m, paperWorkId); flashSaveIndicator();
+    });
+    editEl.addEventListener("scroll", function(){ m.paperScrollFrac = paperScrollFraction(); });
+    wireMentionAutocomplete(editEl, paperWorkId);
+    requestAnimationFrame(function(){
+      var denom = editEl.scrollHeight - editEl.clientHeight;
+      if (denom > 0) editEl.scrollTop = (m.paperScrollFrac||0) * denom;
+    });
+  }
+}
+
 function renderManuscriptPage(m) {
   if (m.previewFontSize === undefined) m.previewFontSize = 16;
   if (m.previewFont === undefined) m.previewFont = "sans";
@@ -12992,9 +13137,14 @@ function renderManuscriptPage(m) {
   if (m.bookSpread === undefined) m.bookSpread = false;
   if (m.editScrollFrac === undefined) m.editScrollFrac = 0;
   if (m.format === undefined) m.format = "general";
+  if (m.paperMode === undefined) m.paperMode = "edit";
+  if (m.paperPage === undefined) m.paperPage = 0;
+  if (m.paperSize === undefined) m.paperSize = 400;
+  if (m.paperScrollFrac === undefined) m.paperScrollFrac = 0;
 
   var main = document.getElementById("main");
   var isBook = m.format === "general";
+  var isPaper = m.format === "paper";
   var isPlain = m.format === "plain";
 
   var novelOfMs = NOVELS.find(function(n){ return n.id === m.novelId; });
@@ -13033,6 +13183,19 @@ function renderManuscriptPage(m) {
         (m.bookMode!=="view" && !m.bookSpread ? '<div class="sep"></div><button type="button" id="msFindBtnBook">'+ic("search",13)+'<span>찾아바꾸기</span></button>' : '') +
       '</div>' +
       '<div id="bookArea"></div>';
+  } else if (isPaper) {
+    bodyHtml =
+      '<div class="ms-controls">' +
+        focusBtnHtml +
+        '<button type="button" class="'+(m.paperMode!=="view"?"on":"")+'" id="msPaperEditBtn">'+ic("p",13)+'<span>쓰기</span></button>' +
+        '<button type="button" class="'+(m.paperMode==="view"?"on":"")+'" id="msPaperViewBtn">'+ic("docIcon",13)+'<span>미리보기</span></button>' +
+        '<div class="sep"></div>' +
+        '<div class="paper-size-toggle">' + [200,400,1000].map(function(sz){
+          return '<button type="button" class="'+(m.paperSize===sz?"on":"")+'" data-papersize="'+sz+'">'+sz+'자</button>';
+        }).join("") + '</div>' +
+        (m.paperMode!=="view" ? '<div class="sep"></div><button type="button" id="msPaperFindBtn">'+ic("search",13)+'<span>찾아바꾸기</span></button>' : '') +
+      '</div>' +
+      '<div id="paperArea"></div>';
   } else {
     var textareaHtml = '<textarea class="ms-textarea'+(isPlain?" ms-doc-textarea":"")+'" id="msText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요.">'+esc(m.text||"")+'</textarea>';
     bodyHtml =
@@ -13057,7 +13220,7 @@ function renderManuscriptPage(m) {
     '<div class="graph-shell">' +
       '<div class="graph-title-bar"><input class="graph-title" id="msTitle" value="'+esc(m.title)+'" placeholder="원고(화) 제목"><span class="ms-save-indicator saved" id="msSaveIndicator">'+ic("checkmark",11)+' 저장됨</span><span class="ms-char-count" id="msCharCount">'+fmtNum(charCount(m.text))+'자</span><button class="page-del" id="deleteMsBtn" style="margin-top:0">'+ic("trash",13)+'<span>원고 삭제</span></button></div>' +
       '<div class="page-pad" style="padding-top:26px">' + povHtml + statsHtml + tabsHtml +
-        (isBook
+        ((isBook || isPaper)
           ? '<div class="ms-editor-stack">' + bodyHtml + '<div class="ms-context-panel stacked" id="msContextPanel"></div></div>'
           : '<div class="ms-editor-row"><div class="ms-editor-main">' + bodyHtml + '</div><div class="ms-context-panel" id="msContextPanel"></div></div>') +
       '</div>' +
@@ -13110,6 +13273,27 @@ function renderManuscriptPage(m) {
       });
     });
     renderBookArea(m);
+  } else if (isPaper) {
+    document.getElementById("msPaperEditBtn").addEventListener("click", function(){
+      m.paperMode = "edit"; saveData(); renderManuscriptPage(m);
+    });
+    document.getElementById("msPaperViewBtn").addEventListener("click", function(){
+      m.paperMode = "view"; saveData(); renderManuscriptPage(m);
+    });
+    main.querySelectorAll("[data-papersize]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        m.paperSize = parseInt(btn.dataset.papersize, 10);
+        m.paperPage = 0;
+        saveData(); renderManuscriptPage(m);
+      });
+    });
+    var findBtnPaper = document.getElementById("msPaperFindBtn");
+    if (findBtnPaper) findBtnPaper.addEventListener("click", function(e){
+      openFindReplace("paperEditText", e.currentTarget, function(newVal){
+        m.text = newVal; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId, true); updateContextPanel(m, msWorkId); flashSaveIndicator();
+      });
+    });
+    renderManuscriptPaperArea(m);
   } else {
     applyMsStyle(m);
     var msTextEl = document.getElementById("msText");
