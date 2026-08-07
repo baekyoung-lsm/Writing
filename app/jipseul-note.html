@@ -243,7 +243,7 @@
    * .graph-shell-based workspace pages (map/graph/table/manuscript/etc.) and the
    * split list+detail view are left to use the full available width. */
   main { padding:0; width:100%; }
-  .page-pad { padding:44px 48px 90px; max-width:960px; margin:0 auto; }
+  .page-pad { width:100%; padding:44px 48px 90px; max-width:960px; margin:0 auto; min-width:0; }
   .doccat-split-pad { max-width:none; }
 
   .home-view { padding:48px 48px 90px; max-width:1080px; margin:0 auto; }
@@ -668,6 +668,7 @@
   .sb-template-divider { display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-faint); margin:14px 4px 6px; letter-spacing:0.02em; }
   .template-folder { border-style:dashed; border-color:var(--border-strong); background:var(--bg-card); }
   .template-badge { flex:none; font-size:10px; padding:2px 7px; border-radius:10px; background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .template-badge.stale { background:var(--rose-soft); color:var(--rose); }
   .work-row .row-del, .work-row .row-settings { opacity:.55; }
   .work-row:hover .row-del, .work-row:hover .row-settings { opacity:1; }
 
@@ -874,6 +875,7 @@
   .paper-toolbar .sep { width:1px; align-self:stretch; background:var(--border); margin:2px 4px; }
   .paper-toolbar button { display:flex; align-items:center; gap:5px; background:none; border:none; padding:6px 8px; border-radius:6px; font-size:12px; color:var(--ink-soft); }
   .paper-toolbar button:hover { background:var(--bg-card-hover); color:var(--ink); }
+  .paper-line-swatch { width:12px; height:12px; border-radius:3px; border:1px solid var(--border-strong); flex:none; }
   .paper-toolbar button.on { color:var(--accent); background:var(--accent-soft); }
   .paper-lang-badge { font-size:11px; padding:4px 10px; border-radius:20px; background:var(--accent-soft); color:var(--accent); font-weight:600; flex:none; }
   .paper-size-toggle { display:flex; gap:2px; background:var(--bg); border-radius:6px; padding:2px; }
@@ -936,6 +938,28 @@
   .graph-shell { display:flex; flex-direction:column; height:100vh; }
   .graph-title-bar { display:flex; align-items:center; gap:10px; padding:16px 22px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
   .graph-title { font-family:var(--serif); font-size:18px; font-weight:600; border:none; background:none; outline:none; flex:1; }
+  /* ---------- 원고지 전용 축소 제목 바 ----------
+   * "정보 영역이 원고지 본문보다 눈에 띄면 안 된다"는 요구에 맞춰 다른
+   * 포맷의 크고 굵은 제목 바 대신 훨씬 작고 얇게 짠다. 이름 바꾸기 input은
+   * 기능을 지키기 위해 그대로 두되(단, 아주 작게), 화수 배지를 덧붙인다. */
+  .paper-compact-bar { padding:10px 22px; gap:8px; }
+  .paper-info-tag-label { font-size:10px; color:var(--ink-faint); letter-spacing:0.04em; text-transform:uppercase; flex:none; }
+  .paper-ep-badge { font-size:11px; color:var(--accent); background:var(--accent-soft); border-radius:10px; padding:2px 8px; flex:none; font-weight:600; }
+  .paper-compact-title { font-family:inherit; font-size:12.5px; font-weight:500; color:var(--ink-soft); border:none; background:none; outline:none; flex:1; min-width:40px; max-width:220px; padding:2px 4px; }
+  .paper-compact-title.dim { color:var(--ink-faint); max-width:70px; opacity:.65; }
+  .paper-compact-title.dim:focus { opacity:1; max-width:220px; color:var(--ink-soft); }
+  .paper-info-settings-btn { color:var(--ink-faint); display:flex; align-items:center; justify-content:center; background:none; border:none; padding:3px; border-radius:5px; flex:none; }
+  .paper-info-settings-btn:hover { color:var(--accent); background:var(--bg-card); }
+  /* 원고지 화면에서는 등장인물 칩·통계·목표·이전화 이어보기·맞춤법 안내까지
+   * 전부 본문보다 작고 얇게 -- 기능은 그대로 두고 시각적 비중만 낮춘다. */
+  .page-pad.paper-info-compact > .pov-row { font-size:11px; margin-bottom:4px; }
+  .page-pad.paper-info-compact > .pov-row .pov-label { font-size:10.5px; }
+  .page-pad.paper-info-compact .ms-stats-bar { font-size:10.5px; opacity:.85; }
+  .page-pad.paper-info-compact .ms-goal-row { font-size:11px; margin:2px 0; }
+  .page-pad.paper-info-compact .ms-goal-label { font-size:10.5px; }
+  .page-pad.paper-info-compact .ms-spellcheck-hint { font-size:10px; opacity:.7; margin-bottom:6px; }
+  .page-pad.paper-info-compact .ms-peek-toggle { font-size:10.5px; }
+  .page-pad.paper-info-compact .ms-tabs { margin-bottom:6px; }
   .graph-hint { font-size:11.5px; color:var(--ink-faint); }
   .map-breadcrumb { display:flex; align-items:center; gap:4px; padding:8px 22px 0; flex-wrap:wrap; font-size:12px; }
   .map-breadcrumb-crumb { color:var(--ink-faint); background:none; border:none; padding:2px 2px; font-family:inherit; font-size:12px; }
@@ -1259,9 +1283,15 @@
     .sidebar-scrim.show { opacity:1; pointer-events:auto; }
     .page-pad { padding:28px 20px 60px; }
     .two-col { grid-template-columns:1fr; }
+    /* .ms-ctx-section 두 칸이 좁은 화면에서 나란히 꽉 차 보이지 않도록 한 섹션이
+     * 한 줄 전체를 쓰게 한다(진짜 가로 넘침 버그는 .page-pad에 min-width:0을
+     * 주는 것으로 별도로 고쳤다 -- .graph-shell이 flex column이라 .page-pad가
+     * flex item으로서 기본 min-width:auto를 가져 원고지 텍스트 영역처럼 줄바꿈
+     * 안 되는 후손 폭만큼 페이지 전체가 밀려나던 문제였다). */
+    .ms-context-panel.stacked .ms-ctx-section, .ms-editor-row .ms-context-panel .ms-ctx-section { min-width:0; flex:1 1 100%; }
   }
 </style>
-<script>(function(){try{var t=JSON.parse(localStorage.getItem("jipseul_theme_v1")||"{}");var mode=t.mode||"auto";if(mode==="light"||mode==="dark"){document.documentElement.setAttribute("data-theme",mode);}else if(mode==="rgb"){document.documentElement.setAttribute("data-theme","rgb");document.documentElement.setAttribute("data-rgbvariant",t.rgbVariant||"cyber");}}catch(e){}})();</script>
+<script>(function(){try{var t=JSON.parse(localStorage.getItem("jipseul_theme_v1")||"{}");var mode=t.mode||"auto";if(mode==="light"||mode==="dark"){document.documentElement.setAttribute("data-theme",mode);}else if(mode==="rgb"){document.documentElement.setAttribute("data-theme","rgb");if(t.rgbVariant==="custom"){var root=document.documentElement;root.style.setProperty("--bg",t.customBg||"#0a0e14");root.style.setProperty("--accent",t.customAccent||"#00e5ff");}else{document.documentElement.setAttribute("data-rgbvariant",t.rgbVariant||"cyber");}}}catch(e){}})();</script>
 
 <div class="mobile-topbar">
   <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" title="메뉴 열기" aria-label="메뉴 열기"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="2.5" y1="4.5" x2="13.5" y2="4.5"/><line x1="2.5" y1="8" x2="13.5" y2="8"/><line x1="2.5" y1="11.5" x2="13.5" y2="11.5"/></svg></button>
@@ -1394,17 +1424,63 @@ var RGB_VARIANTS = {
 };
 function loadThemePref() {
   try { var raw = localStorage.getItem(THEME_KEY); if (raw) { var t = JSON.parse(raw); if (t && t.mode) return t; } } catch (e) {}
-  return { mode: "auto", rgbVariant: "cyber" };
+  return { mode: "auto", rgbVariant: "cyber", customBg: "#0a0e14", customAccent: "#00e5ff" };
 }
 var THEME_PREF = loadThemePref();
+if (!THEME_PREF.customBg) THEME_PREF.customBg = "#0a0e14";
+if (!THEME_PREF.customAccent) THEME_PREF.customAccent = "#00e5ff";
+/* 프리셋 4종(사이버/네온/오로라/신스웨이브)은 그대로 두고, "커스텀"을 골랐을
+ * 때만 이 토큰들을 :root 인라인 스타일로 덮어써서 임의의 RGB 배경·강조색을
+ * 쓸 수 있게 한다. 프리셋으로 되돌아가면 인라인 스타일을 지워서 원래
+ * CSS 블록(:root[data-theme="rgb"][data-rgbvariant=...])이 다시 먹히게 한다. */
+var CUSTOM_THEME_PROPS = ["--bg","--bg-panel","--bg-card","--bg-card-hover","--ink","--ink-soft","--ink-faint","--border","--border-strong","--accent","--accent-soft","--accent-strong","--shadow","--tide","--tide-soft","--rose","--rose-soft","--moss","--moss-soft"];
+function clearCustomThemeProps() {
+  var root = document.documentElement;
+  CUSTOM_THEME_PROPS.forEach(function (p) { root.style.removeProperty(p); });
+}
+function hexIsDark(hex) {
+  var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  if (isNaN(r)||isNaN(g)||isNaN(b)) return true;
+  return (0.299*r + 0.587*g + 0.114*b) / 255 < 0.5;
+}
+function applyCustomRgbColors() {
+  var root = document.documentElement;
+  var bg = THEME_PREF.customBg || "#0a0e14";
+  var accent = THEME_PREF.customAccent || "#00e5ff";
+  var isDark = hexIsDark(bg);
+  var ink = isDark ? "#EDEDED" : "#1A1A1A";
+  var mixDir = isDark ? "white" : "black";
+  root.style.setProperty("--bg", bg);
+  root.style.setProperty("--bg-panel", "color-mix(in srgb, "+bg+" 94%, "+mixDir+" 6%)");
+  root.style.setProperty("--bg-card", "color-mix(in srgb, "+bg+" 88%, "+mixDir+" 12%)");
+  root.style.setProperty("--bg-card-hover", "color-mix(in srgb, "+bg+" 80%, "+mixDir+" 20%)");
+  root.style.setProperty("--ink", ink);
+  root.style.setProperty("--ink-soft", "color-mix(in srgb, "+ink+" 70%, "+bg+" 30%)");
+  root.style.setProperty("--ink-faint", "color-mix(in srgb, "+ink+" 45%, "+bg+" 55%)");
+  root.style.setProperty("--border", "color-mix(in srgb, "+ink+" 15%, "+bg+" 85%)");
+  root.style.setProperty("--border-strong", "color-mix(in srgb, "+ink+" 30%, "+bg+" 70%)");
+  root.style.setProperty("--accent", accent);
+  root.style.setProperty("--accent-soft", "color-mix(in srgb, "+accent+" 16%, transparent)");
+  root.style.setProperty("--accent-strong", "color-mix(in srgb, "+accent+" 80%, "+mixDir+")");
+  root.style.setProperty("--shadow", isDark ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.18)");
+  root.style.setProperty("--tide", "#39d3c6"); root.style.setProperty("--tide-soft", "rgba(57,211,198,0.16)");
+  root.style.setProperty("--rose", "#ff5c7a"); root.style.setProperty("--rose-soft", "rgba(255,92,122,0.16)");
+  root.style.setProperty("--moss", "#7CFFB2"); root.style.setProperty("--moss-soft", "rgba(124,255,178,0.16)");
+}
 function applyThemePref() {
   var root = document.documentElement;
+  clearCustomThemeProps();
   if (THEME_PREF.mode === "light" || THEME_PREF.mode === "dark") {
     root.setAttribute("data-theme", THEME_PREF.mode);
     root.removeAttribute("data-rgbvariant");
   } else if (THEME_PREF.mode === "rgb") {
     root.setAttribute("data-theme", "rgb");
-    root.setAttribute("data-rgbvariant", THEME_PREF.rgbVariant || "cyber");
+    if (THEME_PREF.rgbVariant === "custom") {
+      root.removeAttribute("data-rgbvariant");
+      applyCustomRgbColors();
+    } else {
+      root.setAttribute("data-rgbvariant", THEME_PREF.rgbVariant || "cyber");
+    }
   } else {
     root.removeAttribute("data-theme");
     root.removeAttribute("data-rgbvariant");
@@ -1415,6 +1491,11 @@ function setThemePref(mode, rgbVariant) {
   if (rgbVariant) THEME_PREF.rgbVariant = rgbVariant;
   try { localStorage.setItem(THEME_KEY, JSON.stringify(THEME_PREF)); } catch (e) {}
   applyThemePref();
+}
+function setCustomThemeColor(which, hex) {
+  if (which === "bg") THEME_PREF.customBg = hex; else THEME_PREF.customAccent = hex;
+  try { localStorage.setItem(THEME_KEY, JSON.stringify(THEME_PREF)); } catch (e) {}
+  if (THEME_PREF.mode === "rgb" && THEME_PREF.rgbVariant === "custom") applyCustomRgbColors();
 }
 /* ---------------- 사이드바 섹션 표시 설정 ----------------
  * "설정 노트" 하위 섹션 중 자주 쓰지 않는 것들을 작품 폴더 안 "고급 기능"
@@ -1472,7 +1553,20 @@ function openPreferencesModal() {
               var v = RGB_VARIANTS[k];
               return '<button type="button" class="modal-pick'+(THEME_PREF.rgbVariant===k?" on":"")+'" data-themergb="'+k+'" style="--pc:'+v.swatch+'">'+esc(v.label)+'</button>';
             }).join("") +
-          '</div>'
+            '<button type="button" class="modal-pick'+(THEME_PREF.rgbVariant==="custom"?" on":"")+'" data-themergb="custom" style="--pc:'+esc(THEME_PREF.customAccent)+'">직접 선택</button>' +
+          '</div>' +
+          (THEME_PREF.rgbVariant === "custom" ? (
+            '<div class="modal-picker-label" style="margin-top:10px">배경 RGB</div>' +
+            '<div class="modal-accent-custom-row" style="display:flex; align-items:center; gap:8px">' +
+              '<input type="color" id="customBgPicker" value="'+esc(THEME_PREF.customBg)+'">' +
+              '<input type="text" id="customBgHex" class="modal-input" style="flex:1" value="'+esc(THEME_PREF.customBg)+'" placeholder="#0A0E14">' +
+            '</div>' +
+            '<div class="modal-picker-label" style="margin-top:10px">강조 RGB</div>' +
+            '<div class="modal-accent-custom-row" style="display:flex; align-items:center; gap:8px">' +
+              '<input type="color" id="customAccentPicker" value="'+esc(THEME_PREF.customAccent)+'">' +
+              '<input type="text" id="customAccentHex" class="modal-input" style="flex:1" value="'+esc(THEME_PREF.customAccent)+'" placeholder="#00E5FF">' +
+            '</div>'
+          ) : "")
         ) : "") +
         '<div class="modal-picker-label" style="margin-top:14px">사이드바 표시 — 체크 해제하면 작품 폴더 안 "고급 기능"으로 접어둡니다</div>' +
         SIDEBAR_SECTIONS.map(function(s){
@@ -1486,6 +1580,13 @@ function openPreferencesModal() {
     overlay.querySelectorAll("[data-themergb]").forEach(function(btn){
       btn.addEventListener("click", function(){ setThemePref("rgb", btn.dataset.themergb); paint(); });
     });
+    var bgPicker = document.getElementById("customBgPicker"), bgHex = document.getElementById("customBgHex");
+    var accentPicker = document.getElementById("customAccentPicker"), accentHex = document.getElementById("customAccentHex");
+    function isValidHex6(v) { return /^#[0-9a-fA-F]{6}$/.test(v.trim()); }
+    if (bgPicker) bgPicker.addEventListener("input", function(){ setCustomThemeColor("bg", bgPicker.value); if (bgHex) bgHex.value = bgPicker.value; });
+    if (bgHex) bgHex.addEventListener("change", function(){ if (!isValidHex6(bgHex.value)) { bgHex.value = THEME_PREF.customBg; return; } setCustomThemeColor("bg", bgHex.value.trim()); if (bgPicker) bgPicker.value = bgHex.value.trim(); });
+    if (accentPicker) accentPicker.addEventListener("input", function(){ setCustomThemeColor("accent", accentPicker.value); if (accentHex) accentHex.value = accentPicker.value; });
+    if (accentHex) accentHex.addEventListener("change", function(){ if (!isValidHex6(accentHex.value)) { accentHex.value = THEME_PREF.customAccent; return; } setCustomThemeColor("accent", accentHex.value.trim()); if (accentPicker) accentPicker.value = accentHex.value.trim(); });
     overlay.querySelectorAll("[data-sidebarpref]").forEach(function(cb){
       cb.addEventListener("change", function(){ setSidebarSectionPinned(cb.dataset.sidebarpref, cb.checked); });
     });
@@ -1697,6 +1798,112 @@ var MANUSCRIPT_PAPER_SIZES = {
   1000: { cols: 20, rows: 50 }
 };
 var PAPER_INDENT_CHAR = "　"; // 전각 공백 -- 문단 들여쓰기를 "실제 글자"로 표현
+
+/* 원고지 칸선 색상 -- 앱 전체에 적용되는 사용자 선호(작품/화 단위가 아니라
+ * "이 사람이 평소에 원고지를 어떤 색으로 보는가"이므로 테마 설정과 같은
+ * 급의 전역 preference로 취급한다). 내용(m.text)과는 완전히 분리된 순수
+ * 표시 설정이라, 색을 바꿔도 저장된 원고 데이터는 전혀 건드리지 않는다. */
+var PAPER_LINE_KEY = "jipseul_paper_line_v1";
+var PAPER_LINE_PRESETS = [
+  { key: "black", label: "검정", hex: "#3A3A3A" },
+  { key: "gray",  label: "회색", hex: "#9B9B9B" },
+  { key: "brown", label: "갈색", hex: "#B9AF95" },
+  { key: "blue",  label: "파랑", hex: "#5B7FB5" },
+  { key: "green", label: "녹색", hex: "#5E9770" }
+];
+function loadPaperLineColor() {
+  try { var raw = localStorage.getItem(PAPER_LINE_KEY); if (raw && /^#[0-9a-fA-F]{6}$/.test(raw)) return raw; } catch (e) {}
+  return PAPER_LINE_PRESETS[2].hex; // 갈색 -- 기존 기본값과 동일
+}
+var PAPER_LINE_COLOR = loadPaperLineColor();
+function setPaperLineColor(hex) {
+  PAPER_LINE_COLOR = hex;
+  try { localStorage.setItem(PAPER_LINE_KEY, hex); } catch (e) {}
+  document.querySelectorAll(".paper-text").forEach(function (el) { el.style.setProperty("--paper-line", hex); });
+  document.querySelectorAll(".paper-line-swatch").forEach(function (el) { el.style.background = hex; });
+}
+/* 원고지 화면에서 "제목/화수" 표시 방식 -- 원고지 모드는 정보 영역이 본문보다
+ * 눈에 띄면 안 되므로, 큰 제목 대신 작은 라벨 하나로 줄인다. 이 라벨을
+ * 제목+화수/화수만/제목만/숨김 중 사용자가 고르게 한다(전역 preference). */
+var PAPER_INFO_KEY = "jipseul_paper_info_v1";
+var PAPER_INFO_MODES = [
+  { key: "title_ep", label: "제목 + 화수" },
+  { key: "ep_only", label: "화수만" },
+  { key: "title_only", label: "제목만" },
+  { key: "hidden", label: "숨김" }
+];
+function loadPaperInfoMode() {
+  try { var raw = localStorage.getItem(PAPER_INFO_KEY); if (PAPER_INFO_MODES.some(function (x) { return x.key === raw; })) return raw; } catch (e) {}
+  return "title_ep";
+}
+var PAPER_INFO_MODE = loadPaperInfoMode();
+function setPaperInfoMode(mode) {
+  PAPER_INFO_MODE = mode;
+  try { localStorage.setItem(PAPER_INFO_KEY, mode); } catch (e) {}
+}
+/* 원고의 "N화" 표시는 저장된 필드가 아니라, 같은 소설 안에서 만들어진 순서로
+ * 매길 때마다 계산한다(화수는 정렬 방식(최신순/시간순) 설정과 무관하게 항상
+ * 먼저 쓴 순서를 기준으로 세야 "화수"라는 말의 뜻과 맞는다). */
+function episodeOrdinal(m) {
+  var eps = MANUSCRIPTS.filter(function (x) { return x.novelId === m.novelId; })
+    .slice().sort(function (a, b) { return (a.createdAt||0) - (b.createdAt||0); });
+  var idx = eps.findIndex(function (x) { return x.id === m.id; });
+  return idx === -1 ? null : idx + 1;
+}
+function openPaperInfoModeModal() {
+  closeModal();
+  openModal({
+    title: "원고지 정보 표시",
+    pickers: [{ key: "mode", label: "제목/화수 표시 방식", default: PAPER_INFO_MODE, noDot: true,
+      options: PAPER_INFO_MODES.map(function (x) { return { value: x.key, label: x.label }; }) }],
+    confirmLabel: "적용",
+    onConfirm: function (values, checked, picks) {
+      setPaperInfoMode(picks.mode || PAPER_INFO_MODE);
+      var m = currentManuscript();
+      if (m) renderManuscriptPage(m);
+    }
+  });
+}
+function openPaperLineColorModal() {
+  closeModal();
+  var overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.id = "modalOverlay";
+  document.body.appendChild(overlay);
+  function paint() {
+    overlay.innerHTML =
+      '<div class="modal-box">' +
+        '<div class="modal-title">원고지 칸선 색상</div>' +
+        '<div class="modal-msg">본문 내용은 그대로 두고 격자 선 색만 바뀝니다.</div>' +
+        '<div class="modal-picker-row">' +
+          PAPER_LINE_PRESETS.map(function (p) {
+            return '<button type="button" class="modal-pick'+(PAPER_LINE_COLOR.toUpperCase()===p.hex.toUpperCase()?" on":"")+'" data-linecolor="'+p.hex+'" style="--pc:'+p.hex+'">'+esc(p.label)+'</button>';
+          }).join("") +
+        '</div>' +
+        '<div class="modal-picker-label" style="margin-top:12px">사용자 지정</div>' +
+        '<div class="modal-accent-custom-row" style="display:flex; align-items:center; gap:8px">' +
+          '<input type="color" id="paperLineColorPicker" value="'+esc(PAPER_LINE_COLOR)+'">' +
+          '<input type="text" id="paperLineColorHex" class="modal-input" style="flex:1" value="'+esc(PAPER_LINE_COLOR)+'" placeholder="#B9AF95">' +
+        '</div>' +
+        '<div class="modal-actions"><button type="button" class="btn primary" id="paperLineColorClose">닫기</button></div>' +
+      '</div>';
+    overlay.querySelectorAll("[data-linecolor]").forEach(function (btn) {
+      btn.addEventListener("click", function () { setPaperLineColor(btn.dataset.linecolor); paint(); });
+    });
+    var picker = document.getElementById("paperLineColorPicker");
+    var hexInput = document.getElementById("paperLineColorHex");
+    if (picker) picker.addEventListener("input", function () { setPaperLineColor(picker.value); if (hexInput) hexInput.value = picker.value; });
+    if (hexInput) hexInput.addEventListener("change", function () {
+      var v = hexInput.value.trim();
+      if (!/^#[0-9a-fA-F]{6}$/.test(v)) { hexInput.value = PAPER_LINE_COLOR; return; }
+      setPaperLineColor(v);
+      if (picker) picker.value = v;
+    });
+    overlay.querySelector("#paperLineColorClose").addEventListener("click", closeModal);
+  }
+  paint();
+  overlay.addEventListener("mousedown", function (e) { if (e.target === overlay) closeModal(); });
+}
 
 var MANUSCRIPT_LANG_RULES = {
   ko: { label: "한국어", grid: true, vertical: false },
@@ -3788,8 +3995,15 @@ function applyFocusModeClass() {
 }
 
 /* ---------------- works (top-level project folders) ---------------- */
+/* 이 함수가 만드는 예시 데이터(캐릭터·문서·원고 등)의 내용을 앞으로 바꿀
+ * 때마다 이 숫자를 올린다. work.templateVersion과 비교해서 "이 사용자가
+ * 갖고 있는 템플릿이 지금 코드의 예시보다 오래됐는지"를 판단하는 데만 쓰고,
+ * 자동으로 지우거나 덮어쓰지는 않는다(사용자가 그 안에서 직접 편집했을 수
+ * 있으므로) -- 대신 오래됐다는 걸 알려주고, 원하면 명시적으로
+ * resetGenreTemplateWork()를 눌러 초기화하게 한다. */
+var TEMPLATE_CONTENT_VERSION = 1;
 function createGenreTemplateWork() {
-  var w = { id: uid(), title: "📎 장르별 기능 템플릿", isTemplate: true };
+  var w = { id: uid(), title: "📎 장르별 기능 템플릿", isTemplate: true, templateVersion: TEMPLATE_CONTENT_VERSION };
   WORKS.push(w);
   var wid = w.id;
 
@@ -4220,6 +4434,44 @@ function toggleGenreTemplateWork() {
   state.collapsed["work:"+w.id] = false;
   state.mode = "empty"; state.activeId = null;
   render();
+}
+/* 숨기기/보이기(toggleGenreTemplateWork)는 데이터를 절대 지우지 않는다. 하지만
+ * createGenreTemplateWork()의 예시 콘텐츠 자체를 나중에 고치면(TEMPLATE_CONTENT_VERSION을
+ * 올리면), 이미 만들어진 템플릿 작품은 그 변경을 자동으로 받지 못한다 --
+ * 사용자가 그 안에서 직접 뭔가 편집해놨을 수도 있어서 함부로 덮어쓸 수 없기
+ * 때문이다. 그래서 "최신 예시로 초기화"는 여기, 명시적으로 확인을 받는
+ * 별도 동작으로만 존재한다 -- 예전처럼 숨기기 버튼을 누를 때마다 조용히
+ * 일어나지 않는다. */
+function resetGenreTemplateWork() {
+  var existing = WORKS.find(function (w) { return w.isTemplate; });
+  if (!existing) return;
+  var id = existing.id;
+  openModal({
+    title: "예시 템플릿을 최신 내용으로 초기화할까요?",
+    message: "지금 템플릿 작품 안의 문서·원고·관계도 등 모든 내용이 사라지고, 최신 버전의 예시 데이터로 새로 만들어집니다. 이 템플릿 안에서 직접 편집한 내용이 있다면 되돌릴 수 없습니다.",
+    confirmLabel: "초기화", danger: true,
+    onConfirm: function () {
+      var novelIds = NOVELS.filter(function(n){ return n.workId===id; }).map(function(n){ return n.id; });
+      var essayIds = ESSAYS.filter(function(es){ return es.workId===id; }).map(function(es){ return es.id; });
+      WORKS = WORKS.filter(function(x){ return x.id !== id; });
+      DOCS = DOCS.filter(function(d){ return d.workId !== id; });
+      GRAPHS = GRAPHS.filter(function(g){ return g.workId !== id; });
+      TABLES = TABLES.filter(function(t){ return t.workId !== id; });
+      TIMELINES = TIMELINES.filter(function(tl){ return tl.workId !== id; });
+      MAPS = MAPS.filter(function(mp){ return mp.workId !== id; });
+      NOVELS = NOVELS.filter(function(n){ return n.workId !== id; });
+      MANUSCRIPTS = MANUSCRIPTS.filter(function(m){ return novelIds.indexOf(m.novelId)===-1; });
+      ESSAYS = ESSAYS.filter(function(es){ return es.workId !== id; });
+      ESSAY_ENTRIES = ESSAY_ENTRIES.filter(function(e){ return essayIds.indexOf(e.essayId)===-1; });
+      SCRIPTS = SCRIPTS.filter(function(sc){ return sc.workId !== id; });
+      SPORTS = SPORTS.filter(function(sp){ return sp.workId !== id; });
+      if (state.mode === "workhome" && state.activeId === id) { state.mode = "empty"; state.activeId = null; }
+      var w = createGenreTemplateWork();
+      state.collapsed["work:"+w.id] = false;
+      saveData();
+      openWorkOverview(w.id);
+    }
+  });
 }
 function newWork() {
   openModal({
@@ -7145,11 +7397,14 @@ function renderSidebar() {
   function renderWorkRow(work) {
     var msIds = NOVELS.filter(function(n){ return n.workId===work.id; }).map(function(n){ return n.id; });
     var charTotal = MANUSCRIPTS.filter(function(m){ return msIds.indexOf(m.novelId)!==-1; }).reduce(function(sum,m){ return sum+charCount(m.text); }, 0);
+    var isStaleTemplate = work.isTemplate && (work.templateVersion||0) < TEMPLATE_CONTENT_VERSION;
     return '<div class="work-row'+(work.isTemplate?" template-folder":"")+(work.id===activeWorkId?" active":"")+'" data-openwork="'+work.id+'">' +
       '<span class="gt work-title">'+esc(work.title||"제목 없는 작품")+'</span>' +
       (work.isTemplate?'<span class="template-badge">예시</span>':'') +
+      (isStaleTemplate?'<span class="template-badge stale" title="예시 콘텐츠에 새 버전이 있어요">새 버전</span>':'') +
       (charTotal?'<span class="char-total">'+fmtNum(charTotal)+'자</span>':'') +
       '<button class="row-settings" data-exportzip="'+work.id+'" title="원고·설정집 내보내기(ZIP)">'+ic("upload",12)+'</button>' +
+      (work.isTemplate?'<button class="row-settings" data-resettemplate="'+work.id+'" title="최신 예시 콘텐츠로 초기화(현재 편집 내용은 사라집니다)">'+ic("rotate",12)+'</button>':'') +
       (work.isTemplate?'':'<button class="row-del" data-delwork="'+work.id+'" title="작품 삭제">'+ic("trash",12)+'</button>') +
     '</div>';
   }
@@ -7237,6 +7492,7 @@ function wireWorkTreeHandlers(el) {
   el.querySelectorAll("[data-delmap]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteMap(b.dataset.delmap); }); });
   el.querySelectorAll("[data-delwork]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteWork(b.dataset.delwork); }); });
   el.querySelectorAll("[data-exportzip]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); openExportZipModal(b.dataset.exportzip); }); });
+  el.querySelectorAll("[data-resettemplate]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); resetGenreTemplateWork(); }); });
 }
 
 /* ---------------- doc page ---------------- */
@@ -13483,11 +13739,12 @@ function renderManuscriptPaperArea(m) {
       '</select>' +
       '<span id="paperToolbarExtras" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap"></span>' +
       '<div class="sep"></div>' +
+      '<button type="button" id="paperLineColorBtn" title="원고지 칸선 색상"><span class="paper-line-swatch" style="background:'+esc(PAPER_LINE_COLOR)+'"></span><span>칸선 색상</span></button>' +
       '<button type="button" id="msPaperFindBtn">'+ic("search",13)+'<span>찾아바꾸기</span></button>' +
     '</div>' +
     '<div class="paper-stats-bar" id="paperStatsBar"></div>' +
     '<div class="paper-outer"><div class="paper-sheet-wrap">' +
-      '<textarea class="paper-text'+(initStats.rules.grid?" grid":" flow")+((m.paperVertical&&initStats.rules.vertical)?" vertical":"")+'" id="paperText" spellcheck="true" placeholder="여기에 바로 쓰세요 — 이 화면이 곧 완성된 원고입니다." lang="'+esc(initStats.rules.lang)+'">'+esc(m.text||"")+'</textarea>' +
+      '<textarea class="paper-text'+(initStats.rules.grid?" grid":" flow")+((m.paperVertical&&initStats.rules.vertical)?" vertical":"")+'" id="paperText" spellcheck="true" placeholder="여기에 바로 쓰세요 — 이 화면이 곧 완성된 원고입니다." lang="'+esc(initStats.rules.lang)+'" style="--paper-line:'+esc(PAPER_LINE_COLOR)+'">'+esc(m.text||"")+'</textarea>' +
     '</div></div>' +
     '<div class="paper-page-nav">' +
       '<button type="button" id="paperPrevPage">'+ic("chevL",13)+'</button>' +
@@ -13605,6 +13862,8 @@ function renderManuscriptPaperArea(m) {
   if (langSel) langSel.addEventListener("change", function (e) {
     m.paperLang = e.target.value; saveData(); refreshStatsBar();
   });
+  var lineColorBtn = document.getElementById("paperLineColorBtn");
+  if (lineColorBtn) lineColorBtn.addEventListener("click", openPaperLineColorModal);
   var findBtnPaper = document.getElementById("msPaperFindBtn");
   if (findBtnPaper) findBtnPaper.addEventListener("click", function (e) {
     openFindReplace("paperText", e.currentTarget, function (newVal) {
@@ -13714,15 +13973,44 @@ function renderManuscriptPage(m) {
         : '<div class="ms-frame"><div class="ms-notch"></div><div class="ms-screen">' + textareaHtml + '</div></div>');
   }
 
+  /* 원고지 모드는 "정보 영역이 원고지 본문보다 눈에 띄면 안 된다"는 요구에
+   * 맞춰 제목 바를 따로 짠다 -- 제목 input은 그대로 두되(이름 바꾸기 기능이
+   * 없어지면 안 되므로) 아주 작게 줄이고, 그 위에 "N화" 같은 화수 배지를
+   * 붙인다. 표시 방식(제목+화수/화수만/제목만/숨김)은 PAPER_INFO_MODE로
+   * 사용자가 고른다. */
+  var titleBarHtml;
+  if (isPaper) {
+    var ord = episodeOrdinal(m);
+    var epBadgeHtml = (ord && PAPER_INFO_MODE !== "title_only" && PAPER_INFO_MODE !== "hidden")
+      ? '<span class="paper-ep-badge">'+ord+'화</span>' : '';
+    var showTitleText = PAPER_INFO_MODE === "title_ep" || PAPER_INFO_MODE === "title_only";
+    titleBarHtml =
+      '<div class="graph-title-bar paper-compact-bar">' +
+        '<span class="paper-info-tag-label">원고지</span>' +
+        epBadgeHtml +
+        '<input class="graph-title paper-compact-title'+(showTitleText?"":" dim")+'" id="msTitle" value="'+esc(m.title)+'" placeholder="제목">' +
+        '<button type="button" class="paper-info-settings-btn" id="paperInfoSettingsBtn" title="제목/화수 표시 방식 설정">'+ic("gear",12)+'</button>' +
+        '<span class="ms-save-indicator saved" id="msSaveIndicator">'+ic("checkmark",11)+' 저장됨</span>' +
+        '<span class="ms-char-count" id="msCharCount">'+fmtNum(charCount(m.text))+'자</span>' +
+        '<button class="page-del" id="deleteMsBtn" style="margin-top:0">'+ic("trash",13)+'<span>원고 삭제</span></button>' +
+      '</div>';
+  } else {
+    titleBarHtml = '<div class="graph-title-bar"><input class="graph-title" id="msTitle" value="'+esc(m.title)+'" placeholder="원고(화) 제목"><span class="ms-save-indicator saved" id="msSaveIndicator">'+ic("checkmark",11)+' 저장됨</span><span class="ms-char-count" id="msCharCount">'+fmtNum(charCount(m.text))+'자</span><button class="page-del" id="deleteMsBtn" style="margin-top:0">'+ic("trash",13)+'<span>원고 삭제</span></button></div>';
+  }
+
   main.innerHTML =
     '<div class="graph-shell">' +
-      '<div class="graph-title-bar"><input class="graph-title" id="msTitle" value="'+esc(m.title)+'" placeholder="원고(화) 제목"><span class="ms-save-indicator saved" id="msSaveIndicator">'+ic("checkmark",11)+' 저장됨</span><span class="ms-char-count" id="msCharCount">'+fmtNum(charCount(m.text))+'자</span><button class="page-del" id="deleteMsBtn" style="margin-top:0">'+ic("trash",13)+'<span>원고 삭제</span></button></div>' +
-      '<div class="page-pad" style="padding-top:26px">' + povHtml + statsHtml + tabsHtml +
+      titleBarHtml +
+      '<div class="page-pad'+(isPaper?" paper-info-compact":"")+'" style="padding-top:26px">' + povHtml + statsHtml + tabsHtml +
         ((isBook || isPaper)
           ? '<div class="ms-editor-stack">' + bodyHtml + '<div class="ms-context-panel stacked" id="msContextPanel"></div></div>'
           : '<div class="ms-editor-row"><div class="ms-editor-main">' + bodyHtml + '</div><div class="ms-context-panel" id="msContextPanel"></div></div>') +
       '</div>' +
     '</div>';
+  if (isPaper) {
+    var infoSettingsBtn = document.getElementById("paperInfoSettingsBtn");
+    if (infoSettingsBtn) infoSettingsBtn.addEventListener("click", openPaperInfoModeModal);
+  }
 
   document.getElementById("msTitle").addEventListener("input", function(e){ m.title = e.target.value; saveData(); renderSidebar(); updateMsStatsBar(m); flashSaveIndicator(); });
   document.getElementById("deleteMsBtn").addEventListener("click", function(){ deleteManuscript(m.id); });
