@@ -12,7 +12,7 @@
     --bg: #faf9f6; --bg-panel: #f4f3ef; --bg-card: #ffffff; --bg-card-hover: #f4f3ef;
     --ink: #17181c; --ink-soft: #4b4d55; --ink-faint: #8a8c94;
     --border: #e6e4dd; --border-strong: #d8d5cb;
-    --accent: #3B82F6; --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+    --accent: #A5691E; --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
     --accent-strong: color-mix(in srgb, var(--accent) 82%, black);
     --tide: #357C82; --tide-soft: rgba(53,124,130,0.14);
     --rose: #A6473C; --rose-soft: rgba(166,71,60,0.13);
@@ -21,6 +21,20 @@
     --radius: 12px;
     --serif: "Noto Serif KR","Nanum Myeongjo","Batang",serif;
     --sans: "Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+
+    /* ---- 디자인 토큰: 간격/반경/입체(elevation)/타이포 스케일 ----
+     * 기존 컴포넌트는 손으로 튜닝된 리터럴 px가 많아 전부를 강제로 스케일에
+     * 맞추지 않았다(시각적 회귀 위험). 대신 이 스케일을 "정식 표준"으로 두고,
+     * 이번에 새로 만들거나 다시 짜는 컴포넌트(홈 빠른 시작, 사이드바 생성 메뉴,
+     * 외견 편집기 확대/비율 컨트롤, 반응형 사이드바 레일 등)는 전부 이 토큰만
+     * 사용한다. */
+    --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px;
+    --sp-6: 24px; --sp-7: 32px; --sp-8: 40px; --sp-9: 48px; --sp-10: 64px;
+    --radius-sm: 7px; --radius-md: 11px; --radius-lg: 16px; --radius-pill: 999px;
+    --shadow-1: 0 1px 3px var(--shadow);
+    --shadow-2: 0 8px 20px var(--shadow);
+    --shadow-3: 0 16px 40px var(--shadow);
+    --fs-xs: 11px; --fs-sm: 12.5px; --fs-base: 14px; --fs-md: 15.5px; --fs-lg: 19px; --fs-xl: 24px; --fs-2xl: 30px;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -226,6 +240,16 @@
     .home-view { max-width:1280px; }
   }
 
+  /* 900~1100px(태블릿 가로/작은 노트북): 270px 고정 사이드바가 지도·표 같은
+   * 작업공간 폭을 지나치게 잡아먹는 구간. 사이드바를 접지는 않되(문서 트리
+   * 탐색은 태블릿에서도 계속 필요) 폭과 내부 여백을 좁혀 본문에 폭을 더 준다. */
+  @media (max-width:1100px) and (min-width:781px) {
+    .app { grid-template-columns:232px 1fr; }
+    .sidebar { padding:var(--sp-5) var(--sp-3) var(--sp-3); gap:var(--sp-3); }
+    .page-pad { padding:32px 28px 70px; }
+    .home-view { padding:32px 28px 70px; }
+  }
+
   .btn { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:9px; padding:8px 13px; font-size:13px; color:var(--ink); transition:border-color .12s, color .12s, background .12s, box-shadow .12s; }
   .btn:hover { border-color:var(--accent); color:var(--accent); background:var(--bg-card-hover); }
   .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 1px 2px var(--shadow); }
@@ -346,6 +370,12 @@
   .appear-height-row-shared input[type="range"] { flex:1; accent-color:var(--accent); }
   .appear-height-row-value { display:flex; align-items:center; gap:3px; font-size:12px; color:var(--ink); font-variant-numeric:tabular-nums; flex:none; min-width:56px; }
   .appear-height-row-value svg { flex:none; opacity:.6; }
+  .appear-zoom-row { display:flex; align-items:center; gap:6px; margin-bottom:12px; }
+  .appear-zoom-btn { display:flex; align-items:center; justify-content:center; width:24px; height:24px; border:1px solid var(--border-strong); background:var(--bg); border-radius:var(--radius-sm); color:var(--ink-soft); flex:none; }
+  .appear-zoom-btn:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
+  .appear-zoom-btn:disabled { opacity:.4; cursor:default; }
+  .appear-zoom-readout { font-size:11.5px; color:var(--ink-faint); min-width:34px; text-align:center; font-variant-numeric:tabular-nums; }
+  .appear-face-figure, .appear-compare-figure, .appear-outfit-figure { transform-origin:50% 100%; transition:transform .12s ease; }
   .appear-preview-col { flex:none; width:300px; transition:width .15s ease; }
   .appear-preview-col[data-count="2"] { width:360px; }
   .appear-preview-col[data-count="1"] { width:420px; }
@@ -435,6 +465,25 @@
   .color-trigger:hover { background:var(--bg-card); }
   .color-dot { width:14px; height:14px; border-radius:50%; flex:none; border:1px solid var(--border-strong); }
   .color-pop-fixed { position:fixed; z-index:200; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:14px; box-shadow:0 12px 30px var(--shadow); width:264px; max-height:78vh; overflow-y:auto; }
+
+  /* 새 문서 카테고리 선택 팝오버 -- "+"를 누르면 어떤 종류를 만들지 사용자가
+   * 직접 고른다(이전에는 배열의 첫 항목인 "등장인물"로 조용히 기본값 처리돼,
+   * "새 캐릭터 만들기" 전용 진입점이 사실상 존재하지 않았다). */
+  .cat-menu-fixed { position:fixed; z-index:200; background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-md); padding:var(--sp-2); box-shadow:var(--shadow-2); min-width:184px; }
+  .cat-menu-item { display:flex; align-items:center; gap:var(--sp-2); width:100%; text-align:left; border:none; background:none; color:var(--ink-soft); padding:var(--sp-2) var(--sp-2); border-radius:var(--radius-sm); font-size:13px; }
+  .cat-menu-item:hover { background:var(--accent-soft); color:var(--accent); }
+  .cat-menu-item svg { color:var(--ink-faint); flex:none; }
+  .cat-menu-item:hover svg { color:var(--accent); }
+
+  /* ---------- 홈 빠른 시작 ---------- */
+  .home-quickstart { margin:var(--sp-7) 0 0; }
+  .home-quickstart-for { font-size:var(--fs-sm); color:var(--ink-faint); margin-bottom:var(--sp-3); }
+  .home-quickstart-for b { color:var(--ink-soft); font-weight:600; }
+  .home-quick-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(132px,1fr)); gap:var(--sp-3); }
+  .home-quick-btn { display:flex; flex-direction:column; align-items:flex-start; gap:var(--sp-3); border:1px solid var(--border); background:var(--bg-card); border-radius:var(--radius-md); padding:var(--sp-4); box-shadow:var(--shadow-1); transition:transform .14s, box-shadow .14s, border-color .14s; }
+  .home-quick-btn:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:var(--shadow-2); }
+  .home-quick-btn .qi { width:34px; height:34px; border-radius:var(--radius-sm); background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; flex:none; }
+  .home-quick-btn .qt { font-size:13.5px; font-weight:600; color:var(--ink); }
   .color-pop-label { font-size:11px; letter-spacing:0.04em; color:var(--ink-faint); margin-bottom:7px; }
   .swatch-grid { display:grid; grid-template-columns:repeat(8, 1fr); gap:7px; margin-bottom:6px; }
   .swatch-grid.recent { margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--border); }
@@ -1107,13 +1156,13 @@
 
 <div class="mobile-topbar">
   <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" title="메뉴 열기" aria-label="메뉴 열기"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="2.5" y1="4.5" x2="13.5" y2="4.5"/><line x1="2.5" y1="8" x2="13.5" y2="8"/><line x1="2.5" y1="11.5" x2="13.5" y2="11.5"/></svg></button>
-  <span class="brand-title">집썰</span>
+  <div class="brand-row" id="brandHomeMobile" title="홈으로"><svg class="brand-logo" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><mask id="brandLogoDotsMobile"><rect x="0" y="0" width="24" height="24" fill="#fff"/><circle cx="8" cy="14.2" r="1.3" fill="#000"/><circle cx="12" cy="14.2" r="1.3" fill="#000"/><circle cx="16" cy="14.2" r="1.3" fill="#000"/></mask></defs><g mask="url(#brandLogoDotsMobile)"><polygon points="12,2 21,9 3,9" fill="currentColor"/><rect x="3" y="9" width="18" height="10" rx="3" fill="currentColor"/><polygon points="7,19 7,23 11,19" fill="currentColor"/></g></svg><span class="brand-title">집썰</span></div>
 </div>
 <div class="sidebar-scrim" id="sidebarScrim"></div>
 <div class="app">
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-row" id="brandHome" title="홈으로"><svg class="brand-logo" width="20" height="20" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><mask id="brandLogoDots"><rect x="0" y="0" width="22" height="22" fill="#fff"/><circle cx="7" cy="12.6" r="1.15" fill="#000"/><circle cx="11" cy="12.6" r="1.15" fill="#000"/><circle cx="15" cy="12.6" r="1.15" fill="#000"/></mask></defs><g mask="url(#brandLogoDots)"><polygon points="11,1 20,8 2,8" fill="currentColor"/><rect x="2" y="8" width="18" height="9" rx="3" fill="currentColor"/><polygon points="6,17 6,21 10,17" fill="currentColor"/></g></svg><span class="brand-title">집썰</span></div>
+      <div class="brand-row" id="brandHome" title="홈으로"><svg class="brand-logo" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><mask id="brandLogoDotsMain"><rect x="0" y="0" width="24" height="24" fill="#fff"/><circle cx="8" cy="14.2" r="1.3" fill="#000"/><circle cx="12" cy="14.2" r="1.3" fill="#000"/><circle cx="16" cy="14.2" r="1.3" fill="#000"/></mask></defs><g mask="url(#brandLogoDotsMain)"><polygon points="12,2 21,9 3,9" fill="currentColor"/><rect x="3" y="9" width="18" height="10" rx="3" fill="currentColor"/><polygon points="7,19 7,23 11,19" fill="currentColor"/></g></svg><span class="brand-title">집썰</span></div>
       <button type="button" class="brand-theme-btn" id="themeSettingsBtn" title="환경 설정(테마·사이드바 표시)"><svg class="icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5a5.5 5.5 0 100 11c.9 0 1.4-.6 1.4-1.3 0-.35-.15-.65-.35-.9-.2-.25-.35-.55-.35-.9 0-.7.55-1.2 1.2-1.2h1.4A2.7 2.7 0 0014 6.5C14 4 11.3 2.5 8 2.5z"/><circle cx="5.2" cy="6.6" r="0.9" fill="currentColor" stroke="none"/><circle cx="8" cy="4.9" r="0.9" fill="currentColor" stroke="none"/><circle cx="10.8" cy="6.6" r="0.9" fill="currentColor" stroke="none"/><circle cx="5.6" cy="9.8" r="0.9" fill="currentColor" stroke="none"/></svg></button>
     </div>
     <div class="search-wrap">
@@ -1334,6 +1383,36 @@ applyThemePref();
 
 /* ---------------- data ---------------- */
 var CATS = ["등장인물","세력","장소","세계관","사건","아이템","떡밥","부·사이드","기타"];
+var CAT_ICON = { "등장인물":"person", "세력":"crown", "장소":"pin", "세계관":"magic", "사건":"battle", "아이템":"gift", "떡밥":"eye", "부·사이드":"link", "기타":"tag" };
+var _catMenuOutsideHandler = null;
+function closeCatMenu() {
+  var p = document.getElementById("catMenuFixed"); if (p) p.remove();
+  if (_catMenuOutsideHandler) { document.removeEventListener("mousedown", _catMenuOutsideHandler); _catMenuOutsideHandler = null; }
+}
+function openDocCategoryMenu(anchorEl, workId) {
+  closeCatMenu();
+  var pop = document.createElement("div");
+  pop.className = "cat-menu-fixed";
+  pop.id = "catMenuFixed";
+  pop.innerHTML = CATS.map(function(cat){
+    return '<button type="button" class="cat-menu-item" data-pickcat="'+esc(cat)+'">'+ic(CAT_ICON[cat]||"tag",14)+'<span>'+esc(cat)+'</span></button>';
+  }).join("");
+  document.body.appendChild(pop);
+  var r = anchorEl.getBoundingClientRect();
+  var top = Math.min(r.bottom+6, window.innerHeight-pop.offsetHeight-8);
+  var left = Math.min(r.left, window.innerWidth-pop.offsetWidth-8);
+  pop.style.top = Math.max(8,top)+"px";
+  pop.style.left = Math.max(8,left)+"px";
+  pop.querySelectorAll("[data-pickcat]").forEach(function(btn){
+    btn.addEventListener("click", function(){ closeCatMenu(); newDoc(workId, btn.dataset.pickcat); });
+  });
+  setTimeout(function(){
+    _catMenuOutsideHandler = function(e){
+      if (!pop.contains(e.target) && e.target !== anchorEl && !anchorEl.contains(e.target)) closeCatMenu();
+    };
+    document.addEventListener("mousedown", _catMenuOutsideHandler);
+  }, 0);
+}
 var HOUSE_TYPES = {
   major: { label:"대세력" },
   vassal: { label:"가신 세력" },
@@ -6502,7 +6581,7 @@ function renderWorkBody(work, q) {
      * 모아 접이식 그룹 하나로 묶는다(둘 다 완전히 같은 마크업, 배치만 다르다). */
     var sectionsHtml = {};
 
-    var docsHtml = '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newdoc="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">문서</span></div>';
+    var docsHtml = '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newdoc="'+work.id+'" title="새 문서 종류 선택(등장인물·장소·세계관 등)">'+ic("plus",13)+'</span><span class="t" style="flex:1">문서</span></div>';
     Object.keys(byCat).forEach(function(cat){
       var list = byCat[cat];
       if (!list.length) return;
@@ -6651,7 +6730,7 @@ function renderSidebar() {
   document.getElementById("newWorkBtn").addEventListener("click", newWork);
   var genreTemplateBtn = document.getElementById("genreTemplateBtn");
   if (genreTemplateBtn) genreTemplateBtn.addEventListener("click", toggleGenreTemplateWork);
-  el.querySelectorAll("[data-newdoc]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); newDoc(b.dataset.newdoc); }); });
+  el.querySelectorAll("[data-newdoc]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); openDocCategoryMenu(b, b.dataset.newdoc); }); });
   el.querySelectorAll("[data-newgraph]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); newGraph(b.dataset.newgraph); }); });
   el.querySelectorAll("[data-newnovel]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); newNovel(b.dataset.newnovel); }); });
   el.querySelectorAll("[data-newep]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); newManuscriptIn(b.dataset.newep); }); });
@@ -8229,8 +8308,25 @@ function defaultAppearance() {
     skinTone: APPEAR_SKIN_TONES[2], hairColor: APPEAR_HAIR_COLORS[1], topColor: APPEAR_OUTFIT_COLORS[0], bottomColor: APPEAR_OUTFIT_COLORS[6],
     bodyType: "normal", faceShape: "oval", hairStyle: "dandy", top: "shirt", bottom: "jeans", shoes: "sneakers", bustSize: "medium",
     eyebrowShape: "normal", eyeShape: "basic", eyeColor: APPEAR_EYE_COLORS[0], oddEye: false, eyeColorLeft: APPEAR_EYE_COLORS[0], eyeColorRight: APPEAR_EYE_COLORS[0],
-    mouthShape: "smile", facialHair: "none", memo: "", heightCm: null
+    mouthShape: "smile", facialHair: "none", memo: "", heightCm: null, faceRatio: 1, bodyRatio: 1
   };
+}
+/* 얼굴/신체 "비율" 조절 -- faceShape/bodyType 피커는 이미 있는 도트 부위를 다른
+ * 그림으로 통째로 바꿔 끼우는 이산 선택지라 "조금 더 갸름하게"류의 연속적인 조정이
+ * 안 됐다. 완전히 새로운 그림 자산 없이도 같은 효과를 내기 위해, 선택된 부위 위에
+ * 가로 방향 scaleX만 얹는 연속 슬라이더를 추가한다(세로 방향은 키 슬라이더가 이미
+ * 전담하므로 손대지 않음 -- 두 컨트롤의 책임을 분리해 서로 간섭하지 않게 한다). */
+var APPEAR_RATIO_MIN = 85, APPEAR_RATIO_MAX = 115;
+/* "확대" -- 미리보기 패널 자체의 표시 크기 배율. 패널 폭(얼굴 패널)과 cm당 px
+ * 환산값(체형·외형 패널)에 동시에 곱해 두 종류의 패널이 함께 커지고 작아지도록
+ * 한다(패널 3종이 서로 다른 방식으로 크기를 정하기 때문에 손대는 지점이 둘로
+ * 나뉜다). 캐릭터 데이터가 아니라 화면 상태이므로 저장하지 않는다(외견 렌더
+ * 모드·패널 표시 여부와 동일한 취급). */
+var APPEAR_ZOOM_MIN = 0.7, APPEAR_ZOOM_MAX = 1.6, APPEAR_ZOOM_STEP = 0.1;
+var APPEAR_PREVIEW_BASE_WIDTH = { 1: 420, 2: 360, 3: 300 };
+function appearZoomLevel(docId) {
+  state.appearZoom = state.appearZoom || {};
+  return state.appearZoom[docId] || 1;
 }
 
 /* heightCm is intentionally left unset until the user actually moves the slider, so the
@@ -8466,7 +8562,10 @@ function renderAppearanceEditor(doc) {
   var panelsOn = appearPanelVisible(doc.id);
   var activeCount = (panelsOn.face ? 1 : 0) + (panelsOn.compare ? 1 : 0) + (panelsOn.outfit ? 1 : 0);
   var heightRowOn = panelsOn.compare || panelsOn.outfit;
-  var comparePxNow = appearComparePx(curCm, activeCount);
+  var zoom = appearZoomLevel(doc.id);
+  var comparePxNow = Math.round(appearComparePx(curCm, activeCount) * zoom);
+  var previewColWidth = Math.round((APPEAR_PREVIEW_BASE_WIDTH[activeCount] || 300) * zoom);
+  var faceRatio = ap.faceRatio || 1, bodyRatio = ap.bodyRatio || 1;
 
   /* Each category is a collapsed-by-default accordion row (small live thumbnail +
    * current selection name), not an always-expanded grid -- this, plus splitting
@@ -8544,7 +8643,7 @@ function renderAppearanceEditor(doc) {
   return '<div class="appear-card">' +
     '<div class="appear-head">' + ic("person", 15) + '<span>외견</span></div>' +
     '<div class="appear-body">' +
-    '<div class="appear-preview-col" data-count="' + activeCount + '">' +
+    '<div class="appear-preview-col" data-count="' + activeCount + '" style="width:' + previewColWidth + 'px">' +
     '<div class="appear-render-toggle">' +
     '<button type="button" class="' + (rasterOn ? "" : "on") + '" data-rendermode="dot">도트(SVG)</button>' +
     '<button type="button" class="' + (rasterOn ? "on" : "") + '" data-rendermode="raster">AI 원화(베타)</button>' +
@@ -8554,6 +8653,13 @@ function renderAppearanceEditor(doc) {
     '<button type="button" class="' + (panelsOn.compare ? "on" : "") + '" data-paneltoggle="compare">키·체형 비교</button>' +
     '<button type="button" class="' + (panelsOn.outfit ? "on" : "") + '" data-paneltoggle="outfit">외형 확인</button>' +
     '</div>' +
+    '<div class="appear-zoom-row">' +
+    '<span class="appear-height-row-label">확대</span>' +
+    '<button type="button" class="appear-zoom-btn" data-azoom="out" title="축소" ' + (zoom<=APPEAR_ZOOM_MIN?"disabled":"") + '>' + ic("zoomout", 13) + '</button>' +
+    '<span class="appear-zoom-readout">' + Math.round(zoom * 100) + '%</span>' +
+    '<button type="button" class="appear-zoom-btn" data-azoom="in" title="확대" ' + (zoom>=APPEAR_ZOOM_MAX?"disabled":"") + '>' + ic("zoomin", 13) + '</button>' +
+    '<button type="button" class="appear-zoom-btn" data-azoom="reset" title="100%로">' + ic("fit", 12) + '</button>' +
+    '</div>' +
     (heightRowOn
       ? '<div class="appear-height-row-shared">' +
         '<span class="appear-height-row-label">키</span>' +
@@ -8561,11 +8667,25 @@ function renderAppearanceEditor(doc) {
         '<span class="appear-height-row-value">' + ic("ruler", 12) + '<span class="appear-cm-readout">' + curCm + '</span>cm</span>' +
         '</div>'
       : "") +
+    (panelsOn.face
+      ? '<div class="appear-height-row-shared">' +
+        '<span class="appear-height-row-label">얼굴 비율</span>' +
+        '<input type="range" id="aFaceRatioSlider" min="' + APPEAR_RATIO_MIN + '" max="' + APPEAR_RATIO_MAX + '" step="1" value="' + Math.round(faceRatio * 100) + '">' +
+        '<span class="appear-height-row-value"><span class="appear-faceratio-readout">' + Math.round(faceRatio * 100) + '</span>%</span>' +
+        '</div>'
+      : "") +
+    (heightRowOn
+      ? '<div class="appear-height-row-shared">' +
+        '<span class="appear-height-row-label">신체 비율</span>' +
+        '<input type="range" id="aBodyRatioSlider" min="' + APPEAR_RATIO_MIN + '" max="' + APPEAR_RATIO_MAX + '" step="1" value="' + Math.round(bodyRatio * 100) + '">' +
+        '<span class="appear-height-row-value"><span class="appear-bodyratio-readout">' + Math.round(bodyRatio * 100) + '</span>%</span>' +
+        '</div>'
+      : "") +
     '<div class="appear-preview-group">' +
     (panelsOn.face
       ? '<div class="appear-panel appear-face-panel">' +
         '<div class="appear-panel-label">얼굴 확인</div>' +
-        '<div class="appear-face-figure" id="appearFacePreview">' +
+        '<div class="appear-face-figure" id="appearFacePreview" style="transform:scaleX(' + faceRatio + ')">' +
         (rasterOn
           ? '<img class="appear-face-img" id="appearFaceImg" src="' + rasterSrc + '" alt="얼굴 미리보기" style="filter:' + appearSkinFilterCss(ap.skinTone) + '">'
           : renderAppearanceFaceSvg(ap)) +
@@ -8577,7 +8697,7 @@ function renderAppearanceEditor(doc) {
         '<div class="appear-panel-label">키·체형 비교</div>' +
         '<div class="appear-compare-stage">' +
         '<div class="appear-compare-col">' +
-        '<div class="appear-compare-figure" style="height:' + appearComparePx(APPEAR_HEIGHT_BASELINE, activeCount) + 'px">' +
+        '<div class="appear-compare-figure" style="height:' + Math.round(appearComparePx(APPEAR_HEIGHT_BASELINE, activeCount) * zoom) + 'px">' +
         (rasterOn
           ? '<img src="' + rasterSrc + '" alt="기준 체형" style="filter:' + appearSkinFilterCss(templateAp.skinTone) + '">'
           : renderAppearanceBodySvg(templateAp)) +
@@ -8585,7 +8705,7 @@ function renderAppearanceEditor(doc) {
         '<div class="appear-compare-tag">기준 ' + APPEAR_HEIGHT_BASELINE + 'cm</div>' +
         '</div>' +
         '<div class="appear-compare-col">' +
-        '<div class="appear-compare-figure" id="appearCompareFigure" style="height:' + comparePxNow + 'px">' +
+        '<div class="appear-compare-figure" id="appearCompareFigure" style="height:' + comparePxNow + 'px;transform:scaleX(' + bodyRatio + ')">' +
         (rasterOn
           ? '<img id="appearCompareImg" src="' + rasterSrc + '" alt="현재 체형" style="filter:' + appearSkinFilterCss(ap.skinTone) + '">'
           : renderAppearanceBodySvg(ap)) +
@@ -8603,7 +8723,7 @@ function renderAppearanceEditor(doc) {
           ? '<div class="appear-outfit-placeholder" style="height:' + comparePxNow + 'px">' +
             '<span class="appear-outfit-placeholder-text">AI 원화(베타)는 아직 의상을 표현하지 못해요.<br>도트(SVG) 모드에서 완성된 외형을 확인해보세요.</span>' +
             '</div>'
-          : '<div class="appear-outfit-figure" id="appearOutfitFigure" style="height:' + comparePxNow + 'px">' + renderAppearanceBodySvg(ap) + '</div>' +
+          : '<div class="appear-outfit-figure" id="appearOutfitFigure" style="height:' + comparePxNow + 'px;transform:scaleX(' + bodyRatio + ')">' + renderAppearanceBodySvg(ap) + '</div>' +
             '<div class="appear-compare-tag">현재 <span class="appear-cm-readout">' + curCm + '</span>cm</div>') +
         '</div>'
       : "") +
@@ -8685,7 +8805,7 @@ function wireAppearanceEditor(doc) {
       ap.heightCm = cm;
       var panelsOn = appearPanelVisible(doc.id);
       var activeCount = (panelsOn.face ? 1 : 0) + (panelsOn.compare ? 1 : 0) + (panelsOn.outfit ? 1 : 0);
-      var px = appearComparePx(cm, activeCount) + "px";
+      var px = Math.round(appearComparePx(cm, activeCount) * appearZoomLevel(doc.id)) + "px";
       var compareFig = document.getElementById("appearCompareFigure");
       if (compareFig) compareFig.style.height = px;
       var outfitFig = document.getElementById("appearOutfitFigure");
@@ -8694,6 +8814,41 @@ function wireAppearanceEditor(doc) {
       saveData();
     });
   }
+  var faceRatioSlider = document.getElementById("aFaceRatioSlider");
+  if (faceRatioSlider) {
+    faceRatioSlider.addEventListener("input", function () {
+      var pct = parseInt(faceRatioSlider.value, 10);
+      ap.faceRatio = pct / 100;
+      var el = document.getElementById("appearFacePreview");
+      if (el) el.style.transform = "scaleX(" + ap.faceRatio + ")";
+      document.querySelectorAll(".appear-faceratio-readout").forEach(function (e) { e.textContent = pct; });
+      saveData();
+    });
+  }
+  var bodyRatioSlider = document.getElementById("aBodyRatioSlider");
+  if (bodyRatioSlider) {
+    bodyRatioSlider.addEventListener("input", function () {
+      var pct = parseInt(bodyRatioSlider.value, 10);
+      ap.bodyRatio = pct / 100;
+      ["appearCompareFigure", "appearOutfitFigure"].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.style.transform = "scaleX(" + ap.bodyRatio + ")";
+      });
+      document.querySelectorAll(".appear-bodyratio-readout").forEach(function (e) { e.textContent = pct; });
+      saveData();
+    });
+  }
+  document.querySelectorAll("[data-azoom]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      state.appearZoom = state.appearZoom || {};
+      var cur = appearZoomLevel(doc.id);
+      var next = btn.dataset.azoom === "in" ? Math.min(APPEAR_ZOOM_MAX, +(cur + APPEAR_ZOOM_STEP).toFixed(2))
+        : btn.dataset.azoom === "out" ? Math.max(APPEAR_ZOOM_MIN, +(cur - APPEAR_ZOOM_STEP).toFixed(2))
+        : 1;
+      state.appearZoom[doc.id] = next;
+      renderDocPage(doc);
+    });
+  });
   document.querySelectorAll("[data-atab]").forEach(function (btn) {
     btn.addEventListener("click", function () {
       state.appearTab = state.appearTab || {};
@@ -9337,6 +9492,12 @@ function renderDocPage(doc, containerId) {
 
 /* ---------------- graph page ---------------- */
 var gState = { mode: "idle", connectFrom: null, selected: null, panStart: null, dragNode: null, justDragged: false, boardMode: false };
+/* renderGraphPage used to attach fresh window mousemove/mouseup listeners on every visit
+ * without ever detaching the previous pair, so re-opening a relationship graph N times left
+ * N stale listener pairs permanently attached to window (leak + redundant work on every
+ * mouse move app-wide). Track the currently-attached pair and remove it before attaching a
+ * new one, mirroring the map editor's _mapWinHandlers pattern. */
+var _graphWinHandlers = null;
 
 function currentGraph() { return GRAPHS.find(function(g){ return g.id === state.activeId; }); }
 
@@ -9505,7 +9666,11 @@ function renderGraphPage(g) {
     gState.selected = null;
     drawGraph(g);
   });
-  window.addEventListener("mousemove", function(e){
+  if (_graphWinHandlers) {
+    window.removeEventListener("mousemove", _graphWinHandlers.move);
+    window.removeEventListener("mouseup", _graphWinHandlers.up);
+  }
+  function onGraphMouseMove(e){
     if (gState.panStart) {
       g.view.x = gState.panStart.vx + (e.clientX - gState.panStart.x);
       g.view.y = gState.panStart.vy + (e.clientY - gState.panStart.y);
@@ -9518,11 +9683,14 @@ function renderGraphPage(g) {
       dn.moved = true;
       updateNodePosition(g, dn.node);
     }
-  });
-  window.addEventListener("mouseup", function(){
+  }
+  function onGraphMouseUp(){
     if (gState.panStart) { gState.panStart = null; wrapEl.classList.remove("panning"); saveData(); }
     if (gState.dragNode) { gState.justDragged = gState.dragNode.moved; saveData(); gState.dragNode = null; }
-  });
+  }
+  window.addEventListener("mousemove", onGraphMouseMove);
+  window.addEventListener("mouseup", onGraphMouseUp);
+  _graphWinHandlers = { move: onGraphMouseMove, up: onGraphMouseUp };
 
   window.onkeydown = function(e) {
     if ((e.key === "Delete" || e.key === "Backspace") && gState.selected && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
@@ -13112,6 +13280,18 @@ function renderHomePage() {
       '</div>';
     });
     html += '</div>';
+
+    var qsWork = WORKS[WORKS.length-1];
+    html += '<div class="home-quickstart">' +
+      '<div class="home-quickstart-for">빠른 시작 — <b>'+esc(qsWork.title||"제목 없는 작품")+'</b>에 바로 추가합니다</div>' +
+      '<div class="home-quick-grid">' +
+        '<button type="button" class="home-quick-btn" id="qsChar"><span class="qi">'+ic("person",17)+'</span><span class="qt">새 캐릭터</span></button>' +
+        '<button type="button" class="home-quick-btn" id="qsPlace"><span class="qi">'+ic("pin",17)+'</span><span class="qt">새 장소</span></button>' +
+        '<button type="button" class="home-quick-btn" id="qsWorld"><span class="qi">'+ic("magic",17)+'</span><span class="qt">새 세계관 설정</span></button>' +
+        '<button type="button" class="home-quick-btn" id="qsMap"><span class="qi">'+ic("map",17)+'</span><span class="qt">새 지도</span></button>' +
+        '<button type="button" class="home-quick-btn" id="qsWrite"><span class="qi">'+ic("pen",17)+'</span><span class="qt">이어서 쓰기</span></button>' +
+      '</div>' +
+    '</div>';
   }
 
   html += (noWorks
@@ -13145,6 +13325,24 @@ function renderHomePage() {
   main.querySelectorAll("[data-openwork]").forEach(function(card){
     card.addEventListener("click", function(){ openWorkOverview(card.dataset.openwork); });
   });
+  if (!noWorks) {
+    var qsWorkId = WORKS[WORKS.length-1].id;
+    var qc = document.getElementById("qsChar"); if (qc) qc.addEventListener("click", function(){ newDoc(qsWorkId, "등장인물"); });
+    var qp = document.getElementById("qsPlace"); if (qp) qp.addEventListener("click", function(){ newDoc(qsWorkId, "장소"); });
+    var qw = document.getElementById("qsWorld"); if (qw) qw.addEventListener("click", function(){ newDoc(qsWorkId, "세계관"); });
+    var qm = document.getElementById("qsMap"); if (qm) qm.addEventListener("click", function(){ newMapWithTemplatePicker(qsWorkId); });
+    var qr = document.getElementById("qsWrite"); if (qr) qr.addEventListener("click", function(){ quickResumeWrite(qsWorkId); });
+  }
+}
+function quickResumeWrite(workId) {
+  var novelIds = NOVELS.filter(function(n){ return n.workId===workId; }).map(function(n){ return n.id; });
+  var eps = MANUSCRIPTS.filter(function(m){ return novelIds.indexOf(m.novelId)!==-1; });
+  if (eps.length) {
+    var last = eps.reduce(function(a,b){ return (b.createdAt||0) > (a.createdAt||0) ? b : a; });
+    state.mode = "manuscript"; state.activeId = last.id; render();
+  } else {
+    newNovel(workId);
+  }
 }
 
 /* ---------------- root render ---------------- */
@@ -13153,6 +13351,13 @@ function render() {
   applyFocusModeClass();
   window.onkeydown = null;
   hideRegionTooltip();
+  /* 지도/관계도 페이지는 각각 window 레벨 mousemove/mouseup 리스너를 붙인다. 같은
+   * 페이지 안에서 다시 그릴 때는 각 렌더 함수가 스스로 이전 리스너를 정리하지만,
+   * 완전히 다른 페이지로 떠나버리면(예: 지도 보다가 홈으로) 그 페이지의 render
+   * 함수가 다시 불리지 않아 정리 기회 자체가 없다 -- 페이지 전환의 유일한 공통
+   * 관문인 여기서 한 번 더 정리해 새어나가지 않게 막는다. */
+  if (_mapWinHandlers) { window.removeEventListener("mousemove", _mapWinHandlers.move); window.removeEventListener("mouseup", _mapWinHandlers.up); _mapWinHandlers = null; }
+  if (_graphWinHandlers) { window.removeEventListener("mousemove", _graphWinHandlers.move); window.removeEventListener("mouseup", _graphWinHandlers.up); _graphWinHandlers = null; }
   if (state.mode === "doc") {
     var d = currentDoc();
     if (d) { renderDocPage(d); return; }
@@ -13315,11 +13520,12 @@ document.getElementById("search").addEventListener("keydown", function(e){
   if (e.key === "Enter" && state.query.trim()) { state.mode = "search"; render(); }
 });
 
-document.getElementById("brandHome").addEventListener("click", function(){ state.mode = "empty"; state.activeId = null; render(); });
+document.getElementById("brandHome").addEventListener("click", function(){ state.mode = "empty"; state.activeId = null; render(); closeMobileSidebar(); });
+document.getElementById("brandHomeMobile").addEventListener("click", function(){ state.mode = "empty"; state.activeId = null; render(); closeMobileSidebar(); });
 
 var ASSET_CSS = `/* World-Building Viewer — self-contained stylesheet (no external fonts/CDN). */
 :root {
-  --accent: #3B82F6;
+  --accent: #A5691E;
   --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
   --accent-strong: color-mix(in srgb, var(--accent) 82%, black);
   --bg: #faf9f6; --bg-card: #ffffff; --bg-card-hover: #f4f3ef; --bg-sidebar: #f4f3ef;
