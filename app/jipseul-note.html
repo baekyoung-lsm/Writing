@@ -7426,15 +7426,25 @@ function renderDocCategoryPage(workId, category) {
 
   // ---- head ----
   var VD_HEAD_CX = CX, VD_HEAD_TOP = VY.headTop, VD_HEAD_BOTTOM = VY.headBottom;
-  function vdHeadPath(faceRatio) {
+  /* faceShape only reshapes the jaw/cheek/chin landmarks -- the top-of-head and
+   * cheekbone-height points stay fixed so hair (authored against the same
+   * VD_HEAD_TOP/hw reference) never has to know which faceShape is active to still
+   * sit flush. */
+  var FACE_SHAPE_PRESETS = {
+    oval:   { cheek: 0.98, jaw: 0.62, chin: 0.26, chinY: 0 },
+    round:  { cheek: 1.14, jaw: 1.00, chin: 0.52, chinY: -3 },
+    square: { cheek: 1.00, jaw: 1.04, chin: 0.80, chinY: -7 }
+  };
+  function vdHeadPath(faceRatio, faceShape) {
     faceRatio = faceRatio || 1;
+    var fp = FACE_SHAPE_PRESETS[faceShape] || FACE_SHAPE_PRESETS.oval;
     var hw = 26 * faceRatio; // half width at cheekbone
     var pts = [
       pt(VD_HEAD_CX, VD_HEAD_TOP),
       pt(VD_HEAD_CX + hw * 0.86, VD_HEAD_TOP + 8),
-      pt(VD_HEAD_CX + hw, (VD_HEAD_TOP + VD_HEAD_BOTTOM) / 2 - 2),
-      pt(VD_HEAD_CX + hw * 0.7, VD_HEAD_BOTTOM - 6),
-      pt(VD_HEAD_CX + hw * 0.32, VD_HEAD_BOTTOM)
+      pt(VD_HEAD_CX + hw * fp.cheek, (VD_HEAD_TOP + VD_HEAD_BOTTOM) / 2 - 2),
+      pt(VD_HEAD_CX + hw * fp.jaw, VD_HEAD_BOTTOM - 6 + fp.chinY),
+      pt(VD_HEAD_CX + hw * fp.chin, VD_HEAD_BOTTOM + fp.chinY)
     ];
     var full = pts.concat(vdMirror(pts).reverse());
     return crPath(full, true);
@@ -7453,13 +7463,24 @@ function renderDocCategoryPage(workId, category) {
    * overlap each other -- that mismatch is what causes skin to show through at the
    * seam if the two garments are drawn from unrelated width formulas. */
   var VD_HIP_TUCK_Y = VY.hip + 6;
-  function vdShirtPath(m) {
-    var off = 5.5;
+  /* top styles all share the same torso-following silhouette construction (neck ->
+   * shoulder -> chest -> waist -> hip -> tucked hem); only the sleeve reach and the
+   * outward offset (fabric bulk) change per style, so tank/hoodie can't develop the
+   * gap/clip issues a from-scratch shape risks -- they inherit the same hip-matched
+   * hem discipline as the default shirt. */
+  var TOP_PRESETS = {
+    shirt: { off: 5.5, sleeve: 30 },
+    tank: { off: 3, sleeve: 4 },
+    hoodie: { off: 8, sleeve: 34 }
+  };
+  function vdShirtPath(m, style) {
+    var pr = TOP_PRESETS[style] || TOP_PRESETS.shirt;
+    var off = pr.off;
     var hemY = VY.hip + 20;
     var right = [
       pt(CX + m.neck + off, VY.neckTop),
       pt(CX + m.shoulder + off * 1.3, VY.shoulder - 2),
-      pt(CX + m.shoulder * 0.98 + off, VY.shoulder + 30), // short sleeve end
+      pt(CX + m.shoulder * 0.98 + off, VY.shoulder + pr.sleeve), // sleeve reach
       pt(CX + m.chest + off, VY.chest + 6),
       pt(CX + m.waist + off, VY.waist + 2),
       pt(CX + m.hip + off, VY.hip),           // full hip width -- matches vdTorsoPath exactly
@@ -7471,18 +7492,36 @@ function renderDocCategoryPage(workId, category) {
     // between the two symmetric side points (which otherwise leaves a gap above
     // the pants waist right at the body's centerline)
     var pts = right.concat([pt(CX, hemY + 3)]).concat(left);
-    return crPath(pts, true);
+    var body = crPath(pts, true);
+    var hoodPath = null;
+    if (style === "hoodie") {
+      // hood: a raised collar gathered behind the neck, wide enough and tall enough
+      // to read as its own garment piece rather than blend into the shirt collar
+      var hood = [
+        pt(CX - m.neck - off - 10, VY.neckTop + 6), pt(CX - m.shoulder * 0.62, VY.neckTop - 20),
+        pt(CX - m.neck * 0.5, VY.neckTop - 34), pt(CX, VY.neckTop - 38),
+        pt(CX + m.neck * 0.5, VY.neckTop - 34), pt(CX + m.shoulder * 0.62, VY.neckTop - 20),
+        pt(CX + m.neck + off + 10, VY.neckTop + 6), pt(CX + m.neck * 0.6, VY.neckTop + 4),
+        pt(CX, VY.neckTop - 6), pt(CX - m.neck * 0.6, VY.neckTop + 4)
+      ];
+      hoodPath = crPath(hood, true);
+    }
+    return { body: body, hood: hoodPath };
   }
-  /* Waistband sits at the same full hip width as the shirt hem above it (generous
-   * vertical + horizontal overlap) and the leg hem stops short of the ankle, so the
-   * only place bare leg is ever visible is the deliberate ankle gap -- never at the
-   * waist seam. */
-  function vdPantsPath(m) {
+  /* shorts reuse the exact same waist-cap + leg-band construction as jeans -- only
+   * the hem cutoff Y changes -- so the hip/waist overlap guarantee above holds for
+   * both without duplicating that logic. */
+  var BOTTOM_HEM_Y = {
+    jeans: VY.knee + (VY.ankle - VY.knee) * 0.6 + 0.5,
+    shorts: VY.crotch + (VY.knee - VY.crotch) * 0.55
+  };
+  function vdPantsPath(m, style) {
+    var hemY = BOTTOM_HEM_Y[style] || BOTTOM_HEM_Y.jeans;
     function onePants(side) {
       var sign = side === "r" ? 1 : -1;
       var line = vdLegCenterline(m, side);
       var margin = [4, 5, 5.5, 6, 6.5];
-      var band = vdLimbBandPath(line, function (i) { return margin[i]; }, VY.knee + (VY.ankle - VY.knee) * 0.6 + 0.5);
+      var band = vdLimbBandPath(line, function (i) { return margin[i]; }, hemY);
       // waist cap: full hip width (matches shirt hem width above), down to the leg band's own top edge
       var waistOuter = pt(CX + sign * (m.hip + 2), VD_HIP_TUCK_Y - 14);
       var waistInner = pt(CX + sign * (m.hip * 0.08), VD_HIP_TUCK_Y - 14);
@@ -7496,17 +7535,81 @@ function renderDocCategoryPage(workId, category) {
     }
     return onePants("r") + " " + onePants("l");
   }
-  function vdShoePath(m, side) { return vdFootPath({ ankle: m.ankle * 1.12, limbW: m.limbW }, side); }
-
-  // ---- hair: dandy (short, side-swept) ----
-  function vdHairBackPath(faceRatio) {
-    var hw = 26 * (faceRatio || 1);
-    var pts = [pt(VD_HEAD_CX - hw * 1.02, VD_HEAD_TOP + 10), pt(VD_HEAD_CX - hw * 1.05, VD_HEAD_TOP - 2), pt(VD_HEAD_CX, VD_HEAD_TOP - 10), pt(VD_HEAD_CX + hw * 1.05, VD_HEAD_TOP - 2), pt(VD_HEAD_CX + hw * 1.02, VD_HEAD_TOP + 10), pt(VD_HEAD_CX + hw * 0.9, VD_HEAD_TOP + 22), pt(VD_HEAD_CX, VD_HEAD_TOP + 14), pt(VD_HEAD_CX - hw * 0.9, VD_HEAD_TOP + 22)];
-    return crPath(pts, true);
-  }
-  function vdHairFrontPath(faceRatio) {
-    var hw = 26 * (faceRatio || 1);
+  function vdShoePath(m, side, style) {
+    var foot = vdFootPath({ ankle: m.ankle * 1.12, limbW: m.limbW }, side);
+    if (style !== "boots") return foot;
+    // boot shaft: a band hugging the lower leg from the ankle up toward the calf
+    var sign = side === "r" ? 1 : -1;
+    var shaftTopY = VY.ankle - 30;
     var pts = [
+      pt(CX + sign * m.ankle * 1.05, VY.ankle + 2), pt(CX + sign * m.ankle * 1.1, shaftTopY),
+      pt(CX + sign * m.ankle * 0.5, shaftTopY - 4), pt(CX + sign * m.ankle * 0.05, shaftTopY),
+      pt(CX + sign * m.ankle * 0.15, VY.ankle + 2)
+    ];
+    return foot + " " + crPath(pts, true);
+  }
+
+  // ---- hair: dandy / bob / ponytail / buzz ----
+  function vdHairBackPath(faceRatio, style) {
+    var hw = 26 * (faceRatio || 1);
+    if (style === "bob") {
+      var pts = [
+        pt(VD_HEAD_CX - hw * 1.10, VD_HEAD_TOP + 8), pt(VD_HEAD_CX - hw * 1.16, VD_HEAD_BOTTOM - 8),
+        pt(VD_HEAD_CX - hw * 0.88, VD_HEAD_BOTTOM + 16), pt(VD_HEAD_CX, VD_HEAD_BOTTOM + 20),
+        pt(VD_HEAD_CX + hw * 0.88, VD_HEAD_BOTTOM + 16), pt(VD_HEAD_CX + hw * 1.16, VD_HEAD_BOTTOM - 8),
+        pt(VD_HEAD_CX + hw * 1.10, VD_HEAD_TOP + 8), pt(VD_HEAD_CX, VD_HEAD_TOP - 10)
+      ];
+      return crPath(pts, true);
+    }
+    if (style === "ponytail") {
+      var hug = [
+        pt(VD_HEAD_CX - hw * 0.95, VD_HEAD_TOP + 8), pt(VD_HEAD_CX - hw * 0.98, VD_HEAD_TOP - 3), pt(VD_HEAD_CX, VD_HEAD_TOP - 9),
+        pt(VD_HEAD_CX + hw * 0.98, VD_HEAD_TOP - 3), pt(VD_HEAD_CX + hw * 0.95, VD_HEAD_TOP + 8), pt(VD_HEAD_CX + hw * 0.85, VD_HEAD_TOP + 18),
+        pt(VD_HEAD_CX, VD_HEAD_TOP + 12), pt(VD_HEAD_CX - hw * 0.85, VD_HEAD_TOP + 18)
+      ];
+      // side-swept strand hanging past the shoulder (not centered over the collar,
+      // which read as a floating dark wedge on the neck at small sizes) -- anchored
+      // near the ear/temple and drapes down along the outside of the arm
+      var tail = [
+        pt(VD_HEAD_CX + hw * 0.80, VD_HEAD_TOP + 14), pt(VD_HEAD_CX + hw * 1.15, VD_HEAD_TOP + 34),
+        pt(VD_HEAD_CX + hw * 1.05, VD_HEAD_TOP + 62), pt(VD_HEAD_CX + hw * 0.78, VD_HEAD_TOP + 72),
+        pt(VD_HEAD_CX + hw * 0.62, VD_HEAD_TOP + 50), pt(VD_HEAD_CX + hw * 0.68, VD_HEAD_TOP + 24)
+      ];
+      return crPath(hug, true) + " " + crPath(tail, true);
+    }
+    if (style === "buzz") {
+      var pts2 = [pt(VD_HEAD_CX - hw * 1.0, VD_HEAD_TOP + 6), pt(VD_HEAD_CX - hw * 1.0, VD_HEAD_TOP - 1), pt(VD_HEAD_CX, VD_HEAD_TOP - 5), pt(VD_HEAD_CX + hw * 1.0, VD_HEAD_TOP - 1), pt(VD_HEAD_CX + hw * 1.0, VD_HEAD_TOP + 6), pt(VD_HEAD_CX, VD_HEAD_TOP + 2)];
+      return crPath(pts2, true);
+    }
+    // dandy (default)
+    var pts0 = [pt(VD_HEAD_CX - hw * 1.02, VD_HEAD_TOP + 10), pt(VD_HEAD_CX - hw * 1.05, VD_HEAD_TOP - 2), pt(VD_HEAD_CX, VD_HEAD_TOP - 10), pt(VD_HEAD_CX + hw * 1.05, VD_HEAD_TOP - 2), pt(VD_HEAD_CX + hw * 1.02, VD_HEAD_TOP + 10), pt(VD_HEAD_CX + hw * 0.9, VD_HEAD_TOP + 22), pt(VD_HEAD_CX, VD_HEAD_TOP + 14), pt(VD_HEAD_CX - hw * 0.9, VD_HEAD_TOP + 22)];
+    return crPath(pts0, true);
+  }
+  function vdHairFrontPath(faceRatio, style) {
+    var hw = 26 * (faceRatio || 1);
+    if (style === "bob") {
+      var pts = [
+        pt(VD_HEAD_CX - hw * 0.98, VD_HEAD_TOP + 20), pt(VD_HEAD_CX - hw * 0.92, VD_HEAD_TOP - 3),
+        pt(VD_HEAD_CX, VD_HEAD_TOP - 9), pt(VD_HEAD_CX + hw * 0.92, VD_HEAD_TOP - 3),
+        pt(VD_HEAD_CX + hw * 0.98, VD_HEAD_TOP + 20), pt(VD_HEAD_CX + hw * 0.62, VD_HEAD_TOP + 13),
+        pt(VD_HEAD_CX, VD_HEAD_TOP + 16), pt(VD_HEAD_CX - hw * 0.62, VD_HEAD_TOP + 13)
+      ];
+      return crPath(pts, true);
+    }
+    if (style === "ponytail") {
+      var pts = [
+        pt(VD_HEAD_CX - hw * 0.52, VD_HEAD_TOP + 3), pt(VD_HEAD_CX - hw * 0.2, VD_HEAD_TOP - 6),
+        pt(VD_HEAD_CX + hw * 0.2, VD_HEAD_TOP - 6), pt(VD_HEAD_CX + hw * 0.52, VD_HEAD_TOP + 3),
+        pt(VD_HEAD_CX + hw * 0.3, VD_HEAD_TOP + 11), pt(VD_HEAD_CX - hw * 0.3, VD_HEAD_TOP + 11)
+      ];
+      return crPath(pts, true);
+    }
+    if (style === "buzz") {
+      var pts2 = [pt(VD_HEAD_CX - hw * 0.9, VD_HEAD_TOP + 8), pt(VD_HEAD_CX - hw * 0.85, VD_HEAD_TOP + 1), pt(VD_HEAD_CX, VD_HEAD_TOP - 3), pt(VD_HEAD_CX + hw * 0.85, VD_HEAD_TOP + 1), pt(VD_HEAD_CX + hw * 0.9, VD_HEAD_TOP + 8), pt(VD_HEAD_CX, VD_HEAD_TOP + 4)];
+      return crPath(pts2, true);
+    }
+    // dandy (default)
+    var pts0 = [
       pt(VD_HEAD_CX - hw * 0.95, VD_HEAD_TOP + 16),
       pt(VD_HEAD_CX - hw * 0.6, VD_HEAD_TOP - 4),
       pt(VD_HEAD_CX - hw * 0.15, VD_HEAD_TOP - 9),
@@ -7516,7 +7619,7 @@ function renderDocCategoryPage(workId, category) {
       pt(VD_HEAD_CX + hw * 0.2, VD_HEAD_TOP + 7),
       pt(VD_HEAD_CX - hw * 0.3, VD_HEAD_TOP + 9)
     ];
-    return crPath(pts, true);
+    return crPath(pts0, true);
   }
 
   // ---- face features (default set: basic eyes, normal brows, smile mouth) ----
@@ -7606,11 +7709,11 @@ function renderDocCategoryPage(workId, category) {
     svg += '</g>';
     // shoes
     svg += '<g fill="' + pal.shoe + '" stroke="' + pal.shoeShadow + '" stroke-width="1">';
-    svg += '<path d="' + vdShoePath(m, "l") + '"/><path d="' + vdShoePath(m, "r") + '"/>';
+    svg += '<path d="' + vdShoePath(m, "l", ap.shoes) + '"/><path d="' + vdShoePath(m, "r", ap.shoes) + '"/>';
     svg += '</g>';
     // pants
     svg += '<g fill="url(#' + uid + 'bottom)" stroke="' + pal.bottomShadow + '" stroke-width="1">';
-    svg += '<path d="' + vdPantsPath(m) + '"/>';
+    svg += '<path d="' + vdPantsPath(m, ap.bottom) + '"/>';
     svg += '</g>';
     // torso + arms (skin)
     svg += '<g fill="url(#' + uid + 'skin)" stroke="' + vdDarken(pal.skin, 0.30) + '" stroke-width="1">';
@@ -7620,8 +7723,14 @@ function renderDocCategoryPage(workId, category) {
     svg += vdHandPath(m, "l") + vdHandPath(m, "r");
     svg += '</g>';
     // shirt (over torso + upper arm)
+    var topShape = vdShirtPath(m, ap.top);
+    if (topShape.hood) {
+      svg += '<g fill="' + pal.topShadow + '" stroke="' + vdDarken(pal.topShadow, 0.2) + '" stroke-width="1">';
+      svg += '<path d="' + topShape.hood + '"/>';
+      svg += '</g>';
+    }
     svg += '<g fill="url(#' + uid + 'top)" stroke="' + pal.topShadow + '" stroke-width="1">';
-    svg += '<path d="' + vdShirtPath(m) + '"/>';
+    svg += '<path d="' + topShape.body + '"/>';
     svg += '</g>';
     // shirt fabric fold highlight -- a single soft center-line rim light so the
     // garment reads as cloth rather than a flat color blob at higher zoom
@@ -7629,19 +7738,19 @@ function renderDocCategoryPage(workId, category) {
       '" stroke="' + pal.topHighlight + '" stroke-width="2.2" fill="none" stroke-linecap="round" opacity="0.5"/>';
     // hair back
     svg += '<g fill="url(#' + uid + 'hair)" stroke="' + pal.hairShadow + '" stroke-width="1">';
-    svg += '<path d="' + vdHairBackPath(faceRatio) + '"/>';
+    svg += '<path d="' + vdHairBackPath(faceRatio, ap.hairStyle) + '"/>';
     svg += '</g>';
     // neck + head (skin)
     svg += '<g fill="url(#' + uid + 'skin)" stroke="' + vdDarken(pal.skin, 0.30) + '" stroke-width="1">';
     svg += '<path d="' + vdNeckPath(m) + '"/>';
-    svg += '<path d="' + vdHeadPath(faceRatio) + '"/>';
+    svg += '<path d="' + vdHeadPath(faceRatio, ap.faceShape) + '"/>';
     svg += '</g>';
     svg += '<g fill="' + pal.skin + '" stroke="' + vdDarken(pal.skin, 0.30) + '" stroke-width="1">' + vdEars(m) + '</g>';
     // face features
     svg += vdFaceFeaturesSvg(faceRatio, pal);
     // hair front
     svg += '<g fill="url(#' + uid + 'hair)" stroke="' + pal.hairShadow + '" stroke-width="1">';
-    svg += '<path d="' + vdHairFrontPath(faceRatio) + '"/>';
+    svg += '<path d="' + vdHairFrontPath(faceRatio, ap.hairStyle) + '"/>';
     svg += '</g>';
     // a few individual strand highlights so the hair silhouette isn't a flat blob at zoom
     var hw2 = 26 * faceRatio;
@@ -8815,11 +8924,11 @@ var APPEAR_BODY_VIEWBOX = "20 0 88 128";
 var VECTOR_COVERAGE = {
   gender: ["f", "m", "u"],
   bodyType: ["normal", "slim", "curvy", "stocky", "broad", "muscular"],
-  faceShape: ["oval"],
-  hairStyle: ["dandy"],
-  top: ["shirt"],
-  bottom: ["jeans"],
-  shoes: ["sneakers"],
+  faceShape: ["oval", "round", "square"],
+  hairStyle: ["dandy", "bob", "ponytail", "buzz"],
+  top: ["shirt", "tank", "hoodie"],
+  bottom: ["jeans", "shorts"],
+  shoes: ["sneakers", "boots"],
   eyebrowShape: ["normal"],
   eyeShape: ["basic"],
   mouthShape: ["smile"],
