@@ -1582,6 +1582,51 @@ function colorReadoutHtml(hex) {
 }
 
 var STORE_KEY = "settingnote_v1";
+var DATA_COLLECTIONS = ["docs", "graphs", "manuscripts", "novels", "works", "tables", "timelines", "maps", "recentColors", "sports", "scripts", "essays", "essayEntries", "relationships"];
+var _bootIssue = null;
+function emptyData() {
+  return { docs: [], graphs: [], manuscripts: [], novels: [], works: [], tables: [], timelines: [], maps: [], recentColors: [], sports: [], scripts: [], essays: [], essayEntries: [], relationships: [] };
+}
+function normalizeData(data) {
+  var normalized = emptyData();
+  var invalidFields = [];
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    return { data: normalized, invalidFields: DATA_COLLECTIONS.slice(), invalidRoot: true };
+  }
+  DATA_COLLECTIONS.forEach(function(key){
+    if (data[key] === undefined) return;
+    if (Array.isArray(data[key])) normalized[key] = data[key];
+    else invalidFields.push(key);
+  });
+  return { data: normalized, invalidFields: invalidFields, invalidRoot: false };
+}
+function downloadRecoveryData(raw) {
+  if (!raw) return;
+  var blob = new Blob([raw], { type: "application/json" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = "집썰_복구용_원본_데이터.json";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+function showLoadRecoveryNotice() {
+  if (!_bootIssue) return;
+  var notice = document.createElement("div");
+  notice.id = "storageRecoveryNotice";
+  notice.setAttribute("role", "alert");
+  var message = _bootIssue.invalidRoot
+    ? "저장된 데이터의 형식을 읽을 수 없어 빈 상태로 열었습니다. 원본 데이터는 내려받아 보관한 뒤 백업 파일을 확인해주세요."
+    : "저장된 데이터 중 일부 항목의 형식이 올바르지 않아 해당 항목만 비워 두었습니다. 원본 데이터는 내려받아 보관할 수 있습니다.";
+  notice.style.cssText = "position:fixed;right:20px;bottom:20px;z-index:10000;max-width:400px;padding:13px 16px;border-radius:10px;background:#7c3d12;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.24);font-size:13px;line-height:1.55;";
+  var text = document.createElement("div"); text.textContent = message;
+  var button = document.createElement("button");
+  button.type = "button"; button.textContent = "원본 데이터 내려받기";
+  button.style.cssText = "margin-top:9px;padding:5px 8px;border:1px solid rgba(255,255,255,.7);border-radius:6px;background:transparent;color:inherit;cursor:pointer;";
+  button.addEventListener("click", function(){ downloadRecoveryData(_bootIssue.raw); });
+  notice.appendChild(text);
+  if (_bootIssue.raw) notice.appendChild(button);
+  document.body.appendChild(notice);
+}
 var storageSaveErrorShown = false;
 function showStorageSaveError() {
   if (storageSaveErrorShown) return;
@@ -1596,9 +1641,16 @@ function showStorageSaveError() {
 function loadData() {
   try {
     var raw = localStorage.getItem(STORE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {}
-  return { docs: [], graphs: [], manuscripts: [], novels: [], works: [], tables: [], timelines: [], maps: [], recentColors: [], sports: [], scripts: [], essays: [], essayEntries: [], relationships: [] };
+    if (!raw) return emptyData();
+    var result = normalizeData(JSON.parse(raw));
+    if (result.invalidRoot || result.invalidFields.length) {
+      _bootIssue = { raw: raw, invalidRoot: result.invalidRoot, invalidFields: result.invalidFields };
+    }
+    return result.data;
+  } catch (e) {
+    _bootIssue = { raw: (typeof raw === "string" ? raw : null), invalidRoot: true, invalidFields: DATA_COLLECTIONS.slice() };
+    return emptyData();
+  }
 }
 function saveData() {
   try {
@@ -11047,14 +11099,14 @@ function render() {
 }
 
 /* ---------------- backup / restore ---------------- */
-var BACKUP_COLLECTIONS = ["docs", "graphs", "manuscripts", "novels", "works", "tables", "timelines", "maps", "sports", "scripts", "essays", "essayEntries", "relationships"];
+var BACKUP_COLLECTIONS = DATA_COLLECTIONS;
 function isValidBackupData(data) {
   return !!data && typeof data === "object" && !Array.isArray(data) && BACKUP_COLLECTIONS.every(function(key){
     return data[key] === undefined || Array.isArray(data[key]);
   });
 }
 function exportData() {
-  var data = { docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS, exportedAt: new Date().toISOString(), appVersion: 1 };
+  var data = { docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS, exportedAt: new Date().toISOString(), appVersion: 1 };
   var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   var url = URL.createObjectURL(blob);
   var a = document.createElement("a");
@@ -11088,6 +11140,7 @@ function importDataFile(file) {
         TABLES = parsed.tables || [];
         TIMELINES = parsed.timelines || [];
         MAPS = parsed.maps || [];
+        RECENT_COLORS = parsed.recentColors || [];
         SPORTS = parsed.sports || [];
         SCRIPTS = parsed.scripts || [];
         ESSAYS = parsed.essays || [];
@@ -13194,5 +13247,6 @@ function openExportZipModal(workId) {
 }
 
 render();
+showLoadRecoveryNotice();
 </script>
 
