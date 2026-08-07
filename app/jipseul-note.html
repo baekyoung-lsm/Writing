@@ -1934,6 +1934,16 @@ var _bootIssue = null;
 function emptyData() {
   return { docs: [], graphs: [], manuscripts: [], novels: [], works: [], tables: [], timelines: [], maps: [], recentColors: [], sports: [], scripts: [], essays: [], essayEntries: [], relationships: [] };
 }
+/* recentColors만 순수 문자열 배열이고, 나머지 컬렉션은 전부 {id, ...} 형태의
+ * 객체 배열이다 -- 이 앱 전체에 걸쳐 .find(d=>d.id===...)/.filter(...) 식으로
+ * id를 가정하고 접근하는 코드가 수백 곳이라, 배열 안에 id 없는 항목(문자열,
+ * null, id 없는 객체 등)이 섞여 있으면 그 즉시가 아니라 나중에 엉뚱한 화면에서
+ * 크래시로 튀어나온다. 컬렉션 전체를 버리는 대신 형태가 이상한 항목만 걸러내고
+ * 나머지는 살린다(기존 normalizeData의 "구제 가능한 건 구제한다" 방침과 동일). */
+function isValidCollectionItem(key, item) {
+  if (key === "recentColors") return typeof item === "string" && item.length > 0;
+  return !!item && typeof item === "object" && !Array.isArray(item) && typeof item.id === "string" && item.id.length > 0;
+}
 function normalizeData(data) {
   var normalized = emptyData();
   var invalidFields = [];
@@ -1942,8 +1952,10 @@ function normalizeData(data) {
   }
   DATA_COLLECTIONS.forEach(function(key){
     if (data[key] === undefined) return;
-    if (Array.isArray(data[key])) normalized[key] = data[key];
-    else invalidFields.push(key);
+    if (!Array.isArray(data[key])) { invalidFields.push(key); return; }
+    var filtered = data[key].filter(function(item){ return isValidCollectionItem(key, item); });
+    normalized[key] = filtered;
+    if (filtered.length !== data[key].length) invalidFields.push(key);
   });
   return { data: normalized, invalidFields: invalidFields, invalidRoot: false };
 }
@@ -1999,7 +2011,20 @@ function loadData() {
     return emptyData();
   }
 }
-function saveData() {
+/* saveData()는 입력 하나마다(타이핑 등) 불려서 매번 전체 상태를
+ * JSON.stringify하는데, 그 직렬화+디스크 쓰기 자체가 데이터가 커질수록
+ * 무거워진다. 짧게 묶어서(디바운스) 쓰기 횟수를 줄이되, 탭을 닫거나
+ * 다른 페이지로 이동하는 순간(beforeunload)과 백그라운드로 넘어가는
+ * 순간(visibilitychange: hidden)에는 대기 중인 변경을 즉시 flush해서
+ * 데이터 유실이 없게 한다. saveData()의 반환값(성공 여부)을 실제로 쓰는
+ * 호출부가 없으므로 항상 true를 돌려줘도 무방하다 -- 진짜 성공/실패는
+ * flush 시점에 showStorageSaveError()로 알린다. */
+var _saveDataTimer = null;
+var _saveDataPending = false;
+function _flushSaveData() {
+  if (_saveDataTimer) { clearTimeout(_saveDataTimer); _saveDataTimer = null; }
+  if (!_saveDataPending) return true;
+  _saveDataPending = false;
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({ docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS }));
     storageSaveErrorShown = false;
@@ -2011,6 +2036,14 @@ function saveData() {
     return false;
   }
 }
+function saveData() {
+  _saveDataPending = true;
+  if (_saveDataTimer) clearTimeout(_saveDataTimer);
+  _saveDataTimer = setTimeout(_flushSaveData, 400);
+  return true;
+}
+window.addEventListener("beforeunload", function(){ _flushSaveData(); });
+document.addEventListener("visibilitychange", function(){ if (document.visibilityState === "hidden") _flushSaveData(); });
 /* ---------------- 지도 배경 이미지 자산 저장소 (IndexedDB) ----------------
  * localStorage는 몇 MB 수준 용량 제한이 있고, 이 앱은 편집마다 전체 상태를
  * 동기적으로 JSON.stringify해서 저장하는 구조다. 지도 배경 이미지(Base64,
@@ -13238,25 +13271,33 @@ function importDataFile(file) {
       openModal({ title: "가져오기 실패", message: "백업 데이터의 형식이 올바르지 않습니다. 집썰에서 내보낸 백업 파일인지 확인해주세요.", confirmLabel: "확인" });
       return;
     }
+    /* 컬렉션이 배열인지만 보는 것으로는 부족하다 -- 배열 안에 id 없는 항목이
+     * 섞여 있으면(손으로 고친 백업, 다른 버전에서 만든 파일 등) 나중에 .find/
+     * .filter가 그 항목의 id를 읽으려다 엉뚱한 화면에서 깨진다. normalizeData
+     * (부팅 시 localStorage 복구에 쓰는 것과 같은 함수)를 재사용해 형태가
+     * 이상한 항목만 걸러내고 나머지는 살린다. */
+    var result = normalizeData(parsed);
+    var hasDropped = result.invalidFields.length > 0;
     openModal({
       title: "데이터를 불러올까요?",
-      message: "현재 브라우저에 저장된 모든 작품·문서·원고 데이터가 이 백업 파일 내용으로 통째로 바뀝니다. 되돌릴 수 없어요.",
+      message: "현재 브라우저에 저장된 모든 작품·문서·원고 데이터가 이 백업 파일 내용으로 통째로 바뀝니다. 되돌릴 수 없어요." +
+        (hasDropped ? " (일부 항목의 형식이 올바르지 않아 그 항목만 제외하고 불러옵니다.)" : ""),
       confirmLabel: "불러오기", danger: true,
       onConfirm: function(){
-        DOCS = parsed.docs || [];
-        GRAPHS = parsed.graphs || [];
-        MANUSCRIPTS = parsed.manuscripts || [];
-        NOVELS = parsed.novels || [];
-        WORKS = parsed.works || [];
-        TABLES = parsed.tables || [];
-        TIMELINES = parsed.timelines || [];
-        MAPS = parsed.maps || [];
-        RECENT_COLORS = parsed.recentColors || [];
-        SPORTS = parsed.sports || [];
-        SCRIPTS = parsed.scripts || [];
-        ESSAYS = parsed.essays || [];
-        ESSAY_ENTRIES = parsed.essayEntries || [];
-        RELATIONSHIPS = parsed.relationships || [];
+        DOCS = result.data.docs;
+        GRAPHS = result.data.graphs;
+        MANUSCRIPTS = result.data.manuscripts;
+        NOVELS = result.data.novels;
+        WORKS = result.data.works;
+        TABLES = result.data.tables;
+        TIMELINES = result.data.timelines;
+        MAPS = result.data.maps;
+        RECENT_COLORS = result.data.recentColors;
+        SPORTS = result.data.sports;
+        SCRIPTS = result.data.scripts;
+        ESSAYS = result.data.essays;
+        ESSAY_ENTRIES = result.data.essayEntries;
+        RELATIONSHIPS = result.data.relationships;
         state.mode = "empty"; state.activeId = null; state.collapsed = {};
         saveData(); render();
       }
