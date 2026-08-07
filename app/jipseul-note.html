@@ -12,7 +12,7 @@
     --bg: #faf9f6; --bg-panel: #f4f3ef; --bg-card: #ffffff; --bg-card-hover: #f4f3ef;
     --ink: #17181c; --ink-soft: #4b4d55; --ink-faint: #8a8c94;
     --border: #e6e4dd; --border-strong: #d8d5cb;
-    --accent: #3B82F6; --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+    --accent: #A5691E; --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
     --accent-strong: color-mix(in srgb, var(--accent) 82%, black);
     --tide: #357C82; --tide-soft: rgba(53,124,130,0.14);
     --rose: #A6473C; --rose-soft: rgba(166,71,60,0.13);
@@ -21,6 +21,21 @@
     --radius: 12px;
     --serif: "Noto Serif KR","Nanum Myeongjo","Batang",serif;
     --sans: "Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+
+    /* ---- 디자인 토큰: 간격/반경/입체(elevation)/타이포 스케일 ----
+     * 기존 컴포넌트는 손으로 튜닝된 리터럴 px가 많아 전부를 강제로 스케일에
+     * 맞추지 않았다(시각적 회귀 위험). 대신 이 스케일을 "정식 표준"으로 두고,
+     * 이번에 새로 만들거나 다시 짜는 컴포넌트(홈 빠른 시작, 사이드바 생성 메뉴,
+     * 외견 편집기 확대/비율 컨트롤, 반응형 사이드바 레일 등)는 전부 이 토큰만
+     * 사용한다. */
+    --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px;
+    --sp-6: 24px; --sp-7: 32px; --sp-8: 40px; --sp-9: 48px; --sp-10: 64px;
+    --radius-sm: 7px; --radius-md: 11px; --radius-lg: 16px; --radius-pill: 999px;
+    --shadow-1: 0 1px 3px var(--shadow);
+    --shadow-2: 0 8px 20px var(--shadow);
+    --shadow-popover: 0 12px 30px var(--shadow);
+    --shadow-3: 0 16px 40px var(--shadow);
+    --fs-xs: 11px; --fs-sm: 12.5px; --fs-base: 14px; --fs-md: 15.5px; --fs-lg: 19px; --fs-xl: 24px; --fs-2xl: 30px;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -128,7 +143,7 @@
   .brand-sub { font-size:11px; color:var(--ink-faint); letter-spacing:0.04em; padding-left:16px; }
 
   .search-wrap { position:relative; }
-  .search { width:100%; background:var(--bg-card); border:1px solid var(--border); border-radius:7px; padding:9px 12px 9px 32px; font-size:13.5px; outline:none; }
+  .search { width:100%; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 12px 9px 32px; font-size:13.5px; outline:none; }
   .search:focus { border-color:var(--accent); }
   .search::placeholder { color:var(--ink-faint); }
   .search-icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--ink-faint); }
@@ -144,7 +159,7 @@
   .sb-head .add { color:var(--ink-faint); display:flex; padding:2px; border-radius:5px; background:none; border:none; }
   .sb-head .add:hover { color:var(--accent); background:var(--bg-card); }
 
-  .doc-row, .graph-row { display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:7px; cursor:pointer; font-size:13.5px; color:var(--ink-soft); }
+  .doc-row, .graph-row { display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:var(--radius-sm); cursor:pointer; font-size:13.5px; color:var(--ink-soft); }
   .doc-row:hover, .graph-row:hover { background:var(--bg-card); color:var(--ink); }
   .doc-row.active, .graph-row.active { background:var(--accent-soft); color:var(--accent); font-weight:600; }
   .row-meta { margin-left:auto; display:flex; align-items:center; gap:6px; flex:none; }
@@ -179,7 +194,7 @@
   .storage-usage-row { font-size:11px; color:var(--ink-faint); margin-top:6px; line-height:1.6; }
   .storage-usage-row .su-warn { color:#b23b3b; font-weight:600; }
   .backup-row { display:flex; gap:6px; margin-bottom:8px; }
-  .backup-btn { flex:1; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:7px; padding:6px 4px; font-size:11.5px; color:var(--ink-soft); }
+  .backup-btn { flex:1; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:var(--radius-sm); padding:6px 4px; font-size:11.5px; color:var(--ink-soft); }
   .backup-btn:hover { border-color:var(--accent); color:var(--accent); }
 
   /* ---------- Main shell ----------
@@ -199,20 +214,20 @@
   .home-hero h1 { font-family:var(--serif); font-size:30px; font-weight:600; line-height:1.36; margin:0 0 10px; text-wrap:balance; color:var(--ink); }
   .home-hero p { margin:0; font-size:14px; color:var(--ink-soft); max-width:480px; line-height:1.65; }
   .home-stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:10px; margin:32px 0; }
-  .home-stat { border:1px solid var(--border); border-radius:11px; background:var(--bg-card); padding:14px 16px; box-shadow:0 1px 3px var(--shadow); }
+  .home-stat { border:1px solid var(--border); border-radius:var(--radius-md); background:var(--bg-card); padding:14px 16px; box-shadow:var(--shadow-1); }
   .home-stat .n { font-family:var(--serif); font-size:24px; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; }
   .home-stat .l { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
   .home-section-label { font-size:11.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-faint); margin:28px 0 12px; }
   .home-work-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:12px; }
-  .home-work-card { border:1px solid var(--border); border-radius:11px; padding:14px; background:var(--bg-card); cursor:pointer; display:flex; flex-direction:column; gap:6px; box-shadow:0 1px 3px var(--shadow); transition:transform .14s, box-shadow .14s, border-color .14s; }
-  .home-work-card:hover { border-color:var(--accent); background:var(--bg-card-hover); transform:translateY(-2px); box-shadow:0 8px 20px var(--shadow); }
+  .home-work-card { border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; background:var(--bg-card); cursor:pointer; display:flex; flex-direction:column; gap:6px; box-shadow:var(--shadow-1); transition:transform .14s, box-shadow .14s, border-color .14s; }
+  .home-work-card:hover { border-color:var(--accent); background:var(--bg-card-hover); transform:translateY(-2px); box-shadow:var(--shadow-2); }
   .home-work-card .t { font-family:var(--serif); font-weight:600; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .home-work-card .m { font-size:12px; color:var(--ink-faint); }
   .home-work-card .cta { display:flex; align-items:center; gap:3px; font-size:11.5px; color:var(--tide); margin-top:2px; }
   .home-empty-card { border:1px dashed var(--border-strong); border-radius:12px; padding:34px 32px; text-align:left; color:var(--ink-faint); margin-top:28px; max-width:440px; }
   .home-empty-card h2 { font-family:var(--serif); font-size:19px; color:var(--ink); margin:0 0 8px; }
   .home-empty-card p { font-size:13.5px; margin:0 0 16px; line-height:1.55; }
-  .home-onboard-card { border:1px solid var(--border); border-radius:12px; padding:20px 22px; margin-top:16px; max-width:520px; background:var(--bg-card); box-shadow:0 1px 3px var(--shadow); }
+  .home-onboard-card { border:1px solid var(--border); border-radius:12px; padding:20px 22px; margin-top:16px; max-width:520px; background:var(--bg-card); box-shadow:var(--shadow-1); }
   .home-onboard-title { display:flex; align-items:center; gap:7px; font-size:12px; letter-spacing:0.04em; color:var(--accent); font-weight:600; margin-bottom:12px; }
   .home-onboard-steps { margin:0; padding-left:19px; display:flex; flex-direction:column; gap:9px; }
   .home-onboard-steps li { font-size:13px; color:var(--ink-soft); line-height:1.6; }
@@ -224,6 +239,16 @@
   @media (min-width:1900px) {
     .page-pad { max-width:1120px; }
     .home-view { max-width:1280px; }
+  }
+
+  /* 900~1100px(태블릿 가로/작은 노트북): 270px 고정 사이드바가 지도·표 같은
+   * 작업공간 폭을 지나치게 잡아먹는 구간. 사이드바를 접지는 않되(문서 트리
+   * 탐색은 태블릿에서도 계속 필요) 폭과 내부 여백을 좁혀 본문에 폭을 더 준다. */
+  @media (max-width:1100px) and (min-width:781px) {
+    .app { grid-template-columns:232px 1fr; }
+    .sidebar { padding:var(--sp-5) var(--sp-3) var(--sp-3); gap:var(--sp-3); }
+    .page-pad { padding:32px 28px 70px; }
+    .home-view { padding:32px 28px 70px; }
   }
 
   .btn { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:9px; padding:8px 13px; font-size:13px; color:var(--ink); transition:border-color .12s, color .12s, background .12s, box-shadow .12s; }
@@ -242,7 +267,7 @@
   .doc-head-row { display:flex; align-items:flex-start; gap:10px; margin-bottom:22px; }
   .doc-title { font-family:var(--serif); font-size:34px; font-weight:600; border:none; background:none; outline:none; width:100%; padding:0; flex:1; }
   .doc-title::placeholder { color: var(--ink-faint); }
-  .page-del { flex:none; display:inline-flex; align-items:center; gap:6px; margin-top:8px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:7px; padding:7px 12px; font-size:12.5px; color:var(--ink-soft); }
+  .page-del { flex:none; display:inline-flex; align-items:center; gap:6px; margin-top:8px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:var(--radius-sm); padding:7px 12px; font-size:12.5px; color:var(--ink-soft); }
   .page-del:hover { border-color:var(--rose); color:var(--rose); background:var(--rose-soft); }
 
   /* ---------- doc category folder view ---------- */
@@ -251,8 +276,8 @@
   .doccat-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:12px; margin-top:8px; }
   .doccat-tree { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
   .doc-card-tree { width:100%; box-sizing:border-box; }
-  .doc-card { position:relative; border:1px solid var(--border); border-radius:11px; padding:14px; background:var(--bg-card); cursor:pointer; display:flex; flex-direction:column; gap:8px; box-shadow:0 1px 3px var(--shadow); transition:transform .14s, box-shadow .14s, border-color .14s; }
-  .doc-card:hover { border-color:var(--accent); background:var(--bg-card-hover); transform:translateY(-2px); box-shadow:0 8px 20px var(--shadow); }
+  .doc-card { position:relative; border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; background:var(--bg-card); cursor:pointer; display:flex; flex-direction:column; gap:8px; box-shadow:var(--shadow-1); transition:transform .14s, box-shadow .14s, border-color .14s; }
+  .doc-card:hover { border-color:var(--accent); background:var(--bg-card-hover); transform:translateY(-2px); box-shadow:var(--shadow-2); }
   .doc-card-top { display:flex; align-items:center; gap:6px; min-height:14px; }
   .doc-card-dot { width:10px; height:10px; border-radius:50%; flex:none; }
   .doc-card-title { font-family:var(--serif); font-weight:600; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -274,7 +299,7 @@
     .doccat-split-detail { width:100%; height:auto; max-height:640px; }
   }
 
-  .prop-grid { display:flex; flex-direction:column; border:1px solid var(--border); border-radius:11px; margin-bottom:16px; background:var(--bg-card); box-shadow:0 1px 3px var(--shadow); }
+  .prop-grid { display:flex; flex-direction:column; border:1px solid var(--border); border-radius:var(--radius-md); margin-bottom:16px; background:var(--bg-card); box-shadow:var(--shadow-1); }
   .prop-row { display:flex; align-items:flex-start; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); }
   .prop-row:first-child { border-top-left-radius:11px; border-top-right-radius:11px; }
   .prop-row:last-child { border-bottom:none; border-bottom-left-radius:11px; border-bottom-right-radius:11px; }
@@ -313,7 +338,7 @@
   .sw-stat-fill { height:100%; background:linear-gradient(90deg, #ffcf6b, #ff9d4d); border-radius:5px; }
   .sw-stat-num { width:26px; flex:none; text-align:right; font-size:12px; color:rgba(255,255,255,0.6); font-variant-numeric:tabular-nums; }
   .sw-list { display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
-  .sw-list-row { display:flex; align-items:flex-start; gap:8px; background:rgba(255,255,255,0.06); border-radius:7px; padding:8px 10px; }
+  .sw-list-row { display:flex; align-items:flex-start; gap:8px; background:rgba(255,255,255,0.06); border-radius:var(--radius-sm); padding:8px 10px; }
   .sw-list-main { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
   .sw-list-name { font-size:13px; font-weight:600; color:#fff; }
   .sw-list-desc { font-size:12px; color:rgba(255,255,255,0.65); line-height:1.4; }
@@ -323,7 +348,7 @@
   .status-window-body .chip-add { color:rgba(255,255,255,0.8); border:1px dashed rgba(255,255,255,0.28); }
   .status-window-body .chip-add:hover { color:#fff; border-color:rgba(255,255,255,0.55); background:rgba(255,255,255,0.08); }
 
-  .appear-card { border:1px solid var(--border); border-radius:11px; padding:14px; margin-bottom:16px; background:var(--bg-card); box-shadow:0 1px 3px var(--shadow); }
+  .appear-card { border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; margin-bottom:16px; background:var(--bg-card); box-shadow:var(--shadow-1); }
   .appear-head { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-faint); margin-bottom:12px; }
   .relationship-group { margin-bottom:12px; }
   .relationship-group:last-child { margin-bottom:0; }
@@ -346,15 +371,21 @@
   .appear-height-row-shared input[type="range"] { flex:1; accent-color:var(--accent); }
   .appear-height-row-value { display:flex; align-items:center; gap:3px; font-size:12px; color:var(--ink); font-variant-numeric:tabular-nums; flex:none; min-width:56px; }
   .appear-height-row-value svg { flex:none; opacity:.6; }
+  .appear-zoom-row { display:flex; align-items:center; gap:6px; margin-bottom:12px; }
+  .appear-zoom-btn { display:flex; align-items:center; justify-content:center; width:24px; height:24px; border:1px solid var(--border-strong); background:var(--bg); border-radius:var(--radius-sm); color:var(--ink-soft); flex:none; }
+  .appear-zoom-btn:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
+  .appear-zoom-btn:disabled { opacity:.4; cursor:default; }
+  .appear-zoom-readout { font-size:11.5px; color:var(--ink-faint); min-width:34px; text-align:center; font-variant-numeric:tabular-nums; }
+  .appear-face-figure, .appear-compare-figure, .appear-outfit-figure { transform-origin:50% 100%; transition:transform .12s ease; }
   .appear-preview-col { flex:none; width:300px; transition:width .15s ease; }
   .appear-preview-col[data-count="2"] { width:360px; }
   .appear-preview-col[data-count="1"] { width:420px; }
   .appear-preview-group { display:flex; flex-direction:column; gap:12px; }
   .appear-panel-label { font-size:11px; color:var(--ink-faint); font-weight:600; margin-bottom:6px; align-self:stretch; text-align:left; }
-  .appear-face-figure { position:relative; width:100%; aspect-ratio:4/5; border:1px solid var(--border); border-radius:11px; overflow:hidden; background:var(--bg-card-hover); }
+  .appear-face-figure { position:relative; width:100%; aspect-ratio:4/5; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; background:var(--bg-card-hover); }
   .appear-face-figure svg { display:block; width:100%; height:100%; }
   .appear-face-img { position:absolute; left:50%; top:-8.1%; height:316%; width:auto; transform:translateX(-50%); }
-  .appear-compare-panel, .appear-outfit-panel { border:1px solid var(--border); border-radius:11px; padding:10px; background:var(--bg-card-hover); }
+  .appear-compare-panel, .appear-outfit-panel { border:1px solid var(--border); border-radius:var(--radius-md); padding:10px; background:var(--bg-card-hover); }
   .appear-outfit-panel { display:flex; flex-direction:column; align-items:center; }
   .appear-compare-stage { display:flex; align-items:flex-end; justify-content:center; gap:10px; min-height:150px; overflow-x:auto; }
   .appear-compare-col { display:flex; flex-direction:column; align-items:center; gap:6px; flex:none; }
@@ -431,10 +462,29 @@
   .star-half-fill { position:absolute; top:0; left:0; width:50%; overflow:hidden; display:flex; color:var(--accent); }
 
   .color-dot-sel { display:flex; align-items:center; gap:8px; }
-  .color-trigger { display:flex; align-items:center; gap:8px; border:1px solid var(--border); background:none; border-radius:7px; padding:5px 10px 5px 7px; font-size:13px; color:var(--ink-soft); }
+  .color-trigger { display:flex; align-items:center; gap:8px; border:1px solid var(--border); background:none; border-radius:var(--radius-sm); padding:5px 10px 5px 7px; font-size:13px; color:var(--ink-soft); }
   .color-trigger:hover { background:var(--bg-card); }
   .color-dot { width:14px; height:14px; border-radius:50%; flex:none; border:1px solid var(--border-strong); }
-  .color-pop-fixed { position:fixed; z-index:200; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:14px; box-shadow:0 12px 30px var(--shadow); width:264px; max-height:78vh; overflow-y:auto; }
+  .color-pop-fixed { position:fixed; z-index:200; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:14px; box-shadow:var(--shadow-popover); width:264px; max-height:78vh; overflow-y:auto; }
+
+  /* 새 문서 카테고리 선택 팝오버 -- "+"를 누르면 어떤 종류를 만들지 사용자가
+   * 직접 고른다(이전에는 배열의 첫 항목인 "등장인물"로 조용히 기본값 처리돼,
+   * "새 캐릭터 만들기" 전용 진입점이 사실상 존재하지 않았다). */
+  .cat-menu-fixed { position:fixed; z-index:200; background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-md); padding:var(--sp-2); box-shadow:var(--shadow-2); min-width:184px; }
+  .cat-menu-item { display:flex; align-items:center; gap:var(--sp-2); width:100%; text-align:left; border:none; background:none; color:var(--ink-soft); padding:var(--sp-2) var(--sp-2); border-radius:var(--radius-sm); font-size:13px; }
+  .cat-menu-item:hover { background:var(--accent-soft); color:var(--accent); }
+  .cat-menu-item svg { color:var(--ink-faint); flex:none; }
+  .cat-menu-item:hover svg { color:var(--accent); }
+
+  /* ---------- 홈 빠른 시작 ---------- */
+  .home-quickstart { margin:var(--sp-7) 0 0; }
+  .home-quickstart-for { font-size:var(--fs-sm); color:var(--ink-faint); margin-bottom:var(--sp-3); }
+  .home-quickstart-for b { color:var(--ink-soft); font-weight:600; }
+  .home-quick-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(132px,1fr)); gap:var(--sp-3); }
+  .home-quick-btn { display:flex; flex-direction:column; align-items:flex-start; gap:var(--sp-3); border:1px solid var(--border); background:var(--bg-card); border-radius:var(--radius-md); padding:var(--sp-4); box-shadow:var(--shadow-1); transition:transform .14s, box-shadow .14s, border-color .14s; }
+  .home-quick-btn:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:var(--shadow-2); }
+  .home-quick-btn .qi { width:34px; height:34px; border-radius:var(--radius-sm); background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; flex:none; }
+  .home-quick-btn .qt { font-size:13.5px; font-weight:600; color:var(--ink); }
   .color-pop-label { font-size:11px; letter-spacing:0.04em; color:var(--ink-faint); margin-bottom:7px; }
   .swatch-grid { display:grid; grid-template-columns:repeat(8, 1fr); gap:7px; margin-bottom:6px; }
   .swatch-grid.recent { margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--border); }
@@ -475,15 +525,15 @@
   .add-prop-box:hover { border-color:var(--accent); color:var(--accent); }
   .add-prop-box .lbl { display:flex; flex-direction:column; align-items:center; gap:8px; font-size:13.5px; font-weight:600; }
 
-  .add-prop-pop { position:absolute; z-index:20; top:8px; left:8px; right:8px; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:14px; box-shadow:0 8px 24px var(--shadow); display:flex; flex-direction:column; gap:10px; cursor:default; }
+  .add-prop-pop { position:absolute; z-index:20; top:8px; left:8px; right:8px; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:14px; box-shadow:var(--shadow-2); display:flex; flex-direction:column; gap:10px; cursor:default; }
   .add-prop-pop input { border:1px solid var(--border); border-radius:6px; padding:7px 9px; font-size:13px; outline:none; background:var(--bg); }
   .add-prop-pop input:focus { border-color:var(--accent); }
   .type-row { display:flex; gap:6px; }
-  .type-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 4px; border-radius:7px; border:1px solid var(--border); background:var(--bg); font-size:10.5px; color:var(--ink-soft); }
+  .type-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 4px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg); font-size:10.5px; color:var(--ink-soft); }
   .type-btn.on { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
 
   .preset-list { max-height:230px; overflow-y:auto; display:flex; flex-direction:column; gap:1px; }
-  .preset-row { display:flex; align-items:center; gap:9px; padding:8px 8px; border-radius:7px; font-size:13px; color:var(--ink); background:none; border:none; text-align:left; }
+  .preset-row { display:flex; align-items:center; gap:9px; padding:8px 8px; border-radius:var(--radius-sm); font-size:13px; color:var(--ink); background:none; border:none; text-align:left; }
   .preset-row:hover:not(.disabled) { background:var(--bg-card); }
   .preset-row .pic { color:var(--ink-faint); display:flex; flex:none; }
   .preset-row .plabel { flex:1; }
@@ -499,7 +549,7 @@
 
   /* ---------- modal ---------- */
   .modal-overlay { position:fixed; inset:0; background:rgba(20,16,10,0.45); display:flex; align-items:center; justify-content:center; z-index:100; padding:20px; }
-  .modal-box { background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:12px; padding:20px; width:380px; max-width:100%; max-height:82vh; overflow-y:auto; box-shadow:0 16px 40px var(--shadow); }
+  .modal-box { background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:12px; padding:20px; width:380px; max-width:100%; max-height:82vh; overflow-y:auto; box-shadow:var(--shadow-3); }
   .tpl-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:4px; }
   .tpl-card { text-align:left; border:1px solid var(--border-strong); border-radius:10px; padding:10px 12px; background:var(--bg-card); }
   .tpl-card:hover { border-color:var(--accent); background:var(--accent-soft); }
@@ -510,7 +560,7 @@
   .name-sugg-chip:hover { border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
   .modal-title { font-family:var(--serif); font-size:17px; font-weight:600; margin-bottom:8px; }
   .modal-msg { font-size:13.5px; color:var(--ink-soft); margin-bottom:14px; line-height:1.55; white-space:pre-line; }
-  .modal-input { width:100%; border:1px solid var(--border); border-radius:7px; padding:9px 11px; font-size:13.5px; outline:none; background:var(--bg); margin-bottom:10px; box-sizing:border-box; }
+  .modal-input { width:100%; border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 11px; font-size:13.5px; outline:none; background:var(--bg); margin-bottom:10px; box-sizing:border-box; }
   .modal-input:focus { border-color:var(--accent); }
   .modal-textarea { resize:vertical; font-family:inherit; line-height:1.5; }
   .modal-check { display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink-soft); margin-bottom:6px; cursor:pointer; }
@@ -522,7 +572,7 @@
   .modal-pick.on { border-color:var(--pc); color:var(--ink); background:var(--bg-card); font-weight:600; }
   .modal-location-row { display:flex; gap:8px; align-items:center; margin-bottom:10px; }
   .affinity-log-list { display:flex; flex-direction:column; gap:5px; margin-bottom:8px; max-height:160px; overflow-y:auto; }
-  .affinity-log-row { display:flex; align-items:center; gap:8px; background:var(--bg-card); border:1px solid var(--border); border-radius:7px; padding:6px 9px; }
+  .affinity-log-row { display:flex; align-items:center; gap:8px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 9px; }
   .alr-label { flex:1; font-size:12.5px; color:var(--ink); min-width:0; }
   .alr-val { flex:none; font-size:12px; color:var(--accent); font-weight:600; white-space:nowrap; }
   .affinity-log-add { display:flex; gap:6px; align-items:center; margin-bottom:10px; }
@@ -607,13 +657,13 @@
     .ms-editor-row .ms-context-panel { width:100%; position:static; max-height:none; flex-direction:row; flex-wrap:wrap; }
     .ms-editor-row .ms-ctx-section { flex:1; min-width:180px; }
   }
-  .mention-pop { position:fixed; z-index:220; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:6px; box-shadow:0 12px 30px var(--shadow); width:240px; max-height:260px; overflow-y:auto; }
-  .mention-item { display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:7px; cursor:pointer; font-size:13px; }
+  .mention-pop { position:fixed; z-index:220; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:6px; box-shadow:var(--shadow-popover); width:240px; max-height:260px; overflow-y:auto; }
+  .mention-item { display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:var(--radius-sm); cursor:pointer; font-size:13px; }
   .mention-item:hover, .mention-item.on { background:var(--bg-card); }
   .mention-cat { font-size:10.5px; color:var(--ink-faint); background:var(--bg-card); border-radius:5px; padding:2px 6px; flex-shrink:0; }
   .mention-item.on .mention-cat { background:var(--bg); }
   .mention-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .findreplace-pop { position:fixed; z-index:200; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:12px; box-shadow:0 12px 30px var(--shadow); width:270px; }
+  .findreplace-pop { position:fixed; z-index:200; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:12px; box-shadow:var(--shadow-popover); width:270px; }
   .fr-row { margin-bottom:8px; }
   .fr-row input { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:6px; padding:7px 9px; font-size:12.5px; outline:none; background:var(--bg); }
   .fr-row input:focus { border-color:var(--accent); }
@@ -641,11 +691,11 @@
   .glyph-pad-wrap { display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; }
   .glyph-pad { flex:none; width:220px; height:220px; border:1px solid var(--border-strong); border-radius:10px; background:var(--bg-card); touch-action:none; cursor:crosshair; }
   .glyph-pad-tools { display:flex; gap:6px; margin-top:8px; }
-  .glyph-pad-tools button { display:inline-flex; align-items:center; gap:5px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:7px; padding:6px 10px; font-size:12px; color:var(--ink-soft); }
+  .glyph-pad-tools button { display:inline-flex; align-items:center; gap:5px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:var(--radius-sm); padding:6px 10px; font-size:12px; color:var(--ink-soft); }
   .glyph-pad-tools button:hover { border-color:var(--accent); color:var(--accent); }
   .glyph-form { flex:1; min-width:200px; display:flex; flex-direction:column; gap:10px; }
   .glyph-form label { font-size:11px; color:var(--ink-faint); display:block; margin-bottom:4px; }
-  .glyph-form input { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:7px; padding:8px 10px; font-size:13.5px; outline:none; background:var(--bg); }
+  .glyph-form input { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 10px; font-size:13.5px; outline:none; background:var(--bg); }
   .glyph-form input:focus { border-color:var(--accent); }
   .glyph-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(84px,1fr)); gap:10px; margin-top:16px; }
   .glyph-card { position:relative; border:1px solid var(--border); border-radius:9px; padding:8px; text-align:center; cursor:pointer; background:var(--bg-card); }
@@ -658,12 +708,12 @@
   .glyph-card .gc-del:hover { color:var(--rose); border-color:var(--rose); }
   .pair-list { display:flex; flex-direction:column; gap:6px; }
   .pair-row { display:flex; align-items:center; gap:8px; }
-  .pair-row input { flex:1; min-width:0; box-sizing:border-box; border:1px solid var(--border); border-radius:7px; padding:7px 10px; font-size:13px; outline:none; background:var(--bg); }
+  .pair-row input { flex:1; min-width:0; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; font-size:13px; outline:none; background:var(--bg); }
   .pair-row input:focus { border-color:var(--accent); }
   .pair-row .pair-eq { flex:none; color:var(--ink-faint); font-size:13px; }
   .pair-row .pair-del { flex:none; background:none; border:none; color:var(--ink-faint); padding:4px; border-radius:5px; display:flex; }
   .pair-row .pair-del:hover { color:var(--rose); background:var(--rose-soft); }
-  .sc-typein { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:7px; padding:9px 11px; font-size:14px; outline:none; background:var(--bg); margin-bottom:10px; }
+  .sc-typein { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 11px; font-size:14px; outline:none; background:var(--bg); margin-bottom:10px; }
   .sc-typein:focus { border-color:var(--accent); }
   .sc-output-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:8px; background:var(--bg-card); margin-bottom:16px; padding:6px; }
   .sc-output-wrap svg { display:block; }
@@ -722,7 +772,7 @@
   .ms-goal-bar-fill { height:100%; background:var(--accent); border-radius:4px; }
   .ms-goal-bar-fill.done { background:var(--moss, #5E7A3A); }
   .ms-goal-pct { font-size:11.5px; color:var(--ink-faint); flex:none; font-variant-numeric:tabular-nums; }
-  .ms-save-indicator { font-size:11px; color:var(--ink-faint); flex:none; }
+  .ms-save-indicator { display:inline-flex; align-items:center; gap:3px; font-size:11px; color:var(--ink-faint); flex:none; }
   .ms-save-indicator.saved { color:var(--moss, #5E7A3A); }
   .ms-peek { margin-bottom:12px; }
   .ms-peek-toggle { display:flex; align-items:center; gap:5px; background:none; border:none; padding:4px 0; font-size:12px; color:var(--accent); }
@@ -758,7 +808,7 @@
   .book-shell.spread .book-edit-flow-wrap { position:absolute; inset:0; }
   .book-shell.spread .book-edit-flow-wrap::after { content:""; position:absolute; top:0; bottom:0; left:50%; width:1px; background:rgba(0,0,0,0.12); pointer-events:none; z-index:1; }
   .book-nav { display:flex; align-items:center; justify-content:center; gap:16px; margin-top:14px; font-size:13px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
-  .book-nav button { background:var(--bg-card); border:1px solid var(--border-strong); border-radius:7px; padding:7px 14px; color:var(--ink); }
+  .book-nav button { background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:7px 14px; color:var(--ink); }
   .book-nav button:disabled { opacity:.35; }
   .book-hint { text-align:center; font-size:11.5px; color:var(--ink-faint); margin-top:8px; }
 
@@ -838,7 +888,7 @@
   .gedge-memo path { stroke:var(--tide); fill:none; stroke-width:1.3; }
 
   .graph-toolbar { position:absolute; left:16px; bottom:16px; display:flex; align-items:center; gap:2px; background:var(--bg-card); border:1px solid var(--border-strong); border-radius:10px; padding:5px; box-shadow:0 4px 14px var(--shadow); }
-  .tb-btn { display:flex; align-items:center; gap:6px; background:none; border:none; padding:8px; border-radius:7px; color:var(--ink-soft); font-size:12px; }
+  .tb-btn { display:flex; align-items:center; gap:6px; background:none; border:none; padding:8px; border-radius:var(--radius-sm); color:var(--ink-soft); font-size:12px; }
   .tb-btn:hover { background:var(--bg-card-hover); color:var(--ink); }
   .tb-btn.active { background:var(--accent-soft); color:var(--accent); }
   .tb-sep { width:1px; align-self:stretch; background:var(--border); margin:4px 2px; }
@@ -888,7 +938,7 @@
   #mapG[data-zoom="low"] .map-region-label { font-size:10px; }
   .map-region-label { fill:var(--ink); font-family:var(--sans); font-size:12px; font-weight:600; paint-order:stroke; stroke:var(--bg-card); stroke-width:3px; pointer-events:none; }
   .map-region-house-label { font-family:var(--sans); font-size:11px; font-weight:600; paint-order:stroke; stroke:var(--bg-card); stroke-width:3px; pointer-events:none; }
-  .region-tooltip { position:fixed; z-index:200; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:12px 14px; box-shadow:0 8px 24px var(--shadow); max-width:240px; pointer-events:none; display:none; }
+  .region-tooltip { position:fixed; z-index:200; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:10px; padding:12px 14px; box-shadow:var(--shadow-2); max-width:240px; pointer-events:none; display:none; }
   .region-tooltip-title { font-family:var(--serif); font-weight:600; font-size:14px; margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border); }
   .region-tooltip-row { display:flex; gap:8px; font-size:12px; padding:2px 0; }
   .region-tooltip-row .rt-k { color:var(--ink-faint); flex:none; width:68px; }
@@ -1107,13 +1157,13 @@
 
 <div class="mobile-topbar">
   <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" title="메뉴 열기" aria-label="메뉴 열기"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="2.5" y1="4.5" x2="13.5" y2="4.5"/><line x1="2.5" y1="8" x2="13.5" y2="8"/><line x1="2.5" y1="11.5" x2="13.5" y2="11.5"/></svg></button>
-  <span class="brand-title">집썰</span>
+  <div class="brand-row" id="brandHomeMobile" title="홈으로"><svg class="brand-logo" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><mask id="brandLogoDotsMobile"><rect x="0" y="0" width="24" height="24" fill="#fff"/><circle cx="8" cy="14.2" r="1.3" fill="#000"/><circle cx="12" cy="14.2" r="1.3" fill="#000"/><circle cx="16" cy="14.2" r="1.3" fill="#000"/></mask></defs><g mask="url(#brandLogoDotsMobile)"><polygon points="12,2 21,9 3,9" fill="currentColor"/><rect x="3" y="9" width="18" height="10" rx="3" fill="currentColor"/><polygon points="7,19 7,23 11,19" fill="currentColor"/></g></svg><span class="brand-title">집썰</span></div>
 </div>
 <div class="sidebar-scrim" id="sidebarScrim"></div>
 <div class="app">
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-row" id="brandHome" title="홈으로"><svg class="brand-logo" width="20" height="20" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><mask id="brandLogoDots"><rect x="0" y="0" width="22" height="22" fill="#fff"/><circle cx="7" cy="12.6" r="1.15" fill="#000"/><circle cx="11" cy="12.6" r="1.15" fill="#000"/><circle cx="15" cy="12.6" r="1.15" fill="#000"/></mask></defs><g mask="url(#brandLogoDots)"><polygon points="11,1 20,8 2,8" fill="currentColor"/><rect x="2" y="8" width="18" height="9" rx="3" fill="currentColor"/><polygon points="6,17 6,21 10,17" fill="currentColor"/></g></svg><span class="brand-title">집썰</span></div>
+      <div class="brand-row" id="brandHome" title="홈으로"><svg class="brand-logo" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><mask id="brandLogoDotsMain"><rect x="0" y="0" width="24" height="24" fill="#fff"/><circle cx="8" cy="14.2" r="1.3" fill="#000"/><circle cx="12" cy="14.2" r="1.3" fill="#000"/><circle cx="16" cy="14.2" r="1.3" fill="#000"/></mask></defs><g mask="url(#brandLogoDotsMain)"><polygon points="12,2 21,9 3,9" fill="currentColor"/><rect x="3" y="9" width="18" height="10" rx="3" fill="currentColor"/><polygon points="7,19 7,23 11,19" fill="currentColor"/></g></svg><span class="brand-title">집썰</span></div>
       <button type="button" class="brand-theme-btn" id="themeSettingsBtn" title="환경 설정(테마·사이드바 표시)"><svg class="icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5a5.5 5.5 0 100 11c.9 0 1.4-.6 1.4-1.3 0-.35-.15-.65-.35-.9-.2-.25-.35-.55-.35-.9 0-.7.55-1.2 1.2-1.2h1.4A2.7 2.7 0 0014 6.5C14 4 11.3 2.5 8 2.5z"/><circle cx="5.2" cy="6.6" r="0.9" fill="currentColor" stroke="none"/><circle cx="8" cy="4.9" r="0.9" fill="currentColor" stroke="none"/><circle cx="10.8" cy="6.6" r="0.9" fill="currentColor" stroke="none"/><circle cx="5.6" cy="9.8" r="0.9" fill="currentColor" stroke="none"/></svg></button>
     </div>
     <div class="search-wrap">
@@ -1178,7 +1228,10 @@ function ic(name, size) {
     moon: '<path d="M13 9.3A5.6 5.6 0 116.7 3 4.4 4.4 0 0013 9.3z"/>',
     chevL: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
     chevR: '<path d="M6 3.5L10.5 8 6 12.5"/>',
+    chevUp: '<path d="M4.5 10L8 6l3.5 4"/>',
+    chevDown: '<path d="M4.5 6L8 10l3.5-4"/>',
     check: '<rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4.8 8.2l2.2 2.3 4.2-5"/>',
+    checkmark: '<path d="M3.2 8.6l3.1 3.2 6.5-7.4"/>',
     table: '<rect x="2" y="3" width="12" height="10" rx="1.5"/><line x1="2" y1="6.5" x2="14" y2="6.5"/><line x1="6.5" y1="6.5" x2="6.5" y2="13"/><line x1="10.5" y1="6.5" x2="10.5" y2="13"/>',
     map: '<path d="M2 4l4-1.5 4 1.5 4-1.5v9.5l-4 1.5-4-1.5-4 1.5z"/><line x1="6" y1="2.5" x2="6" y2="12"/><line x1="10" y1="4" x2="10" y2="13.5"/>',
     upload: '<path d="M8 11V3"/><path d="M4.5 6.5L8 3l3.5 3.5"/><path d="M2.5 12.5v1a1 1 0 001 1h9a1 1 0 001-1v-1"/>',
@@ -1334,6 +1387,36 @@ applyThemePref();
 
 /* ---------------- data ---------------- */
 var CATS = ["등장인물","세력","장소","세계관","사건","아이템","떡밥","부·사이드","기타"];
+var CAT_ICON = { "등장인물":"person", "세력":"crown", "장소":"pin", "세계관":"magic", "사건":"battle", "아이템":"gift", "떡밥":"eye", "부·사이드":"link", "기타":"tag" };
+var _catMenuOutsideHandler = null;
+function closeCatMenu() {
+  var p = document.getElementById("catMenuFixed"); if (p) p.remove();
+  if (_catMenuOutsideHandler) { document.removeEventListener("mousedown", _catMenuOutsideHandler); _catMenuOutsideHandler = null; }
+}
+function openDocCategoryMenu(anchorEl, workId) {
+  closeCatMenu();
+  var pop = document.createElement("div");
+  pop.className = "cat-menu-fixed";
+  pop.id = "catMenuFixed";
+  pop.innerHTML = CATS.map(function(cat){
+    return '<button type="button" class="cat-menu-item" data-pickcat="'+esc(cat)+'">'+ic(CAT_ICON[cat]||"tag",14)+'<span>'+esc(cat)+'</span></button>';
+  }).join("");
+  document.body.appendChild(pop);
+  var r = anchorEl.getBoundingClientRect();
+  var top = Math.min(r.bottom+6, window.innerHeight-pop.offsetHeight-8);
+  var left = Math.min(r.left, window.innerWidth-pop.offsetWidth-8);
+  pop.style.top = Math.max(8,top)+"px";
+  pop.style.left = Math.max(8,left)+"px";
+  pop.querySelectorAll("[data-pickcat]").forEach(function(btn){
+    btn.addEventListener("click", function(){ closeCatMenu(); newDoc(workId, btn.dataset.pickcat); });
+  });
+  setTimeout(function(){
+    _catMenuOutsideHandler = function(e){
+      if (!pop.contains(e.target) && e.target !== anchorEl && !anchorEl.contains(e.target)) closeCatMenu();
+    };
+    document.addEventListener("mousedown", _catMenuOutsideHandler);
+  }, 0);
+}
 var HOUSE_TYPES = {
   major: { label:"대세력" },
   vassal: { label:"가신 세력" },
@@ -6445,7 +6528,7 @@ function renderWorkBody(work, q) {
         '<option value="">전체 인물</option>' +
         workCharacterDocs.map(function(d){ return '<option value="'+d.id+'" '+(povSel===d.id?"selected":"")+'>'+esc(d.title||"제목 없음")+'</option>'; }).join("") +
         '</select>' : '';
-      html += '<div class="novel-folder"><div class="sb-head" style="margin-left:18px" data-toggle="'+nkey+'"><span class="chev '+(ncollapsed?"collapsed":"")+'">'+ic("chevron",12)+'</span><span class="t">'+esc(n.title||"제목 없는 소설")+' · 전체 '+eps.length+'화'+(novelCharTotal?' · '+fmtNum(novelCharTotal)+'자':'')+'</span><button class="add" data-newep="'+n.id+'" title="새 화(맨 아래에 추가)">'+ic("plus",12)+'</button><button class="row-settings" data-novelsettings="'+n.id+'" title="소설 설정">&#9881;</button><button class="row-del" data-delnovel="'+n.id+'" title="폴더 삭제" style="margin-left:0">'+ic("trash",12)+'</button></div>';
+      html += '<div class="novel-folder"><div class="sb-head" style="margin-left:18px" data-toggle="'+nkey+'"><span class="chev '+(ncollapsed?"collapsed":"")+'">'+ic("chevron",12)+'</span><span class="t">'+esc(n.title||"제목 없는 소설")+' · 전체 '+eps.length+'화'+(novelCharTotal?' · '+fmtNum(novelCharTotal)+'자':'')+'</span><button class="add" data-newep="'+n.id+'" title="새 화(맨 아래에 추가)">'+ic("plus",12)+'</button><button class="row-settings" data-novelsettings="'+n.id+'" title="소설 설정">'+ic("gear",12)+'</button><button class="row-del" data-delnovel="'+n.id+'" title="폴더 삭제" style="margin-left:0">'+ic("trash",12)+'</button></div>';
       if (!ncollapsed && (workCharacterDocs.length || eps.length > 1)) {
         html += '<div class="novel-subrow" style="margin-left:36px"><button class="ms-sort-btn" data-sortnovel="'+n.id+'" title="정렬 방식 전환">'+(sortMode==="newest"?"최신순":"시간순")+'</button>'+povFilterHtml+'</div>';
       }
@@ -6457,8 +6540,8 @@ function renderWorkBody(work, q) {
         var canReorder = !povSel && eps.length > 1;
         var insertHtml = !povSel ? '<button class="row-move row-insert" data-msinsertafter="'+m.id+'" title="이 화 다음에 새 화 삽입">+</button>' : '';
         var moveHtml = canReorder ?
-          '<button class="row-move" data-msmoveup="'+m.id+'" title="위로 이동"'+(epIdx===0?" disabled":"")+'>&#9650;</button>' +
-          '<button class="row-move" data-msmovedown="'+m.id+'" title="아래로 이동"'+(epIdx===eps.length-1?" disabled":"")+'>&#9660;</button>' : '';
+          '<button class="row-move" data-msmoveup="'+m.id+'" title="위로 이동"'+(epIdx===0?" disabled":"")+'>'+ic("chevUp",9)+'</button>' +
+          '<button class="row-move" data-msmovedown="'+m.id+'" title="아래로 이동"'+(epIdx===eps.length-1?" disabled":"")+'>'+ic("chevDown",9)+'</button>' : '';
         html += '<div class="graph-row ms-draggable'+(state.mode==="manuscript"&&state.activeId===m.id?" active":"")+'" data-openms="'+m.id+'" draggable="'+(canReorder?"true":"false")+'" style="margin-left:26px">'+ic("docIcon",13)+'<span style="flex:1 1 0%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(m.title||"제목 없음")+'</span>'+povBadge+(epChars?'<span class="char-total">'+fmtNum(epChars)+'자</span>':'')+insertHtml+moveHtml+'<button class="row-del" data-delms="'+m.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
       });
       if (!eps.length) html += '<div class="sb-empty" style="margin-left:26px">'+(povSel?"이 인물이 등장하는 화가 없습니다.":"아직 화가 없습니다.")+'</div>';
@@ -6480,11 +6563,11 @@ function renderWorkBody(work, q) {
       var entries = sortedEssayEntriesOf(es.id);
       var esCharTotal = entries.reduce(function(sum,e){ return sum+charCount(e.text); }, 0);
       var ekey = "essaycol:"+es.id, ecollapsed = !!state.collapsed[ekey];
-      html += '<div class="novel-folder"><div class="sb-head" style="margin-left:18px" data-toggle="'+ekey+'"><span class="chev '+(ecollapsed?"collapsed":"")+'">'+ic("chevron",12)+'</span><span class="t">'+esc(es.title||"제목 없는 폴더")+' · 전체 '+entries.length+'편'+(esCharTotal?' · '+fmtNum(esCharTotal)+'자':'')+'</span><button class="add" data-newessayentry="'+es.id+'" title="새 글(맨 아래에 추가)">'+ic("plus",12)+'</button><button class="row-settings" data-essaysettings="'+es.id+'" title="폴더 설정">&#9881;</button><button class="row-del" data-delessay="'+es.id+'" title="폴더 삭제" style="margin-left:0">'+ic("trash",12)+'</button></div>';
+      html += '<div class="novel-folder"><div class="sb-head" style="margin-left:18px" data-toggle="'+ekey+'"><span class="chev '+(ecollapsed?"collapsed":"")+'">'+ic("chevron",12)+'</span><span class="t">'+esc(es.title||"제목 없는 폴더")+' · 전체 '+entries.length+'편'+(esCharTotal?' · '+fmtNum(esCharTotal)+'자':'')+'</span><button class="add" data-newessayentry="'+es.id+'" title="새 글(맨 아래에 추가)">'+ic("plus",12)+'</button><button class="row-settings" data-essaysettings="'+es.id+'" title="폴더 설정">'+ic("gear",12)+'</button><button class="row-del" data-delessay="'+es.id+'" title="폴더 삭제" style="margin-left:0">'+ic("trash",12)+'</button></div>';
       if (!ecollapsed) entries.forEach(function(e, eIdx){
         var eChars = charCount(e.text);
         var periodBadge = e.period ? '<span class="pov-badge" title="시기">'+esc(e.period)+'</span>' : '';
-        html += '<div class="graph-row essay-draggable'+(state.mode==="essayentry"&&state.activeId===e.id?" active":"")+'" data-openessayentry="'+e.id+'" draggable="true" style="margin-left:26px">'+ic("docIcon",13)+'<span style="flex:1 1 0%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(e.title||"제목 없음")+'</span>'+periodBadge+(eChars?'<span class="char-total">'+fmtNum(eChars)+'자</span>':'')+'<button class="row-move row-insert" data-essayinsertafter="'+e.id+'" title="이 글 다음에 새 글 삽입">+</button><button class="row-move" data-essaymoveup="'+e.id+'" title="위로 이동"'+(eIdx===0?" disabled":"")+'>&#9650;</button><button class="row-move" data-essaymovedown="'+e.id+'" title="아래로 이동"'+(eIdx===entries.length-1?" disabled":"")+'>&#9660;</button><button class="row-del" data-delessayentry="'+e.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
+        html += '<div class="graph-row essay-draggable'+(state.mode==="essayentry"&&state.activeId===e.id?" active":"")+'" data-openessayentry="'+e.id+'" draggable="true" style="margin-left:26px">'+ic("docIcon",13)+'<span style="flex:1 1 0%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(e.title||"제목 없음")+'</span>'+periodBadge+(eChars?'<span class="char-total">'+fmtNum(eChars)+'자</span>':'')+'<button class="row-move row-insert" data-essayinsertafter="'+e.id+'" title="이 글 다음에 새 글 삽입">+</button><button class="row-move" data-essaymoveup="'+e.id+'" title="위로 이동"'+(eIdx===0?" disabled":"")+'>'+ic("chevUp",9)+'</button><button class="row-move" data-essaymovedown="'+e.id+'" title="아래로 이동"'+(eIdx===entries.length-1?" disabled":"")+'>'+ic("chevDown",9)+'</button><button class="row-del" data-delessayentry="'+e.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
       });
       if (!entries.length) html += '<div class="sb-empty" style="margin-left:26px">아직 글이 없습니다.</div>';
       html += '</div>';
@@ -6502,7 +6585,7 @@ function renderWorkBody(work, q) {
      * 모아 접이식 그룹 하나로 묶는다(둘 다 완전히 같은 마크업, 배치만 다르다). */
     var sectionsHtml = {};
 
-    var docsHtml = '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newdoc="'+work.id+'">'+ic("plus",13)+'</span><span class="t" style="flex:1">문서</span></div>';
+    var docsHtml = '<div class="sb-section"><div class="sb-head" style="margin-left:18px"><span class="add" data-newdoc="'+work.id+'" title="새 문서 종류 선택(등장인물·장소·세계관 등)">'+ic("plus",13)+'</span><span class="t" style="flex:1">문서</span></div>';
     Object.keys(byCat).forEach(function(cat){
       var list = byCat[cat];
       if (!list.length) return;
@@ -6651,7 +6734,7 @@ function renderSidebar() {
   document.getElementById("newWorkBtn").addEventListener("click", newWork);
   var genreTemplateBtn = document.getElementById("genreTemplateBtn");
   if (genreTemplateBtn) genreTemplateBtn.addEventListener("click", toggleGenreTemplateWork);
-  el.querySelectorAll("[data-newdoc]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); newDoc(b.dataset.newdoc); }); });
+  el.querySelectorAll("[data-newdoc]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); openDocCategoryMenu(b, b.dataset.newdoc); }); });
   el.querySelectorAll("[data-newgraph]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); newGraph(b.dataset.newgraph); }); });
   el.querySelectorAll("[data-newnovel]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); newNovel(b.dataset.newnovel); }); });
   el.querySelectorAll("[data-newep]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); newManuscriptIn(b.dataset.newep); }); });
@@ -7142,6 +7225,440 @@ function renderDocCategoryPage(workId, category) {
     GRID: GRID, OUT: OUT, ANCHORS: ANCHORS, PALETTE_KEYS: PALETTE_KEYS, DEFAULT_PALETTE: DEFAULT_PALETTE,
     px: px, rect: rect, taper: taper, ascii: ascii, mirrorAscii: mirrorAscii, mirrorAsciiLR: mirrorAsciiLR, dither: dither, shade: shade,
     newGrid: newGrid, compose: compose, paintToCanvas: paintToCanvas, renderSvgString: renderSvgString
+  };
+})(typeof window !== "undefined" ? window : this);
+
+/* ---------------- VectorDoll: parametric A-pose vector character engine ----------------
+ * PixelDoll above draws a fixed 128x128 pixel grid and flattens every part into one
+ * run-length-encoded <rect> list -- there's no per-part SVG structure left once it's
+ * drawn, so parts can't be independently reshaped or gradient-shaded. VectorDoll is a
+ * from-scratch second renderer that draws real <path>/<ellipse> primitives with
+ * gradients in a smooth coordinate space (viewBox "0 0 200 340"), built to reach a
+ * noticeably higher illustration quality bar (soft gradient shading, anatomical
+ * curves via Catmull-Rom splines through landmark points, A-pose, garments generated
+ * as offsets from the body silhouette so they always follow body-shape changes).
+ *
+ * Coverage is intentionally partial at first (see VECTOR_COVERAGE below): only
+ * default/normal, dandy hair, shirt/jeans/sneakers, oval face, etc. It stands
+ * alongside PixelDoll rather than replacing it -- appearanceUsesVectorEngine() below
+ * gates which renderer a given character uses, so any character with a part selection
+ * not yet covered here safely keeps rendering through the original PixelDoll system,
+ * completely unchanged. This is additive: no existing option, saved character, or
+ * appearance data field is removed or reshaped by VectorDoll's presence.
+ */
+(function (global) {
+  var CX = 100;
+
+  // ---- Catmull-Rom -> cubic bezier path string (smooth curve through points) ----
+  function crPath(pts, closed) {
+    if (pts.length < 2) return "";
+    var p = pts.slice();
+    if (closed) {
+      p = [pts[pts.length - 1]].concat(pts, [pts[0], pts[1]]);
+    } else {
+      p = [pts[0]].concat(pts, [pts[pts.length - 1]]);
+    }
+    var d = "M " + pts[0].x.toFixed(2) + " " + pts[0].y.toFixed(2) + " ";
+    var n = closed ? pts.length : pts.length - 1;
+    for (var i = 0; i < n; i++) {
+      var p0 = p[i], p1 = p[i + 1], p2 = p[i + 2], p3 = p[i + 3];
+      var c1x = p1.x + (p2.x - p0.x) / 6;
+      var c1y = p1.y + (p2.y - p0.y) / 6;
+      var c2x = p2.x - (p3.x - p1.x) / 6;
+      var c2y = p2.y - (p3.y - p1.y) / 6;
+      d += "C " + c1x.toFixed(2) + " " + c1y.toFixed(2) + " " + c2x.toFixed(2) + " " + c2y.toFixed(2) + " " + p2.x.toFixed(2) + " " + p2.y.toFixed(2) + " ";
+    }
+    if (closed) d += "Z";
+    return d;
+  }
+
+  function vdMirror(pts) { return pts.map(function (p) { return { x: 2 * CX - p.x, y: p.y }; }); }
+  function pt(x, y) { return { x: x, y: y }; }
+
+  // ---- color helpers ----
+  function vdHexToRgb(hex) { return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)]; }
+  function vdRgbToHex(r, g, b) {
+    function h(c) { c = Math.max(0, Math.min(255, Math.round(c))); var s = c.toString(16); return s.length < 2 ? "0" + s : s; }
+    return "#" + h(r) + h(g) + h(b);
+  }
+  function vdLighten(hex, amt) { var c = vdHexToRgb(hex); return vdRgbToHex(c[0] + (255 - c[0]) * amt, c[1] + (255 - c[1]) * amt, c[2] + (255 - c[2]) * amt); }
+  function vdDarken(hex, amt) { var c = vdHexToRgb(hex); return vdRgbToHex(c[0] * (1 - amt), c[1] * (1 - amt), c[2] * (1 - amt)); }
+
+  // ---- body type proportion presets (multipliers on baseline half-widths) ----
+  var BODY_PRESETS = {
+    normal:   { shoulder: 1.00, chest: 1.00, waist: 1.00, hip: 1.00, limbW: 1.00, neckW: 1.00 },
+    slim:     { shoulder: 0.86, chest: 0.88, waist: 0.80, hip: 0.88, limbW: 0.82, neckW: 0.90 },
+    curvy:    { shoulder: 0.92, chest: 1.04, waist: 0.76, hip: 1.26, limbW: 0.92, neckW: 0.94 },
+    stocky:   { shoulder: 1.08, chest: 1.10, waist: 1.18, hip: 1.14, limbW: 1.18, neckW: 1.12 },
+    broad:    { shoulder: 1.32, chest: 1.16, waist: 1.04, hip: 1.00, limbW: 1.18, neckW: 1.10 },
+    muscular: { shoulder: 1.24, chest: 1.14, waist: 0.92, hip: 0.98, limbW: 1.14, neckW: 1.10 }
+  };
+
+  // Baseline (normal, female) half-widths at each landmark Y, in local units.
+  var VY = { headTop: 18, headBottom: 66, neckTop: 66, neckBottom: 80, shoulder: 84, chest: 112, waist: 164, hip: 190, crotch: 196, knee: 254, ankle: 306, footBottom: 320 };
+  var BASE_HALF = { neck: 12, shoulder: 46, chest: 40, waist: 30, hip: 40, thigh: 20, calf: 13, ankle: 9 };
+
+  function vdBodyMetrics(bodyType, gender) {
+    var pr = BODY_PRESETS[bodyType] || BODY_PRESETS.normal;
+    var bustBoost = gender === "f" ? 1.10 : gender === "m" ? 0.94 : 1.0;
+    var hipBoost = gender === "f" ? 1.08 : gender === "m" ? 0.92 : 1.0;
+    var waistPinch = gender === "f" ? 0.94 : 1.0;
+    return {
+      neck: BASE_HALF.neck * pr.neckW,
+      shoulder: BASE_HALF.shoulder * pr.shoulder,
+      chest: BASE_HALF.chest * pr.chest * bustBoost,
+      waist: BASE_HALF.waist * pr.waist * waistPinch,
+      hip: BASE_HALF.hip * pr.hip * hipBoost,
+      thigh: BASE_HALF.thigh * pr.limbW,
+      calf: BASE_HALF.calf * pr.limbW,
+      ankle: BASE_HALF.ankle * pr.limbW,
+      limbW: pr.limbW
+    };
+  }
+
+  // ---- torso silhouette (closed path): neck -> shoulder -> chest -> waist -> hip -> crotch -> mirrored back up ----
+  function vdTorsoPath(m) {
+    var right = [
+      pt(CX + m.neck, VY.neckTop),
+      pt(CX + m.shoulder, VY.shoulder),
+      pt(CX + m.chest, VY.chest),
+      pt(CX + m.waist, VY.waist),
+      pt(CX + m.hip, VY.hip),
+      pt(CX + m.hip * 0.55, VY.crotch)
+    ];
+    var left = vdMirror(right).reverse();
+    var pts = right.concat(left);
+    return crPath(pts, true);
+  }
+
+  /* Shared leg centerline + half-width curve (crotch -> ankle), used by BOTH the
+   * skin leg path and the pants path so pants are guaranteed >= leg width at every
+   * point by construction (pants = same centerline, width + margin) -- this is what
+   * prevents the leg silhouette from ever poking out through the trouser leg. */
+  function vdLegCenterline(m, side) {
+    var sign = side === "r" ? 1 : -1;
+    var lowCalfY = VY.knee + (VY.ankle - VY.knee) * 0.6;
+    var centerX = [
+      CX + sign * m.hip * 0.32, CX + sign * (m.thigh * 0.5), CX + sign * (m.calf * 0.55),
+      CX + sign * (m.calf * 0.5), CX + sign * (m.ankle * 0.5)
+    ];
+    var halfW = [m.thigh, m.thigh * 0.92, m.calf, m.calf * 0.85, m.ankle];
+    var ys = [VY.crotch - 2, VY.crotch + (VY.knee - VY.crotch) * 0.35, VY.knee, lowCalfY, VY.ankle];
+    return { cx: centerX, hw: halfW, y: ys };
+  }
+  function vdLimbBandPath(line, marginFn, yEnd) {
+    var n = line.cx.length;
+    var outer = [], inner = [];
+    for (var i = 0; i < n; i++) {
+      if (yEnd != null && line.y[i] > yEnd) continue;
+      var m = marginFn ? marginFn(i) : 0;
+      outer.push(pt(line.cx[i] + line.hw[i] + m, line.y[i]));
+      inner.push(pt(line.cx[i] - line.hw[i] - m, line.y[i]));
+    }
+    return crPath(outer.concat(inner.reverse()), true);
+  }
+  // ---- one leg (right or left), hip to ankle, tapered ----
+  function vdLegPath(m, side) {
+    return vdLimbBandPath(vdLegCenterline(m, side));
+  }
+
+  // ---- foot (simple rounded wedge) ----
+  function vdFootPath(m, side) {
+    var sign = side === "r" ? 1 : -1;
+    var backX = CX + sign * m.ankle * 0.3;
+    var frontX = CX + sign * (m.ankle * 1.5 + 14);
+    var pts = [
+      pt(CX + sign * m.ankle * 1.15, VY.ankle),
+      pt(frontX, VY.ankle + 6),
+      pt(frontX - sign * 4, VY.footBottom),
+      pt(backX, VY.footBottom),
+      pt(backX - sign * 2, VY.ankle + 4)
+    ];
+    return crPath(pts, true);
+  }
+
+  // ---- arm in A-pose: shoulder -> elbow (angled out+down) -> wrist -> hand ----
+  function vdArmPoints(m, side) {
+    var sign = side === "r" ? 1 : -1;
+    var shoulderPt = pt(CX + sign * m.shoulder * 0.92, VY.shoulder + 2);
+    // A-pose angle: ~16deg out from vertical at upper arm, slightly more at forearm
+    var upperLen = 62, foreLen = 58;
+    var upperAngle = 16 * Math.PI / 180; // from vertical
+    var elbow = pt(shoulderPt.x + sign * Math.sin(upperAngle) * upperLen, shoulderPt.y + Math.cos(upperAngle) * upperLen);
+    var foreAngle = 10 * Math.PI / 180;
+    var wrist = pt(elbow.x + sign * Math.sin(foreAngle) * foreLen, elbow.y + Math.cos(foreAngle) * foreLen);
+    return { shoulder: shoulderPt, elbow: elbow, wrist: wrist };
+  }
+  function vdArmPath(m, side) {
+    var sign = side === "r" ? 1 : -1;
+    var a = vdArmPoints(m, side);
+    var w = m.limbW;
+    var upperHalf = 13 * w, elbowHalf = 10.5 * w, wristHalf = 8 * w;
+    // perpendicular offsets along the limb direction for a tapered capsule
+    function perp(p1, p2, half) {
+      var dx = p2.x - p1.x, dy = p2.y - p1.y, len = Math.sqrt(dx * dx + dy * dy) || 1;
+      return { x: -dy / len * half, y: dx / len * half };
+    }
+    var oS = perp(a.shoulder, a.elbow, upperHalf);
+    var oE = perp(a.shoulder, a.elbow, elbowHalf);
+    var oE2 = perp(a.elbow, a.wrist, elbowHalf);
+    var oW = perp(a.elbow, a.wrist, wristHalf);
+    var outer = [
+      pt(a.shoulder.x + oS.x, a.shoulder.y + oS.y),
+      pt(a.elbow.x + oE.x, a.elbow.y + oE.y),
+      pt(a.elbow.x + oE2.x, a.elbow.y + oE2.y),
+      pt(a.wrist.x + oW.x, a.wrist.y + oW.y)
+    ];
+    var inner = [
+      pt(a.wrist.x - oW.x, a.wrist.y - oW.y),
+      pt(a.elbow.x - oE2.x, a.elbow.y - oE2.y),
+      pt(a.elbow.x - oE.x, a.elbow.y - oE.y),
+      pt(a.shoulder.x - oS.x, a.shoulder.y - oS.y)
+    ];
+    return { d: crPath(outer.concat(inner), true), wrist: a.wrist, wristHalf: wristHalf };
+  }
+  function vdHandPath(m, side) {
+    var a = vdArmPoints(m, side);
+    var sign = side === "r" ? 1 : -1;
+    var cx = a.wrist.x + sign * 6, cy = a.wrist.y + 10;
+    return '<ellipse cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" rx="' + (7 * m.limbW).toFixed(1) + '" ry="' + (9 * m.limbW).toFixed(1) + '" />';
+  }
+
+  // ---- head ----
+  var VD_HEAD_CX = CX, VD_HEAD_TOP = VY.headTop, VD_HEAD_BOTTOM = VY.headBottom;
+  function vdHeadPath(faceRatio) {
+    faceRatio = faceRatio || 1;
+    var hw = 26 * faceRatio; // half width at cheekbone
+    var pts = [
+      pt(VD_HEAD_CX, VD_HEAD_TOP),
+      pt(VD_HEAD_CX + hw * 0.86, VD_HEAD_TOP + 8),
+      pt(VD_HEAD_CX + hw, (VD_HEAD_TOP + VD_HEAD_BOTTOM) / 2 - 2),
+      pt(VD_HEAD_CX + hw * 0.7, VD_HEAD_BOTTOM - 6),
+      pt(VD_HEAD_CX + hw * 0.32, VD_HEAD_BOTTOM)
+    ];
+    var full = pts.concat(vdMirror(pts).reverse());
+    return crPath(full, true);
+  }
+
+  function vdNeckPath(m) {
+    var nw = m.neck;
+    var pts = [pt(CX - nw, VY.neckTop - 2), pt(CX - nw * 0.9, VY.neckBottom), pt(CX + nw * 0.9, VY.neckBottom), pt(CX + nw, VY.neckTop - 2)];
+    return crPath(pts, true);
+  }
+
+  // ---- garments: generated as offsets from the body silhouette so they inherently follow body shape ----
+  /* The shirt hem and the pants waistband are authored against the SAME hip
+   * landmark width (m.hip, the exact value vdTorsoPath also uses at VY.hip) so
+   * neither garment can be narrower than the body at the point where they must
+   * overlap each other -- that mismatch is what causes skin to show through at the
+   * seam if the two garments are drawn from unrelated width formulas. */
+  var VD_HIP_TUCK_Y = VY.hip + 6;
+  function vdShirtPath(m) {
+    var off = 5.5;
+    var hemY = VY.hip + 20;
+    var right = [
+      pt(CX + m.neck + off, VY.neckTop),
+      pt(CX + m.shoulder + off * 1.3, VY.shoulder - 2),
+      pt(CX + m.shoulder * 0.98 + off, VY.shoulder + 30), // short sleeve end
+      pt(CX + m.chest + off, VY.chest + 6),
+      pt(CX + m.waist + off, VY.waist + 2),
+      pt(CX + m.hip + off, VY.hip),           // full hip width -- matches vdTorsoPath exactly
+      pt(CX + m.hip * 0.78 + off, hemY)       // tapered hem, tucked below the hip line
+    ];
+    var left = vdMirror(right).reverse();
+    // explicit center-bottom point so the hem curve provably dips to hemY at the
+    // centerline instead of relying on the spline to interpolate that low point
+    // between the two symmetric side points (which otherwise leaves a gap above
+    // the pants waist right at the body's centerline)
+    var pts = right.concat([pt(CX, hemY + 3)]).concat(left);
+    return crPath(pts, true);
+  }
+  /* Waistband sits at the same full hip width as the shirt hem above it (generous
+   * vertical + horizontal overlap) and the leg hem stops short of the ankle, so the
+   * only place bare leg is ever visible is the deliberate ankle gap -- never at the
+   * waist seam. */
+  function vdPantsPath(m) {
+    function onePants(side) {
+      var sign = side === "r" ? 1 : -1;
+      var line = vdLegCenterline(m, side);
+      var margin = [4, 5, 5.5, 6, 6.5];
+      var band = vdLimbBandPath(line, function (i) { return margin[i]; }, VY.knee + (VY.ankle - VY.knee) * 0.6 + 0.5);
+      // waist cap: full hip width (matches shirt hem width above), down to the leg band's own top edge
+      var waistOuter = pt(CX + sign * (m.hip + 2), VD_HIP_TUCK_Y - 14);
+      var waistInner = pt(CX + sign * (m.hip * 0.08), VD_HIP_TUCK_Y - 14);
+      var topOuter = pt(line.cx[0] + line.hw[0] + margin[0], line.y[0]);
+      var topInner = pt(line.cx[0] - line.hw[0] - margin[0], line.y[0]);
+      var cap = 'M ' + waistOuter.x.toFixed(2) + ' ' + waistOuter.y.toFixed(2) +
+        ' L ' + topOuter.x.toFixed(2) + ' ' + topOuter.y.toFixed(2) +
+        ' L ' + topInner.x.toFixed(2) + ' ' + topInner.y.toFixed(2) +
+        ' L ' + waistInner.x.toFixed(2) + ' ' + waistInner.y.toFixed(2) + ' Z';
+      return band + ' ' + cap;
+    }
+    return onePants("r") + " " + onePants("l");
+  }
+  function vdShoePath(m, side) { return vdFootPath({ ankle: m.ankle * 1.12, limbW: m.limbW }, side); }
+
+  // ---- hair: dandy (short, side-swept) ----
+  function vdHairBackPath(faceRatio) {
+    var hw = 26 * (faceRatio || 1);
+    var pts = [pt(VD_HEAD_CX - hw * 1.02, VD_HEAD_TOP + 10), pt(VD_HEAD_CX - hw * 1.05, VD_HEAD_TOP - 2), pt(VD_HEAD_CX, VD_HEAD_TOP - 10), pt(VD_HEAD_CX + hw * 1.05, VD_HEAD_TOP - 2), pt(VD_HEAD_CX + hw * 1.02, VD_HEAD_TOP + 10), pt(VD_HEAD_CX + hw * 0.9, VD_HEAD_TOP + 22), pt(VD_HEAD_CX, VD_HEAD_TOP + 14), pt(VD_HEAD_CX - hw * 0.9, VD_HEAD_TOP + 22)];
+    return crPath(pts, true);
+  }
+  function vdHairFrontPath(faceRatio) {
+    var hw = 26 * (faceRatio || 1);
+    var pts = [
+      pt(VD_HEAD_CX - hw * 0.95, VD_HEAD_TOP + 16),
+      pt(VD_HEAD_CX - hw * 0.6, VD_HEAD_TOP - 4),
+      pt(VD_HEAD_CX - hw * 0.15, VD_HEAD_TOP - 9),
+      pt(VD_HEAD_CX + hw * 0.3, VD_HEAD_TOP - 6),
+      pt(VD_HEAD_CX + hw * 0.75, VD_HEAD_TOP + 4),
+      pt(VD_HEAD_CX + hw * 0.55, VD_HEAD_TOP + 15),
+      pt(VD_HEAD_CX + hw * 0.2, VD_HEAD_TOP + 7),
+      pt(VD_HEAD_CX - hw * 0.3, VD_HEAD_TOP + 9)
+    ];
+    return crPath(pts, true);
+  }
+
+  // ---- face features (default set: basic eyes, normal brows, smile mouth) ----
+  function vdFaceFeaturesSvg(faceRatio, palette) {
+    var hw = 26 * (faceRatio || 1);
+    var eyeY = VD_HEAD_TOP + 27, eyeDX = hw * 0.42;
+    var out = "";
+    // brows
+    out += '<path d="M ' + (CX - eyeDX - 6) + ' ' + (eyeY - 6) + ' Q ' + (CX - eyeDX) + ' ' + (eyeY - 9) + ' ' + (CX - eyeDX + 6) + ' ' + (eyeY - 6.5) + '" stroke="' + palette.hairShadow + '" stroke-width="2" fill="none" stroke-linecap="round"/>';
+    out += '<path d="M ' + (CX + eyeDX - 6) + ' ' + (eyeY - 6.5) + ' Q ' + (CX + eyeDX) + ' ' + (eyeY - 9) + ' ' + (CX + eyeDX + 6) + ' ' + (eyeY - 6) + '" stroke="' + palette.hairShadow + '" stroke-width="2" fill="none" stroke-linecap="round"/>';
+    // eyes (white + iris with subtle gradient + pupil + eyelash + double highlight)
+    // supports heterochromia via palette.eyeIrisLeft/eyeIrisRight (falls back to eyeIris)
+    [-1, 1].forEach(function (s) {
+      var ex = CX + s * eyeDX;
+      var iris = (s < 0 ? palette.eyeIrisLeft : palette.eyeIrisRight) || palette.eyeIris;
+      out += '<ellipse cx="' + ex + '" cy="' + eyeY + '" rx="5.2" ry="4" fill="#fff"/>';
+      out += '<circle cx="' + ex + '" cy="' + eyeY + '" r="3.1" fill="' + vdLighten(iris, 0.12) + '"/>';
+      out += '<circle cx="' + ex + '" cy="' + (eyeY + 0.6) + '" r="2.5" fill="' + iris + '"/>';
+      out += '<circle cx="' + ex + '" cy="' + eyeY + '" r="1.4" fill="#1a1410"/>';
+      out += '<circle cx="' + (ex + 1) + '" cy="' + (eyeY - 1.2) + '" r="0.8" fill="#fff" opacity="0.9"/>';
+      out += '<circle cx="' + (ex - 1.4) + '" cy="' + (eyeY + 1.6) + '" r="0.4" fill="#fff" opacity="0.6"/>';
+      out += '<path d="M ' + (ex - 5) + ' ' + (eyeY - 3.2) + ' Q ' + ex + ' ' + (eyeY - 5) + ' ' + (ex + 5) + ' ' + (eyeY - 3.2) + '" stroke="' + vdDarken(palette.skin, 0.5) + '" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.75"/>';
+    });
+    // nose (tiny)
+    out += '<path d="M ' + CX + ' ' + (eyeY + 6) + ' q 1.5 4 0 6" stroke="' + vdDarken(palette.skin, 0.18) + '" stroke-width="1.2" fill="none" stroke-linecap="round"/>';
+    // blush
+    out += '<ellipse cx="' + (CX - hw * 0.62) + '" cy="' + (eyeY + 10) + '" rx="4.2" ry="2.6" fill="#ff8a94" opacity="0.32"/>';
+    out += '<ellipse cx="' + (CX + hw * 0.62) + '" cy="' + (eyeY + 10) + '" rx="4.2" ry="2.6" fill="#ff8a94" opacity="0.32"/>';
+    // mouth (smile)
+    var mouthY = eyeY + 15;
+    out += '<path d="M ' + (CX - 6) + ' ' + mouthY + ' Q ' + CX + ' ' + (mouthY + 4.5) + ' ' + (CX + 6) + ' ' + mouthY + '" stroke="' + vdDarken(palette.skin, 0.35) + '" stroke-width="1.6" fill="none" stroke-linecap="round"/>';
+    return out;
+  }
+
+  function vdEars(m) {
+    var hw = 26;
+    var out = "";
+    [-1, 1].forEach(function (s) {
+      var ex = CX + s * (hw * 1.0);
+      out += '<ellipse cx="' + ex + '" cy="' + (VD_HEAD_TOP + 34) + '" rx="4.2" ry="7" />';
+    });
+    return out;
+  }
+
+  function vdPalette(ap) {
+    var skin = ap.skinTone || "#F2C9A4";
+    var hair = ap.hairColor || "#3B2A20";
+    var top = ap.topColor || "#4A6FA5";
+    var bottom = ap.bottomColor || "#33404E";
+    var eye = ap.eyeColor || "#4A3323";
+    return {
+      skin: skin, skinShadow: vdDarken(skin, 0.14), skinHighlight: vdLighten(skin, 0.22),
+      hair: hair, hairShadow: vdDarken(hair, 0.30), hairHighlight: vdLighten(hair, 0.30),
+      top: top, topShadow: vdDarken(top, 0.22), topHighlight: vdLighten(top, 0.2),
+      bottom: bottom, bottomShadow: vdDarken(bottom, 0.22),
+      eyeIris: eye,
+      eyeIrisLeft: ap.oddEye ? (ap.eyeColorLeft || eye) : eye,
+      eyeIrisRight: ap.oddEye ? (ap.eyeColorRight || eye) : eye,
+      shoe: "#2b2622", shoeShadow: vdDarken("#2b2622", 0.3)
+    };
+  }
+
+  var VD_GRAD_ID = 0;
+  function vdGrad(defs, id, from, to, x1, y1, x2, y2) {
+    defs.push('<linearGradient id="' + id + '" x1="' + x1 + '%" y1="' + y1 + '%" x2="' + x2 + '%" y2="' + y2 + '%">' +
+      '<stop offset="0%" stop-color="' + from + '"/><stop offset="100%" stop-color="' + to + '"/></linearGradient>');
+  }
+
+  function vdRenderCharacterSvg(ap, opts) {
+    opts = opts || {};
+    var m = vdBodyMetrics(ap.bodyType || "normal", ap.gender || "u");
+    var pal = vdPalette(ap);
+    var uid = "vd" + (VD_GRAD_ID++);
+    var defs = [];
+    vdGrad(defs, uid + "skin", pal.skinHighlight, pal.skinShadow, 30, 0, 70, 100);
+    vdGrad(defs, uid + "hair", pal.hairHighlight, pal.hairShadow, 20, 0, 80, 100);
+    vdGrad(defs, uid + "top", pal.topHighlight, pal.topShadow, 20, 0, 80, 100);
+    vdGrad(defs, uid + "bottom", pal.bottom, pal.bottomShadow, 20, 0, 80, 100);
+
+    var faceRatio = ap.faceRatio || 1;
+    var svg = "";
+    svg += '<defs>' + defs.join("") + '</defs>';
+    svg += '<g fill="url(#' + uid + 'skin)" stroke="' + vdDarken(pal.skin, 0.30) + '" stroke-width="1">';
+    // legs (behind pants)
+    svg += '<path d="' + vdLegPath(m, "l") + '"/>';
+    svg += '<path d="' + vdLegPath(m, "r") + '"/>';
+    svg += '</g>';
+    // shoes
+    svg += '<g fill="' + pal.shoe + '" stroke="' + pal.shoeShadow + '" stroke-width="1">';
+    svg += '<path d="' + vdShoePath(m, "l") + '"/><path d="' + vdShoePath(m, "r") + '"/>';
+    svg += '</g>';
+    // pants
+    svg += '<g fill="url(#' + uid + 'bottom)" stroke="' + pal.bottomShadow + '" stroke-width="1">';
+    svg += '<path d="' + vdPantsPath(m) + '"/>';
+    svg += '</g>';
+    // torso + arms (skin)
+    svg += '<g fill="url(#' + uid + 'skin)" stroke="' + vdDarken(pal.skin, 0.30) + '" stroke-width="1">';
+    svg += '<path d="' + vdTorsoPath(m) + '"/>';
+    var armL = vdArmPath(m, "l"), armR = vdArmPath(m, "r");
+    svg += '<path d="' + armL.d + '"/><path d="' + armR.d + '"/>';
+    svg += vdHandPath(m, "l") + vdHandPath(m, "r");
+    svg += '</g>';
+    // shirt (over torso + upper arm)
+    svg += '<g fill="url(#' + uid + 'top)" stroke="' + pal.topShadow + '" stroke-width="1">';
+    svg += '<path d="' + vdShirtPath(m) + '"/>';
+    svg += '</g>';
+    // shirt fabric fold highlight -- a single soft center-line rim light so the
+    // garment reads as cloth rather than a flat color blob at higher zoom
+    svg += '<path d="M ' + (CX - 3) + ' ' + (VY.shoulder + 6) + ' Q ' + (CX + 2) + ' ' + VY.chest + ' ' + (CX - 2) + ' ' + (VY.waist + 4) +
+      '" stroke="' + pal.topHighlight + '" stroke-width="2.2" fill="none" stroke-linecap="round" opacity="0.5"/>';
+    // hair back
+    svg += '<g fill="url(#' + uid + 'hair)" stroke="' + pal.hairShadow + '" stroke-width="1">';
+    svg += '<path d="' + vdHairBackPath(faceRatio) + '"/>';
+    svg += '</g>';
+    // neck + head (skin)
+    svg += '<g fill="url(#' + uid + 'skin)" stroke="' + vdDarken(pal.skin, 0.30) + '" stroke-width="1">';
+    svg += '<path d="' + vdNeckPath(m) + '"/>';
+    svg += '<path d="' + vdHeadPath(faceRatio) + '"/>';
+    svg += '</g>';
+    svg += '<g fill="' + pal.skin + '" stroke="' + vdDarken(pal.skin, 0.30) + '" stroke-width="1">' + vdEars(m) + '</g>';
+    // face features
+    svg += vdFaceFeaturesSvg(faceRatio, pal);
+    // hair front
+    svg += '<g fill="url(#' + uid + 'hair)" stroke="' + pal.hairShadow + '" stroke-width="1">';
+    svg += '<path d="' + vdHairFrontPath(faceRatio) + '"/>';
+    svg += '</g>';
+    // a few individual strand highlights so the hair silhouette isn't a flat blob at zoom
+    var hw2 = 26 * faceRatio;
+    [-0.35, 0, 0.4].forEach(function (t, i) {
+      var sx = VD_HEAD_CX + hw2 * t;
+      svg += '<path d="M ' + (sx - 3) + ' ' + (VD_HEAD_TOP - 6) + ' Q ' + sx + ' ' + (VD_HEAD_TOP + 6) + ' ' + (sx - 1) + ' ' + (VD_HEAD_TOP + 15) +
+        '" stroke="' + pal.hairHighlight + '" stroke-width="1.1" fill="none" stroke-linecap="round" opacity="0.55"/>';
+    });
+
+    var vb = opts.viewBox || "0 0 200 340";
+    var par = opts.preserveAspectRatio ? ' preserveAspectRatio="' + opts.preserveAspectRatio + '"' : "";
+    return '<svg viewBox="' + vb + '" width="100%" height="100%"' + par + ' xmlns="http://www.w3.org/2000/svg">' + svg + '</svg>';
+  }
+
+  global.VectorDoll = {
+    renderCharacterSvg: vdRenderCharacterSvg, bodyMetrics: vdBodyMetrics, crPath: crPath,
+    FULL_VIEWBOX: "0 0 200 340", FACE_VIEWBOX: "55 4 90 108", BODY_VIEWBOX: "0 0 200 340"
   };
 })(typeof window !== "undefined" ? window : this);
 
@@ -8229,8 +8746,25 @@ function defaultAppearance() {
     skinTone: APPEAR_SKIN_TONES[2], hairColor: APPEAR_HAIR_COLORS[1], topColor: APPEAR_OUTFIT_COLORS[0], bottomColor: APPEAR_OUTFIT_COLORS[6],
     bodyType: "normal", faceShape: "oval", hairStyle: "dandy", top: "shirt", bottom: "jeans", shoes: "sneakers", bustSize: "medium",
     eyebrowShape: "normal", eyeShape: "basic", eyeColor: APPEAR_EYE_COLORS[0], oddEye: false, eyeColorLeft: APPEAR_EYE_COLORS[0], eyeColorRight: APPEAR_EYE_COLORS[0],
-    mouthShape: "smile", facialHair: "none", memo: "", heightCm: null
+    mouthShape: "smile", facialHair: "none", memo: "", heightCm: null, faceRatio: 1, bodyRatio: 1
   };
+}
+/* 얼굴/신체 "비율" 조절 -- faceShape/bodyType 피커는 이미 있는 도트 부위를 다른
+ * 그림으로 통째로 바꿔 끼우는 이산 선택지라 "조금 더 갸름하게"류의 연속적인 조정이
+ * 안 됐다. 완전히 새로운 그림 자산 없이도 같은 효과를 내기 위해, 선택된 부위 위에
+ * 가로 방향 scaleX만 얹는 연속 슬라이더를 추가한다(세로 방향은 키 슬라이더가 이미
+ * 전담하므로 손대지 않음 -- 두 컨트롤의 책임을 분리해 서로 간섭하지 않게 한다). */
+var APPEAR_RATIO_MIN = 85, APPEAR_RATIO_MAX = 115;
+/* "확대" -- 미리보기 패널 자체의 표시 크기 배율. 패널 폭(얼굴 패널)과 cm당 px
+ * 환산값(체형·외형 패널)에 동시에 곱해 두 종류의 패널이 함께 커지고 작아지도록
+ * 한다(패널 3종이 서로 다른 방식으로 크기를 정하기 때문에 손대는 지점이 둘로
+ * 나뉜다). 캐릭터 데이터가 아니라 화면 상태이므로 저장하지 않는다(외견 렌더
+ * 모드·패널 표시 여부와 동일한 취급). */
+var APPEAR_ZOOM_MIN = 0.7, APPEAR_ZOOM_MAX = 1.6, APPEAR_ZOOM_STEP = 0.1;
+var APPEAR_PREVIEW_BASE_WIDTH = { 1: 420, 2: 360, 3: 300 };
+function appearZoomLevel(docId) {
+  state.appearZoom = state.appearZoom || {};
+  return state.appearZoom[docId] || 1;
 }
 
 /* heightCm is intentionally left unset until the user actually moves the slider, so the
@@ -8267,10 +8801,42 @@ function appearPanelVisible(docId) {
  * face crop stops just past the shoulders; the body crop keeps the full 0..GRID height. */
 var APPEAR_FACE_VIEWBOX = "20 0 88 70";
 var APPEAR_BODY_VIEWBOX = "20 0 88 128";
+
+/* ---------------- VectorDoll coverage gate ----------------
+ * VectorDoll (see engine.js) draws a real gradient-shaded vector character, but only
+ * for the option values listed below so far -- covering the full existing option
+ * matrix (82+ distinct hand-drawn parts) to that quality bar is a large, ongoing
+ * effort done in priority order, not a one-pass job. A character only switches to the
+ * new renderer once EVERY one of its current selections has vector coverage; anything
+ * else (any option not yet listed here) keeps rendering through PixelDoll exactly as
+ * before -- so no existing character's appearance ever regresses or goes blank while
+ * coverage is incomplete, it just doesn't upgrade yet. Extend these lists (never
+ * remove PixelDoll's own options) as more parts get a VectorDoll implementation. */
+var VECTOR_COVERAGE = {
+  gender: ["f", "m", "u"],
+  bodyType: ["normal", "slim", "curvy", "stocky", "broad", "muscular"],
+  faceShape: ["oval"],
+  hairStyle: ["dandy"],
+  top: ["shirt"],
+  bottom: ["jeans"],
+  shoes: ["sneakers"],
+  eyebrowShape: ["normal"],
+  eyeShape: ["basic"],
+  mouthShape: ["smile"],
+  facialHair: ["none"],
+  bustSize: ["medium"]
+};
+function appearanceUsesVectorEngine(ap) {
+  return Object.keys(VECTOR_COVERAGE).every(function (key) {
+    return VECTOR_COVERAGE[key].indexOf(ap[key]) !== -1;
+  });
+}
 function renderAppearanceFaceSvg(ap) {
+  if (appearanceUsesVectorEngine(ap)) return VectorDoll.renderCharacterSvg(ap, { viewBox: VectorDoll.FACE_VIEWBOX, preserveAspectRatio: "xMidYMin slice" });
   return PixelDoll.renderSvgString(buildAppearanceLayers(ap), buildAppearancePalette(ap), APPEAR_FACE_VIEWBOX, "xMidYMin slice");
 }
 function renderAppearanceBodySvg(ap) {
+  if (appearanceUsesVectorEngine(ap)) return VectorDoll.renderCharacterSvg(ap, { viewBox: VectorDoll.BODY_VIEWBOX });
   return PixelDoll.renderSvgString(buildAppearanceLayers(ap), buildAppearancePalette(ap), APPEAR_BODY_VIEWBOX);
 }
 function appearEffectiveHeightCm(ap) {
@@ -8452,6 +9018,18 @@ function mixTowardBlush(hex) {
   return "#" + hx(cl(r + 14)) + hx(cl(g - 8)) + hx(cl(b - 14));
 }
 function renderAppearanceSvg(ap) {
+  if (appearanceUsesVectorEngine(ap)) return VectorDoll.renderCharacterSvg(ap, { viewBox: VectorDoll.FULL_VIEWBOX });
+  return PixelDoll.renderSvgString(buildAppearanceLayers(ap), buildAppearancePalette(ap));
+}
+/* Picker-grid option thumbnails (pickerSection below) each preview ONE swapped-out
+ * attribute at a time -- if those thumbnails individually gated to VectorDoll based on
+ * their own single-option coverage, a grid of e.g. 6 face shapes would show 1 smooth
+ * vector thumbnail next to 5 pixel-art ones, which reads as broken rather than as
+ * incremental rollout. Thumbnails always preview in the same (PixelDoll) style so a
+ * browsing grid is visually consistent; only the real preview panels (which reflect
+ * the character's actual full current selection, not a hypothetical one) gate to
+ * VectorDoll via renderAppearanceSvg/Face/BodySvg above. */
+function renderAppearancePickThumbSvg(ap) {
   return PixelDoll.renderSvgString(buildAppearanceLayers(ap), buildAppearancePalette(ap));
 }
 
@@ -8466,7 +9044,10 @@ function renderAppearanceEditor(doc) {
   var panelsOn = appearPanelVisible(doc.id);
   var activeCount = (panelsOn.face ? 1 : 0) + (panelsOn.compare ? 1 : 0) + (panelsOn.outfit ? 1 : 0);
   var heightRowOn = panelsOn.compare || panelsOn.outfit;
-  var comparePxNow = appearComparePx(curCm, activeCount);
+  var zoom = appearZoomLevel(doc.id);
+  var comparePxNow = Math.round(appearComparePx(curCm, activeCount) * zoom);
+  var previewColWidth = Math.round((APPEAR_PREVIEW_BASE_WIDTH[activeCount] || 300) * zoom);
+  var faceRatio = ap.faceRatio || 1, bodyRatio = ap.bodyRatio || 1;
 
   /* Each category is a collapsed-by-default accordion row (small live thumbnail +
    * current selection name), not an always-expanded grid -- this, plus splitting
@@ -8487,7 +9068,7 @@ function renderAppearanceEditor(doc) {
         var thumbAp = Object.assign({}, ap); thumbAp[cat.key] = id;
         var o = dict[id];
         return '<button type="button" class="appear-pick-btn' + (id === current ? " on" : "") + '" data-pickval="' + esc(id) + '" title="' + esc(o.label || id) + '">' +
-          '<span class="appear-pick-thumb">' + renderAppearanceSvg(thumbAp) + '</span>' +
+          '<span class="appear-pick-thumb">' + renderAppearancePickThumbSvg(thumbAp) + '</span>' +
           '<span class="appear-pick-name">' + esc(o.label || id) + '</span>' +
           '</button>';
       }).join("") +
@@ -8544,7 +9125,7 @@ function renderAppearanceEditor(doc) {
   return '<div class="appear-card">' +
     '<div class="appear-head">' + ic("person", 15) + '<span>외견</span></div>' +
     '<div class="appear-body">' +
-    '<div class="appear-preview-col" data-count="' + activeCount + '">' +
+    '<div class="appear-preview-col" data-count="' + activeCount + '" style="width:' + previewColWidth + 'px">' +
     '<div class="appear-render-toggle">' +
     '<button type="button" class="' + (rasterOn ? "" : "on") + '" data-rendermode="dot">도트(SVG)</button>' +
     '<button type="button" class="' + (rasterOn ? "on" : "") + '" data-rendermode="raster">AI 원화(베타)</button>' +
@@ -8554,6 +9135,13 @@ function renderAppearanceEditor(doc) {
     '<button type="button" class="' + (panelsOn.compare ? "on" : "") + '" data-paneltoggle="compare">키·체형 비교</button>' +
     '<button type="button" class="' + (panelsOn.outfit ? "on" : "") + '" data-paneltoggle="outfit">외형 확인</button>' +
     '</div>' +
+    '<div class="appear-zoom-row">' +
+    '<span class="appear-height-row-label">확대</span>' +
+    '<button type="button" class="appear-zoom-btn" data-azoom="out" title="축소" ' + (zoom<=APPEAR_ZOOM_MIN?"disabled":"") + '>' + ic("zoomout", 13) + '</button>' +
+    '<span class="appear-zoom-readout">' + Math.round(zoom * 100) + '%</span>' +
+    '<button type="button" class="appear-zoom-btn" data-azoom="in" title="확대" ' + (zoom>=APPEAR_ZOOM_MAX?"disabled":"") + '>' + ic("zoomin", 13) + '</button>' +
+    '<button type="button" class="appear-zoom-btn" data-azoom="reset" title="100%로">' + ic("fit", 12) + '</button>' +
+    '</div>' +
     (heightRowOn
       ? '<div class="appear-height-row-shared">' +
         '<span class="appear-height-row-label">키</span>' +
@@ -8561,11 +9149,25 @@ function renderAppearanceEditor(doc) {
         '<span class="appear-height-row-value">' + ic("ruler", 12) + '<span class="appear-cm-readout">' + curCm + '</span>cm</span>' +
         '</div>'
       : "") +
+    (panelsOn.face
+      ? '<div class="appear-height-row-shared">' +
+        '<span class="appear-height-row-label">얼굴 비율</span>' +
+        '<input type="range" id="aFaceRatioSlider" min="' + APPEAR_RATIO_MIN + '" max="' + APPEAR_RATIO_MAX + '" step="1" value="' + Math.round(faceRatio * 100) + '">' +
+        '<span class="appear-height-row-value"><span class="appear-faceratio-readout">' + Math.round(faceRatio * 100) + '</span>%</span>' +
+        '</div>'
+      : "") +
+    (heightRowOn
+      ? '<div class="appear-height-row-shared">' +
+        '<span class="appear-height-row-label">신체 비율</span>' +
+        '<input type="range" id="aBodyRatioSlider" min="' + APPEAR_RATIO_MIN + '" max="' + APPEAR_RATIO_MAX + '" step="1" value="' + Math.round(bodyRatio * 100) + '">' +
+        '<span class="appear-height-row-value"><span class="appear-bodyratio-readout">' + Math.round(bodyRatio * 100) + '</span>%</span>' +
+        '</div>'
+      : "") +
     '<div class="appear-preview-group">' +
     (panelsOn.face
       ? '<div class="appear-panel appear-face-panel">' +
         '<div class="appear-panel-label">얼굴 확인</div>' +
-        '<div class="appear-face-figure" id="appearFacePreview">' +
+        '<div class="appear-face-figure" id="appearFacePreview" style="transform:scaleX(' + faceRatio + ')">' +
         (rasterOn
           ? '<img class="appear-face-img" id="appearFaceImg" src="' + rasterSrc + '" alt="얼굴 미리보기" style="filter:' + appearSkinFilterCss(ap.skinTone) + '">'
           : renderAppearanceFaceSvg(ap)) +
@@ -8577,7 +9179,7 @@ function renderAppearanceEditor(doc) {
         '<div class="appear-panel-label">키·체형 비교</div>' +
         '<div class="appear-compare-stage">' +
         '<div class="appear-compare-col">' +
-        '<div class="appear-compare-figure" style="height:' + appearComparePx(APPEAR_HEIGHT_BASELINE, activeCount) + 'px">' +
+        '<div class="appear-compare-figure" style="height:' + Math.round(appearComparePx(APPEAR_HEIGHT_BASELINE, activeCount) * zoom) + 'px">' +
         (rasterOn
           ? '<img src="' + rasterSrc + '" alt="기준 체형" style="filter:' + appearSkinFilterCss(templateAp.skinTone) + '">'
           : renderAppearanceBodySvg(templateAp)) +
@@ -8585,7 +9187,7 @@ function renderAppearanceEditor(doc) {
         '<div class="appear-compare-tag">기준 ' + APPEAR_HEIGHT_BASELINE + 'cm</div>' +
         '</div>' +
         '<div class="appear-compare-col">' +
-        '<div class="appear-compare-figure" id="appearCompareFigure" style="height:' + comparePxNow + 'px">' +
+        '<div class="appear-compare-figure" id="appearCompareFigure" style="height:' + comparePxNow + 'px;transform:scaleX(' + bodyRatio + ')">' +
         (rasterOn
           ? '<img id="appearCompareImg" src="' + rasterSrc + '" alt="현재 체형" style="filter:' + appearSkinFilterCss(ap.skinTone) + '">'
           : renderAppearanceBodySvg(ap)) +
@@ -8603,7 +9205,7 @@ function renderAppearanceEditor(doc) {
           ? '<div class="appear-outfit-placeholder" style="height:' + comparePxNow + 'px">' +
             '<span class="appear-outfit-placeholder-text">AI 원화(베타)는 아직 의상을 표현하지 못해요.<br>도트(SVG) 모드에서 완성된 외형을 확인해보세요.</span>' +
             '</div>'
-          : '<div class="appear-outfit-figure" id="appearOutfitFigure" style="height:' + comparePxNow + 'px">' + renderAppearanceBodySvg(ap) + '</div>' +
+          : '<div class="appear-outfit-figure" id="appearOutfitFigure" style="height:' + comparePxNow + 'px;transform:scaleX(' + bodyRatio + ')">' + renderAppearanceBodySvg(ap) + '</div>' +
             '<div class="appear-compare-tag">현재 <span class="appear-cm-readout">' + curCm + '</span>cm</div>') +
         '</div>'
       : "") +
@@ -8685,7 +9287,7 @@ function wireAppearanceEditor(doc) {
       ap.heightCm = cm;
       var panelsOn = appearPanelVisible(doc.id);
       var activeCount = (panelsOn.face ? 1 : 0) + (panelsOn.compare ? 1 : 0) + (panelsOn.outfit ? 1 : 0);
-      var px = appearComparePx(cm, activeCount) + "px";
+      var px = Math.round(appearComparePx(cm, activeCount) * appearZoomLevel(doc.id)) + "px";
       var compareFig = document.getElementById("appearCompareFigure");
       if (compareFig) compareFig.style.height = px;
       var outfitFig = document.getElementById("appearOutfitFigure");
@@ -8694,6 +9296,41 @@ function wireAppearanceEditor(doc) {
       saveData();
     });
   }
+  var faceRatioSlider = document.getElementById("aFaceRatioSlider");
+  if (faceRatioSlider) {
+    faceRatioSlider.addEventListener("input", function () {
+      var pct = parseInt(faceRatioSlider.value, 10);
+      ap.faceRatio = pct / 100;
+      var el = document.getElementById("appearFacePreview");
+      if (el) el.style.transform = "scaleX(" + ap.faceRatio + ")";
+      document.querySelectorAll(".appear-faceratio-readout").forEach(function (e) { e.textContent = pct; });
+      saveData();
+    });
+  }
+  var bodyRatioSlider = document.getElementById("aBodyRatioSlider");
+  if (bodyRatioSlider) {
+    bodyRatioSlider.addEventListener("input", function () {
+      var pct = parseInt(bodyRatioSlider.value, 10);
+      ap.bodyRatio = pct / 100;
+      ["appearCompareFigure", "appearOutfitFigure"].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.style.transform = "scaleX(" + ap.bodyRatio + ")";
+      });
+      document.querySelectorAll(".appear-bodyratio-readout").forEach(function (e) { e.textContent = pct; });
+      saveData();
+    });
+  }
+  document.querySelectorAll("[data-azoom]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      state.appearZoom = state.appearZoom || {};
+      var cur = appearZoomLevel(doc.id);
+      var next = btn.dataset.azoom === "in" ? Math.min(APPEAR_ZOOM_MAX, +(cur + APPEAR_ZOOM_STEP).toFixed(2))
+        : btn.dataset.azoom === "out" ? Math.max(APPEAR_ZOOM_MIN, +(cur - APPEAR_ZOOM_STEP).toFixed(2))
+        : 1;
+      state.appearZoom[doc.id] = next;
+      renderDocPage(doc);
+    });
+  });
   document.querySelectorAll("[data-atab]").forEach(function (btn) {
     btn.addEventListener("click", function () {
       state.appearTab = state.appearTab || {};
@@ -9337,6 +9974,12 @@ function renderDocPage(doc, containerId) {
 
 /* ---------------- graph page ---------------- */
 var gState = { mode: "idle", connectFrom: null, selected: null, panStart: null, dragNode: null, justDragged: false, boardMode: false };
+/* renderGraphPage used to attach fresh window mousemove/mouseup listeners on every visit
+ * without ever detaching the previous pair, so re-opening a relationship graph N times left
+ * N stale listener pairs permanently attached to window (leak + redundant work on every
+ * mouse move app-wide). Track the currently-attached pair and remove it before attaching a
+ * new one, mirroring the map editor's _mapWinHandlers pattern. */
+var _graphWinHandlers = null;
 
 function currentGraph() { return GRAPHS.find(function(g){ return g.id === state.activeId; }); }
 
@@ -9505,7 +10148,11 @@ function renderGraphPage(g) {
     gState.selected = null;
     drawGraph(g);
   });
-  window.addEventListener("mousemove", function(e){
+  if (_graphWinHandlers) {
+    window.removeEventListener("mousemove", _graphWinHandlers.move);
+    window.removeEventListener("mouseup", _graphWinHandlers.up);
+  }
+  function onGraphMouseMove(e){
     if (gState.panStart) {
       g.view.x = gState.panStart.vx + (e.clientX - gState.panStart.x);
       g.view.y = gState.panStart.vy + (e.clientY - gState.panStart.y);
@@ -9518,11 +10165,14 @@ function renderGraphPage(g) {
       dn.moved = true;
       updateNodePosition(g, dn.node);
     }
-  });
-  window.addEventListener("mouseup", function(){
+  }
+  function onGraphMouseUp(){
     if (gState.panStart) { gState.panStart = null; wrapEl.classList.remove("panning"); saveData(); }
     if (gState.dragNode) { gState.justDragged = gState.dragNode.moved; saveData(); gState.dragNode = null; }
-  });
+  }
+  window.addEventListener("mousemove", onGraphMouseMove);
+  window.addEventListener("mouseup", onGraphMouseUp);
+  _graphWinHandlers = { move: onGraphMouseMove, up: onGraphMouseUp };
 
   window.onkeydown = function(e) {
     if ((e.key === "Delete" || e.key === "Backspace") && gState.selected && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
@@ -9875,7 +10525,7 @@ function updateMapSaveIndicator(mp) {
   }
   var t = mapSaveTimes[mp.id];
   var timeStr = t ? new Date(t).toLocaleTimeString("ko-KR", { hour:"2-digit", minute:"2-digit", second:"2-digit" }) : "";
-  el.textContent = "✓ 저장됨" + (timeStr ? " · "+timeStr : "");
+  el.innerHTML = ic("checkmark",11) + " 저장됨" + (timeStr ? " · "+timeStr : "");
   el.classList.add("saved");
 }
 function mapApplySnapshot(mp, json) {
@@ -11078,7 +11728,7 @@ function renderMapPage(mp) {
       '<div class="novel-subrow" style="padding:0 22px 12px">' +
         '<button type="button" class="ms-sort-btn" id="mapUndoBtn" title="실행 취소 (Ctrl/Cmd+Z)"'+(mapCanUndo()?"":" disabled")+'>'+ic("chevL",11)+' 실행 취소</button>' +
         '<button type="button" class="ms-sort-btn" id="mapRedoBtn" title="다시 실행 (Ctrl/Cmd+Shift+Z)"'+(mapCanRedo()?"":" disabled")+'>'+ic("chevR",11)+' 다시 실행</button>' +
-        '<span class="ms-save-indicator saved" id="mapSaveIndicator" style="padding:2px 4px">✓ 저장됨</span>' +
+        '<span class="ms-save-indicator saved" id="mapSaveIndicator" style="padding:2px 4px">'+ic("checkmark",11)+' 저장됨</span>' +
         '<button type="button" class="ms-sort-btn" id="mapYearBtn" title="연도·연표 정보 설정">'+ic("calendar",11)+' '+(esc(mp.yearLabel)||"연도 설정")+'</button>' +
         '<button type="button" class="ms-sort-btn" id="mapRegionListBtn" title="지역이 겹쳐서 클릭하기 어려울 때 이름으로 바로 찾기">'+ic("map",11)+' 지역 목록('+mp.regions.length+')</button>' +
         '<button type="button" class="ms-sort-btn'+(mpState.showAlignment?" on":"")+'" id="mapAlignmentBtn" title="지역에 연결된 세력의 정파·사파·마교 진영으로 한 번에 색칠해서 보기">'+ic("sword",11)+' 세력권 보기</button>' +
@@ -12043,7 +12693,7 @@ function flashSaveIndicator() {
   el.classList.remove("saved");
   clearTimeout(msSaveTimer);
   msSaveTimer = setTimeout(function(){
-    el.textContent = "저장됨";
+    el.innerHTML = ic("checkmark",11) + " 저장됨";
     el.classList.add("saved");
   }, 500);
 }
@@ -12296,7 +12946,7 @@ function renderManuscriptPage(m) {
 
   main.innerHTML =
     '<div class="graph-shell">' +
-      '<div class="graph-title-bar"><input class="graph-title" id="msTitle" value="'+esc(m.title)+'" placeholder="원고(화) 제목"><span class="ms-save-indicator saved" id="msSaveIndicator">저장됨</span><span class="ms-char-count" id="msCharCount">'+fmtNum(charCount(m.text))+'자</span><button class="page-del" id="deleteMsBtn" style="margin-top:0">'+ic("trash",13)+'<span>원고 삭제</span></button></div>' +
+      '<div class="graph-title-bar"><input class="graph-title" id="msTitle" value="'+esc(m.title)+'" placeholder="원고(화) 제목"><span class="ms-save-indicator saved" id="msSaveIndicator">'+ic("checkmark",11)+' 저장됨</span><span class="ms-char-count" id="msCharCount">'+fmtNum(charCount(m.text))+'자</span><button class="page-del" id="deleteMsBtn" style="margin-top:0">'+ic("trash",13)+'<span>원고 삭제</span></button></div>' +
       '<div class="page-pad" style="padding-top:26px">' + povHtml + statsHtml + tabsHtml +
         (isBook
           ? '<div class="ms-editor-stack">' + bodyHtml + '<div class="ms-context-panel stacked" id="msContextPanel"></div></div>'
@@ -12412,7 +13062,7 @@ function flashEsSaveIndicator() {
   el.textContent = "저장 중…";
   el.classList.remove("saved");
   clearTimeout(esSaveTimer);
-  esSaveTimer = setTimeout(function(){ el.textContent = "저장됨"; el.classList.add("saved"); }, 500);
+  esSaveTimer = setTimeout(function(){ el.innerHTML = ic("checkmark",11) + " 저장됨"; el.classList.add("saved"); }, 500);
 }
 function applyEsStyle(e) {
   var el = document.getElementById("esText");
@@ -12552,7 +13202,7 @@ function renderEssayEntryPage(e) {
 
   main.innerHTML =
     '<div class="graph-shell">' +
-      '<div class="graph-title-bar"><input class="graph-title" id="esTitle" value="'+esc(e.title)+'" placeholder="글 제목"><span class="ms-save-indicator saved" id="esSaveIndicator">저장됨</span><span class="ms-char-count" id="esCharCount">'+fmtNum(charCount(e.text))+'자</span><button class="page-del" id="deleteEsBtn" style="margin-top:0">'+ic("trash",13)+'<span>글 삭제</span></button></div>' +
+      '<div class="graph-title-bar"><input class="graph-title" id="esTitle" value="'+esc(e.title)+'" placeholder="글 제목"><span class="ms-save-indicator saved" id="esSaveIndicator">'+ic("checkmark",11)+' 저장됨</span><span class="ms-char-count" id="esCharCount">'+fmtNum(charCount(e.text))+'자</span><button class="page-del" id="deleteEsBtn" style="margin-top:0">'+ic("trash",13)+'<span>글 삭제</span></button></div>' +
       '<div class="page-pad" style="padding-top:26px">' + metaHtml + statsHtml + bodyHtml + '</div>' +
     '</div>';
 
@@ -13112,6 +13762,18 @@ function renderHomePage() {
       '</div>';
     });
     html += '</div>';
+
+    var qsWork = WORKS[WORKS.length-1];
+    html += '<div class="home-quickstart">' +
+      '<div class="home-quickstart-for">빠른 시작 — <b>'+esc(qsWork.title||"제목 없는 작품")+'</b>에 바로 추가합니다</div>' +
+      '<div class="home-quick-grid">' +
+        '<button type="button" class="home-quick-btn" id="qsChar"><span class="qi">'+ic("person",17)+'</span><span class="qt">새 캐릭터</span></button>' +
+        '<button type="button" class="home-quick-btn" id="qsPlace"><span class="qi">'+ic("pin",17)+'</span><span class="qt">새 장소</span></button>' +
+        '<button type="button" class="home-quick-btn" id="qsWorld"><span class="qi">'+ic("magic",17)+'</span><span class="qt">새 세계관 설정</span></button>' +
+        '<button type="button" class="home-quick-btn" id="qsMap"><span class="qi">'+ic("map",17)+'</span><span class="qt">새 지도</span></button>' +
+        '<button type="button" class="home-quick-btn" id="qsWrite"><span class="qi">'+ic("pen",17)+'</span><span class="qt">이어서 쓰기</span></button>' +
+      '</div>' +
+    '</div>';
   }
 
   html += (noWorks
@@ -13145,6 +13807,24 @@ function renderHomePage() {
   main.querySelectorAll("[data-openwork]").forEach(function(card){
     card.addEventListener("click", function(){ openWorkOverview(card.dataset.openwork); });
   });
+  if (!noWorks) {
+    var qsWorkId = WORKS[WORKS.length-1].id;
+    var qc = document.getElementById("qsChar"); if (qc) qc.addEventListener("click", function(){ newDoc(qsWorkId, "등장인물"); });
+    var qp = document.getElementById("qsPlace"); if (qp) qp.addEventListener("click", function(){ newDoc(qsWorkId, "장소"); });
+    var qw = document.getElementById("qsWorld"); if (qw) qw.addEventListener("click", function(){ newDoc(qsWorkId, "세계관"); });
+    var qm = document.getElementById("qsMap"); if (qm) qm.addEventListener("click", function(){ newMapWithTemplatePicker(qsWorkId); });
+    var qr = document.getElementById("qsWrite"); if (qr) qr.addEventListener("click", function(){ quickResumeWrite(qsWorkId); });
+  }
+}
+function quickResumeWrite(workId) {
+  var novelIds = NOVELS.filter(function(n){ return n.workId===workId; }).map(function(n){ return n.id; });
+  var eps = MANUSCRIPTS.filter(function(m){ return novelIds.indexOf(m.novelId)!==-1; });
+  if (eps.length) {
+    var last = eps.reduce(function(a,b){ return (b.createdAt||0) > (a.createdAt||0) ? b : a; });
+    state.mode = "manuscript"; state.activeId = last.id; render();
+  } else {
+    newNovel(workId);
+  }
 }
 
 /* ---------------- root render ---------------- */
@@ -13153,6 +13833,13 @@ function render() {
   applyFocusModeClass();
   window.onkeydown = null;
   hideRegionTooltip();
+  /* 지도/관계도 페이지는 각각 window 레벨 mousemove/mouseup 리스너를 붙인다. 같은
+   * 페이지 안에서 다시 그릴 때는 각 렌더 함수가 스스로 이전 리스너를 정리하지만,
+   * 완전히 다른 페이지로 떠나버리면(예: 지도 보다가 홈으로) 그 페이지의 render
+   * 함수가 다시 불리지 않아 정리 기회 자체가 없다 -- 페이지 전환의 유일한 공통
+   * 관문인 여기서 한 번 더 정리해 새어나가지 않게 막는다. */
+  if (_mapWinHandlers) { window.removeEventListener("mousemove", _mapWinHandlers.move); window.removeEventListener("mouseup", _mapWinHandlers.up); _mapWinHandlers = null; }
+  if (_graphWinHandlers) { window.removeEventListener("mousemove", _graphWinHandlers.move); window.removeEventListener("mouseup", _graphWinHandlers.up); _graphWinHandlers = null; }
   if (state.mode === "doc") {
     var d = currentDoc();
     if (d) { renderDocPage(d); return; }
@@ -13315,11 +14002,12 @@ document.getElementById("search").addEventListener("keydown", function(e){
   if (e.key === "Enter" && state.query.trim()) { state.mode = "search"; render(); }
 });
 
-document.getElementById("brandHome").addEventListener("click", function(){ state.mode = "empty"; state.activeId = null; render(); });
+document.getElementById("brandHome").addEventListener("click", function(){ state.mode = "empty"; state.activeId = null; render(); closeMobileSidebar(); });
+document.getElementById("brandHomeMobile").addEventListener("click", function(){ state.mode = "empty"; state.activeId = null; render(); closeMobileSidebar(); });
 
 var ASSET_CSS = `/* World-Building Viewer — self-contained stylesheet (no external fonts/CDN). */
 :root {
-  --accent: #3B82F6;
+  --accent: #A5691E;
   --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
   --accent-strong: color-mix(in srgb, var(--accent) 82%, black);
   --bg: #faf9f6; --bg-card: #ffffff; --bg-card-hover: #f4f3ef; --bg-sidebar: #f4f3ef;
@@ -13460,14 +14148,14 @@ a:hover { text-decoration: underline; }
 .wb-h1 { font-size: 25px; font-weight: 700; margin: 0 0 6px; }
 .wb-sub { color: var(--ink-faint); font-size: 13.5px; margin: 0 0 24px; }
 .wb-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 12px; margin-bottom: 28px; }
-.wb-stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 3px var(--shadow); }
+.wb-stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-1); }
 .wb-stat-card .n { font-size: 22px; font-weight: 700; }
 .wb-stat-card .l { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
 
 .wb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px,1fr)); gap: 14px; }
 .wb-card {
   background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 16px; box-shadow: 0 1px 3px var(--shadow); transition: transform .14s, box-shadow .14s, border-color .14s;
+  padding: 16px; box-shadow: var(--shadow-1); transition: transform .14s, box-shadow .14s, border-color .14s;
   display: flex; flex-direction: column; gap: 6px;
 }
 .wb-card:hover { transform: translateY(-2px); box-shadow: 0 10px 26px var(--shadow); border-color: var(--accent); text-decoration: none; }
@@ -13481,7 +14169,7 @@ a:hover { text-decoration: underline; }
 .wb-tag { font-size: 10.5px; padding: 3px 8px; border-radius: 12px; background: var(--bg-card-hover); color: var(--ink-faint); }
 .wb-empty { color: var(--ink-faint); font-size: 13px; padding: 40px 0; text-align: center; }
 
-.wb-detail-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 1px 3px var(--shadow); padding: 24px; margin-bottom: 18px; }
+.wb-detail-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-1); padding: 24px; margin-bottom: 18px; }
 .wb-detail-head { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 4px; }
 .wb-detail-avatar { width: 76px; height: 76px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-strong); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 28px; flex: none; }
 .wb-detail-title { font-size: 24px; font-weight: 700; }
