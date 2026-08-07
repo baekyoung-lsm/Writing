@@ -176,6 +176,8 @@
   .sidebar-adv-details summary::before { content:"\25B8"; font-size:9px; transition:transform .12s; display:inline-block; }
   .sidebar-adv-details[open] summary::before { transform:rotate(90deg); }
   .sidebar-adv-details .backup-row { margin:8px 0 2px; }
+  .storage-usage-row { font-size:11px; color:var(--ink-faint); margin-top:6px; line-height:1.6; }
+  .storage-usage-row .su-warn { color:#b23b3b; font-weight:600; }
   .backup-row { display:flex; gap:6px; margin-bottom:8px; }
   .backup-btn { flex:1; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:7px; padding:6px 4px; font-size:11.5px; color:var(--ink-soft); }
   .backup-btn:hover { border-color:var(--accent); color:var(--accent); }
@@ -1120,13 +1122,14 @@
     </div>
     <div id="sbBody" style="display:flex; flex-direction:column; gap:10px; overflow-y:auto;"></div>
     <div class="sidebar-foot">
-      <details class="sidebar-adv-details">
+      <details class="sidebar-adv-details" id="dataManageDetails">
         <summary>데이터 관리</summary>
         <div class="backup-row">
           <button type="button" class="backup-btn" id="exportBtn">내보내기</button>
           <button type="button" class="backup-btn" id="importBtn">가져오기</button>
           <input type="file" id="importFile" accept="application/json" style="display:none">
         </div>
+        <div class="storage-usage-row" id="storageUsageRow">저장 공간 확인 중…</div>
       </details>
       작품 폴더 안에 원고(소설·화)와 설정 노트(문서·관계도·지도·표·연표·문자)가 들어갑니다.
     </div>
@@ -2007,6 +2010,140 @@ function saveData() {
     showStorageSaveError();
     return false;
   }
+}
+/* ---------------- 지도 배경 이미지 자산 저장소 (IndexedDB) ----------------
+ * localStorage는 몇 MB 수준 용량 제한이 있고, 이 앱은 편집마다 전체 상태를
+ * 동기적으로 JSON.stringify해서 저장하는 구조다. 지도 배경 이미지(Base64,
+ * 크게는 수 MB)를 지도 데이터(mp) 자체에 박아 넣으면 그 한도에 금방
+ * 부딪힌다 -- 지도 회차(버전)를 하나 추가할 때마다 이미지가 통째로
+ * 복제되는 문제도 있었다. 이미지 원본은 IndexedDB에 assetId로 저장하고,
+ * mp에는 assetId 문자열(mp.bgAssetId / mp.traceAssetId)만 남긴다.
+ * 같은 assetId를 여러 지도(회차)가 공유할 수 있으므로, 크롭/회전처럼
+ * 내용이 바뀌는 편집은 기존 자산을 덮어쓰지 않고 항상 새 assetId를
+ * 만든다(자산은 한 번 쓰이면 내용이 바뀌지 않는다는 불변식을 지켜야
+ * 다른 회차가 공유 중인 자산이 옆에서 깨지지 않는다). 이 앱의 다른
+ * 비동기 작업(traceMapImage 등)과 마찬가지로 콜백 스타일을 그대로
+ * 따르며, IndexedDB를 못 쓰는 환경에서는 각 호출부가 mp.bgImage/
+ * traceImage 문자열 필드에 예전처럼 직접 저장하는 방식으로 자동
+ * 대체된다(완전히 새로운 기능이 아니라 예전 동작의 안전망). */
+var MAP_ASSET_DB_NAME = "jipseul_map_assets_v1";
+var MAP_ASSET_STORE = "assets";
+var _mapAssetDb = null;
+var _mapAssetDbWaiters = null;
+var _mapAssetCache = {}; // assetId -> dataUrl. 한 번 로드되면 세션 동안 메모리에만 유지(localStorage엔 안 감).
+function openMapAssetDb(callback) {
+  if (_mapAssetDb) { callback(_mapAssetDb); return; }
+  if (!window.indexedDB) { callback(null); return; }
+  if (_mapAssetDbWaiters) { _mapAssetDbWaiters.push(callback); return; }
+  _mapAssetDbWaiters = [callback];
+  var req;
+  try { req = indexedDB.open(MAP_ASSET_DB_NAME, 1); } catch (e) { req = null; }
+  if (!req) {
+    var failWaiters = _mapAssetDbWaiters; _mapAssetDbWaiters = null;
+    failWaiters.forEach(function(cb){ cb(null); });
+    return;
+  }
+  req.onupgradeneeded = function(e){
+    var db = e.target.result;
+    if (!db.objectStoreNames.contains(MAP_ASSET_STORE)) db.createObjectStore(MAP_ASSET_STORE);
+  };
+  req.onsuccess = function(e){
+    _mapAssetDb = e.target.result;
+    var waiters = _mapAssetDbWaiters; _mapAssetDbWaiters = null;
+    waiters.forEach(function(cb){ cb(_mapAssetDb); });
+  };
+  req.onerror = function(){
+    var waiters = _mapAssetDbWaiters; _mapAssetDbWaiters = null;
+    waiters.forEach(function(cb){ cb(null); });
+  };
+}
+function putMapAsset(dataUrl, callback) {
+  if (!dataUrl) { callback(null); return; }
+  openMapAssetDb(function(db){
+    if (!db) { callback(null); return; }
+    var id = uid() + uid();
+    try {
+      var tx = db.transaction(MAP_ASSET_STORE, "readwrite");
+      tx.objectStore(MAP_ASSET_STORE).put(dataUrl, id);
+      tx.oncomplete = function(){ _mapAssetCache[id] = dataUrl; callback(id); };
+      tx.onerror = function(){ callback(null); };
+    } catch (e) { callback(null); }
+  });
+}
+function getMapAsset(id, callback) {
+  if (!id) { callback(null); return; }
+  if (_mapAssetCache[id] !== undefined) { callback(_mapAssetCache[id]); return; }
+  openMapAssetDb(function(db){
+    if (!db) { callback(null); return; }
+    try {
+      var tx = db.transaction(MAP_ASSET_STORE, "readonly");
+      var req = tx.objectStore(MAP_ASSET_STORE).get(id);
+      req.onsuccess = function(){ _mapAssetCache[id] = req.result || null; callback(_mapAssetCache[id]); };
+      req.onerror = function(){ callback(null); };
+    } catch (e) { callback(null); }
+  });
+}
+/* mp가 더 이상 참조하지 않게 된 assetId를 지운다. 회차(버전)가 같은
+ * 자산을 공유할 수 있으므로, 다른 지도가 아직 쓰고 있으면 지우지 않는다. */
+function releaseMapAssetIfUnused(assetId) {
+  if (!assetId) return;
+  var stillUsed = MAPS.some(function(m){ return m.bgAssetId === assetId || m.traceAssetId === assetId; });
+  if (stillUsed) return;
+  delete _mapAssetCache[assetId];
+  openMapAssetDb(function(db){
+    if (!db) return;
+    try { db.transaction(MAP_ASSET_STORE, "readwrite").objectStore(MAP_ASSET_STORE).delete(assetId); } catch (e) {}
+  });
+}
+function mapHasBgImage(mp) { return !!(mp.bgAssetId || mp.bgImage); }
+function mapHasTraceImage(mp) { return !!(mp.traceAssetId || mp.traceImage); }
+/* 지도의 배경/트레이스 이미지를 그릴 때 쓸 data URL을 구한다. assetId가
+ * 있는데 아직 캐시에 없으면(비동기 로드 필요) undefined를 돌려준다 --
+ * 호출부는 이 경우 getMapAsset으로 로드를 시작하고 로드가 끝나면 다시
+ * 그려야 한다. assetId가 아예 없으면(마이그레이션 전이거나 IndexedDB를
+ * 못 쓰는 환경) mp에 직접 저장된 문자열을 그대로 쓴다. */
+function resolveMapBgSrc(mp, mode) {
+  var assetId = mode === "trace" ? mp.traceAssetId : mp.bgAssetId;
+  if (assetId) return _mapAssetCache[assetId] !== undefined ? _mapAssetCache[assetId] : undefined;
+  return (mode === "trace" ? mp.traceImage : mp.bgImage) || null;
+}
+/* 배경 이미지가 이미 IndexedDB 자산이면 그 데이터를, 아니면(마이그레이션
+ * 전) mp에 직접 저장된 문자열을 콜백으로 돌려준다 -- 크롭/회전/재추적처럼
+ * 원본 픽셀 데이터가 실제로 필요한 편집에서 공용으로 쓴다. */
+function resolveMapBgSource(mp, callback) {
+  if (mp.bgAssetId) { getMapAsset(mp.bgAssetId, callback); return; }
+  callback(mp.bgImage || null);
+}
+/* 예전 형식(mp.bgImage/traceImage에 Base64 문자열을 직접 저장)으로 저장된
+ * 지도를 IndexedDB 자산 저장소로 옮긴다. 페이지를 처음 그린 뒤(render())
+ * 한 번만 백그라운드로 실행되고, 끝나면 지금 열려 있는 지도가 있으면
+ * 다시 그려서 이미지가 반영되게 한다. IndexedDB에 저장하지 못하면
+ * (지원 안 하는 환경 등) 문자열 필드를 그대로 남겨 예전 방식으로 계속
+ * 동작하게 한다 -- 마이그레이션 실패가 이미지 유실로 이어지면 안 된다. */
+function migrateMapImageAssets() {
+  var pending = MAPS.filter(function(mp){ return (typeof mp.bgImage === "string" && mp.bgImage) || (typeof mp.traceImage === "string" && mp.traceImage); });
+  if (!pending.length) return;
+  var remaining = pending.length;
+  function mapDone() {
+    remaining--;
+    if (remaining <= 0) {
+      saveData();
+      if (state.mode === "map" && currentMap()) drawMap(currentMap());
+    }
+  }
+  pending.forEach(function(mp){
+    var need = (mp.bgImage ? 1 : 0) + (mp.traceImage ? 1 : 0);
+    var got = 0;
+    function partDone(){ got++; if (got >= need) mapDone(); }
+    if (mp.bgImage) {
+      var oldBg = mp.bgImage;
+      putMapAsset(oldBg, function(id){ if (id) { mp.bgAssetId = id; mp.bgImage = null; } partDone(); });
+    }
+    if (mp.traceImage) {
+      var oldTrace = mp.traceImage;
+      putMapAsset(oldTrace, function(id){ if (id) { mp.traceAssetId = id; mp.traceImage = null; } partDone(); });
+    }
+  });
 }
 var _boot = loadData();
 var DOCS = _boot.docs || [];
@@ -4483,7 +4620,7 @@ function newMap(workId, opts) {
     level: opts.level || (opts.parentMapId ? "region" : "world"),
     yearLabel: opts.yearLabel || "",
     linkedTimelineId: null, linkedEventId: null,
-    bgImage: null, bgOpacity: 0.35, showBg: true,
+    bgImage: null, bgAssetId: null, traceAssetId: null, bgOpacity: 0.35, showBg: true,
     view: { x: 0, y: 0, scale: 1 },
     regions: [], lines: [], markers: [], dangerZones: [], gates: [],
     scaleKmPerUnit: null,
@@ -4993,6 +5130,7 @@ function deleteMap(id) {
     message: '"'+(mp.title||"제목 없음")+'"을(를) 삭제하면 되돌릴 수 없습니다.' + (siblingCount > 1 ? ' 이 지도에 연결된 다른 회차('+(siblingCount-1)+'개)는 그대로 남아요.' : ''),
     confirmLabel: "삭제", danger: true,
     onConfirm: function(){
+      var bgAssetId = mp.bgAssetId, traceAssetId = mp.traceAssetId;
       MAPS.forEach(function(m){
         if (m.parentMapId === id) m.parentMapId = null;
         (m.regions||[]).forEach(function(r){ if (r.childMapId === id) r.childMapId = null; });
@@ -5000,6 +5138,8 @@ function deleteMap(id) {
       MAPS = MAPS.filter(function(x){ return x.id !== id; });
       if (state.activeId === id) { state.mode = "empty"; state.activeId = null; }
       saveData(); render();
+      releaseMapAssetIfUnused(bgAssetId);
+      releaseMapAssetIfUnused(traceAssetId);
     }
   });
 }
@@ -5036,8 +5176,13 @@ function addMapVersion(mp) {
     mapType: mp.mapType, era: mp.era,
     parentMapId: mp.parentMapId, level: mp.level,
     yearLabel: "", linkedTimelineId: null, linkedEventId: null,
-    bgImage: mp.bgImage, bgWidth: mp.bgWidth, bgHeight: mp.bgHeight,
-    bgOpacity: mp.bgOpacity, bgMode: mp.bgMode, traceImage: mp.traceImage,
+    /* 배경/트레이스 이미지는 같은 assetId를 그대로 공유한다(복제 안 함) --
+     * 크롭/회전처럼 내용이 바뀌는 편집은 항상 새 assetId를 만들기 때문에
+     * 이 회차가 나중에 따로 편집해도 원본 회차의 이미지는 옆에서 깨지지 않는다. */
+    bgAssetId: mp.bgAssetId || null, bgImage: mp.bgAssetId ? null : (mp.bgImage || null),
+    bgWidth: mp.bgWidth, bgHeight: mp.bgHeight,
+    bgOpacity: mp.bgOpacity, bgMode: mp.bgMode,
+    traceAssetId: mp.traceAssetId || null, traceImage: mp.traceAssetId ? null : (mp.traceImage || null),
     view: Object.assign({}, mp.view),
     regions: clone.regions, lines: clone.lines, markers: clone.markers, dangerZones: clone.dangerZones, gates: clone.gates,
     scaleKmPerUnit: mp.scaleKmPerUnit,
@@ -5069,10 +5214,13 @@ function deleteMapVersion(mp) {
     message: '이 회차의 국경선·세력·이동경로·랜드마크가 모두 함께 삭제되고, 되돌릴 수 없습니다. 다른 회차는 영향받지 않아요.',
     confirmLabel: "삭제", danger: true,
     onConfirm: function(){
+      var bgAssetId = mp.bgAssetId, traceAssetId = mp.traceAssetId;
       var remaining = siblings.filter(function(m){ return m.id !== mp.id; });
       MAPS = MAPS.filter(function(x){ return x.id !== mp.id; });
       if (state.activeId === mp.id) { state.mode = "map"; state.activeId = remaining[0].id; }
       saveData(); render();
+      releaseMapAssetIfUnused(bgAssetId);
+      releaseMapAssetIfUnused(traceAssetId);
     }
   });
 }
@@ -9669,14 +9817,21 @@ function currentMap() { return MAPS.find(function(mp){ return mp.id === state.ac
  * 같으면(선택만 바뀌었거나 세력권 보기 토글 등) 아무 것도 쌓지 않아
  * 실제 데이터 변경만 히스토리에 남는다. */
 var mapHistory = { mapId: null, past: [], future: [], limit: 60 };
-/* 배경 이미지 필드(bgImage 등)도 스냅샷에 포함한다 -- 그래야 이미지 회전(크기가
- * 바뀌고 좌표가 재투영되는 확정적 편집)도 다른 편집과 동일하게 Ctrl+Z 대상이
- * 된다. 배경 이미지가 큰 데이터 URL이라 스냅샷 하나당 메모리 비용이 커질 수는
- * 있지만, 이 앱의 히스토리는 애초에 전체 상태를 통째로 복사하는 단순한
- * 구조(증분 diff가 아님)를 택했으므로 일관성을 위해 그대로 따른다 -- 실제
- * 변경이 없으면(선택만 바뀌는 등) mapHistoryCommit의 dedup이 걸러내 준다. */
+/* 배경 이미지 필드도 스냅샷에 포함한다 -- 그래야 이미지 회전(크기가 바뀌고
+ * 좌표가 재투영되는 확정적 편집)도 다른 편집과 동일하게 Ctrl+Z 대상이 된다.
+ * 이미지 자체는 IndexedDB 자산 저장소에 있고 여기엔 assetId(짧은 문자열)만
+ * 담기 때문에 스냅샷이 커지지 않는다 -- assetId가 없는(마이그레이션 전이거나
+ * IndexedDB를 못 쓰는) 경우에만 예전처럼 문자열 그대로 담는다. undo/redo는
+ * assetId 참조만 되돌릴 뿐 IndexedDB에서 실제로 자산을 지우지는 않는다 --
+ * redo로 다시 필요해질 수 있으므로 자산 정리는 크롭/회전/삭제 같은 확정적
+ * 편집에서만 한다. */
 function mapSnapshot(mp) {
-  return JSON.stringify({ regions: mp.regions, lines: mp.lines, markers: mp.markers, dangerZones: mp.dangerZones||[], gates: mp.gates||[], bgImage: mp.bgImage||null, bgWidth: mp.bgWidth||0, bgHeight: mp.bgHeight||0, bgMode: mp.bgMode||"hidden", traceImage: mp.traceImage||null });
+  return JSON.stringify({
+    regions: mp.regions, lines: mp.lines, markers: mp.markers, dangerZones: mp.dangerZones||[], gates: mp.gates||[],
+    bgAssetId: mp.bgAssetId||null, bgImage: mp.bgAssetId ? null : (mp.bgImage||null),
+    bgWidth: mp.bgWidth||0, bgHeight: mp.bgHeight||0, bgMode: mp.bgMode||"hidden",
+    traceAssetId: mp.traceAssetId||null, traceImage: mp.traceAssetId ? null : (mp.traceImage||null)
+  });
 }
 function mapHistoryEnsure(mp) {
   if (mapHistory.mapId !== mp.id) {
@@ -9727,9 +9882,11 @@ function mapApplySnapshot(mp, json) {
   var snap = JSON.parse(json);
   mp.regions = snap.regions; mp.lines = snap.lines; mp.markers = snap.markers;
   mp.dangerZones = snap.dangerZones; mp.gates = snap.gates;
-  if (snap.bgImage !== undefined) {
-    mp.bgImage = snap.bgImage; mp.bgWidth = snap.bgWidth; mp.bgHeight = snap.bgHeight;
-    mp.bgMode = snap.bgMode; mp.traceImage = snap.traceImage;
+  if (snap.bgAssetId !== undefined || snap.bgImage !== undefined) {
+    mp.bgAssetId = snap.bgAssetId || null; mp.bgImage = snap.bgImage || null;
+    mp.bgWidth = snap.bgWidth; mp.bgHeight = snap.bgHeight;
+    mp.bgMode = snap.bgMode;
+    mp.traceAssetId = snap.traceAssetId || null; mp.traceImage = snap.traceImage || null;
   }
   mpState.selected = null;
   saveData();
@@ -10075,7 +10232,7 @@ var MAP_ROTATE_HANDLE_R = 70;
  * applyMapRotation이 커밋한다 -- 드래그 중에는 미리보기일 뿐이다. */
 function updateRotateOverlay(mp) {
   var gEl = document.getElementById("mapG");
-  if (!gEl || !mp.bgImage || mpState.tool !== "rotate") { removeRotateOverlay(); return; }
+  if (!gEl || !mapHasBgImage(mp) || mpState.tool !== "rotate") { removeRotateOverlay(); return; }
   if (!mpState.rotatePivot) mpState.rotatePivot = [mp.bgWidth / 2, mp.bgHeight / 2];
   var pivot = mpState.rotatePivot;
   var deg = mpState.rotateDeg || 0;
@@ -10167,26 +10324,38 @@ function applyMapCrop(mp, x, y, w, h) {
     };
     img.src = dataUrl;
   }
-  cropDataUrl(mp.bgImage, function(newBg){
-    mp.bgImage = newBg;
-    mp.bgWidth = w; mp.bgHeight = h;
-    mp.traceImage = null;
-    mp.bgMode = newBg ? "original" : "hidden";
-    mp.regions.forEach(function(r){ r.points = r.points.map(function(p){ return [p[0]-x, p[1]-y]; }); });
-    mp.lines.forEach(function(l){ l.points = l.points.map(function(p){ return [p[0]-x, p[1]-y]; }); });
-    mp.markers.forEach(function(mk){ mk.x -= x; mk.y -= y; });
-    fitMap(mp);
-    saveData(); drawMap(mp);
-    if (newBg) {
-      traceMapImage(newBg, 60, function(traceUrl){
-        mp.traceImage = traceUrl;
-        mp.bgMode = "trace";
-        saveData();
-        mapHistorySuppressed = true;
-        drawMap(mp);
-        mapHistorySuppressed = false;
-      });
-    }
+  var oldBgAssetId = mp.bgAssetId, oldTraceAssetId = mp.traceAssetId;
+  resolveMapBgSource(mp, function(sourceUrl){
+    cropDataUrl(sourceUrl, function(newBg){
+      function afterStore(newAssetId){
+        mp.bgAssetId = newAssetId || null;
+        mp.bgImage = newAssetId ? null : newBg; // IndexedDB 실패 시엔 예전처럼 문자열로 보관
+        mp.bgWidth = w; mp.bgHeight = h;
+        mp.traceAssetId = null; mp.traceImage = null;
+        mp.bgMode = newBg ? "original" : "hidden";
+        mp.regions.forEach(function(r){ r.points = r.points.map(function(p){ return [p[0]-x, p[1]-y]; }); });
+        mp.lines.forEach(function(l){ l.points = l.points.map(function(p){ return [p[0]-x, p[1]-y]; }); });
+        mp.markers.forEach(function(mk){ mk.x -= x; mk.y -= y; });
+        fitMap(mp);
+        saveData(); drawMap(mp);
+        releaseMapAssetIfUnused(oldBgAssetId);
+        releaseMapAssetIfUnused(oldTraceAssetId);
+        if (newBg) {
+          traceMapImage(newBg, 60, function(traceUrl){
+            putMapAsset(traceUrl, function(traceAssetId){
+              mp.traceAssetId = traceAssetId || null;
+              mp.traceImage = traceAssetId ? null : traceUrl;
+              mp.bgMode = "trace";
+              saveData();
+              mapHistorySuppressed = true;
+              drawMap(mp);
+              mapHistorySuppressed = false;
+            });
+          });
+        }
+      }
+      if (newBg) putMapAsset(newBg, afterStore); else afterStore(null);
+    });
   });
 }
 /* pivot(회전 중심)을 이미지 좌표계(0..bgWidth, 0..bgHeight) 기준 [x,y]로 받는다.
@@ -10195,7 +10364,7 @@ function applyMapCrop(mp, x, y, w, h) {
  * 이미지 재생성은 그 뒤에도 비동기로 이어지지만, 화면상으로는 이미 회전이
  * 끝난 상태이므로 회전 UI 오버레이를 다시 그려도 되는 시점이다). */
 function applyMapRotation(mp, deg, pivot, onDone) {
-  if (!mp.bgImage || !deg) { if (onDone) onDone(); return; }
+  if (!mapHasBgImage(mp) || !deg) { if (onDone) onDone(); return; }
   var rad = deg * Math.PI / 180;
   var W = mp.bgWidth, H = mp.bgHeight;
   var px = (pivot && pivot.length===2) ? pivot[0] : W/2, py = (pivot && pivot.length===2) ? pivot[1] : H/2;
@@ -10229,29 +10398,41 @@ function applyMapRotation(mp, deg, pivot, onDone) {
     var r = rot(x, y);
     return [r[0] - minX, r[1] - minY];
   }
-  rotateDataUrl(mp.bgImage, function(newBg){
-    mp.bgImage = newBg;
-    mp.bgWidth = newW; mp.bgHeight = newH;
-    mp.traceImage = null;
-    mp.bgMode = newBg ? "original" : "hidden";
-    mp.regions.forEach(function(r){ r.points = r.points.map(function(p){ return rotatePoint(p[0], p[1]); }); });
-    mp.lines.forEach(function(l){ l.points = l.points.map(function(p){ return rotatePoint(p[0], p[1]); }); });
-    mp.markers.forEach(function(mk){ var np = rotatePoint(mk.x, mk.y); mk.x = np[0]; mk.y = np[1]; });
-    (mp.dangerZones||[]).forEach(function(dz){ var np = rotatePoint(dz.x, dz.y); dz.x = np[0]; dz.y = np[1]; });
-    (mp.gates||[]).forEach(function(g){ var np = rotatePoint(g.x, g.y); g.x = np[0]; g.y = np[1]; });
-    fitMap(mp);
-    saveData(); drawMap(mp);
-    if (onDone) onDone();
-    if (newBg) {
-      traceMapImage(newBg, 60, function(traceUrl){
-        mp.traceImage = traceUrl;
-        mp.bgMode = "trace";
-        saveData();
-        mapHistorySuppressed = true;
-        drawMap(mp);
-        mapHistorySuppressed = false;
-      });
-    }
+  var oldBgAssetId = mp.bgAssetId, oldTraceAssetId = mp.traceAssetId;
+  resolveMapBgSource(mp, function(sourceUrl){
+    rotateDataUrl(sourceUrl, function(newBg){
+      function afterStore(newAssetId){
+        mp.bgAssetId = newAssetId || null;
+        mp.bgImage = newAssetId ? null : newBg;
+        mp.bgWidth = newW; mp.bgHeight = newH;
+        mp.traceAssetId = null; mp.traceImage = null;
+        mp.bgMode = newBg ? "original" : "hidden";
+        mp.regions.forEach(function(r){ r.points = r.points.map(function(p){ return rotatePoint(p[0], p[1]); }); });
+        mp.lines.forEach(function(l){ l.points = l.points.map(function(p){ return rotatePoint(p[0], p[1]); }); });
+        mp.markers.forEach(function(mk){ var np = rotatePoint(mk.x, mk.y); mk.x = np[0]; mk.y = np[1]; });
+        (mp.dangerZones||[]).forEach(function(dz){ var np = rotatePoint(dz.x, dz.y); dz.x = np[0]; dz.y = np[1]; });
+        (mp.gates||[]).forEach(function(g){ var np = rotatePoint(g.x, g.y); g.x = np[0]; g.y = np[1]; });
+        fitMap(mp);
+        saveData(); drawMap(mp);
+        releaseMapAssetIfUnused(oldBgAssetId);
+        releaseMapAssetIfUnused(oldTraceAssetId);
+        if (onDone) onDone();
+        if (newBg) {
+          traceMapImage(newBg, 60, function(traceUrl){
+            putMapAsset(traceUrl, function(traceAssetId){
+              mp.traceAssetId = traceAssetId || null;
+              mp.traceImage = traceAssetId ? null : traceUrl;
+              mp.bgMode = "trace";
+              saveData();
+              mapHistorySuppressed = true;
+              drawMap(mp);
+              mapHistorySuppressed = false;
+            });
+          });
+        }
+      }
+      if (newBg) putMapAsset(newBg, afterStore); else afterStore(null);
+    });
   });
 }
 function openMapLineModal(mp, line, isNew, onDone) {
@@ -10613,7 +10794,16 @@ function drawMap(mp) {
   (mp.gates||[]).forEach(function(gt){ if (gt.label) labelEntries.push({ key:"gate:"+gt.id, x:gt.x, y:gt.y+22, text:gt.label, fontSize:11.5 }); });
   var labelOffsets = layoutMapLabels(labelEntries);
   if (mp.bgMode !== "hidden") {
-    var src = mp.bgMode === "trace" ? mp.traceImage : mp.bgImage;
+    var src = resolveMapBgSrc(mp, mp.bgMode);
+    if (src === undefined) {
+      /* assetId는 있는데 아직 IndexedDB에서 안 읽혔다 -- 로드를 시작하고,
+       * 끝나면(캐시가 채워지면) 같은 지도를 보고 있을 때만 다시 그린다.
+       * drawMap 자체는 동기 함수로 남겨두기 위한 절충(이 함수는 매 편집마다
+       * 호출되므로 async로 바꾸면 파급 범위가 너무 커진다). */
+      var bgAssetIdToLoad = mp.bgMode === "trace" ? mp.traceAssetId : mp.bgAssetId;
+      getMapAsset(bgAssetIdToLoad, function(){ if (currentMap() && currentMap().id === mp.id) drawMap(mp); });
+      src = null;
+    }
     if (src) html += '<image id="mapBgImageEl" href="'+src+'" x="0" y="0" width="'+mp.bgWidth+'" height="'+mp.bgHeight+'" opacity="'+mp.bgOpacity+'" style="pointer-events:none"></image>';
   }
   mp.regions.forEach(function(r){
@@ -10795,7 +10985,7 @@ function renderMapPage(mp) {
   mpState = { tool: "select", terrain: mpState.terrain || "forest", symbol: mpState.symbol || "city", regionKind: mpState.regionKind || "country", drawPoints: null, panStart: null, selected: null, cropRect: null, cropDragStart: null, scaleLine: null, scaleLineStart: null, dangerStart: null, dangerCircle: null, showAlignment: mpState.showAlignment || false, dragObj: null, rotateDeg: 0, rotatePivot: null, rotateHandleDrag: null, rotatePivotDrag: null };
   mapHistoryEnsure(mp);
   if (mp.bgOpacity === undefined) mp.bgOpacity = 0.4;
-  if (mp.bgMode === undefined) mp.bgMode = mp.bgImage ? "original" : "hidden";
+  if (mp.bgMode === undefined) mp.bgMode = mapHasBgImage(mp) ? "original" : "hidden";
   if (!mp.regions) mp.regions = [];
   if (!mp.lines) mp.lines = [];
   if (!mp.markers) mp.markers = [];
@@ -10898,7 +11088,7 @@ function renderMapPage(mp) {
       '</div>' +
       '<div class="graph-canvas-wrap" id="mapWrap">' +
         '<svg class="graph-svg" id="mapSvg"><g id="mapG"></g></svg>' +
-        (mp.regions.length || mp.lines.length || mp.markers.length || mp.dangerZones.length || mp.gates.length || mp.bgImage ? "" : '<div class="graph-empty-hint">아직 그린 내용이 없습니다<br>아래 도구로 선·지역·기호를 그리거나 이미지를 올려보세요</div>') +
+        (mp.regions.length || mp.lines.length || mp.markers.length || mp.dangerZones.length || mp.gates.length || mapHasBgImage(mp) ? "" : '<div class="graph-empty-hint">아직 그린 내용이 없습니다<br>아래 도구로 선·지역·기호를 그리거나 이미지를 올려보세요</div>') +
         (mpState.showAlignment
           ? '<div class="map-alignment-legend">' +
             Object.keys(HOUSE_ALIGNMENTS).map(function(k){ return '<span class="map-alignment-legend-item"><span class="dot" style="background:'+HOUSE_ALIGNMENTS[k].color+'"></span>'+HOUSE_ALIGNMENTS[k].label+'</span>'; }).join("") +
@@ -10984,7 +11174,7 @@ function renderMapPage(mp) {
   });
 
   var wrapEl = document.getElementById("mapWrap");
-  if (mp.view.scale===1 && mp.view.x===0 && mp.view.y===0 && !mp.bgImage && !mp.regions.length && !mp.lines.length) {
+  if (mp.view.scale===1 && mp.view.x===0 && mp.view.y===0 && !mapHasBgImage(mp) && !mp.regions.length && !mp.lines.length) {
     mp.view.x = wrapEl.clientWidth/2; mp.view.y = wrapEl.clientHeight/2;
   }
   if (state.pendingMapFocusRegion) {
@@ -11044,21 +11234,24 @@ function renderMapPage(mp) {
   document.getElementById("mtDanger").addEventListener("click", function(){ setTool("danger"); });
   document.getElementById("mtGate").addEventListener("click", function(){ setTool("gate"); });
   document.getElementById("mtCrop").addEventListener("click", function(){
-    if (!mp.bgImage) {
+    if (!mapHasBgImage(mp)) {
       openModal({ title: "이미지가 없습니다", message: "먼저 업로드 버튼으로 배경 이미지를 올려주세요.", confirmLabel: "확인" });
       return;
     }
     setTool("crop");
   });
   document.getElementById("mtDeleteBg").addEventListener("click", function(){
-    if (!mp.bgImage && !mp.traceImage) return;
+    if (!mapHasBgImage(mp) && !mapHasTraceImage(mp)) return;
     openModal({
       title: "배경 이미지를 삭제할까요?",
       message: "업로드한 배경 이미지와 자동 선 감지 결과가 모두 사라집니다.",
       confirmLabel: "삭제", danger: true,
       onConfirm: function(){
-        mp.bgImage = null; mp.traceImage = null; mp.bgWidth = 0; mp.bgHeight = 0; mp.bgMode = "hidden";
+        var oldBg = mp.bgAssetId, oldTrace = mp.traceAssetId;
+        mp.bgAssetId = null; mp.bgImage = null; mp.traceAssetId = null; mp.traceImage = null; mp.bgWidth = 0; mp.bgHeight = 0; mp.bgMode = "hidden";
         saveData(); drawMap(mp);
+        releaseMapAssetIfUnused(oldBg);
+        releaseMapAssetIfUnused(oldTrace);
       }
     });
   });
@@ -11076,7 +11269,7 @@ function renderMapPage(mp) {
     setTool("select");
   });
   document.getElementById("mtRotate").addEventListener("click", function(){
-    if (!mp.bgImage) {
+    if (!mapHasBgImage(mp)) {
       openModal({ title: "이미지가 없습니다", message: "먼저 업로드 버튼으로 배경 이미지를 올려주세요.", confirmLabel: "확인" });
       return;
     }
@@ -11150,22 +11343,32 @@ function renderMapPage(mp) {
       var dataUrl = ev.target.result;
       var img = new Image();
       img.onload = function(){
-        mp.bgImage = dataUrl;
-        mp.bgWidth = img.naturalWidth;
-        mp.bgHeight = img.naturalHeight;
-        mp.traceImage = null;
-        mp.bgMode = "original";
-        fitMap(mp);
-        saveData();
-        drawMap(mp);
-        var hint = document.querySelector(".graph-empty-hint");
-        if (hint) hint.remove();
-        traceMapImage(mp.bgImage, 60, function(traceUrl){
-          mp.traceImage = traceUrl;
-          mp.bgMode = "trace";
+        var oldBg = mp.bgAssetId, oldTrace = mp.traceAssetId;
+        function afterStore(assetId){
+          mp.bgAssetId = assetId || null;
+          mp.bgImage = assetId ? null : dataUrl; // IndexedDB 실패 시엔 예전처럼 문자열로 보관
+          mp.bgWidth = img.naturalWidth;
+          mp.bgHeight = img.naturalHeight;
+          mp.traceAssetId = null; mp.traceImage = null;
+          mp.bgMode = "original";
+          fitMap(mp);
           saveData();
           drawMap(mp);
-        });
+          var hint = document.querySelector(".graph-empty-hint");
+          if (hint) hint.remove();
+          releaseMapAssetIfUnused(oldBg);
+          releaseMapAssetIfUnused(oldTrace);
+          traceMapImage(dataUrl, 60, function(traceUrl){
+            putMapAsset(traceUrl, function(traceAssetId){
+              mp.traceAssetId = traceAssetId || null;
+              mp.traceImage = traceAssetId ? null : traceUrl;
+              mp.bgMode = "trace";
+              saveData();
+              drawMap(mp);
+            });
+          });
+        }
+        putMapAsset(dataUrl, afterStore);
       };
       img.src = dataUrl;
     };
@@ -11174,21 +11377,29 @@ function renderMapPage(mp) {
   });
 
   document.getElementById("mtTrace").addEventListener("click", function(){
-    if (!mp.bgImage) {
+    if (!mapHasBgImage(mp)) {
       openModal({ title: "이미지가 없습니다", message: "먼저 업로드 버튼으로 배경 이미지를 올려주세요.", confirmLabel: "확인" });
       return;
     }
-    traceMapImage(mp.bgImage, 60, function(traceUrl){
-      mp.traceImage = traceUrl;
-      mp.bgMode = "trace";
-      saveData();
-      drawMap(mp);
+    resolveMapBgSource(mp, function(sourceUrl){
+      if (!sourceUrl) return;
+      traceMapImage(sourceUrl, 60, function(traceUrl){
+        var oldTrace = mp.traceAssetId;
+        putMapAsset(traceUrl, function(traceAssetId){
+          mp.traceAssetId = traceAssetId || null;
+          mp.traceImage = traceAssetId ? null : traceUrl;
+          mp.bgMode = "trace";
+          saveData();
+          drawMap(mp);
+          releaseMapAssetIfUnused(oldTrace);
+        });
+      });
     });
   });
 
   document.getElementById("mtToggleBg").addEventListener("click", function(){
-    if (!mp.bgImage && !mp.traceImage) return;
-    var order = mp.traceImage ? ["original","trace","hidden"] : ["original","hidden"];
+    if (!mapHasBgImage(mp) && !mapHasTraceImage(mp)) return;
+    var order = mapHasTraceImage(mp) ? ["original","trace","hidden"] : ["original","hidden"];
     var idx = order.indexOf(mp.bgMode);
     mp.bgMode = order[(idx+1) % order.length];
     saveData(); drawMap(mp);
@@ -13059,6 +13270,41 @@ document.getElementById("importFile").addEventListener("change", function(e){
   var file = e.target.files[0];
   if (file) importDataFile(file);
   e.target.value = "";
+});
+/* localStorage 용량(5~10MB 남짓)이 실제로 빠듯해지는 자원이므로, 그 크기를
+ * 그대로 보여준다. 지도 이미지는 이제 IndexedDB(자산 저장소)에 따로 있어
+ * 훨씬 여유롭기 때문에 개수·용량은 참고용으로만 함께 보여준다. IndexedDB
+ * 전체를 커서로 훑어야 해서(비동기) "데이터 관리"를 펼칠 때만 계산한다. */
+function computeMapAssetStorageSize(callback) {
+  openMapAssetDb(function(db){
+    if (!db) { callback(0, 0); return; }
+    try {
+      var tx = db.transaction(MAP_ASSET_STORE, "readonly");
+      var req = tx.objectStore(MAP_ASSET_STORE).openCursor();
+      var total = 0, count = 0;
+      req.onsuccess = function(e){
+        var cursor = e.target.result;
+        if (cursor) { total += (cursor.value || "").length; count++; cursor.continue(); }
+        else callback(total, count);
+      };
+      req.onerror = function(){ callback(0, 0); };
+    } catch (e) { callback(0, 0); }
+  });
+}
+function updateStorageUsageDisplay() {
+  var el = document.getElementById("storageUsageRow");
+  if (!el) return;
+  var localKb = Math.round(((localStorage.getItem(STORE_KEY) || "").length) / 1024);
+  computeMapAssetStorageSize(function(assetBytes, assetCount){
+    var assetKb = Math.round(assetBytes / 1024);
+    var warn = localKb > 4000;
+    el.innerHTML = "저장 데이터 " + localKb.toLocaleString("ko-KR") + "KB" +
+      (assetCount ? " &middot; 지도 이미지 " + assetCount + "개(" + assetKb.toLocaleString("ko-KR") + "KB, 별도 저장소)" : "") +
+      (warn ? '<br><span class="su-warn">저장 공간이 많이 찼습니다 — 지금 내보내기로 백업해 두세요.</span>' : "");
+  });
+}
+document.getElementById("dataManageDetails").addEventListener("toggle", function(e){
+  if (e.target.open) updateStorageUsageDisplay();
 });
 
 document.getElementById("search").addEventListener("input", function(e){
@@ -15169,5 +15415,6 @@ document.getElementById("sbBody").addEventListener("click", function(e){
 
 render();
 showLoadRecoveryNotice();
+migrateMapImageAssets();
 </script>
 
