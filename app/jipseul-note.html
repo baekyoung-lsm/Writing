@@ -1582,6 +1582,17 @@ function colorReadoutHtml(hex) {
 }
 
 var STORE_KEY = "settingnote_v1";
+var storageSaveErrorShown = false;
+function showStorageSaveError() {
+  if (storageSaveErrorShown) return;
+  storageSaveErrorShown = true;
+  var notice = document.createElement("div");
+  notice.id = "storageSaveError";
+  notice.setAttribute("role", "alert");
+  notice.textContent = "저장 공간이 부족하거나 브라우저 저장소를 사용할 수 없어 변경사항을 저장하지 못했습니다. 중요한 내용은 지금 백업해주세요.";
+  notice.style.cssText = "position:fixed;right:20px;bottom:20px;z-index:10000;max-width:360px;padding:13px 16px;border-radius:10px;background:#9b1c1c;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.24);font-size:13px;line-height:1.55;";
+  document.body.appendChild(notice);
+}
 function loadData() {
   try {
     var raw = localStorage.getItem(STORE_KEY);
@@ -1590,7 +1601,16 @@ function loadData() {
   return { docs: [], graphs: [], manuscripts: [], novels: [], works: [], tables: [], timelines: [], maps: [], recentColors: [], sports: [], scripts: [], essays: [], essayEntries: [], relationships: [] };
 }
 function saveData() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify({ docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS })); } catch (e) {}
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({ docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS }));
+    storageSaveErrorShown = false;
+    var oldNotice = document.getElementById("storageSaveError");
+    if (oldNotice) oldNotice.remove();
+    return true;
+  } catch (e) {
+    showStorageSaveError();
+    return false;
+  }
 }
 var _boot = loadData();
 var DOCS = _boot.docs || [];
@@ -1770,7 +1790,7 @@ function pushRecentColor(hex) {
 })();
 
 function uid() { return Math.random().toString(36).slice(2, 10); }
-function esc(s) { return (s == null ? "" : String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function esc(s) { return (s == null ? "" : String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
 function colorOf(c) { return c || "#8B8579"; }
 function charCount(text) { return (text || "").replace(/\s/g, "").length; }
 function fmtNum(n) { return (n||0).toLocaleString("ko-KR"); }
@@ -11027,6 +11047,12 @@ function render() {
 }
 
 /* ---------------- backup / restore ---------------- */
+var BACKUP_COLLECTIONS = ["docs", "graphs", "manuscripts", "novels", "works", "tables", "timelines", "maps", "sports", "scripts", "essays", "essayEntries", "relationships"];
+function isValidBackupData(data) {
+  return !!data && typeof data === "object" && !Array.isArray(data) && BACKUP_COLLECTIONS.every(function(key){
+    return data[key] === undefined || Array.isArray(data[key]);
+  });
+}
 function exportData() {
   var data = { docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS, exportedAt: new Date().toISOString(), appVersion: 1 };
   var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -11043,6 +11069,10 @@ function importDataFile(file) {
     var parsed;
     try { parsed = JSON.parse(e.target.result); } catch (err) {
       openModal({ title: "가져오기 실패", message: "올바른 백업 파일(JSON)이 아닙니다.", confirmLabel: "확인" });
+      return;
+    }
+    if (!isValidBackupData(parsed)) {
+      openModal({ title: "가져오기 실패", message: "백업 데이터의 형식이 올바르지 않습니다. 집썰에서 내보낸 백업 파일인지 확인해주세요.", confirmLabel: "확인" });
       return;
     }
     openModal({
@@ -11307,7 +11337,7 @@ var ASSET_CLIENT_JS = `/* 설정집.html의 클라이언트 로직. window.WB_DA
   "use strict";
   var DATA = window.WB_DATA || {};
 
-  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
   function fmtNum(n) { return (n || 0).toLocaleString("ko-KR"); }
   function linkFor(kind, id) { return "#" + kind + "/" + encodeURIComponent(id); }
 
