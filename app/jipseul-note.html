@@ -892,13 +892,18 @@
     width:calc(20em + 60px); max-width:100%; height:640px;
     padding:26px 30px;
     white-space:pre-wrap; word-break:normal; overflow-wrap:normal; line-break:strict;
+    /* 세 번째 배경 레이어는 원고지 매(paperSize) 경계마다 살짝 더 굵은 가로선을
+     * 그려 "지금 몇 매째를 쓰고 있는지"가 타이핑 중에도 은은하게 느껴지게 한다
+     * -- --paper-page-h는 renderManuscriptPaperArea가 paperSize의 rows*26px로
+     * 인라인 지정한다(격자선 자체와 같은 색, 굵기와 불투명도만 다르게). */
     background-image:
       repeating-linear-gradient(to right, var(--paper-line) 0, var(--paper-line) 1px, transparent 1px, transparent 1em),
-      repeating-linear-gradient(to bottom, var(--paper-line) 0, var(--paper-line) 1px, transparent 1px, transparent 26px);
-    background-position:30px 26px, 30px 26px;
-    background-repeat:repeat, repeat;
-    background-size:1em 1em, 100% 26px;
-    background-attachment:local, local;
+      repeating-linear-gradient(to bottom, var(--paper-line) 0, var(--paper-line) 1px, transparent 1px, transparent 26px),
+      repeating-linear-gradient(to bottom, color-mix(in srgb, var(--paper-line) 70%, transparent) 0, color-mix(in srgb, var(--paper-line) 70%, transparent) 2px, transparent 2px, transparent var(--paper-page-h, 999999px));
+    background-position:30px 26px, 30px 26px, 30px 26px;
+    background-repeat:repeat, repeat, repeat;
+    background-size:1em 1em, 100% 26px, 100% var(--paper-page-h, 999999px);
+    background-attachment:local, local, local;
   }
   .paper-text.grid.vertical {
     writing-mode:vertical-rl; text-orientation:mixed;
@@ -921,6 +926,26 @@
   .paper-page-nav button { background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:7px 14px; color:var(--ink); }
   .paper-page-nav button:disabled { opacity:.35; }
   .paper-page-label { min-width:160px; text-align:center; }
+
+  /* ---------- 원고지 정밀 미리보기(읽기 전용) ----------
+   * 집필화면은 계속 자연스러운 단일 textarea로 입력받고, 이 미리보기는 그
+   * 텍스트를 computeManuscriptLayout()으로 계산한 결과 그대로 실물 원고지
+   * 낱장(칸선·행·페이지 번호)으로 "보여주기만" 한다 -- 여기서 편집하지 않으므로
+   * 예전의 "미리보기에서만 결과를 볼 수 있는" 구조로 되돌아가는 게 아니다. */
+  .modal-box.paper-preview-box { width:min(680px, 96vw); max-height:92vh; }
+  .paper-preview-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .paper-preview-head h3 { font-size:15px; font-weight:600; margin:0; }
+  .paper-preview-close { background:none; border:none; color:var(--ink-faint); padding:4px; border-radius:6px; }
+  .paper-preview-close:hover { color:var(--ink); background:var(--bg-card); }
+  .paper-preview-sheet-wrap { display:flex; justify-content:center; overflow-x:auto; padding:4px 0; }
+  .paper-preview-sheet { position:relative; flex:none; background:#FBF9F2; border:1px solid var(--paper-line, #B9AF95); padding:20px 18px 34px; box-shadow:0 4px 18px var(--shadow); }
+  .paper-preview-no { position:absolute; top:8px; right:14px; font-size:11px; color:#6b6250; font-variant-numeric:tabular-nums; }
+  .paper-preview-row { display:flex; }
+  .paper-preview-cell { flex:none; width:24px; height:24px; box-sizing:border-box; border:1px solid var(--paper-line, #C9C2AE); margin:-1px 0 0 -1px; display:flex; align-items:center; justify-content:center; font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif; font-size:13px; color:#2A2015; }
+  .paper-preview-caption { position:absolute; left:16px; bottom:8px; font-size:10.5px; color:#8a8168; }
+  .paper-preview-nav { display:flex; align-items:center; justify-content:center; gap:14px; margin-top:12px; font-size:13px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .paper-preview-nav button { background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:6px 12px; color:var(--ink); }
+  .paper-preview-nav button:disabled { opacity:.35; }
 
   /* body blocks */
   .blocks { display:flex; flex-direction:column; }
@@ -1979,7 +2004,9 @@ function manuscriptStats(m) {
   var words = manuscriptWordCount(text);
   var paras = manuscriptParagraphCount(text);
   var units = manuscriptWidthUnits(text);
-  var sheets = rf.rules.grid ? Math.max(1, Math.ceil(units / (size.cols * size.rows))) : null;
+  // 원고지 매수는 근사치(글자폭 합계÷용량)가 아니라 computeManuscriptLayout()의
+  // 정밀 계산을 그대로 쓴다 -- 미리보기에서 보이는 매수와 항상 같아야 하므로.
+  var sheets = rf.rules.grid ? getManuscriptLayoutCached(m, size).totalPages : null;
   // A4 한 장 환산: 원고지 기준 약 1000자 / 영문 출판 관례 250단어(더블스페이스)
   var a4Pages = rf.rules.grid ? Math.max(0.1, Math.round(units / 1000 * 10) / 10) : Math.max(0.1, Math.round(words / 250 * 10) / 10);
   // 출판 분량(추정): 한국 단행본 1페이지 ≈ 500자 / 영미 단행본 1페이지 ≈ 300단어
@@ -1989,26 +2016,25 @@ function manuscriptStats(m) {
     a4Pages: a4Pages, pubPages: pubPages };
 }
 /* 커서 위치로부터 현재 줄/칸/페이지(매)를 계산한다 -- "현재 페이지 표시/현재
- * 줄 표시/현재 칸 표시" 요구사항. 페이지는 별도로 잘라서 그리지 않고(그러면
- * 다시 "변환 후 미리보기" 구조가 되므로), 커서 앞 텍스트의 분량으로부터
- * 역산한 논리적 페이지 번호만 보여준다. */
+ * 줄 표시/현재 칸 표시" 요구사항. 그리드 언어(한국어/중국어/일본어)는
+ * computeManuscriptLayout()의 정밀 계산을 그대로 써서, 이 숫자가 미리보기에서
+ * 보이는 매/줄/칸과 항상 일치하도록 한다(근사치가 아니라 같은 엔진의 결과).
+ * 영어처럼 격자가 없는 언어는 여전히 출판 관례(더블스페이스 250단어/페이지)
+ * 기준의 근사치를 쓴다 -- 애초에 칸 개념이 없으므로 "정밀 일치"가 의미가 없다. */
 function manuscriptCaretInfo(m, caretPos) {
   var text = m.text || "";
+  var stats = manuscriptStats(m);
+  if (stats.rules.grid) {
+    var layout = getManuscriptLayoutCached(m, stats.size);
+    var pos = manuscriptLayoutPosAt(layout, caretPos);
+    return { line: pos.row, col: pos.col, page: pos.page, totalPages: layout.totalPages };
+  }
   var head = text.slice(0, caretPos);
   var lines = head.split("\n");
   var line = lines.length;
-  var rawCol = Array.from(lines[lines.length - 1]).length + 1;
-  var stats = manuscriptStats(m);
-  // 그리드 언어에서는 "현재 칸"이 원고지 한 줄(20칸) 안에서의 위치를 뜻하므로
-  // 논리 줄(단락) 안의 절대 글자 위치를 20칸 단위로 접어 보여준다
-  var col = stats.rules.grid ? (((rawCol - 1) % stats.size.cols) + 1) : rawCol;
-  var page;
-  if (stats.rules.grid) {
-    page = Math.max(1, Math.ceil(manuscriptWidthUnits(head) / (stats.size.cols * stats.size.rows)) || 1);
-  } else {
-    page = Math.max(1, Math.ceil(manuscriptWordCount(head) / 250) || 1);
-  }
-  return { line: line, col: col, page: page, totalPages: stats.sheets || Math.max(1, Math.ceil(stats.words / 250)) };
+  var col = Array.from(lines[lines.length - 1]).length + 1;
+  var page = Math.max(1, Math.ceil(manuscriptWordCount(head) / 250) || 1);
+  return { line: line, col: col, page: page, totalPages: Math.max(1, Math.ceil(stats.words / 250)) };
 }
 /* 페이지 N의 시작 지점(문자 오프셋)을 찾는다 -- 페이지 이동 버튼에서 캐럿을
  * 옮기고 그 위치로 스크롤하는 데 쓴다. */
@@ -2017,12 +2043,10 @@ function manuscriptOffsetForPage(m, pageNum) {
   var stats = manuscriptStats(m);
   var target = Math.max(1, pageNum);
   if (stats.rules.grid) {
-    var capacity = stats.size.cols * stats.size.rows;
-    var acc = 0;
-    for (var i = 0; i < text.length; i++) {
-      if (Math.floor(acc / capacity) + 1 >= target) return i;
-      if (text[i] !== "\n") acc += isFullWidthChar(text[i]) ? 1 : 0.5;
-    }
+    var layout = getManuscriptLayoutCached(m, stats.size);
+    var pageIdx = Math.min(target, layout.totalPages) - 1;
+    var pg = layout.pages[pageIdx];
+    if (pg && pg.rows.length) return pg.rows[0].startOffset;
     return text.length;
   } else {
     var wordCap = 250, wc = 0;
@@ -2033,6 +2057,81 @@ function manuscriptOffsetForPage(m, pageNum) {
     }
     return text.length;
   }
+}
+/* ---------- 원고지 정밀 레이아웃 엔진 ----------
+ * 집필화면(캐럿의 현재 매/줄/칸 표시)과 미리보기(실제 셀 격자 렌더링)가 서로
+ * 다른 계산을 각자 하면 두 화면의 매수·줄수·문장부호 위치가 어긋날 수 있어서,
+ * "텍스트를 실제로 몇 칸/몇 줄/몇 매로 나눌 것인가"를 이 함수 하나로만 계산하고
+ * 두 화면 모두 이 결과만 가져다 쓴다(DOM 비의존 순수 함수). 브라우저 네이티브
+ * line-break:strict가 라이브 타이핑 중 시각적 줄바꿈을 처리하는 것과는 별개로,
+ * "정확한 매/줄/칸 번호"가 필요한 곳은 전부 이 엔진을 쓴다. */
+var MANUSCRIPT_KINSOKU_LINE_START_FORBIDDEN = ")]｝〉》」』】〕、。，．,.!?！？:：;；·ㆍ'\"’”";
+var MANUSCRIPT_KINSOKU_LINE_END_FORBIDDEN = "([｛〈《「『【〔‘“'\"";
+/* 텍스트를 cols×rows 격자 규격에 맞춰 행/페이지로 나눈다. 문단(\n)은 항상 새
+ * 줄에서 시작하고, 문단 안에서는 cols칸마다 자동으로 줄을 바꾸되, 행두 금지
+ * 문자(닫는 괄호·따옴표·대부분의 문장부호)는 앞 줄 끝으로 당기고, 행말 금지
+ * 문자(여는 괄호·따옴표)는 다음 줄로 넘긴다 -- 실무에서 가장 흔한 경우만 다루는
+ * 실용적 부분집합이며, 완전한 국어 조판 금칙(구두점 압축 등)까지는 다루지 않는다. */
+function computeManuscriptLayout(text, size) {
+  var cols = size.cols, rows = size.rows;
+  var paragraphs = (text || "").split("\n");
+  var allRows = [];
+  var offset = 0;
+  var maxRowLen = cols * 3; // 병적인 입력(연속된 금칙 문자 등)에서 한 행이 무한정 커지는 것 방지
+  paragraphs.forEach(function (para, paraIdx) {
+    var chars = Array.from(para);
+    var i = 0;
+    var paraStartOffset = offset;
+    if (chars.length === 0) {
+      allRows.push({ chars: "", startOffset: paraStartOffset, paraIndex: paraIdx });
+    }
+    while (i < chars.length) {
+      var rowStartOffset = paraStartOffset + i;
+      var take = Math.min(cols, chars.length - i);
+      var rowChars = chars.slice(i, i + take);
+      var nextIdx = i + take;
+      while (nextIdx < chars.length && rowChars.length < maxRowLen &&
+             MANUSCRIPT_KINSOKU_LINE_START_FORBIDDEN.indexOf(chars[nextIdx]) !== -1) {
+        rowChars.push(chars[nextIdx]);
+        nextIdx++;
+      }
+      while (rowChars.length > 1 && nextIdx < chars.length &&
+             MANUSCRIPT_KINSOKU_LINE_END_FORBIDDEN.indexOf(rowChars[rowChars.length - 1]) !== -1) {
+        nextIdx--;
+        rowChars.pop();
+      }
+      allRows.push({ chars: rowChars.join(""), startOffset: rowStartOffset, paraIndex: paraIdx });
+      i = nextIdx;
+    }
+    offset = paraStartOffset + chars.length + 1; // "\n" 구분자 한 칸
+  });
+  var pages = [];
+  for (var r = 0; r < allRows.length; r += rows) {
+    pages.push({ rows: allRows.slice(r, r + rows), startRow: r });
+  }
+  if (!pages.length) pages.push({ rows: [], startRow: 0 });
+  return { rows: allRows, pages: pages, totalRows: allRows.length, totalPages: pages.length, cols: cols, rowsPerPage: rows };
+}
+/* 캐럿(문자 오프셋)이 위 레이아웃의 몇 매/몇 줄/몇 칸에 해당하는지 역조회 */
+function manuscriptLayoutPosAt(layout, caretOffset) {
+  var rows = layout.rows;
+  for (var i = rows.length - 1; i >= 0; i--) {
+    if (caretOffset >= rows[i].startOffset) {
+      return { page: Math.floor(i / layout.rowsPerPage) + 1, row: i + 1, col: caretOffset - rows[i].startOffset + 1 };
+    }
+  }
+  return { page: 1, row: 1, col: 1 };
+}
+/* 레이아웃 계산은 O(n)이지만 원고가 커지면(수십만 자) 매 키 입력마다 다시 돌리면
+ * 무겁다. 텍스트/규격이 실제로 안 바뀌었으면(캐럿만 이동) 재계산을 건너뛴다. */
+var _paperLayoutCache = { id: null, text: null, size: null, layout: null };
+function getManuscriptLayoutCached(m, size) {
+  if (_paperLayoutCache.id === m.id && _paperLayoutCache.text === m.text && _paperLayoutCache.size === m.paperSize) {
+    return _paperLayoutCache.layout;
+  }
+  var layout = computeManuscriptLayout(m.text || "", size);
+  _paperLayoutCache = { id: m.id, text: m.text, size: m.paperSize, layout: layout };
+  return layout;
 }
 /* 영어 모드 스마트 문장부호: 입력 중 라틴 문자열에 한해 "--"를 em dash로,
  * 곧은따옴표를 문맥에 맞는 여는/닫는 따옴표로 바꿔 출판 원고 스타일을
@@ -13721,6 +13820,62 @@ function schedulePaperSave() {
 function flushPaperSave() {
   if (msPaperSaveTimer) { clearTimeout(msPaperSaveTimer); msPaperSaveTimer = null; saveData(); }
 }
+/* 원고지 정밀 미리보기 -- computeManuscriptLayout() 결과를 그대로 낱장(칸선·행·
+ * 페이지 번호)으로 그린다. 완전히 읽기 전용이고(입력 이벤트가 없다), 집필화면과
+ * 분리된 열람 전용 화면이다 -- 편집은 항상 집필화면(자연스러운 textarea)에서만
+ * 일어나므로, 예전에 없앤 "쓰기/미리보기를 오가야만 편집되는" 구조가 아니다. */
+function openManuscriptPaperPreview(m, initialCaretPos) {
+  closeModal();
+  var stats = manuscriptStats(m);
+  if (!stats.rules.grid) return;
+  var layout = getManuscriptLayoutCached(m, stats.size);
+  var startPos = manuscriptLayoutPosAt(layout, initialCaretPos || 0);
+  var pageIdx = Math.min(Math.max(0, startPos.page - 1), layout.totalPages - 1);
+
+  var overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.id = "modalOverlay";
+  document.body.appendChild(overlay);
+
+  function paint() {
+    var page = layout.pages[pageIdx] || { rows: [] };
+    var rowsHtml = "";
+    for (var r = 0; r < layout.rowsPerPage; r++) {
+      var row = page.rows[r];
+      var chars = row ? Array.from(row.chars) : [];
+      var cellCount = Math.max(layout.cols, chars.length);
+      var cellsHtml = "";
+      for (var c = 0; c < cellCount; c++) {
+        var ch = chars[c];
+        cellsHtml += '<div class="paper-preview-cell">' + (ch && ch !== " " && ch !== "　" ? esc(ch) : "") + '</div>';
+      }
+      rowsHtml += '<div class="paper-preview-row">' + cellsHtml + '</div>';
+    }
+    overlay.innerHTML =
+      '<div class="modal-box paper-preview-box">' +
+        '<div class="paper-preview-head">' +
+          '<h3>원고지 미리보기 · 읽기 전용</h3>' +
+          '<button type="button" class="paper-preview-close" id="paperPreviewCloseBtn" title="닫기">'+ic("close",16)+'</button>' +
+        '</div>' +
+        '<div class="paper-preview-sheet-wrap"><div class="paper-preview-sheet" style="--paper-line:'+esc(PAPER_LINE_COLOR)+'">' +
+          '<span class="paper-preview-no">NO. '+(pageIdx+1)+'</span>' +
+          rowsHtml +
+          '<span class="paper-preview-caption">'+layout.cols+'×'+layout.rowsPerPage+'</span>' +
+        '</div></div>' +
+        '<div class="paper-preview-nav">' +
+          '<button type="button" id="paperPreviewPrev" '+(pageIdx<=0?"disabled":"")+'>'+ic("chevL",13)+'</button>' +
+          '<span>'+(pageIdx+1)+' / '+layout.totalPages+'매</span>' +
+          '<button type="button" id="paperPreviewNext" '+(pageIdx>=layout.totalPages-1?"disabled":"")+'>'+ic("chevR",13)+'</button>' +
+        '</div>' +
+      '</div>';
+    document.getElementById("paperPreviewCloseBtn").addEventListener("click", closeModal);
+    var prevBtn = document.getElementById("paperPreviewPrev"), nextBtn = document.getElementById("paperPreviewNext");
+    if (prevBtn) prevBtn.addEventListener("click", function () { if (pageIdx > 0) { pageIdx--; paint(); } });
+    if (nextBtn) nextBtn.addEventListener("click", function () { if (pageIdx < layout.totalPages - 1) { pageIdx++; paint(); } });
+  }
+  overlay.addEventListener("mousedown", function (e) { if (e.target === overlay) closeModal(); });
+  paint();
+}
 function renderManuscriptPaperArea(m) {
   var area = document.getElementById("paperArea");
   if (!area) return;
@@ -13744,7 +13899,7 @@ function renderManuscriptPaperArea(m) {
     '</div>' +
     '<div class="paper-stats-bar" id="paperStatsBar"></div>' +
     '<div class="paper-outer"><div class="paper-sheet-wrap">' +
-      '<textarea class="paper-text'+(initStats.rules.grid?" grid":" flow")+((m.paperVertical&&initStats.rules.vertical)?" vertical":"")+'" id="paperText" spellcheck="true" placeholder="여기에 바로 쓰세요 — 이 화면이 곧 완성된 원고입니다." lang="'+esc(initStats.rules.lang)+'" style="--paper-line:'+esc(PAPER_LINE_COLOR)+'">'+esc(m.text||"")+'</textarea>' +
+      '<textarea class="paper-text'+(initStats.rules.grid?" grid":" flow")+((m.paperVertical&&initStats.rules.vertical)?" vertical":"")+'" id="paperText" spellcheck="true" placeholder="여기에 바로 쓰세요 — 이 화면이 곧 완성된 원고입니다." lang="'+esc(initStats.rules.lang)+'" style="--paper-line:'+esc(PAPER_LINE_COLOR)+';--paper-page-h:'+(initStats.size.rows*26)+'px">'+esc(m.text||"")+'</textarea>' +
     '</div></div>' +
     '<div class="paper-page-nav">' +
       '<button type="button" id="paperPrevPage">'+ic("chevL",13)+'</button>' +
@@ -13769,7 +13924,10 @@ function renderManuscriptPaperArea(m) {
       var verticalToggleHtml = st.rules.vertical
         ? '<button type="button" class="'+(m.paperVertical?"on":"")+'" id="paperVerticalBtn" title="세로쓰기">'+ic("docIcon",13)+'<span>세로쓰기</span></button>'
         : '';
-      extras.innerHTML = langBadgeHtml + sizeToggleHtml + verticalToggleHtml;
+      var previewBtnHtml = st.rules.grid
+        ? '<button type="button" id="paperPreviewBtn" title="실제 원고지 매(장) 형태로 보기 — 읽기 전용">'+ic("docIcon",13)+'<span>미리보기</span></button>'
+        : '';
+      extras.innerHTML = langBadgeHtml + sizeToggleHtml + verticalToggleHtml + previewBtnHtml;
       extras.querySelectorAll("[data-papersize]").forEach(function (btn) {
         btn.addEventListener("click", function () {
           m.paperSize = parseInt(btn.dataset.papersize, 10); saveData(); refreshStatsBar();
@@ -13779,8 +13937,13 @@ function renderManuscriptPaperArea(m) {
       if (vBtn) vBtn.addEventListener("click", function () {
         m.paperVertical = !m.paperVertical; saveData(); refreshStatsBar();
       });
+      var previewBtn = document.getElementById("paperPreviewBtn");
+      if (previewBtn) previewBtn.addEventListener("click", function () {
+        openManuscriptPaperPreview(m, textEl.selectionStart || 0);
+      });
     }
     if (!st.rules.vertical) m.paperVertical = false;
+    if (st.rules.grid) textEl.style.setProperty("--paper-page-h", (st.size.rows * 26) + "px");
     /* 대형 원고에서 격자 눈금 배경을 끄면 타이핑이 살짝 빨라지긴 하지만
      * (실측 5% 안팎) "입력 화면이 곧 원고지"라는 원칙과 충돌해서 배경이 사라진
      * 순간 그냥 메모장처럼 보인다 -- 그 정도 이득으로는 격자를 꺼둘 이유가
