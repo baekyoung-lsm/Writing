@@ -371,6 +371,26 @@
   .doc-card:hover .doc-card-del { opacity:1; }
   .doc-card-selected { border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 1px var(--accent) inset; }
 
+  /* ---------- 소설 원고(회차) 목록 전용 페이지 ---------- */
+  .novel-page-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .novel-page-title { font-family:var(--serif); font-size:28px; font-weight:600; margin:0; }
+  .novel-page-meta { font-size:12.5px; color:var(--ink-faint); margin-top:4px; }
+  .novel-page-actions { display:flex; align-items:center; gap:8px; flex:none; }
+  .novel-jump-wrap { position:relative; margin-bottom:14px; }
+  .novel-jump-input { width:100%; box-sizing:border-box; padding:11px 14px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); background:var(--bg-card); color:var(--ink); font-size:14px; outline:none; }
+  .novel-jump-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  .novel-jump-hint { font-size:11.5px; color:var(--ink-faint); margin-top:6px; }
+  .novel-toolbar-row { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+  .novel-ep-list { display:flex; flex-direction:column; gap:6px; }
+  .novel-ep-row { display:flex; align-items:center; gap:12px; padding:11px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-card); cursor:pointer; }
+  .novel-ep-row:hover { border-color:var(--border-strong); background:var(--bg-card-hover); }
+  .novel-ep-row.selected { border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 1px var(--accent) inset; }
+  .novel-ep-row.active { border-color:var(--accent); }
+  .novel-ep-ord { flex:none; width:40px; text-align:center; font-family:var(--serif); font-weight:700; font-size:13px; color:var(--ink-faint); }
+  .novel-ep-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; color:var(--ink); }
+  .novel-ep-meta { flex:none; display:flex; align-items:center; gap:10px; font-size:11.5px; color:var(--ink-faint); }
+  .novel-ep-row .row-move, .novel-ep-row .row-del, .novel-ep-row .row-insert { flex:none; }
+
   .doccat-viewtoggle { display:flex; gap:6px; flex:none; }
   .doccat-split-pad { padding-bottom:0; }
   .doccat-split-wrap { display:flex; gap:20px; align-items:flex-start; height:calc(100vh - 190px); min-height:420px; }
@@ -560,6 +580,26 @@
   .cat-menu-item:hover { background:var(--accent-soft); color:var(--accent); }
   .cat-menu-item svg { color:var(--ink-faint); flex:none; }
   .cat-menu-item:hover svg { color:var(--accent); }
+
+  /* ---------- 집필창 내부 회차 이동(이전/현재/다음) ---------- */
+  .ep-switcher-row { display:flex; align-items:center; gap:6px; padding:8px 20px 0; }
+  .ep-switch-btn { display:flex; align-items:center; gap:5px; flex:none; border:1px solid var(--border); background:var(--bg-card); border-radius:20px; padding:6px 12px; font-size:12.5px; color:var(--ink-soft); max-width:160px; }
+  .ep-switch-btn span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ep-switch-btn:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+  .ep-switch-btn:disabled { opacity:.35; }
+  .ep-switch-current { flex:1; min-width:0; display:flex; align-items:center; gap:6px; justify-content:center; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:20px; padding:6px 14px; font-size:13px; font-weight:600; color:var(--ink); }
+  .ep-switch-current span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ep-switch-current:hover { border-color:var(--accent); background:var(--accent-soft); }
+  .ep-switch-popover { position:fixed; z-index:200; background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-md); box-shadow:var(--shadow-2); width:320px; max-height:400px; display:flex; flex-direction:column; }
+  .ep-switch-popover-input { margin:8px; padding:8px 10px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); background:var(--bg-panel); color:var(--ink); font-size:13px; outline:none; }
+  .ep-switch-popover-input:focus { border-color:var(--accent); }
+  .ep-switch-popover-list { overflow-y:auto; padding:4px 8px 8px; }
+  .ep-switch-popover-row { display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:var(--radius-sm); font-size:12.5px; color:var(--ink-soft); cursor:pointer; }
+  .ep-switch-popover-row .ord { flex:none; width:26px; text-align:center; color:var(--ink-faint); font-weight:700; }
+  .ep-switch-popover-row .t { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ep-switch-popover-row:hover { background:var(--bg-card-hover); }
+  .ep-switch-popover-row.selected { background:var(--accent-soft); color:var(--accent); }
+  .ep-switch-popover-row.active .t { color:var(--accent); font-weight:600; }
 
   /* ---------- 홈 빠른 시작 ---------- */
   .home-quickstart { margin:var(--sp-7) 0 0; }
@@ -4744,13 +4784,13 @@ function newWork() {
 }
 function openWorkOverview(workId) {
   state.collapsed["work:"+workId] = false;
-  var firstMs = null;
-  NOVELS.filter(function(n){ return n.workId === workId; }).forEach(function(n){
-    var eps = MANUSCRIPTS.filter(function(m){ return m.novelId === n.id; });
-    eps.forEach(function(m){ if (!firstMs || (m.createdAt||0) < (firstMs.createdAt||0)) firstMs = m; });
-  });
-  if (firstMs) {
-    state.mode = "manuscript"; state.activeId = firstMs.id;
+  /* 예전에는 작품을 열면 가장 오래된 화의 집필창으로 곧장 들어갔다 -- "소설을
+   * 선택하면 화 목록을 먼저 보여준다"는 원칙과 맞지 않아, 이제는 소설 원고
+   * 여부와 무관하게 항상 작품 홈("소설 원고" 탭)에서 시작한다. 화가 하나도
+   * 없는 작품만 예전처럼 문서/관계도로 안내한다. */
+  var hasNovel = NOVELS.some(function(n){ return n.workId === workId; });
+  if (hasNovel) {
+    state.mode = "workhome"; state.activeId = workId; state.wsHomeTab[workId] = "ms";
   } else {
     var firstDoc = DOCS.filter(function(d){ return d.workId === workId; })[0];
     var firstGraph = GRAPHS.filter(function(g){ return g.workId === workId; })[0];
@@ -4812,6 +4852,7 @@ function deleteWork(id) {
         (state.mode==="timeline"&&removedTimelineIds.indexOf(state.activeId)!==-1) ||
         (state.mode==="map"&&removedMapIds.indexOf(state.activeId)!==-1) ||
         (state.mode==="manuscript"&&removedMsIds.indexOf(state.activeId)!==-1) ||
+        (state.mode==="novel"&&novelIds.indexOf(state.activeId)!==-1) ||
         (state.mode==="essayentry"&&removedEssayEntryIds.indexOf(state.activeId)!==-1) ||
         (state.mode==="playscript"&&removedPlayScriptIds.indexOf(state.activeId)!==-1) ||
         (state.mode==="script"&&removedScriptIds.indexOf(state.activeId)!==-1) ||
@@ -6166,7 +6207,7 @@ function openNovelSettings(novelId) {
     onConfirm: function(values, checked, picks){
       if (values[0]) n.title = values[0];
       n.epScheme = picks.epScheme || n.epScheme || "subtitle";
-      saveData(); renderSidebar();
+      saveData(); render();
     }
   });
 }
@@ -6183,6 +6224,7 @@ function deleteNovel(id) {
       NOVELS = NOVELS.filter(function(x){ return x.id !== id; });
       MANUSCRIPTS = MANUSCRIPTS.filter(function(m){ return m.novelId !== id; });
       if (state.mode === "manuscript" && removedIds.indexOf(state.activeId) !== -1) { state.mode = "empty"; state.activeId = null; }
+      if (state.mode === "novel" && state.activeId === id) { state.mode = "empty"; state.activeId = null; }
       saveData(); render();
     }
   });
@@ -7347,7 +7389,7 @@ function renderSearchPage(rawQuery) {
         (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
       '</div>';
     }).join(""));
-    html += section("원고", results.manuscripts.length, results.manuscripts.map(function(r){
+    html += section("소설 원고", results.manuscripts.length, results.manuscripts.map(function(r){
       return '<div class="search-result-row" data-openresult="ms:'+r.ms.id+'">' +
         '<div class="srr-top"><span class="srr-cat">'+(r.novel?esc(r.novel.title||""):"")+'</span><span class="srr-title">'+esc(r.ms.title||"제목 없음")+'</span>'+(r.work?'<span class="srr-work">'+esc(r.work.title||"")+'</span>':'')+'</div>' +
         (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
@@ -7663,42 +7705,24 @@ function renderWorkSections(work, q) {
   var workMsIds = workNovels.map(function(n){ return n.id; });
   var workCharTotal = MANUSCRIPTS.filter(function(m){ return workMsIds.indexOf(m.novelId)!==-1; }).reduce(function(sum,m){ return sum+charCount(m.text); }, 0);
   var workCharacterDocs = DOCS.filter(function(d){ return d.workId===work.id && d.category==="등장인물"; });
-  var msHtml = '<div class="ws-section-head"><span class="t">원고'+(workCharTotal?' · '+fmtNum(workCharTotal)+'자':'')+'</span><button class="add" data-newnovel="'+work.id+'" title="새 소설">'+ic("plus",13)+'</button></div>';
+  var msHtml = '<div class="ws-section-head"><span class="t">소설 원고'+(workCharTotal?' · '+fmtNum(workCharTotal)+'자':'')+'</span><button class="add" data-newnovel="'+work.id+'" title="새 소설">'+ic("plus",13)+'</button></div>';
   var novelList = workNovels.filter(function(n){ return !q || n.title.toLowerCase().includes(q) || MANUSCRIPTS.some(function(m){ return m.novelId===n.id && msMatches(m, q); }); });
-  novelList.forEach(function(n){
+  /* 소설 폴더 행은 더 이상 화 목록을 인라인으로 펼치지 않는다 -- 소설을 클릭하면
+   * 검색·빠른 이동이 되는 전용 "소설 원고" 페이지(renderNovelPage)로 들어간다.
+   * "소설 클릭 → 바로 집필창 진입"을 막고, 항상 화 목록을 먼저 보게 하기 위함. */
+  msHtml += '<div class="ws-chip-wrap">' + novelList.map(function(n){
     var eps = MANUSCRIPTS.filter(function(m){ return m.novelId === n.id; });
     var novelCharTotal = eps.reduce(function(sum,m){ return sum+charCount(m.text); }, 0);
-    var sortMode = n.epSort === "newest" ? "newest" : "oldest";
-    eps = eps.slice().sort(function(a,b){
-      var ac = a.createdAt||0, bc = b.createdAt||0;
-      return sortMode === "newest" ? bc-ac : ac-bc;
-    });
-    var povSel = state.povFilter[n.id] || "";
-    if (povSel) eps = eps.filter(function(m){ return (m.characterIds||(m.povId?[m.povId]:[])).indexOf(povSel) !== -1; });
-    var nkey = "novel:"+n.id, ncollapsed = !!state.collapsed[nkey];
-    var povFilterHtml = workCharacterDocs.length ? '<select class="sel pov-filter-sel" data-povfilter="'+n.id+'" title="등장인물로 필터">' +
-      '<option value="">전체 인물</option>' +
-      workCharacterDocs.map(function(d){ return '<option value="'+d.id+'" '+(povSel===d.id?"selected":"")+'>'+esc(d.title||"제목 없음")+'</option>'; }).join("") +
-      '</select>' : '';
-    msHtml += '<div class="novel-folder"><div class="sb-head" data-toggle="'+nkey+'"><span class="chev '+(ncollapsed?"collapsed":"")+'">'+ic("chevron",12)+'</span><span class="t">'+esc(n.title||"제목 없는 소설")+' · 전체 '+eps.length+'화'+(novelCharTotal?' · '+fmtNum(novelCharTotal)+'자':'')+'</span><button class="add" data-newep="'+n.id+'" title="새 화(맨 아래에 추가)">'+ic("plus",12)+'</button><button class="row-settings" data-novelsettings="'+n.id+'" title="소설 설정">'+ic("gear",12)+'</button><button class="row-del" data-delnovel="'+n.id+'" title="폴더 삭제" style="margin-left:0">'+ic("trash",12)+'</button></div>';
-    if (!ncollapsed && (workCharacterDocs.length || eps.length > 1)) {
-      msHtml += '<div class="novel-subrow"><button class="ms-sort-btn" data-sortnovel="'+n.id+'" title="정렬 방식 전환">'+(sortMode==="newest"?"최신순":"시간순")+'</button>'+povFilterHtml+'</div>';
-    }
-    if (!ncollapsed) msHtml += '<div class="ws-chip-wrap">' + eps.map(function(m, epIdx){
-      var epChars = charCount(m.text);
-      var epCharIds = m.characterIds || (m.povId ? [m.povId] : []);
-      var epCharNames = epCharIds.map(function(id){ var d = workCharacterDocs.find(function(d){ return d.id===id; }); return d ? d.title : null; }).filter(Boolean);
-      var povBadge = epCharNames.length ? '<span class="pov-badge" title="'+esc(epCharNames.join(", "))+'">'+esc(epCharNames.slice(0,2).join(", "))+(epCharNames.length>2?" +"+(epCharNames.length-2):"")+'</span>' : '';
-      var canReorder = !povSel && eps.length > 1;
-      var insertHtml = !povSel ? '<button class="row-move row-insert" data-msinsertafter="'+m.id+'" title="이 화 다음에 새 화 삽입">+</button>' : '';
-      var moveHtml = canReorder ?
-        '<button class="row-move" data-msmoveup="'+m.id+'" title="위로 이동"'+(epIdx===0?" disabled":"")+'>'+ic("chevUp",9)+'</button>' +
-        '<button class="row-move" data-msmovedown="'+m.id+'" title="아래로 이동"'+(epIdx===eps.length-1?" disabled":"")+'>'+ic("chevDown",9)+'</button>' : '';
-      return '<div class="graph-row ms-draggable'+(state.mode==="manuscript"&&state.activeId===m.id?" active":"")+'" data-openms="'+m.id+'" draggable="'+(canReorder?"true":"false")+'">'+ic("docIcon",13)+'<span style="flex:1 1 0%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(m.title||"제목 없음")+'</span>'+povBadge+(epChars?'<span class="char-total">'+fmtNum(epChars)+'자</span>':'')+insertHtml+moveHtml+'<button class="row-del" data-delms="'+m.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
-    }).join("") + '</div>';
-    if (!eps.length) msHtml += '<div class="sb-empty">'+(povSel?"이 인물이 등장하는 화가 없습니다.":"아직 화가 없습니다.")+'</div>';
-    msHtml += '</div>';
-  });
+    var isActive = (state.mode==="novel" && state.activeId===n.id) ||
+      (state.mode==="manuscript" && (function(){ var m=currentManuscript(); return m && m.novelId===n.id; })());
+    return '<div class="graph-row'+(isActive?" active":"")+'" data-opennovel="'+n.id+'">'+ic("docIcon",13)+
+      '<span style="flex:1 1 0%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(n.title||"제목 없는 소설")+'</span>'+
+      '<span class="row-meta" style="color:var(--ink-faint);font-size:11px">전체 '+eps.length+'화'+(novelCharTotal?' · '+fmtNum(novelCharTotal)+'자':'')+'</span>'+
+      '<button class="row-move row-insert" data-newep="'+n.id+'" title="새 화(맨 아래에 추가)">+</button>'+
+      '<button class="row-settings" data-novelsettings="'+n.id+'" title="소설 설정">'+ic("gear",12)+'</button>'+
+      '<button class="row-del" data-delnovel="'+n.id+'" title="폴더 삭제">'+ic("trash",12)+'</button>'+
+    '</div>';
+  }).join("") + '</div>';
   if (!novelList.length) msHtml += '<div class="sb-empty">'+(q ? "일치하는 소설이 없습니다." : "아직 소설이 없습니다. + 를 눌러 만들어보세요.")+'</div>';
   sections.ms = msHtml;
 
@@ -7825,7 +7849,7 @@ function renderWorkSections(work, q) {
 }
 
 var WS_TABS = [
-  { key: "ms", label: "원고", icon: "docIcon" },
+  { key: "ms", label: "소설 원고", icon: "docIcon" },
   { key: "essay", label: "수필·자서전", icon: "docIcon" },
   { key: "plays", label: "시나리오·희곡", icon: "docIcon" },
   { key: "docs", label: "문서", icon: "person" },
@@ -7888,6 +7912,10 @@ function resolveWorkForState() {
     var m = currentManuscript(); if (!m) return null;
     var novel = NOVELS.find(function(n){ return n.id===m.novelId; }); if (!novel) return null;
     var nw = workOf(novel.workId); return nw ? { work: nw, tab: "ms" } : null;
+  }
+  if (mode === "novel") {
+    var nv = NOVELS.find(function(n){ return n.id===id; }); if (!nv) return null;
+    var nvw = workOf(nv.workId); return nvw ? { work: nvw, tab: "ms" } : null;
   }
   if (mode === "essayentry") {
     var ee = ESSAY_ENTRIES.find(function(x){ return x.id===id; }); if (!ee) return null;
@@ -8032,6 +8060,181 @@ function renderWorkHomePage(work) {
     '</div>';
 }
 
+/* ---------------- 소설 원고(회차) 목록 페이지 ----------------
+ * 소설을 클릭해도 곧장 특정 화의 집필창으로 들어가지 않고, 이 전용 페이지에서
+ * 항상 화 목록(검색/빠른 이동 포함)을 먼저 보여준다. 회차가 많아져도(수십~수백
+ * 화) 번호나 제목 일부만으로 원하는 화를 빠르게 찾아 들어갈 수 있게 하는 것이
+ * 목적이라, 검색은 실시간 필터 + 우선순위 기반 Enter 이동 + 방향키 선택을
+ * 함께 지원한다. */
+function epMatchTier(query, title, ordinal) {
+  var q = (query||"").trim();
+  if (!q) return 0;
+  var qLower = q.toLowerCase();
+  var t = (title||"").trim();
+  var tLower = t.toLowerCase();
+  var ordLabel = ordinal != null ? (ordinal + "화") : null;
+  var qDigits = /^\d+$/.test(q) ? parseInt(q, 10) : null;
+  if ((t && tLower === qLower) || (ordLabel && ordLabel === q)) return 1; // 완전 일치
+  if (qDigits !== null && ordinal === qDigits) return 2; // 회차 번호 정확히 일치
+  if (t && tLower.indexOf(qLower) === 0) return 3; // 제목 앞부분 일치
+  if ((t && tLower.indexOf(qLower) !== -1) || (ordLabel && ordLabel.indexOf(q) !== -1) ||
+      (qDigits !== null && ordinal !== null && String(ordinal).indexOf(String(qDigits)) !== -1)) return 4; // 제목/회차번호 포함
+  var norm = function(s){ return (s||"").replace(/[\s\-_·.]/g, "").toLowerCase(); };
+  if (norm(t).indexOf(norm(q)) !== -1) return 5; // 그 외 부분 일치(공백·기호 무시)
+  return null; // 불일치
+}
+function novelEpisodesFiltered(novelId, query, povSel) {
+  var n = NOVELS.find(function(x){ return x.id === novelId; });
+  var sortMode = (n && n.epSort === "newest") ? "newest" : "oldest";
+  var all = MANUSCRIPTS.filter(function(m){ return m.novelId === novelId; });
+  if (povSel) all = all.filter(function(m){ return (m.characterIds||(m.povId?[m.povId]:[])).indexOf(povSel) !== -1; });
+  var q = (query||"").trim();
+  if (!q) {
+    return all.slice().sort(function(a,b){
+      var ac=a.createdAt||0, bc=b.createdAt||0;
+      return sortMode==="newest" ? bc-ac : ac-bc;
+    }).map(function(m){ return { m: m, tier: 0 }; });
+  }
+  var scored = all.map(function(m){ return { m: m, tier: epMatchTier(q, m.title, episodeOrdinal(m)) }; }).filter(function(x){ return x.tier !== null; });
+  scored.sort(function(a,b){
+    if (a.tier !== b.tier) return a.tier - b.tier;
+    return (episodeOrdinal(a.m)||0) - (episodeOrdinal(b.m)||0);
+  });
+  return scored;
+}
+function renderNovelPage(n) {
+  var main = document.getElementById("main");
+  if (!main) return;
+  var work = WORKS.find(function(w){ return w.id === n.workId; });
+  var workCharacterDocs = DOCS.filter(function(d){ return d.workId===n.workId && d.category==="등장인물"; });
+
+  var breadcrumbHtml = '<div class="breadcrumb-row">' +
+    '<button type="button" class="breadcrumb-link" data-backtowork="'+n.workId+'">'+esc(work?work.title:"")+'</button>' +
+    '<span class="breadcrumb-sep">'+ic("chevR",9)+'</span>' +
+    '<span class="breadcrumb-item breadcrumb-current">'+esc(n.title||"제목 없는 소설")+'</span>' +
+  '</div>';
+
+  var povSelInit = state.povFilter[n.id] || "";
+  var povFilterHtml = workCharacterDocs.length ? '<select class="sel" id="novelPovFilter" title="등장인물로 필터">' +
+    '<option value="">전체 인물</option>' +
+    workCharacterDocs.map(function(d){ return '<option value="'+d.id+'" '+(povSelInit===d.id?"selected":"")+'>'+esc(d.title||"제목 없음")+'</option>'; }).join("") +
+    '</select>' : '';
+
+  var headHtml = '<div class="novel-page-head">' +
+    '<div><h2 class="novel-page-title">'+esc(n.title||"제목 없는 소설")+'</h2>' +
+      '<div class="novel-page-meta" id="novelPageMeta"></div>' +
+    '</div>' +
+    '<div class="novel-page-actions">' +
+      '<button type="button" class="btn" id="novelSettingsBtn">'+ic("gear",13)+' 소설 설정</button>' +
+      '<button type="button" class="btn primary" id="novelNewEpBtn">'+ic("plus",13)+' 새 화 쓰기</button>' +
+    '</div>' +
+  '</div>';
+
+  var jumpHtml = '<div class="novel-jump-wrap">' +
+    '<input type="text" class="novel-jump-input" id="novelJumpInput" placeholder="회차 번호 또는 제목으로 검색... (Enter로 바로 이동, ↑↓로 후보 선택)" autocomplete="off">' +
+    '<div class="novel-jump-hint">숫자나 제목 일부를 입력하면 실시간으로 좁혀집니다. Enter를 누르면 가장 잘 맞는 화의 집필창으로 바로 이동합니다.</div>' +
+  '</div>';
+
+  var toolbarHtml = '<div class="novel-toolbar-row">' +
+    '<button type="button" class="ms-sort-btn" id="novelSortBtn" title="정렬 방식 전환">'+((n.epSort==="newest")?"최신순":"시간순")+'</button>' +
+    povFilterHtml +
+  '</div>';
+
+  main.innerHTML =
+    '<div class="graph-shell"><div class="page-pad">' +
+      breadcrumbHtml + headHtml + jumpHtml + toolbarHtml +
+      '<div class="novel-ep-list" id="novelEpList"></div>' +
+    '</div></div>';
+
+  var back = main.querySelector("[data-backtowork]");
+  if (back) back.addEventListener("click", function(){ state.mode="workhome"; state.activeId=n.workId; state.wsHomeTab[n.workId]="ms"; render(); });
+  document.getElementById("novelSettingsBtn").addEventListener("click", function(){ openNovelSettings(n.id); });
+  document.getElementById("novelNewEpBtn").addEventListener("click", function(){ newManuscriptIn(n.id); });
+  var sortBtn = document.getElementById("novelSortBtn");
+  if (sortBtn) sortBtn.addEventListener("click", function(){ toggleNovelSort(n.id); });
+  var povFilterSel = document.getElementById("novelPovFilter");
+  if (povFilterSel) povFilterSel.addEventListener("change", function(ev){ state.povFilter[n.id] = ev.target.value; selIdx = 0; refreshList(); });
+
+  var selIdx = 0;
+  var jumpInput = document.getElementById("novelJumpInput");
+
+  function currentFiltered() {
+    return novelEpisodesFiltered(n.id, jumpInput ? jumpInput.value : "", state.povFilter[n.id] || "");
+  }
+  function refreshMeta() {
+    var epsAll = MANUSCRIPTS.filter(function(m){ return m.novelId === n.id; });
+    var charTotal = epsAll.reduce(function(sum,m){ return sum+charCount(m.text); }, 0);
+    var meta = document.getElementById("novelPageMeta");
+    if (meta) meta.textContent = "전체 "+epsAll.length+"화" + (charTotal ? " · "+fmtNum(charTotal)+"자" : "");
+  }
+  function openEpisode(id) { state.mode = "manuscript"; state.activeId = id; render(); }
+  function epRowHtml(item, idx, list) {
+    var m = item.m;
+    var ord = episodeOrdinal(m);
+    var epChars = charCount(m.text);
+    var epCharIds = m.characterIds || (m.povId ? [m.povId] : []);
+    var epCharNames = epCharIds.map(function(id){ var d = workCharacterDocs.find(function(d){ return d.id===id; }); return d ? d.title : null; }).filter(Boolean);
+    var povBadge = epCharNames.length ? '<span title="'+esc(epCharNames.join(", "))+'">'+esc(epCharNames.slice(0,2).join(", "))+(epCharNames.length>2?" +"+(epCharNames.length-2):"")+'</span>' : '';
+    var hasQuery = !!(jumpInput && jumpInput.value.trim());
+    var canReorder = !state.povFilter[n.id] && !hasQuery && list.length > 1;
+    var isActive = state.mode==="manuscript" && state.activeId===m.id;
+    var moveHtml = canReorder ?
+      '<button class="row-move" data-msmoveup="'+m.id+'" title="위로 이동"'+(idx===0?" disabled":"")+'>'+ic("chevUp",9)+'</button>' +
+      '<button class="row-move" data-msmovedown="'+m.id+'" title="아래로 이동"'+(idx===list.length-1?" disabled":"")+'>'+ic("chevDown",9)+'</button>' : '';
+    var insertHtml = (!state.povFilter[n.id] && !hasQuery) ? '<button class="row-move row-insert" data-msinsertafter="'+m.id+'" title="이 화 다음에 새 화 삽입">+</button>' : '';
+    return '<div class="novel-ep-row'+(isActive?" active":"")+(idx===selIdx?" selected":"")+'" data-openms="'+m.id+'" data-idx="'+idx+'">' +
+      '<span class="novel-ep-ord">'+(ord!=null?ord:"")+'</span>' +
+      '<span class="novel-ep-title">'+esc(m.title||"제목 없음")+'</span>' +
+      '<span class="novel-ep-meta">'+povBadge+(epChars?fmtNum(epChars)+'자':'')+'</span>' +
+      insertHtml + moveHtml +
+      '<button class="row-del" data-delms="'+m.id+'" title="삭제">'+ic("trash",12)+'</button>' +
+    '</div>';
+  }
+  function wireRows() {
+    var box = document.getElementById("novelEpList");
+    box.querySelectorAll("[data-openms]").forEach(function(row){
+      row.addEventListener("click", function(e){
+        if (e.target.closest("[data-msinsertafter],[data-msmoveup],[data-msmovedown],[data-delms]")) return;
+        openEpisode(row.dataset.openms);
+      });
+    });
+    box.querySelectorAll("[data-msmoveup]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); moveManuscript(b.dataset.msmoveup, -1); refreshList(); }); });
+    box.querySelectorAll("[data-msmovedown]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); moveManuscript(b.dataset.msmovedown, 1); refreshList(); }); });
+    box.querySelectorAll("[data-msinsertafter]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); insertManuscriptAfter(n.id, b.dataset.msinsertafter); }); });
+    box.querySelectorAll("[data-delms]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteManuscript(b.dataset.delms); }); });
+  }
+  function refreshList() {
+    var list = currentFiltered();
+    if (selIdx >= list.length) selIdx = Math.max(0, list.length-1);
+    var box = document.getElementById("novelEpList");
+    if (!box) return;
+    var hasQuery = !!(jumpInput && jumpInput.value.trim());
+    if (!list.length) {
+      box.innerHTML = '<div class="sb-empty">'+(hasQuery ? "일치하는 화가 없습니다." : (state.povFilter[n.id] ? "이 인물이 등장하는 화가 없습니다." : "아직 화가 없습니다. \"새 화 쓰기\"로 만들어보세요."))+'</div>';
+    } else {
+      box.innerHTML = list.map(function(item, idx){ return epRowHtml(item, idx, list); }).join("");
+    }
+    wireRows();
+    refreshMeta();
+  }
+  if (jumpInput) {
+    jumpInput.addEventListener("input", function(){ selIdx = 0; refreshList(); });
+    jumpInput.addEventListener("keydown", function(e){
+      var list;
+      if (e.key === "ArrowDown") { e.preventDefault(); list = currentFiltered(); if (list.length) { selIdx = Math.min(list.length-1, selIdx+1); refreshList(); } }
+      else if (e.key === "ArrowUp") { e.preventDefault(); list = currentFiltered(); if (list.length) { selIdx = Math.max(0, selIdx-1); refreshList(); } }
+      else if (e.key === "Enter") {
+        e.preventDefault();
+        list = currentFiltered();
+        if (list.length) { var pick = list[Math.min(selIdx, list.length-1)]; openEpisode(pick.m.id); }
+      } else if (e.key === "Escape") {
+        jumpInput.value = ""; selIdx = 0; refreshList();
+      }
+    });
+  }
+  refreshList();
+}
+
 function renderSidebar() {
   var q = state.query.trim().toLowerCase();
   var el = document.getElementById("sbBody");
@@ -8133,6 +8336,7 @@ function wireWorkTreeHandlers(el) {
   el.querySelectorAll("[data-opendoccat]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="doccat"; state.activeId=b.dataset.opendoccat; render(); }); });
   el.querySelectorAll("[data-opengraph]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="graph"; state.activeId=b.dataset.opengraph; state.addPropOpen=false; state.colorPickerOpen=false; render(); }); });
   el.querySelectorAll("[data-openms]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="manuscript"; state.activeId=b.dataset.openms; render(); }); });
+  el.querySelectorAll("[data-opennovel]").forEach(function(b){ b.addEventListener("click", function(e){ if (e.target.closest("[data-newep],[data-novelsettings],[data-delnovel]")) return; state.mode="novel"; state.activeId=b.dataset.opennovel; render(); }); });
   el.querySelectorAll("[data-opentable]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="table"; state.activeId=b.dataset.opentable; render(); }); });
   el.querySelectorAll("[data-openscript]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="script"; state.activeId=b.dataset.openscript; render(); }); });
   el.querySelectorAll("[data-opensports]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="sports"; state.activeId=b.dataset.opensports; render(); }); });
@@ -14898,6 +15102,69 @@ function openPaperZoomReader(m, layout, startIdx) {
   paint();
 }
 
+var _epSwitchOutsideHandler = null;
+function closeEpSwitchPopover() {
+  var p = document.getElementById("epSwitchPopover"); if (p) p.remove();
+  if (_epSwitchOutsideHandler) { document.removeEventListener("mousedown", _epSwitchOutsideHandler); _epSwitchOutsideHandler = null; }
+}
+/* 집필창 안에서 "현재 회차" 버튼을 누르면 뜨는 검색 가능한 회차 선택 팝오버 --
+ * 소설 원고 목록 페이지와 같은 매칭 엔진(novelEpisodesFiltered/epMatchTier)을
+ * 그대로 써서, 어디서 회차를 찾든 같은 우선순위로 움직인다. */
+function openEpSwitchPopover(anchorEl, m, novel, onPick) {
+  closeEpSwitchPopover();
+  var pop = document.createElement("div");
+  pop.className = "ep-switch-popover";
+  pop.id = "epSwitchPopover";
+  pop.innerHTML =
+    '<input type="text" class="ep-switch-popover-input" id="epSwitchSearch" placeholder="회차 번호 또는 제목 검색..." autocomplete="off">' +
+    '<div class="ep-switch-popover-list" id="epSwitchList"></div>';
+  document.body.appendChild(pop);
+  var r = anchorEl.getBoundingClientRect();
+  var top = Math.min(r.bottom+6, window.innerHeight-Math.min(400, pop.offsetHeight||400)-8);
+  var left = Math.min(r.left, window.innerWidth-320-8);
+  pop.style.top = Math.max(8,top)+"px";
+  pop.style.left = Math.max(8,left)+"px";
+
+  var selIdx = 0;
+  var input = document.getElementById("epSwitchSearch");
+  function currentList() { return novelEpisodesFiltered(novel.id, input.value, ""); }
+  function rowHtml(item, idx) {
+    var ord = episodeOrdinal(item.m);
+    var isActive = item.m.id === m.id;
+    return '<div class="ep-switch-popover-row'+(idx===selIdx?" selected":"")+(isActive?" active":"")+'" data-epid="'+item.m.id+'">' +
+      '<span class="ord">'+(ord!=null?ord:"")+'</span><span class="t">'+esc(item.m.title||"제목 없음")+'</span>' +
+    '</div>';
+  }
+  function refresh() {
+    var list = currentList();
+    if (selIdx >= list.length) selIdx = Math.max(0, list.length-1);
+    var box = document.getElementById("epSwitchList");
+    if (!box) return;
+    box.innerHTML = list.length ? list.map(rowHtml).join("") : '<div class="sb-empty" style="padding:10px">일치하는 화가 없습니다.</div>';
+    box.querySelectorAll("[data-epid]").forEach(function(row){
+      row.addEventListener("click", function(){ var id = row.dataset.epid; closeEpSwitchPopover(); onPick(id); });
+    });
+  }
+  input.addEventListener("input", function(){ selIdx = 0; refresh(); });
+  input.addEventListener("keydown", function(e){
+    var list;
+    if (e.key === "ArrowDown") { e.preventDefault(); list = currentList(); if (list.length) { selIdx = Math.min(list.length-1, selIdx+1); refresh(); } }
+    else if (e.key === "ArrowUp") { e.preventDefault(); list = currentList(); if (list.length) { selIdx = Math.max(0, selIdx-1); refresh(); } }
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      list = currentList();
+      if (list.length) { var pick = list[Math.min(selIdx, list.length-1)].m.id; closeEpSwitchPopover(); onPick(pick); }
+    } else if (e.key === "Escape") { closeEpSwitchPopover(); }
+  });
+  refresh();
+  input.focus();
+  setTimeout(function(){
+    _epSwitchOutsideHandler = function(e){
+      if (!pop.contains(e.target) && e.target !== anchorEl && !anchorEl.contains(e.target)) closeEpSwitchPopover();
+    };
+    document.addEventListener("mousedown", _epSwitchOutsideHandler);
+  }, 0);
+}
 function renderManuscriptPage(m) {
   if (m.previewFontSize === undefined) m.previewFontSize = 16;
   if (m.previewFont === undefined) m.previewFont = "sans";
@@ -15011,15 +15278,45 @@ function renderManuscriptPage(m) {
     titleBarHtml = '<div class="graph-title-bar"><input class="graph-title" id="msTitle" value="'+esc(m.title)+'" placeholder="원고(화) 제목"><span class="ms-save-indicator saved" id="msSaveIndicator">'+ic("checkmark",11)+' 저장됨</span><span class="ms-char-count" id="msCharCount">'+fmtNum(charCount(m.text))+'자</span><button class="page-del" id="deleteMsBtn" style="margin-top:0">'+ic("trash",13)+'<span>원고 삭제</span></button></div>';
   }
 
+  /* 집필창 안에서 다른 회차로 옮겨갈 때, 목록 화면으로 나갔다 다시 들어오지
+   * 않고 바로 전/현재/다음 화를 오갈 수 있게 한다. "현재 회차" 버튼은 소설
+   * 원고 페이지와 같은 검색·빠른 이동 엔진(novelEpisodesFiltered)을 쓰는
+   * 팝오버를 띄운다 -- 회차가 아주 많아도 스크롤 없이 번호/제목으로 바로
+   * 찾아갈 수 있다. */
+  var epSiblings = novelOfMs ? sortedEpsOf(novelOfMs.id) : [];
+  var epIdxInSiblings = epSiblings.findIndex(function(x){ return x.id===m.id; });
+  var prevEpSwitch = epIdxInSiblings>0 ? epSiblings[epIdxInSiblings-1] : null;
+  var nextEpSwitch = (epIdxInSiblings!==-1 && epIdxInSiblings<epSiblings.length-1) ? epSiblings[epIdxInSiblings+1] : null;
+  var epSwitcherHtml = novelOfMs ? (
+    '<div class="ep-switcher-row">' +
+      '<button type="button" class="ep-switch-btn" id="epPrevBtn"'+(prevEpSwitch?'':' disabled')+' title="'+(prevEpSwitch?esc(prevEpSwitch.title||"이전 화"):"이전 화 없음")+'">'+ic("chevL",13)+'<span>'+(prevEpSwitch?esc(prevEpSwitch.title||"이전 화"):"이전 화")+'</span></button>' +
+      '<button type="button" class="ep-switch-current" id="epCurrentBtn" title="다른 회차로 빠르게 이동(검색 가능)">'+ic("docIcon",13)+'<span>'+esc(m.title||"제목 없음")+'</span>'+ic("chevron",11)+'</button>' +
+      '<button type="button" class="ep-switch-btn" id="epNextBtn"'+(nextEpSwitch?'':' disabled')+' title="'+(nextEpSwitch?esc(nextEpSwitch.title||"다음 화"):"다음 화 없음")+'"><span>'+(nextEpSwitch?esc(nextEpSwitch.title||"다음 화"):"다음 화")+'</span>'+ic("chevR",13)+'</button>' +
+    '</div>'
+  ) : '';
+
   main.innerHTML =
     '<div class="graph-shell">' +
-      titleBarHtml +
+      titleBarHtml + epSwitcherHtml +
       '<div class="page-pad'+(isPaper?" paper-info-compact":"")+'" style="padding-top:26px">' + povHtml + statsHtml + tabsHtml +
         ((isBook || isPaper)
           ? '<div class="ms-editor-stack">' + bodyHtml + '<div class="ms-context-panel stacked" id="msContextPanel"></div></div>'
           : '<div class="ms-editor-row"><div class="ms-editor-main">' + bodyHtml + '</div><div class="ms-context-panel" id="msContextPanel"></div></div>') +
       '</div>' +
     '</div>';
+  if (novelOfMs) {
+    var switchToEpisode = function(id) {
+      if (!id || id === m.id) return;
+      flushPaperSave();
+      state.mode = "manuscript"; state.activeId = id; render();
+    };
+    var epPrevBtn = document.getElementById("epPrevBtn");
+    var epNextBtn = document.getElementById("epNextBtn");
+    var epCurrentBtn = document.getElementById("epCurrentBtn");
+    if (epPrevBtn && prevEpSwitch) epPrevBtn.addEventListener("click", function(){ switchToEpisode(prevEpSwitch.id); });
+    if (epNextBtn && nextEpSwitch) epNextBtn.addEventListener("click", function(){ switchToEpisode(nextEpSwitch.id); });
+    if (epCurrentBtn) epCurrentBtn.addEventListener("click", function(){ openEpSwitchPopover(epCurrentBtn, m, novelOfMs, switchToEpisode); });
+  }
   if (isPaper) {
     var infoSettingsBtn = document.getElementById("paperInfoSettingsBtn");
     if (infoSettingsBtn) infoSettingsBtn.addEventListener("click", openPaperInfoModeModal);
@@ -16137,6 +16434,10 @@ function render() {
   if (state.mode === "manuscript") {
     var m = currentManuscript();
     if (m) { renderManuscriptPage(m); return; }
+  }
+  if (state.mode === "novel") {
+    var nv = NOVELS.find(function(n){ return n.id === state.activeId; });
+    if (nv) { renderNovelPage(nv); return; }
   }
   if (state.mode === "essayentry") {
     var esE = ESSAY_ENTRIES.find(function(x){ return x.id === state.activeId; });
