@@ -896,7 +896,7 @@
   .paper-outer { display:flex; justify-content:center; padding:6px 0 16px; }
   .paper-sheet-wrap { flex:none; width:100%; max-width:720px; }
   .paper-text { box-sizing:border-box; border:1px solid var(--border-strong); border-radius:10px; background:var(--bg-card); color:var(--ink); outline:none; resize:none; width:100%; font-family:var(--serif); font-size:16px; line-height:1.95; padding:34px 40px; height:min(66vh, 680px); white-space:pre-wrap; word-break:normal; overflow-wrap:break-word; }
-  .paper-text.vertical { writing-mode:vertical-rl; text-orientation:mixed; height:72vh; max-height:760px; width:min(720px, 100%); }
+  .paper-text.vertical, .ms-textarea.ms-doc-textarea.vertical { writing-mode:vertical-rl; text-orientation:mixed; height:72vh; max-height:760px; width:min(720px, 100%); }
   .paper-page-nav { display:flex; align-items:center; justify-content:center; gap:16px; margin-top:4px; font-size:13px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
   .paper-page-nav button { background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:7px 14px; color:var(--ink); }
   .paper-page-nav button:disabled { opacity:.35; }
@@ -13873,8 +13873,8 @@ function renderManuscriptPaperWrite(m) {
       '<button type="button" id="msPaperFindBtn">'+ic("search",13)+'<span>찾아바꾸기</span></button>' +
     '</div>' +
     '<div class="paper-stats-bar" id="paperStatsBar"></div>' +
-    '<div class="paper-outer"><div class="paper-sheet-wrap">' +
-      '<textarea class="paper-text'+((m.paperVertical&&initStats.rules.vertical)?" vertical":"")+'" id="paperText" spellcheck="true" placeholder="여기에 편하게 쓰세요 — 칸·줄·페이지는 내부적으로 원고지 규칙 그대로 계산됩니다." lang="'+esc(initStats.rules.lang)+'">'+esc(m.text||"")+'</textarea>' +
+    '<div class="ms-doc-page"><div class="ms-doc-ruler"></div><div class="ms-doc-screen">' +
+      '<textarea class="ms-textarea ms-doc-textarea'+((m.paperVertical&&initStats.rules.vertical)?" vertical":"")+'" id="paperText" spellcheck="true" placeholder="여기에 편하게 쓰세요 — 칸·줄·페이지는 내부적으로 원고지 규칙 그대로 계산됩니다." lang="'+esc(initStats.rules.lang)+'">'+esc(m.text||"")+'</textarea>' +
     '</div></div>' +
     '<div class="paper-page-nav">' +
       '<button type="button" id="paperPrevPage">'+ic("chevL",13)+'</button>' +
@@ -13920,7 +13920,7 @@ function renderManuscriptPaperWrite(m) {
       });
     }
     if (!st.rules.vertical) m.paperVertical = false;
-    textEl.className = "paper-text" + ((m.paperVertical && st.rules.vertical) ? " vertical" : "");
+    textEl.className = "ms-textarea ms-doc-textarea" + ((m.paperVertical && st.rules.vertical) ? " vertical" : "");
     textEl.lang = st.rules.lang;
   }
 
@@ -14211,7 +14211,7 @@ function renderManuscriptPage(m) {
       '<div class="ms-controls">' + focusBtnHtml + '</div>' +
       '<div id="paperArea"></div>';
   } else {
-    var textareaHtml = '<textarea class="ms-textarea'+(isPlain?" ms-doc-textarea":"")+'" id="msText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요.">'+esc(m.text||"")+'</textarea>';
+    var textareaHtml = '<textarea class="'+(isPlain?"paper-text":"ms-textarea")+'" id="msText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요.">'+esc(m.text||"")+'</textarea>';
     bodyHtml =
       '<div class="ms-controls">' +
         focusBtnHtml +
@@ -14226,7 +14226,7 @@ function renderManuscriptPage(m) {
         '<button type="button" id="msFindBtn">'+ic("search",13)+'<span>찾아바꾸기</span></button>' +
       '</div>' +
       (isPlain
-        ? '<div class="ms-doc-page"><div class="ms-doc-ruler"></div><div class="ms-doc-screen">' + textareaHtml + '</div></div>'
+        ? '<div class="paper-outer"><div class="paper-sheet-wrap">' + textareaHtml + '</div></div>'
         : '<div class="ms-frame"><div class="ms-notch"></div><div class="ms-screen">' + textareaHtml + '</div></div>');
   }
 
