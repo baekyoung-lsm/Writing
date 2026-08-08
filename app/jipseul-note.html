@@ -1619,6 +1619,12 @@ function openPreferencesModal() {
   }
   paint();
   overlay.addEventListener("mousedown", function(e){ if (e.target === overlay) closeModal(); });
+  /* overlay 자신에 keydown을 걸면 포커스가 overlay 안으로 들어간 적이 없는 한
+   * 버블링을 못 타서 Esc가 씹힌다 -- document에 걸고 지금 열린 모달이 이
+   * overlay가 맞는지만 확인한다. */
+  document.addEventListener("keydown", function onEsc(e){
+    if (e.key === "Escape" && document.getElementById("modalOverlay") === overlay) closeModal();
+  });
 }
 applyThemePref();
 
@@ -1928,6 +1934,13 @@ function openPaperLineColorModal() {
   }
   paint();
   overlay.addEventListener("mousedown", function (e) { if (e.target === overlay) closeModal(); });
+  /* overlay 자신에 keydown을 걸면 포커스가 overlay 안으로 들어간 적이 없는 한
+   * (여기선 openModal()처럼 입력 필드에 자동 포커스를 주지 않는다) 버블링을
+   * 못 타서 Esc가 씹힌다 -- document에 걸고 "지금 열려 있는 모달이 바로 이
+   * overlay인가"만 확인한다. */
+  document.addEventListener("keydown", function onEsc(e) {
+    if (e.key === "Escape" && document.getElementById("modalOverlay") === overlay) closeModal();
+  });
 }
 
 var MANUSCRIPT_LANG_RULES = {
@@ -13746,8 +13759,9 @@ function renderBookArea(m) {
       m.text = flowEl.innerText.split(String.fromCharCode(160)).join(" ");
       var denom0 = flowEl.scrollWidth - flowEl.clientWidth;
       m.editScrollFrac = denom0 > 0 ? Math.max(0, Math.min(1, flowEl.scrollLeft/denom0)) : 0;
-      saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); flashSaveIndicator();
+      schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); flashSaveIndicator();
     });
+    flowEl.addEventListener("blur", flushPaperSave);
     flowEl.addEventListener("scroll", function(){
       var denom = flowEl.scrollWidth - flowEl.clientWidth;
       m.editScrollFrac = denom > 0 ? Math.max(0, Math.min(1, flowEl.scrollLeft/denom)) : 0;
@@ -13761,7 +13775,8 @@ function renderBookArea(m) {
       '<div class="book-outer"><div class="book-shell"><textarea class="book-edit-textarea" id="bookEditText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요.">'+esc(m.text||"")+'</textarea></div></div>' +
       '<div class="book-hint">쓰기 모드는 스크롤로 이어 씁니다 — 미리보기에서 페이지 단위로 넘겨볼 수 있어요</div>';
     var editEl = document.getElementById("bookEditText");
-    editEl.addEventListener("input", function(e){ m.text = e.target.value; m.editScrollFrac = editScrollFraction(); saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); updateContextPanel(m, bookWorkId); flashSaveIndicator(); });
+    editEl.addEventListener("input", function(e){ m.text = e.target.value; m.editScrollFrac = editScrollFraction(); schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); updateContextPanel(m, bookWorkId); flashSaveIndicator(); });
+    editEl.addEventListener("blur", flushPaperSave);
     editEl.addEventListener("scroll", function(){ m.editScrollFrac = editScrollFraction(); });
     wireMentionAutocomplete(editEl, bookWorkId);
     requestAnimationFrame(function(){
@@ -13808,10 +13823,12 @@ function paperScrollFraction(el) {
 }
 /* 대형 원고(10만~100만자) 대응: 이 앱은 편집마다 전체 상태를 동기적으로
  * JSON.stringify해서 localStorage에 저장하는 구조라(saveData 참고), 키 입력마다
- * 그걸 그대로 부르면 원고가 커질수록 타이핑이 버벅인다. 원고지 편집기는 입력을
- * 멈춘 뒤 짧게 디바운스해서 저장하고(포커스를 벗어나면 즉시 flush해 유실을
- * 막는다), 화면 자체는 순수 textarea라 브라우저가 렌더링을 알아서 가상화하므로
- * 글자 수가 늘어도 표시 성능은 별도 최적화 없이 유지된다. */
+ * 그걸 그대로 부르면 원고가 커질수록 타이핑이 버벅인다. 원고지(paper)뿐 아니라
+ * 양장본(book, textarea·두쪽보기 모두)과 일반 집필창(plain)의 본문 입력도 전부
+ * 이 디바운스를 함께 쓴다(입력을 멈춘 뒤 짧게 디바운스해서 저장하고, 포커스를
+ * 벗어나면 즉시 flush해 유실을 막는다) -- 세 형식 다 본문은 같은 "긴 글 입력"
+ * 이라 저장 비용 문제가 동일하게 있다. 화면 자체는 재렌더링하지 않으므로
+ * 글자 수가 늘어도 타이핑 반응성은 별도 최적화 없이 유지된다. */
 var msPaperSaveTimer = null;
 function schedulePaperSave() {
   clearTimeout(msPaperSaveTimer);
@@ -13884,6 +13901,12 @@ function openManuscriptPaperPreview(m, initialCaretPos) {
     if (nextBtn) nextBtn.addEventListener("click", function () { if (pageIdx < layout.totalPages - 1) { pageIdx++; paint(); } });
   }
   overlay.addEventListener("mousedown", function (e) { if (e.target === overlay) closeModal(); });
+  /* overlay 자신에 keydown을 걸면 포커스가 overlay 안으로 들어간 적이 없는 한
+   * 버블링을 못 타서 Esc가 씹힌다 -- document에 걸고 지금 열린 모달이 이
+   * overlay가 맞는지만 확인한다. */
+  document.addEventListener("keydown", function onEsc(e) {
+    if (e.key === "Escape" && document.getElementById("modalOverlay") === overlay) closeModal();
+  });
   paint();
 }
 function renderManuscriptPaperArea(m) {
@@ -14237,7 +14260,8 @@ function renderManuscriptPage(m) {
   } else {
     applyMsStyle(m);
     var msTextEl = document.getElementById("msText");
-    msTextEl.addEventListener("input", function(e){ m.text = e.target.value; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId); updateContextPanel(m, msWorkId); flashSaveIndicator(); });
+    msTextEl.addEventListener("input", function(e){ m.text = e.target.value; schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId); updateContextPanel(m, msWorkId); flashSaveIndicator(); });
+    msTextEl.addEventListener("blur", flushPaperSave);
     wireMentionAutocomplete(msTextEl, msWorkId);
     document.getElementById("msDarkToggle").addEventListener("click", function(){ m.previewDark = !m.previewDark; saveData(); renderManuscriptPage(m); });
     document.getElementById("msFontDec").addEventListener("click", function(){ m.previewFontSize = Math.max(13, m.previewFontSize-1); saveData(); applyMsStyle(m); document.getElementById("msFontVal").textContent = m.previewFontSize+"px"; });
@@ -14777,7 +14801,7 @@ function renderScriptPage(sc) {
 
   main.innerHTML =
     '<div class="graph-shell">' +
-      '<div class="graph-title-bar"><input class="graph-title" id="scTitle" value="'+esc(sc.title)+'" placeholder="문자 체계 이름"><button class="page-del" id="deleteScriptBtn" style="margin-top:0">'+ic("trash",13)+'<span>삭제</span></button></div>' +
+      '<div class="graph-title-bar"><input class="graph-title" id="scTitle" value="'+esc(sc.title)+'" placeholder="문자 체계 이름"><button class="page-del" id="deleteScriptBtn" style="margin-top:0">'+ic("trash",13)+'<span>문자 삭제</span></button></div>' +
       '<div class="page-pad" style="padding-top:26px">' +
         glyphSectionHtml +
         typingSectionHtml +
