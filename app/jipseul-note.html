@@ -140,6 +140,14 @@
   #wsTabBar { position:sticky; top:0; z-index:6; background:var(--bg); }
   #wsTabBar:empty { display:none; }
   .ws-work-title { font-family:var(--serif); font-weight:700; font-size:14px; color:var(--ink); padding:14px 20px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* 상위 카테고리 → 하위 탭 2단 구성 -- 상위(.ws-cat-tabs)는 큰 카테고리를
+   * 고르는 곳이라 밑줄 강조로 "지금 어느 카테고리인가"가 항상 보이고, 그
+   * 아래 하위 탭(.ws-tabs, 기존 것 그대로)은 그 카테고리에 속한 기능만
+   * 추려서 보여준다. */
+  .ws-cat-tabs { display:flex; gap:4px; padding:10px 20px 0; border-bottom:1px solid var(--border); }
+  .ws-cat-tab { flex:none; display:flex; align-items:center; gap:6px; padding:8px 4px 10px; border:none; background:none; border-bottom:2px solid transparent; color:var(--ink-faint); font-size:13px; font-weight:600; margin-right:14px; }
+  .ws-cat-tab:hover { color:var(--ink-soft); }
+  .ws-cat-tab.on { color:var(--ink); border-bottom-color:var(--accent); }
   .ws-tabs-wrap { position:relative; }
   .ws-tabs { display:flex; gap:2px; padding:8px 20px; overflow-x:auto; scrollbar-width:none; cursor:grab; }
   .ws-tabs.dragging { cursor:grabbing; scroll-behavior:auto; user-select:none; }
@@ -148,6 +156,45 @@
   .ws-tab:hover { background:var(--bg-card-hover); color:var(--ink); }
   .ws-tab.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
   .ws-tab .cnt { font-size:11px; opacity:.75; }
+  /* 시나리오·희곡 요소 블록 -- 타입별 기본 서식(왼쪽 색 테두리·아이콘·지문
+   * 이탤릭 등)은 CSS class로, 특정 구간만의 서식(이탤릭/글씨크기)은 그 요소의
+   * html 안 인라인 태그(<i>, <span style>)로 처리한다. 서로 다른 메커니즘이라
+   * "타입 기본 서식"과 "특정 영역 오버라이드"가 항상 구분된다. */
+  .play-el-list { display:flex; flex-direction:column; gap:10px; margin-bottom:18px; }
+  .play-el { border-left:3px solid var(--border-strong); border-radius:8px; background:var(--bg-card); padding:10px 14px; box-shadow:var(--shadow-1); }
+  .play-el-headbar { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .play-el-typebadge { flex:none; font-size:11px; font-weight:700; color:var(--ink-faint); letter-spacing:.02em; padding:2px 7px; border-radius:5px; background:var(--bg-panel); }
+  .play-el-speaker { flex:none; width:110px; font-size:13px; font-weight:700; color:var(--ink); border:1px solid var(--border); border-radius:5px; padding:4px 7px; background:var(--bg-panel); }
+  .play-el-tools { display:flex; gap:2px; margin-left:auto; }
+  .play-el-tools button { width:22px; height:22px; display:flex; align-items:center; justify-content:center; border:none; background:none; color:var(--ink-faint); border-radius:5px; }
+  .play-el-tools button:hover:not(:disabled) { background:var(--bg-card-hover); color:var(--ink); }
+  .play-el-tools button:disabled { opacity:.3; }
+  .play-el-fmtbar { display:flex; gap:6px; margin-bottom:6px; }
+  .play-fmt-btn { width:26px; height:24px; border:1px solid var(--border); border-radius:5px; background:var(--bg-panel); color:var(--ink-soft); font-style:italic; font-size:13px; }
+  .play-fmt-btn:hover { background:var(--bg-card-hover); color:var(--ink); }
+  .play-fmt-size { border:1px solid var(--border); border-radius:5px; background:var(--bg-panel); color:var(--ink-soft); font-size:12px; padding:2px 4px; }
+  .play-el-body { min-height:1.6em; font-size:14.5px; line-height:1.7; color:var(--ink); outline:none; white-space:pre-wrap; word-break:break-word; }
+  .play-el-body:empty:before { content:attr(data-placeholder); color:var(--ink-faint); }
+  .play-el-body span[style*="font-size"] { line-height:1.5; }
+  .play-el-dialogue { border-left-color:var(--accent); }
+  .play-el-aside { border-left-color:var(--tide); }
+  .play-el-aside .play-el-body { font-style:italic; color:var(--tide); }
+  .play-el-direction { border-left-color:var(--ink-faint); }
+  .play-el-direction .play-el-body { font-style:italic; color:var(--ink-soft); }
+  .play-el-sceneDesc, .play-el-location, .play-el-spaceTransition { border-left-color:var(--moss); }
+  .play-el-timeTransition { border-left-color:var(--moss); font-style:italic; }
+  .play-el-prologue { border-left-color:var(--rose); }
+  .play-el-character { border-left-color:var(--accent-strong); }
+  .play-el-character .play-el-body { font-weight:600; }
+  .play-el-note { border-left-style:dashed; border-left-color:var(--ink-faint); }
+  .play-el-heading { text-align:center; border-left:none; border-top:2px solid var(--border-strong); border-bottom:2px solid var(--border-strong); border-radius:0; background:transparent; padding:12px 8px; box-shadow:none; }
+  .play-el-heading .play-el-headbar { justify-content:center; }
+  .play-el-headinput { text-align:center; font-family:var(--serif); font-weight:700; font-size:15px; color:var(--ink); border:none; background:none; flex:1; max-width:420px; }
+  .play-addmenu-wrap { border-top:1px solid var(--border); padding-top:14px; }
+  .play-addmenu-label { font-size:12px; font-weight:700; color:var(--ink-faint); margin-bottom:8px; }
+  .play-addmenu { display:flex; flex-wrap:wrap; gap:6px; }
+  .play-add-btn { display:flex; align-items:center; gap:5px; padding:6px 11px; border:1px solid var(--border); border-radius:20px; background:var(--bg-card); color:var(--ink-soft); font-size:12.5px; }
+  .play-add-btn:hover { background:var(--bg-card-hover); color:var(--ink); border-color:var(--border-strong); }
   .ws-tabs-wrap::before, .ws-tabs-wrap::after { content:""; position:absolute; top:0; bottom:0; width:28px; pointer-events:none; z-index:1; transition:opacity .15s; opacity:0; }
   .ws-tabs-wrap::before { left:0; background:linear-gradient(to right, var(--bg), transparent); }
   .ws-tabs-wrap::after { right:0; background:linear-gradient(to left, var(--bg), transparent); }
@@ -800,6 +847,8 @@
   .ms-notch { width:64px; height:5px; border-radius:4px; background:var(--border-strong); margin:0 auto 10px; }
   .ms-screen { border-radius:16px; overflow:hidden; }
   .ms-textarea { width:100%; height:460px; border:none; outline:none; resize:none; box-sizing:border-box; overflow-y:auto; }
+  .ms-format-preview { white-space:pre-wrap; word-break:break-word; overflow-y:auto; cursor:default; }
+  .ms-format-preview.ms-textarea { padding:0; }
 
   /* ---------- 일반 집필창 (워드/HWP 스타일) ---------- */
   .ms-doc-page { width:100%; max-width:820px; margin:0 auto; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; box-shadow:0 2px 16px var(--shadow); overflow:hidden; }
@@ -2715,10 +2764,10 @@ function colorReadoutHtml(hex) {
 }
 
 var STORE_KEY = "settingnote_v1";
-var DATA_COLLECTIONS = ["docs", "graphs", "manuscripts", "novels", "works", "tables", "timelines", "maps", "recentColors", "sports", "scripts", "essays", "essayEntries", "relationships"];
+var DATA_COLLECTIONS = ["docs", "graphs", "manuscripts", "novels", "works", "tables", "timelines", "maps", "recentColors", "sports", "scripts", "essays", "essayEntries", "relationships", "plays", "playScripts"];
 var _bootIssue = null;
 function emptyData() {
-  return { docs: [], graphs: [], manuscripts: [], novels: [], works: [], tables: [], timelines: [], maps: [], recentColors: [], sports: [], scripts: [], essays: [], essayEntries: [], relationships: [] };
+  return { docs: [], graphs: [], manuscripts: [], novels: [], works: [], tables: [], timelines: [], maps: [], recentColors: [], sports: [], scripts: [], essays: [], essayEntries: [], relationships: [], plays: [], playScripts: [] };
 }
 function normalizeData(data) {
   var normalized = emptyData();
@@ -2787,7 +2836,7 @@ function loadData() {
 }
 function saveData() {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS }));
+    localStorage.setItem(STORE_KEY, JSON.stringify({ docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS, plays: PLAYS, playScripts: PLAY_SCRIPTS }));
     storageSaveErrorShown = false;
     var oldNotice = document.getElementById("storageSaveError");
     if (oldNotice) oldNotice.remove();
@@ -2951,6 +3000,14 @@ var SCRIPTS = _boot.scripts || [];
  * drag-reorder, and font/size/dark preview mechanics as episodes. */
 var ESSAYS = _boot.essays || [];
 var ESSAY_ENTRIES = _boot.essayEntries || [];
+/* 시나리오·희곡 (screenplay/play): PLAYS is a collection folder (parallel to
+ * NOVELS/ESSAYS), PLAY_SCRIPTS are its individual 대본(script) pieces (parallel to
+ * MANUSCRIPTS/ESSAY_ENTRIES). Unlike 원고/수필 which store one big plain-text
+ * string, each PLAY_SCRIPT stores an ordered `elements` array -- one entry per
+ * 등장인물/대사/방백/지문/장면설명/... block -- so dialogue, stage directions and
+ * scene/act breaks are structurally distinct types rather than mixed plain text. */
+var PLAYS = _boot.plays || [];
+var PLAY_SCRIPTS = _boot.playScripts || [];
 /* 구조화된 관계(Relationship) -- 인물-인물뿐 아니라 인물-세력·인물-장소·아이템-소유자·
  * 사건-참여자까지 모든 DOCS 카테고리 쌍을 다룬다. 기존 "관계도"(GRAPHS/edges)는 캔버스
  * 위에 수동 배치하는 시각화 도구라 그대로 두고, 이건 각 문서 상세 페이지의 목록형
@@ -4183,7 +4240,7 @@ function openFindReplace(textareaId, triggerEl, onUpdate) {
 }
 
 /* ---------------- state ---------------- */
-var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, pendingMapFocusMarker: null, focusMode: false, appearTab: {}, splitView: false, splitSelectedId: null, wsHomeTab: {} };
+var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, pendingMapFocusMarker: null, focusMode: false, appearTab: {}, splitView: false, splitSelectedId: null, wsHomeTab: {}, wsLastTabByCat: {} };
 function applyFocusModeClass() {
   var appEl = document.querySelector(".app");
   if (!appEl) return;
@@ -4659,6 +4716,9 @@ function resetGenreTemplateWork() {
       MANUSCRIPTS = MANUSCRIPTS.filter(function(m){ return novelIds.indexOf(m.novelId)===-1; });
       ESSAYS = ESSAYS.filter(function(es){ return es.workId !== id; });
       ESSAY_ENTRIES = ESSAY_ENTRIES.filter(function(e){ return essayIds.indexOf(e.essayId)===-1; });
+      var playIds = PLAYS.filter(function(p){ return p.workId===id; }).map(function(p){ return p.id; });
+      PLAYS = PLAYS.filter(function(p){ return p.workId !== id; });
+      PLAY_SCRIPTS = PLAY_SCRIPTS.filter(function(ps){ return playIds.indexOf(ps.playId)===-1; });
       SCRIPTS = SCRIPTS.filter(function(sc){ return sc.workId !== id; });
       SPORTS = SPORTS.filter(function(sp){ return sp.workId !== id; });
       if (state.mode === "workhome" && state.activeId === id) { state.mode = "empty"; state.activeId = null; }
@@ -4714,9 +4774,12 @@ function deleteWork(id) {
   var essayIds = ESSAYS.filter(function(es){ return es.workId===id; }).map(function(es){ return es.id; });
   var essayCount = essayIds.length;
   var essayEntryCount = ESSAY_ENTRIES.filter(function(e){ return essayIds.indexOf(e.essayId)!==-1; }).length;
+  var playIds = PLAYS.filter(function(p){ return p.workId===id; }).map(function(p){ return p.id; });
+  var playCount = playIds.length;
+  var playScriptCount = PLAY_SCRIPTS.filter(function(ps){ return playIds.indexOf(ps.playId)!==-1; }).length;
   openModal({
     title: "작품을 삭제할까요?",
-    message: '"'+(w.title||"제목 없음")+'"을(를) 삭제하면 안에 있는 문서 '+docCount+'개, 관계도 '+graphCount+'개, 표 '+tableCount+'개, 연표 '+timelineCount+'개, 지도 '+mapCount+'개, 소설 폴더 '+novelCount+'개(화 '+msCount+'개 포함), 수필·자서전 폴더 '+essayCount+'개(글 '+essayEntryCount+'개 포함)가 모두 함께 삭제되고, 되돌릴 수 없습니다.',
+    message: '"'+(w.title||"제목 없음")+'"을(를) 삭제하면 안에 있는 문서 '+docCount+'개, 관계도 '+graphCount+'개, 표 '+tableCount+'개, 연표 '+timelineCount+'개, 지도 '+mapCount+'개, 소설 폴더 '+novelCount+'개(화 '+msCount+'개 포함), 수필·자서전 폴더 '+essayCount+'개(글 '+essayEntryCount+'개 포함), 시나리오·희곡 폴더 '+playCount+'개(대본 '+playScriptCount+'개 포함)가 모두 함께 삭제되고, 되돌릴 수 없습니다.',
     confirmLabel: "삭제", danger: true,
     onConfirm: function(){
       var removedDocIds = DOCS.filter(function(d){ return d.workId===id; }).map(function(d){ return d.id; });
@@ -4726,6 +4789,7 @@ function deleteWork(id) {
       var removedMapIds = MAPS.filter(function(mp){ return mp.workId===id; }).map(function(mp){ return mp.id; });
       var removedMsIds = MANUSCRIPTS.filter(function(m){ return novelIds.indexOf(m.novelId)!==-1; }).map(function(m){ return m.id; });
       var removedEssayEntryIds = ESSAY_ENTRIES.filter(function(e){ return essayIds.indexOf(e.essayId)!==-1; }).map(function(e){ return e.id; });
+      var removedPlayScriptIds = PLAY_SCRIPTS.filter(function(ps){ return playIds.indexOf(ps.playId)!==-1; }).map(function(ps){ return ps.id; });
       WORKS = WORKS.filter(function(x){ return x.id !== id; });
       DOCS = DOCS.filter(function(d){ return d.workId !== id; });
       GRAPHS = GRAPHS.filter(function(g){ return g.workId !== id; });
@@ -4736,6 +4800,8 @@ function deleteWork(id) {
       MANUSCRIPTS = MANUSCRIPTS.filter(function(m){ return novelIds.indexOf(m.novelId)===-1; });
       ESSAYS = ESSAYS.filter(function(es){ return es.workId !== id; });
       ESSAY_ENTRIES = ESSAY_ENTRIES.filter(function(e){ return essayIds.indexOf(e.essayId)===-1; });
+      PLAYS = PLAYS.filter(function(p){ return p.workId !== id; });
+      PLAY_SCRIPTS = PLAY_SCRIPTS.filter(function(ps){ return playIds.indexOf(ps.playId)===-1; });
       var removedScriptIds = SCRIPTS.filter(function(sc){ return sc.workId === id; }).map(function(sc){ return sc.id; });
       var removedSportsIds = SPORTS.filter(function(sp){ return sp.workId === id; }).map(function(sp){ return sp.id; });
       SCRIPTS = SCRIPTS.filter(function(sc){ return sc.workId !== id; });
@@ -4747,6 +4813,7 @@ function deleteWork(id) {
         (state.mode==="map"&&removedMapIds.indexOf(state.activeId)!==-1) ||
         (state.mode==="manuscript"&&removedMsIds.indexOf(state.activeId)!==-1) ||
         (state.mode==="essayentry"&&removedEssayEntryIds.indexOf(state.activeId)!==-1) ||
+        (state.mode==="playscript"&&removedPlayScriptIds.indexOf(state.activeId)!==-1) ||
         (state.mode==="script"&&removedScriptIds.indexOf(state.activeId)!==-1) ||
         (state.mode==="sports"&&removedSportsIds.indexOf(state.activeId)!==-1) ||
         ((state.mode==="workhome"||state.mode==="units"||state.mode==="fieldtemplates")&&state.activeId===id);
@@ -6520,6 +6587,351 @@ function moveEssayEntry(id, dir) {
   saveData(); renderSidebar();
 }
 
+/* ---------------- 시나리오·희곡 (screenplay/play) ----------------
+ * PLAYS(폴더)/PLAY_SCRIPTS(대본)는 ESSAYS/ESSAY_ENTRIES와 같은 폴더-엔트리
+ * 2단 구조를 그대로 재사용한다(생성/삭제/정렬/드래그 로직도 동일 패턴). 다른
+ * 점은 본문 저장 형태뿐이다 -- 대사·지문·장면설명 등을 한 덩어리 텍스트가 아니라
+ * 타입이 있는 elements 배열로 저장해서, "대사와 지문이 구조적으로 분리"되고
+ * "장면/막 구분"이 그 자체로 하나의 요소 타입이 되도록 한다. */
+var PLAY_ELEMENT_TYPES = {
+  actBreak:        { label: "막/장 구분",     icon: "chevron",  hasSpeaker: false, isHeading: true,  placeholder: "예: 제1막 제2장" },
+  sceneBreak:       { label: "장면 구분",      icon: "chevron",  hasSpeaker: false, isHeading: true,  placeholder: "예: 장면 3 · # · 칸나눔" },
+  prologue:        { label: "서극",           icon: "docIcon",  hasSpeaker: false, isHeading: false, placeholder: "서극(프롤로그) 내용을 입력하세요" },
+  location:        { label: "공간·장소",       icon: "map",      hasSpeaker: false, isHeading: false, placeholder: "예: 낡은 여관방, 밤. 창밖으로 빗소리가 들린다." },
+  timeTransition:  { label: "시간·장면 전환",  icon: "calendar", hasSpeaker: false, isHeading: false, placeholder: "예: 다음날 아침. / 며칠 후." },
+  spaceTransition: { label: "공간 이동",       icon: "map",      hasSpeaker: false, isHeading: false, placeholder: "공간 이동에 따른 설명을 입력하세요" },
+  sceneDesc:       { label: "장면 설명",       icon: "docIcon",  hasSpeaker: false, isHeading: false, placeholder: "장면 전체의 상황을 설명하세요" },
+  character:       { label: "등장인물",       icon: "person",   hasSpeaker: false, isHeading: false, placeholder: "예: 민서 — 20대 후반, 신중한 성격의 형사" },
+  dialogue:        { label: "대사",           icon: "docIcon",  hasSpeaker: true,  isHeading: false, placeholder: "대사를 입력하세요" },
+  aside:           { label: "방백",           icon: "docIcon",  hasSpeaker: true,  isHeading: false, placeholder: "관객(독자)에게만 들리는 말을 입력하세요" },
+  direction:       { label: "지문",           icon: "pen",      hasSpeaker: false, isHeading: false, placeholder: "인물의 동작·표정 등 지문을 입력하세요" },
+  note:            { label: "설명문",         icon: "docIcon",  hasSpeaker: false, isHeading: false, placeholder: "필요한 경우 별도 설명을 남기세요" }
+};
+var PLAY_ELEMENT_ORDER = ["actBreak","sceneBreak","prologue","location","timeTransition","spaceTransition","sceneDesc","character","dialogue","aside","direction","note"];
+function newPlayElement(type) {
+  var def = PLAY_ELEMENT_TYPES[type];
+  if (!def) return null;
+  return def.isHeading ? { id: uid(), type: type, label: "" } : { id: uid(), type: type, speaker: "", html: "" };
+}
+function newPlayFolder(workId) {
+  openModal({
+    title: "새 시나리오·희곡 폴더",
+    fields: [{ placeholder: "제목 (예: 단편 희곡집, OO 시나리오)" }],
+    confirmLabel: "만들기",
+    onConfirm: function (values) {
+      var title = values[0]; if (!title) return;
+      var p = { id: uid(), workId: workId, title: title };
+      PLAYS.push(p); saveData();
+      state.collapsed["play:" + workId] = false; state.collapsed["playcol:" + p.id] = false;
+      render();
+    }
+  });
+}
+function openPlaySettings(playId) {
+  var p = PLAYS.find(function (x) { return x.id === playId; });
+  if (!p) return;
+  openModal({
+    title: "시나리오·희곡 폴더 설정",
+    fields: [{ placeholder: "제목", value: p.title || "" }],
+    confirmLabel: "저장",
+    onConfirm: function (values) {
+      if (values[0]) p.title = values[0];
+      saveData(); renderSidebar();
+    }
+  });
+}
+function deletePlayFolder(id) {
+  var p = PLAYS.find(function (x) { return x.id === id; });
+  if (!p) return;
+  var count = PLAY_SCRIPTS.filter(function (ps) { return ps.playId === id; }).length;
+  openModal({
+    title: "폴더를 삭제할까요?",
+    message: '"' + (p.title || "제목 없음") + '"을(를) 삭제하면 안에 있는 대본 ' + count + '개도 함께 삭제되고, 되돌릴 수 없습니다.',
+    confirmLabel: "삭제", danger: true,
+    onConfirm: function () {
+      var removedIds = PLAY_SCRIPTS.filter(function (ps) { return ps.playId === id; }).map(function (ps) { return ps.id; });
+      PLAYS = PLAYS.filter(function (x) { return x.id !== id; });
+      PLAY_SCRIPTS = PLAY_SCRIPTS.filter(function (ps) { return ps.playId !== id; });
+      if (state.mode === "playscript" && removedIds.indexOf(state.activeId) !== -1) { state.mode = "empty"; state.activeId = null; }
+      saveData(); render();
+    }
+  });
+}
+function createPlayScript(playId, createdAt) {
+  var ps = {
+    id: uid(), title: "", playId: playId, createdAt: createdAt,
+    elements: [newPlayElement("sceneBreak")]
+  };
+  PLAY_SCRIPTS.push(ps); saveData();
+  return ps;
+}
+function openNewPlayScript(ps, playId) {
+  state.mode = "playscript"; state.activeId = ps.id; state.collapsed["playcol:" + playId] = false;
+  render();
+  var t = document.getElementById("psTitle");
+  if (t) { t.focus(); t.select(); }
+}
+function newPlayScriptIn(playId) {
+  var ps = createPlayScript(playId, Date.now());
+  openNewPlayScript(ps, playId);
+}
+function sortedPlayScriptsOf(playId, excludeId) {
+  return PLAY_SCRIPTS.filter(function (x) { return x.playId === playId && x.id !== excludeId; }).slice().sort(function (a, b) {
+    return (a.createdAt || 0) - (b.createdAt || 0);
+  });
+}
+function insertPlayScriptAfter(playId, afterId) {
+  var scripts = sortedPlayScriptsOf(playId);
+  var idx = scripts.findIndex(function (x) { return x.id === afterId; });
+  if (idx === -1) return;
+  var after = scripts[idx], next = scripts[idx + 1];
+  var newCreatedAt = next ? ((after.createdAt || 0) + (next.createdAt || 0)) / 2 : Date.now();
+  var ps = createPlayScript(playId, newCreatedAt);
+  openNewPlayScript(ps, playId);
+}
+function movePlayScriptTo(draggedId, targetId, before) {
+  var dragged = PLAY_SCRIPTS.find(function (x) { return x.id === draggedId; });
+  var target = PLAY_SCRIPTS.find(function (x) { return x.id === targetId; });
+  if (!dragged || !target || dragged.playId !== target.playId || draggedId === targetId) return;
+  var playId = dragged.playId;
+  var scripts = sortedPlayScriptsOf(playId, draggedId);
+  var idx = scripts.findIndex(function (x) { return x.id === targetId; });
+  if (idx === -1) return;
+  var nb = before ? scripts[idx - 1] : scripts[idx];
+  var na = before ? scripts[idx] : scripts[idx + 1];
+  var newCreatedAt;
+  if (nb && na) newCreatedAt = ((nb.createdAt || 0) + (na.createdAt || 0)) / 2;
+  else if (!nb && na) newCreatedAt = (na.createdAt || Date.now()) - 1;
+  else if (nb && !na) newCreatedAt = (nb.createdAt || Date.now()) + 1;
+  else newCreatedAt = Date.now();
+  dragged.createdAt = newCreatedAt;
+  saveData(); renderSidebar();
+}
+var playScriptDragId = null;
+function wirePlayScriptDragDrop(el) {
+  var rows = el.querySelectorAll('.play-draggable[draggable="true"]');
+  function clearDragOverMarks() {
+    el.querySelectorAll(".drag-over-left,.drag-over-right").forEach(function (r) { r.classList.remove("drag-over-left", "drag-over-right"); });
+  }
+  rows.forEach(function (row) {
+    row.addEventListener("dragstart", function (e) {
+      playScriptDragId = row.dataset.openplayscript;
+      row.classList.add("dragging");
+      if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = "move";
+        try { e.dataTransfer.setData("text/plain", row.dataset.openplayscript); } catch (err) {}
+      }
+    });
+    row.addEventListener("dragend", function () {
+      row.classList.remove("dragging");
+      clearDragOverMarks();
+      playScriptDragId = null;
+    });
+    row.addEventListener("dragover", function (e) {
+      if (!playScriptDragId || playScriptDragId === row.dataset.openplayscript) return;
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+      var rect = row.getBoundingClientRect();
+      var before = (e.clientX - rect.left) < rect.width / 2;
+      row.classList.toggle("drag-over-left", before);
+      row.classList.toggle("drag-over-right", !before);
+    });
+    row.addEventListener("dragleave", function () {
+      row.classList.remove("drag-over-left", "drag-over-right");
+    });
+    row.addEventListener("drop", function (e) {
+      e.preventDefault();
+      var draggedId = playScriptDragId || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
+      var targetId = row.dataset.openplayscript;
+      var before = row.classList.contains("drag-over-left");
+      clearDragOverMarks();
+      if (!draggedId || draggedId === targetId) return;
+      movePlayScriptTo(draggedId, targetId, before);
+    });
+  });
+}
+function deletePlayScript(id) {
+  var ps = PLAY_SCRIPTS.find(function (x) { return x.id === id; });
+  if (!ps) return;
+  openModal({
+    title: "대본을 삭제할까요?",
+    message: '"' + (ps.title || "제목 없음") + '"을(를) 삭제하면 되돌릴 수 없습니다.',
+    confirmLabel: "삭제", danger: true,
+    onConfirm: function () {
+      PLAY_SCRIPTS = PLAY_SCRIPTS.filter(function (x) { return x.id !== id; });
+      if (state.activeId === id) { state.mode = "empty"; state.activeId = null; }
+      saveData(); render();
+    }
+  });
+}
+function movePlayScript(id, dir) {
+  var ps = PLAY_SCRIPTS.find(function (x) { return x.id === id; });
+  if (!ps) return;
+  var scripts = sortedPlayScriptsOf(ps.playId).concat([ps]).sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+  var idx = scripts.findIndex(function (x) { return x.id === id; });
+  var swapIdx = idx + dir;
+  if (idx === -1 || swapIdx < 0 || swapIdx >= scripts.length) return;
+  var other = scripts[swapIdx];
+  var tmp = ps.createdAt;
+  ps.createdAt = other.createdAt;
+  other.createdAt = tmp;
+  saveData(); renderSidebar();
+}
+/* 인라인 서식(이탤릭/글씨 크기)은 각 요소의 html 필드에 안전한 태그(i/em/b/strong/
+ * span[font-size]/br)만 허용해 저장한다 -- contenteditable에서 나올 수 있는 다른
+ * 태그·속성(스크립트, on* 핸들러, 임의 style 등)은 전부 제거한다. */
+var PLAY_INLINE_TAG_WHITELIST = { I: 1, EM: 1, B: 1, STRONG: 1, SPAN: 1, BR: 1 };
+function sanitizeInlineHtml(html) {
+  var tmp = document.createElement("div");
+  tmp.innerHTML = html || "";
+  (function clean(node) {
+    Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+      if (child.nodeType === 3) return;
+      if (child.nodeType !== 1) { node.removeChild(child); return; }
+      if (!PLAY_INLINE_TAG_WHITELIST[child.tagName]) {
+        while (child.firstChild) node.insertBefore(child.firstChild, child);
+        node.removeChild(child);
+        return;
+      }
+      Array.prototype.slice.call(child.attributes).forEach(function (attr) {
+        if (child.tagName === "SPAN" && attr.name === "style") {
+          var m = /font-size\s*:\s*(\d{1,3})px/i.exec(attr.value);
+          if (m) child.setAttribute("style", "font-size:" + Math.min(72, Math.max(8, parseInt(m[1], 10))) + "px");
+          else child.removeAttribute("style");
+        } else {
+          child.removeAttribute(attr.name);
+        }
+      });
+      clean(child);
+    });
+  })(tmp);
+  return tmp.innerHTML;
+}
+function plainTextOfHtml(html) {
+  var tmp = document.createElement("div");
+  tmp.innerHTML = html || "";
+  return tmp.textContent || "";
+}
+/* execCommand("fontSize")는 낡고 표현력이 부족해서, 선택 영역을 Range API로 직접
+ * <span style="font-size:...">로 감싼다. 여러 노드에 걸친 선택(surroundContents가
+ * 실패하는 경우)은 추출 후 다시 감싸는 방식으로 대체 처리한다. */
+function wrapSelectionInline(applyFn) {
+  var sel = window.getSelection();
+  if (!sel || !sel.rangeCount || sel.isCollapsed) return false;
+  var range = sel.getRangeAt(0);
+  var span = document.createElement("span");
+  applyFn(span);
+  try {
+    range.surroundContents(span);
+  } catch (err) {
+    var content = range.extractContents();
+    span.appendChild(content);
+    range.insertNode(span);
+  }
+  sel.removeAllRanges();
+  var newRange = document.createRange();
+  newRange.selectNodeContents(span);
+  sel.addRange(newRange);
+  return true;
+}
+
+/* ---------------- 원고·수필 부분 서식(이탤릭/글씨 크기) 공통 엔진 ----------------
+ * 원고지 글자수·금칙처리(computeManuscriptLayout)는 순수 텍스트를 전제로 하는
+ * 검증된 계산이라, 서식을 표시하려고 본문(m.text/e.text)에 마크업을 섞으면 그
+ * 계산이 전부 틀어진다. 그래서 서식은 본문과 분리된 문자 오프셋 구간 목록
+ * (formatRanges)으로 저장하고, 읽기 전용 화면에서만 그 구간을 입혀서 그린다 --
+ * 편집 중인 textarea 자체는 원래대로 순수 텍스트 그대로 남는다(textarea는
+ * 애초에 일부 구간만 다른 스타일로 보여줄 수 없는 구조라 이 부분은 리팩토링으로
+ * 피할 수 없는 HTML의 근본 한계다). 본문을 고치면 구간의 시작/끝도 같이
+ * 밀어줘야(rebase) 서식이 엉뚱한 자리로 밀리지 않는다. */
+function rebaseFormatRanges(ranges, oldVal, newVal) {
+  if (!ranges || !ranges.length || oldVal === newVal) return ranges || [];
+  var oldLen = oldVal.length, newLen = newVal.length;
+  var start = 0, maxStart = Math.min(oldLen, newLen);
+  while (start < maxStart && oldVal[start] === newVal[start]) start++;
+  var oldEnd = oldLen, newEnd = newLen;
+  while (oldEnd > start && newEnd > start && oldVal[oldEnd-1] === newVal[newEnd-1]) { oldEnd--; newEnd--; }
+  var delta = newEnd - oldEnd;
+  function shift(pos) {
+    if (pos <= start) return pos;
+    if (pos >= oldEnd) return pos + delta;
+    return start;
+  }
+  return ranges.map(function(r){ return { id:r.id, type:r.type, size:r.size, start:shift(r.start), end:shift(r.end) }; })
+    .filter(function(r){ return r.end > r.start; });
+}
+function toggleFormatRange(ranges, start, end, type, size) {
+  ranges = ranges || [];
+  if (start >= end) return ranges;
+  var sameType = function(r){ return r.type===type && (type!=="size" || r.size===size); };
+  var covered = ranges.some(function(r){ return sameType(r) && r.start<=start && r.end>=end; });
+  if (covered) {
+    var next = [];
+    ranges.forEach(function(r){
+      if (!sameType(r) || r.end<=start || r.start>=end) { next.push(r); return; }
+      if (r.start < start) next.push({ id: uid(), type:r.type, size:r.size, start:r.start, end:start });
+      if (r.end > end) next.push({ id: uid(), type:r.type, size:r.size, start:end, end:r.end });
+    });
+    return next;
+  }
+  var kept = ranges.filter(function(r){ return r.type!==type || r.end<=start || r.start>=end; });
+  kept.push({ id: uid(), type: type, size: size, start: start, end: end });
+  return kept;
+}
+function renderFormattedPlainText(text, ranges) {
+  text = text || "";
+  if (!ranges || !ranges.length) return esc(text).replace(/\n/g, "<br>");
+  var bounds = [0, text.length];
+  ranges.forEach(function(r){ bounds.push(Math.max(0,Math.min(text.length,r.start)), Math.max(0,Math.min(text.length,r.end))); });
+  bounds = bounds.filter(function(v,i,a){ return a.indexOf(v)===i; }).sort(function(a,b){ return a-b; });
+  var html = "";
+  for (var i=0; i<bounds.length-1; i++) {
+    var s = bounds[i], e = bounds[i+1];
+    if (s>=e) continue;
+    var seg = esc(text.slice(s,e)).replace(/\n/g, "<br>");
+    var active = ranges.filter(function(r){ return r.start<=s && r.end>=e; });
+    var italic = active.some(function(r){ return r.type==="italic"; });
+    var sizeR = active.filter(function(r){ return r.type==="size"; }).pop();
+    if (italic) seg = "<i>"+seg+"</i>";
+    if (sizeR) seg = '<span style="font-size:'+sizeR.size+'px">'+seg+'</span>';
+    html += seg;
+  }
+  return html;
+}
+/* 특정 char 오프셋이 이탤릭 구간에 들어있는지만 보는 가벼운 버전 -- 원고지처럼
+ * 글자 하나하나를 셀 단위로 그리는 화면(고정 칸 크기라 글씨크기 변경은 칸
+ * 구조를 깨뜨리므로 지원하지 않고, 이탤릭만 지원한다)에서 쓴다. */
+function isItalicAt(ranges, pos) {
+  if (!ranges) return false;
+  for (var i=0; i<ranges.length; i++) { if (ranges[i].type==="italic" && ranges[i].start<=pos && ranges[i].end>pos) return true; }
+  return false;
+}
+function wireFormatToolbarButtons(root, textareaEl, getRanges, setRanges, onChange) {
+  var italicBtn = root.querySelector("[data-fmtitalic]");
+  if (italicBtn) italicBtn.addEventListener("click", function(){
+    var s = textareaEl.selectionStart, e = textareaEl.selectionEnd;
+    if (s===e) return;
+    setRanges(toggleFormatRange(getRanges(), s, e, "italic"));
+    onChange();
+    textareaEl.focus(); textareaEl.setSelectionRange(s, e);
+  });
+  var sizeSel = root.querySelector("[data-fmtsize]");
+  if (sizeSel) sizeSel.addEventListener("change", function(ev){
+    var px = ev.target.value; ev.target.value = "";
+    var s = textareaEl.selectionStart, e = textareaEl.selectionEnd;
+    if (s===e || !px) return;
+    setRanges(toggleFormatRange(getRanges(), s, e, "size", parseInt(px,10)));
+    onChange();
+    textareaEl.focus(); textareaEl.setSelectionRange(s, e);
+  });
+}
+function formatToolbarHtml() {
+  return '<button type="button" data-fmtitalic title="이탤릭체(선택한 부분에만 적용)"><i>i</i></button>' +
+    '<select class="sel" data-fmtsize title="글씨 크기(선택한 부분에만 적용)" style="max-width:64px">' +
+      '<option value="">크기</option><option value="12">12</option><option value="14">14</option><option value="16">16</option><option value="18">18</option><option value="20">20</option><option value="24">24</option><option value="28">28</option>' +
+    '</select>';
+}
+
 function docMetaHtml(d) {
   var metaHtml = "";
   if (d.category==="등장인물" && d.lifeStatus && LIFE_STATUSES[d.lifeStatus]) {
@@ -6734,6 +7146,14 @@ function msMatches(m, q) {
 function essayEntryMatches(e, q) {
   if (!q) return true;
   return ((e.title||"")+" "+(e.text||"")+" "+(e.period||"")+" "+(e.themeTags||[]).join(" ")).toLowerCase().includes(q);
+}
+function playScriptMatches(ps, q) {
+  if (!q) return true;
+  var hay = [ps.title||""];
+  (ps.elements||[]).forEach(function(el){
+    hay.push(el.speaker||""); hay.push(el.label||""); hay.push(plainTextOfHtml(el.html||""));
+  });
+  return hay.join(" ").toLowerCase().includes(q);
 }
 function highlightMatch(escapedSnippet, q) {
   if (!q) return escapedSnippet;
@@ -7303,6 +7723,25 @@ function renderWorkSections(work, q) {
   if (!essayList.length) essayHtml += '<div class="sb-empty">'+(q ? "일치하는 수필·자서전 글이 없습니다." : "아직 수필·자서전 폴더가 없습니다. + 를 눌러 만들어보세요.")+'</div>';
   sections.essay = essayHtml;
 
+  var workPlays = PLAYS.filter(function(p){ return p.workId === work.id; });
+  var workPlayIds = workPlays.map(function(p){ return p.id; });
+  var workPlayScriptTotal = PLAY_SCRIPTS.filter(function(ps){ return workPlayIds.indexOf(ps.playId)!==-1; }).length;
+  var playHtml = '<div class="ws-section-head"><span class="t">시나리오·희곡'+(workPlayScriptTotal?' · 대본 '+fmtNum(workPlayScriptTotal)+'개':'')+'</span><button class="add" data-newplay="'+work.id+'" title="새 폴더">'+ic("plus",13)+'</button></div>';
+  var playList = workPlays.filter(function(p){ return !q || p.title.toLowerCase().includes(q) || PLAY_SCRIPTS.some(function(ps){ return ps.playId===p.id && playScriptMatches(ps, q); }); });
+  playList.forEach(function(p){
+    var scripts = sortedPlayScriptsOf(p.id);
+    var pkey = "playcol:"+p.id, pcollapsed = !!state.collapsed[pkey];
+    playHtml += '<div class="novel-folder"><div class="sb-head" data-toggle="'+pkey+'"><span class="chev '+(pcollapsed?"collapsed":"")+'">'+ic("chevron",12)+'</span><span class="t">'+esc(p.title||"제목 없는 폴더")+' · 전체 '+scripts.length+'편</span><button class="add" data-newplayscript="'+p.id+'" title="새 대본(맨 아래에 추가)">'+ic("plus",12)+'</button><button class="row-settings" data-playsettings="'+p.id+'" title="폴더 설정">'+ic("gear",12)+'</button><button class="row-del" data-delplay="'+p.id+'" title="폴더 삭제" style="margin-left:0">'+ic("trash",12)+'</button></div>';
+    if (!pcollapsed) playHtml += '<div class="ws-chip-wrap">' + scripts.map(function(ps, psIdx){
+      var elCount = (ps.elements||[]).length;
+      return '<div class="graph-row play-draggable'+(state.mode==="playscript"&&state.activeId===ps.id?" active":"")+'" data-openplayscript="'+ps.id+'" draggable="true">'+ic("docIcon",13)+'<span style="flex:1 1 0%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(ps.title||"제목 없음")+'</span>'+(elCount?'<span class="char-total">'+elCount+'개 요소</span>':'')+'<button class="row-move row-insert" data-playinsertafter="'+ps.id+'" title="이 대본 다음에 새 대본 삽입">+</button><button class="row-move" data-playmoveup="'+ps.id+'" title="위로 이동"'+(psIdx===0?" disabled":"")+'>'+ic("chevUp",9)+'</button><button class="row-move" data-playmovedown="'+ps.id+'" title="아래로 이동"'+(psIdx===scripts.length-1?" disabled":"")+'>'+ic("chevDown",9)+'</button><button class="row-del" data-delplayscript="'+ps.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
+    }).join("") + '</div>';
+    if (!scripts.length) playHtml += '<div class="sb-empty">아직 대본이 없습니다.</div>';
+    playHtml += '</div>';
+  });
+  if (!playList.length) playHtml += '<div class="sb-empty">'+(q ? "일치하는 시나리오·희곡이 없습니다." : "아직 시나리오·희곡 폴더가 없습니다. + 를 눌러 만들어보세요.")+'</div>';
+  sections.plays = playHtml;
+
   var docsHtml = '<div class="ws-section-head"><span class="add" data-newdoc="'+work.id+'" title="새 문서 종류 선택(등장인물·장소·세계관 등)">'+ic("plus",13)+'</span><span class="t" style="flex:1">문서</span></div>';
   Object.keys(byCat).forEach(function(cat){
     var list = byCat[cat];
@@ -7388,17 +7827,32 @@ function renderWorkSections(work, q) {
 var WS_TABS = [
   { key: "ms", label: "원고", icon: "docIcon" },
   { key: "essay", label: "수필·자서전", icon: "docIcon" },
+  { key: "plays", label: "시나리오·희곡", icon: "docIcon" },
   { key: "docs", label: "문서", icon: "person" },
   { key: "graphs", label: "관계도", icon: "graph" },
   { key: "maps", label: "지도", icon: "map" },
+  { key: "timelines", label: "연표", icon: "calendar" },
+  { key: "fieldtemplates", label: "필드 템플릿", icon: "grid" },
   { key: "tables", label: "표", icon: "table" },
   { key: "scripts", label: "문자", icon: "pen" },
-  { key: "timelines", label: "연표", icon: "calendar" },
   { key: "sports", label: "스포츠", icon: "trophy" },
-  { key: "units", label: "단위·달력", icon: "scale" },
-  { key: "fieldtemplates", label: "필드 템플릿", icon: "grid" }
+  { key: "units", label: "단위·달력", icon: "scale" }
 ];
 var WS_SINGLE_ITEM_TABS = { units: true, fieldtemplates: true };
+/* ---------------- 상위 카테고리 → 하위 탭(WS_TABS) 2단 메뉴 ----------------
+ * 예전엔 위 WS_TABS 11(+1)개가 전부 한 줄에 뒤섞여 있었다. 상위 카테고리로
+ * 묶어서 "지금 큰 갈래로 어디에 있는지"가 항상 보이게 한다 -- 기존 탭 키·
+ * 라우팅(WS_SINGLE_ITEM_TABS, state.wsHomeTab 등)은 전혀 안 건드리고 그
+ * 위에 그룹 레이어만 하나 얹는다. */
+var WS_CATEGORIES = [
+  { key: "write", label: "집필", icon: "docIcon", tabs: ["ms", "essay", "plays"] },
+  { key: "notes", label: "설정 노트", icon: "person", tabs: ["docs", "graphs", "maps", "timelines", "fieldtemplates"] },
+  { key: "data", label: "자료·기록", icon: "table", tabs: ["tables", "scripts", "sports", "units"] }
+];
+function categoryOfTab(tabKey) {
+  var cat = WS_CATEGORIES.find(function(c){ return c.tabs.indexOf(tabKey) !== -1; });
+  return cat ? cat.key : WS_CATEGORIES[0].key;
+}
 /* 지금 화면(state.mode/activeId)이 어느 작품에 속하는지, 그리고 그 작품의 상단
  * 탭 중 어느 탭이 지금 상태와 맞는지를 계산한다. renderWorkspaceChrome이 매
  * render()마다 호출해서 탭 바를 그 작품·그 탭에 맞춰 그린다. */
@@ -7439,6 +7893,11 @@ function resolveWorkForState() {
     var ee = ESSAY_ENTRIES.find(function(x){ return x.id===id; }); if (!ee) return null;
     var es = ESSAYS.find(function(x){ return x.id===ee.essayId; }); if (!es) return null;
     var ew = workOf(es.workId); return ew ? { work: ew, tab: "essay" } : null;
+  }
+  if (mode === "playscript") {
+    var pse = PLAY_SCRIPTS.find(function(x){ return x.id===id; }); if (!pse) return null;
+    var ply = PLAYS.find(function(x){ return x.id===pse.playId; }); if (!ply) return null;
+    var plw = workOf(ply.workId); return plw ? { work: plw, tab: "plays" } : null;
   }
   if (mode === "script") {
     var sc = currentScript(); if (!sc) return null;
@@ -7510,15 +7969,30 @@ function wireHorizontalScroll(el) {
   el.addEventListener("scroll", updateFade);
   requestAnimationFrame(updateFade);
 }
+function selectWsTab(work, key) {
+  state.wsLastTabByCat[work.id] = state.wsLastTabByCat[work.id] || {};
+  state.wsLastTabByCat[work.id][categoryOfTab(key)] = key;
+  if (WS_SINGLE_ITEM_TABS[key]) { state.mode = key; state.activeId = work.id; render(); return; }
+  state.wsHomeTab[work.id] = key;
+  state.mode = "workhome"; state.activeId = work.id;
+  render();
+}
 function renderWorkspaceChrome() {
   var bar = document.getElementById("wsTabBar");
   if (!bar) return;
   var resolved = resolveWorkForState();
   if (!resolved || !resolved.work) { bar.innerHTML = ""; return; }
   var work = resolved.work, activeTab = resolved.tab;
+  var activeCat = categoryOfTab(activeTab);
   var sections = renderWorkSections(work, "");
 
-  var tabsHtml = WS_TABS.map(function(t){
+  var catTabsHtml = WS_CATEGORIES.map(function(c){
+    return '<button type="button" class="ws-cat-tab'+(c.key===activeCat?" on":"")+'" data-wscat="'+c.key+'">'+ic(c.icon,14)+'<span>'+esc(c.label)+'</span></button>';
+  }).join("");
+  var subTabDefs = WS_CATEGORIES.find(function(c){ return c.key === activeCat; }).tabs
+    .map(function(key){ return WS_TABS.find(function(t){ return t.key === key; }); })
+    .filter(Boolean);
+  var tabsHtml = subTabDefs.map(function(t){
     return '<button type="button" class="ws-tab'+(t.key===activeTab?" on":"")+'" data-wstab="'+t.key+'">'+ic(t.icon,13)+'<span>'+esc(t.label)+'</span></button>';
   }).join("");
   var bodyHtml = WS_SINGLE_ITEM_TABS[activeTab]
@@ -7527,17 +8001,21 @@ function renderWorkspaceChrome() {
 
   bar.innerHTML =
     '<div class="ws-work-title">'+esc(work.title||"제목 없는 작품")+'</div>' +
+    '<div class="ws-cat-tabs">'+catTabsHtml+'</div>' +
     '<div class="ws-tabs-wrap"><div class="ws-tabs" id="wsTabsScroll">'+tabsHtml+'</div></div>' +
     '<div class="ws-chiprow-outer">'+bodyHtml+'</div>';
 
-  bar.querySelectorAll("[data-wstab]").forEach(function(btn){
+  bar.querySelectorAll("[data-wscat]").forEach(function(btn){
     btn.addEventListener("click", function(){
-      var key = btn.dataset.wstab;
-      if (WS_SINGLE_ITEM_TABS[key]) { state.mode = key; state.activeId = work.id; render(); return; }
-      state.wsHomeTab[work.id] = key;
-      state.mode = "workhome"; state.activeId = work.id;
-      render();
+      var cat = WS_CATEGORIES.find(function(c){ return c.key === btn.dataset.wscat; });
+      if (!cat) return;
+      var remembered = state.wsLastTabByCat[work.id] && state.wsLastTabByCat[work.id][cat.key];
+      var target = (remembered && cat.tabs.indexOf(remembered) !== -1) ? remembered : cat.tabs[0];
+      selectWsTab(work, target);
     });
+  });
+  bar.querySelectorAll("[data-wstab]").forEach(function(btn){
+    btn.addEventListener("click", function(){ selectWsTab(work, btn.dataset.wstab); });
   });
   wireWorkTreeHandlers(bar);
   wireHorizontalScroll(document.getElementById("wsTabsScroll"));
@@ -7681,6 +8159,16 @@ function wireWorkTreeHandlers(el) {
   el.querySelectorAll("[data-essaymovedown]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); moveEssayEntry(b.dataset.essaymovedown, 1); }); });
   el.querySelectorAll("[data-essayinsertafter]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); var essayRow = b.closest(".novel-folder").querySelector("[data-newessayentry]"); insertEssayEntryAfter(essayRow.dataset.newessayentry, b.dataset.essayinsertafter); }); });
   wireEssayEntryDragDrop(el);
+  el.querySelectorAll("[data-newplay]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); newPlayFolder(b.dataset.newplay); }); });
+  el.querySelectorAll("[data-newplayscript]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); newPlayScriptIn(b.dataset.newplayscript); }); });
+  el.querySelectorAll("[data-playsettings]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); openPlaySettings(b.dataset.playsettings); }); });
+  el.querySelectorAll("[data-delplay]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deletePlayFolder(b.dataset.delplay); }); });
+  el.querySelectorAll("[data-openplayscript]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="playscript"; state.activeId=b.dataset.openplayscript; render(); }); });
+  el.querySelectorAll("[data-delplayscript]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deletePlayScript(b.dataset.delplayscript); }); });
+  el.querySelectorAll("[data-playmoveup]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); movePlayScript(b.dataset.playmoveup, -1); }); });
+  el.querySelectorAll("[data-playmovedown]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); movePlayScript(b.dataset.playmovedown, 1); }); });
+  el.querySelectorAll("[data-playinsertafter]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); var playRow = b.closest(".novel-folder").querySelector("[data-newplayscript]"); insertPlayScriptAfter(playRow.dataset.newplayscript, b.dataset.playinsertafter); }); });
+  wirePlayScriptDragDrop(el);
   el.querySelectorAll("[data-deltable]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteTable(b.dataset.deltable); }); });
   el.querySelectorAll("[data-delscript]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteScript(b.dataset.delscript); }); });
   el.querySelectorAll("[data-delsports]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteSports(b.dataset.delsports); }); });
@@ -13974,11 +14462,15 @@ function renderManuscriptPaperWrite(m) {
       '</select>' +
       '<span id="paperToolbarExtras" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap"></span>' +
       '<div class="sep"></div>' +
+      formatToolbarHtml() +
+      '<button type="button" id="paperFormatPreviewToggle" class="'+(m.showFormatPreview?"on":"")+'" title="이탤릭·글씨크기 서식이 실제로 어떻게 보이는지 확인(읽기 전용)">'+ic("eye",13)+'<span>서식 미리보기</span></button>' +
+      '<div class="sep"></div>' +
       '<button type="button" id="msPaperFindBtn">'+ic("search",13)+'<span>찾아바꾸기</span></button>' +
     '</div>' +
     '<div class="paper-stats-bar" id="paperStatsBar"></div>' +
     '<div class="ms-doc-page"><div class="ms-doc-ruler"></div><div class="ms-doc-screen">' +
-      '<textarea class="ms-textarea ms-doc-textarea'+((m.paperVertical&&initStats.rules.vertical)?" vertical":"")+'" id="paperText" spellcheck="true" placeholder="여기에 편하게 쓰세요 — 칸·줄·페이지는 내부적으로 원고지 규칙 그대로 계산됩니다." lang="'+esc(initStats.rules.lang)+'">'+esc(m.text||"")+'</textarea>' +
+      '<textarea class="ms-textarea ms-doc-textarea'+((m.paperVertical&&initStats.rules.vertical)?" vertical":"")+'" id="paperText" spellcheck="true" placeholder="여기에 편하게 쓰세요 — 칸·줄·페이지는 내부적으로 원고지 규칙 그대로 계산됩니다." lang="'+esc(initStats.rules.lang)+'"'+(m.showFormatPreview?' style="display:none"':'')+'>'+esc(m.text||"")+'</textarea>' +
+      '<div class="ms-format-preview ms-textarea ms-doc-textarea" id="paperFormatPreview"'+(m.showFormatPreview?'':' style="display:none"')+'>'+renderFormattedPlainText(m.text||"", m.formatRanges)+'</div>' +
     '</div></div>' +
     '<div class="paper-page-nav">' +
       '<button type="button" id="paperPrevPage">'+ic("chevL",13)+'</button>' +
@@ -14064,13 +14556,19 @@ function renderManuscriptPaperWrite(m) {
       }
     }, 180);
   }
+  function refreshPaperFormatPreview() {
+    var pv = document.getElementById("paperFormatPreview");
+    if (pv) pv.innerHTML = renderFormattedPlainText(m.text||"", m.formatRanges);
+  }
   textEl.addEventListener("input", function (e) {
     if (e.isComposing) return;
     var liveLang = (m.paperLang && m.paperLang !== "auto") ? m.paperLang : detectManuscriptLang(textEl.value).lang;
     if (liveLang === "en") applySmartPunctuation(textEl);
+    m.formatRanges = rebaseFormatRanges(m.formatRanges, m.text||"", textEl.value);
     m.text = textEl.value;
     schedulePaperSave();
     flashSaveIndicator();
+    refreshPaperFormatPreview();
     scheduleStatsRefresh(true);
   });
   textEl.addEventListener("keydown", function (e) {
@@ -14102,12 +14600,16 @@ function renderManuscriptPaperWrite(m) {
   var findBtnPaper = document.getElementById("msPaperFindBtn");
   if (findBtnPaper) findBtnPaper.addEventListener("click", function (e) {
     openFindReplace("paperText", e.currentTarget, function (newVal) {
+      m.formatRanges = rebaseFormatRanges(m.formatRanges, m.text||"", newVal);
       m.text = newVal; textEl.value = newVal;
       saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m);
       updateCharacterChips(m, paperWorkId, true); updateContextPanel(m, paperWorkId); flashSaveIndicator();
-      refreshStatsBar();
+      refreshStatsBar(); refreshPaperFormatPreview();
     });
   });
+  var paperFormatPreviewToggle = document.getElementById("paperFormatPreviewToggle");
+  if (paperFormatPreviewToggle) paperFormatPreviewToggle.addEventListener("click", function(){ m.showFormatPreview = !m.showFormatPreview; saveData(); renderManuscriptPaperArea(m); });
+  wireFormatToolbarButtons(document.querySelector(".paper-toolbar"), textEl, function(){ return m.formatRanges; }, function(r){ m.formatRanges = r; }, function(){ saveData(); refreshPaperFormatPreview(); flashSaveIndicator(); });
   var prevPageBtn = document.getElementById("paperPrevPage"), nextPageBtn = document.getElementById("paperNextPage");
   function jumpToPage(pageNum) {
     var offset = manuscriptOffsetForPage(m, pageNum);
@@ -14412,6 +14914,8 @@ function renderManuscriptPage(m) {
   if (m.paperMode === undefined) m.paperMode = "write";
   if (m.paperOverview === undefined) m.paperOverview = false;
   if (m.paperPage === undefined) m.paperPage = 0;
+  if (m.formatRanges === undefined) m.formatRanges = [];
+  if (m.showFormatPreview === undefined) m.showFormatPreview = false;
 
   var main = document.getElementById("main");
   var isBook = m.format === "general";
@@ -14459,7 +14963,8 @@ function renderManuscriptPage(m) {
       '<div class="ms-controls">' + focusBtnHtml + '</div>' +
       '<div id="paperArea"></div>';
   } else {
-    var textareaHtml = '<textarea class="'+(isPlain?"paper-text":"ms-textarea")+'" id="msText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요.">'+esc(m.text||"")+'</textarea>';
+    var textareaHtml = '<textarea class="'+(isPlain?"paper-text":"ms-textarea")+'" id="msText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요."'+(m.showFormatPreview?' style="display:none"':'')+'>'+esc(m.text||"")+'</textarea>';
+    var formatPreviewHtml = '<div class="ms-format-preview'+(isPlain?" paper-text":" ms-textarea")+'" id="msFormatPreview"'+(m.showFormatPreview?'':' style="display:none"')+'>'+renderFormattedPlainText(m.text||"", m.formatRanges)+'</div>';
     bodyHtml =
       '<div class="ms-controls">' +
         focusBtnHtml +
@@ -14471,11 +14976,14 @@ function renderManuscriptPage(m) {
         '<div class="sep"></div>' +
         '<select class="sel" id="msFontFamily">' + Object.keys(MS_FONTS).map(function(k){ return '<option value="'+k+'" '+(m.previewFont===k?"selected":"")+'>'+MS_FONTS[k].label+'</option>'; }).join("") + '</select>' +
         '<div class="sep"></div>' +
+        formatToolbarHtml() +
+        '<button type="button" id="msFormatPreviewToggle" class="'+(m.showFormatPreview?"on":"")+'" title="이탤릭·글씨크기 서식이 실제로 어떻게 보이는지 확인(읽기 전용)">'+ic("eye",13)+'<span>서식 미리보기</span></button>' +
+        '<div class="sep"></div>' +
         '<button type="button" id="msFindBtn">'+ic("search",13)+'<span>찾아바꾸기</span></button>' +
       '</div>' +
       (isPlain
-        ? '<div class="paper-outer"><div class="paper-sheet-wrap">' + textareaHtml + '</div></div>'
-        : '<div class="ms-frame"><div class="ms-notch"></div><div class="ms-screen">' + textareaHtml + '</div></div>');
+        ? '<div class="paper-outer"><div class="paper-sheet-wrap">' + textareaHtml + formatPreviewHtml + '</div></div>'
+        : '<div class="ms-frame"><div class="ms-notch"></div><div class="ms-screen">' + textareaHtml + formatPreviewHtml + '</div></div>');
   }
 
   /* 원고지 모드는 "정보 영역이 원고지 본문보다 눈에 띄면 안 된다"는 요구에
@@ -14570,16 +15078,28 @@ function renderManuscriptPage(m) {
     applyMsStyle(m);
     var msTextEl = document.getElementById("msText");
     wireAutoIndent(msTextEl);
-    msTextEl.addEventListener("input", function(e){ m.text = e.target.value; schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId); updateContextPanel(m, msWorkId); flashSaveIndicator(); });
+    function refreshMsFormatPreview() {
+      var pv = document.getElementById("msFormatPreview");
+      if (pv) pv.innerHTML = renderFormattedPlainText(m.text||"", m.formatRanges);
+    }
+    msTextEl.addEventListener("input", function(e){
+      var oldVal = m.text||"";
+      m.formatRanges = rebaseFormatRanges(m.formatRanges, oldVal, e.target.value);
+      m.text = e.target.value;
+      schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId); updateContextPanel(m, msWorkId); flashSaveIndicator(); refreshMsFormatPreview();
+    });
     msTextEl.addEventListener("blur", flushPaperSave);
     wireMentionAutocomplete(msTextEl, msWorkId);
     document.getElementById("msDarkToggle").addEventListener("click", function(){ m.previewDark = !m.previewDark; saveData(); renderManuscriptPage(m); });
     document.getElementById("msFontDec").addEventListener("click", function(){ m.previewFontSize = Math.max(13, m.previewFontSize-1); saveData(); applyMsStyle(m); document.getElementById("msFontVal").textContent = m.previewFontSize+"px"; });
     document.getElementById("msFontInc").addEventListener("click", function(){ m.previewFontSize = Math.min(20, m.previewFontSize+1); saveData(); applyMsStyle(m); document.getElementById("msFontVal").textContent = m.previewFontSize+"px"; });
     document.getElementById("msFontFamily").addEventListener("change", function(e){ m.previewFont = e.target.value; saveData(); applyMsStyle(m); });
+    document.getElementById("msFormatPreviewToggle").addEventListener("click", function(){ m.showFormatPreview = !m.showFormatPreview; saveData(); renderManuscriptPage(m); });
+    wireFormatToolbarButtons(document.querySelector(".ms-controls"), msTextEl, function(){ return m.formatRanges; }, function(r){ m.formatRanges = r; }, function(){ saveData(); refreshMsFormatPreview(); flashSaveIndicator(); });
     document.getElementById("msFindBtn").addEventListener("click", function(e){
       openFindReplace("msText", e.currentTarget, function(newVal){
-        m.text = newVal; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId, true); updateContextPanel(m, msWorkId); flashSaveIndicator();
+        m.formatRanges = rebaseFormatRanges(m.formatRanges, m.text||"", newVal);
+        m.text = newVal; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId, true); updateContextPanel(m, msWorkId); flashSaveIndicator(); refreshMsFormatPreview();
       });
     });
   }
@@ -14701,6 +15221,8 @@ function renderEssayEntryPage(e) {
   if (e.relatedCharacterIds === undefined) e.relatedCharacterIds = [];
   if (e.linkedCompareId === undefined) e.linkedCompareId = null;
   if (e.showCompare === undefined) e.showCompare = false;
+  if (e.formatRanges === undefined) e.formatRanges = [];
+  if (e.showFormatPreview === undefined) e.showFormatPreview = false;
 
   var main = document.getElementById("main");
   var essayOf = ESSAYS.find(function(es){ return es.id === e.essayId; });
@@ -14734,7 +15256,8 @@ function renderEssayEntryPage(e) {
       '<div class="ms-goal-bar-wrap" id="esGoalBarWrap"></div>' +
     '</div>';
 
-  var textareaHtml = '<textarea class="ms-textarea ms-doc-textarea" id="esText" spellcheck="true" placeholder="여기에 글을 적어보세요.">'+esc(e.text||"")+'</textarea>';
+  var textareaHtml = '<textarea class="ms-textarea ms-doc-textarea" id="esText" spellcheck="true" placeholder="여기에 글을 적어보세요."'+(e.showFormatPreview?' style="display:none"':'')+'>'+esc(e.text||"")+'</textarea>';
+  var esFormatPreviewHtml = '<div class="ms-format-preview ms-textarea ms-doc-textarea" id="esFormatPreview"'+(e.showFormatPreview?'':' style="display:none"')+'>'+renderFormattedPlainText(e.text||"", e.formatRanges)+'</div>';
   var editorHtml =
     '<div class="ms-controls">' +
       '<button type="button" id="esDarkToggle" class="'+(e.previewDark?"on":"")+'">'+ic(e.previewDark?"moon":"sun",13)+'<span>다크 모드</span></button>' +
@@ -14745,9 +15268,12 @@ function renderEssayEntryPage(e) {
       '<div class="sep"></div>' +
       '<select class="sel" id="esFontFamily">' + Object.keys(MS_FONTS).map(function(k){ return '<option value="'+k+'" '+(e.previewFont===k?"selected":"")+'>'+MS_FONTS[k].label+'</option>'; }).join("") + '</select>' +
       '<div class="sep"></div>' +
+      formatToolbarHtml() +
+      '<button type="button" id="esFormatPreviewToggle" class="'+(e.showFormatPreview?"on":"")+'" title="이탤릭·글씨크기 서식이 실제로 어떻게 보이는지 확인(읽기 전용)">'+ic("eye",13)+'<span>서식 미리보기</span></button>' +
+      '<div class="sep"></div>' +
       '<button type="button" id="esFindBtn">'+ic("search",13)+'<span>찾아바꾸기</span></button>' +
     '</div>' +
-    '<div class="ms-doc-page"><div class="ms-doc-ruler"></div><div class="ms-doc-screen">' + textareaHtml + '</div></div>';
+    '<div class="ms-doc-page"><div class="ms-doc-ruler"></div><div class="ms-doc-screen">' + textareaHtml + esFormatPreviewHtml + '</div></div>';
 
   var bodyHtml;
   if (e.showCompare && compareEntry) {
@@ -14812,17 +15338,180 @@ function renderEssayEntryPage(e) {
   });
 
   applyEsStyle(e);
-  wireAutoIndent(document.getElementById("esText"));
-  document.getElementById("esText").addEventListener("input", function(ev){ e.text = ev.target.value; saveData(); updateEsCharCount(e); updateEsStatsBar(e); updateEsGoalBar(e); flashEsSaveIndicator(); });
+  var esTextEl = document.getElementById("esText");
+  wireAutoIndent(esTextEl);
+  function refreshEsFormatPreview() {
+    var pv = document.getElementById("esFormatPreview");
+    if (pv) pv.innerHTML = renderFormattedPlainText(e.text||"", e.formatRanges);
+  }
+  esTextEl.addEventListener("input", function(ev){
+    var oldVal = e.text||"";
+    e.formatRanges = rebaseFormatRanges(e.formatRanges, oldVal, ev.target.value);
+    e.text = ev.target.value;
+    saveData(); updateEsCharCount(e); updateEsStatsBar(e); updateEsGoalBar(e); flashEsSaveIndicator(); refreshEsFormatPreview();
+  });
   document.getElementById("esDarkToggle").addEventListener("click", function(){ e.previewDark = !e.previewDark; saveData(); renderEssayEntryPage(e); });
   document.getElementById("esFontDec").addEventListener("click", function(){ e.previewFontSize = Math.max(13, e.previewFontSize-1); saveData(); applyEsStyle(e); document.getElementById("esFontVal").textContent = e.previewFontSize+"px"; });
   document.getElementById("esFontInc").addEventListener("click", function(){ e.previewFontSize = Math.min(20, e.previewFontSize+1); saveData(); applyEsStyle(e); document.getElementById("esFontVal").textContent = e.previewFontSize+"px"; });
   document.getElementById("esFontFamily").addEventListener("change", function(ev){ e.previewFont = ev.target.value; saveData(); applyEsStyle(e); });
+  document.getElementById("esFormatPreviewToggle").addEventListener("click", function(){ e.showFormatPreview = !e.showFormatPreview; saveData(); renderEssayEntryPage(e); });
+  wireFormatToolbarButtons(document.querySelector(".ms-controls"), esTextEl, function(){ return e.formatRanges; }, function(r){ e.formatRanges = r; }, function(){ saveData(); refreshEsFormatPreview(); flashEsSaveIndicator(); });
   document.getElementById("esFindBtn").addEventListener("click", function(ev){
     openFindReplace("esText", ev.currentTarget, function(newVal){
-      e.text = newVal; saveData(); updateEsCharCount(e); updateEsStatsBar(e); updateEsGoalBar(e); flashEsSaveIndicator();
+      e.formatRanges = rebaseFormatRanges(e.formatRanges, e.text||"", newVal);
+      e.text = newVal; saveData(); updateEsCharCount(e); updateEsStatsBar(e); updateEsGoalBar(e); flashEsSaveIndicator(); refreshEsFormatPreview();
     });
   });
+}
+
+/* ---------------- 시나리오·희곡 집필 화면 ---------------- */
+function flashPsSaveIndicator() {
+  var ind = document.getElementById("psSaveIndicator");
+  if (!ind) return;
+  ind.classList.remove("saved"); void ind.offsetWidth; ind.classList.add("saved");
+}
+function playElToolbarHtml(idx, total) {
+  return '<span class="play-el-tools">' +
+    '<button type="button" data-elmoveup title="위로"'+(idx===0?" disabled":"")+'>'+ic("chevUp",11)+'</button>' +
+    '<button type="button" data-elmovedown title="아래로"'+(idx===total-1?" disabled":"")+'>'+ic("chevDown",11)+'</button>' +
+    '<button type="button" data-eldel title="삭제">'+ic("trash",12)+'</button>' +
+  '</span>';
+}
+function renderPlayElementHtml(el, idx, total) {
+  var def = PLAY_ELEMENT_TYPES[el.type] || PLAY_ELEMENT_TYPES.note;
+  if (def.isHeading) {
+    return '<div class="play-el play-el-heading" data-elid="'+el.id+'">' +
+      '<div class="play-el-headbar"><span class="play-el-typebadge">'+esc(def.label)+'</span>' +
+        '<input type="text" class="play-el-headinput" data-elfield="label" value="'+esc(el.label||"")+'" placeholder="'+esc(def.placeholder)+'">' +
+        playElToolbarHtml(idx, total) +
+      '</div>' +
+    '</div>';
+  }
+  var speakerHtml = def.hasSpeaker ?
+    '<input type="text" class="play-el-speaker" data-elfield="speaker" value="'+esc(el.speaker||"")+'" placeholder="인물 이름" list="playCharacterList">' : '';
+  return '<div class="play-el play-el-'+el.type+'" data-elid="'+el.id+'">' +
+    '<div class="play-el-headbar">'+ic(def.icon,13)+'<span class="play-el-typebadge">'+esc(def.label)+'</span>' + speakerHtml + playElToolbarHtml(idx, total) + '</div>' +
+    '<div class="play-el-fmtbar">' +
+      '<button type="button" class="play-fmt-btn" data-fmt="italic" title="이탤릭체(선택한 부분에만 적용)"><i>i</i></button>' +
+      '<select class="play-fmt-size" data-fmt="size" title="글씨 크기(선택한 부분에만 적용)">' +
+        '<option value="">크기</option><option value="12">12</option><option value="14">14</option><option value="16">16</option><option value="18">18</option><option value="20">20</option><option value="24">24</option><option value="28">28</option>' +
+      '</select>' +
+    '</div>' +
+    '<div class="play-el-body" contenteditable="true" data-elbody="'+el.id+'" data-placeholder="'+esc(def.placeholder)+'">'+(el.html||"")+'</div>' +
+  '</div>';
+}
+function addPlayElement(ps, type) {
+  var el = newPlayElement(type);
+  if (!el) return;
+  ps.elements = ps.elements || [];
+  ps.elements.push(el);
+  saveData();
+  renderPlayScriptPage(ps);
+  var target = document.querySelector('[data-elid="'+el.id+'"] .play-el-headinput, [data-elid="'+el.id+'"] .play-el-speaker, [data-elid="'+el.id+'"] [data-elbody]');
+  if (target) target.focus();
+  var list = document.getElementById("playElList");
+  if (list) list.scrollTop = list.scrollHeight;
+}
+function movePlayElement(ps, elId, dir) {
+  var idx = ps.elements.findIndex(function(x){ return x.id===elId; });
+  var swap = idx + dir;
+  if (idx === -1 || swap < 0 || swap >= ps.elements.length) return;
+  var tmp = ps.elements[idx]; ps.elements[idx] = ps.elements[swap]; ps.elements[swap] = tmp;
+  saveData(); renderPlayScriptPage(ps);
+}
+function deletePlayElement(ps, elId) {
+  ps.elements = (ps.elements||[]).filter(function(x){ return x.id!==elId; });
+  saveData(); renderPlayScriptPage(ps);
+}
+/* body(contenteditable)는 el.html을 읽어 그릴 뿐, 입력 중에는 절대로 다시 그리지
+ * 않는다(bookEditFlow와 동일한 원칙) -- 별도 tmp div에서 innerHTML을 정제해
+ * el.html에만 저장하고, 실제로 포커스가 가 있는 DOM 노드는 건드리지 않으므로
+ * 한국어 IME 조합 중에도 안전하다. */
+function wirePlayScriptElements(ps) {
+  (ps.elements||[]).forEach(function(el){
+    var block = document.querySelector('[data-elid="'+el.id+'"]');
+    if (!block) return;
+    var headInput = block.querySelector('[data-elfield="label"]');
+    if (headInput) headInput.addEventListener("input", function(ev){ el.label = ev.target.value; saveData(); renderSidebar(); flashPsSaveIndicator(); });
+    var speakerInput = block.querySelector('[data-elfield="speaker"]');
+    if (speakerInput) speakerInput.addEventListener("input", function(ev){ el.speaker = ev.target.value; saveData(); flashPsSaveIndicator(); });
+    var upBtn = block.querySelector("[data-elmoveup]");
+    if (upBtn) upBtn.addEventListener("click", function(){ movePlayElement(ps, el.id, -1); });
+    var downBtn = block.querySelector("[data-elmovedown]");
+    if (downBtn) downBtn.addEventListener("click", function(){ movePlayElement(ps, el.id, 1); });
+    var delBtn = block.querySelector("[data-eldel]");
+    if (delBtn) delBtn.addEventListener("click", function(){ deletePlayElement(ps, el.id); });
+    var body = block.querySelector("[data-elbody]");
+    if (!body) return;
+    var savedRange = null;
+    function captureSelection() {
+      var s = window.getSelection();
+      if (s && s.rangeCount && !s.isCollapsed && body.contains(s.anchorNode)) savedRange = s.getRangeAt(0).cloneRange();
+    }
+    body.addEventListener("mouseup", captureSelection);
+    body.addEventListener("keyup", captureSelection);
+    function commitBody() { el.html = sanitizeInlineHtml(body.innerHTML); saveData(); flashPsSaveIndicator(); }
+    body.addEventListener("input", commitBody);
+    var italicBtn = block.querySelector('[data-fmt="italic"]');
+    if (italicBtn) {
+      italicBtn.addEventListener("mousedown", function(ev){ ev.preventDefault(); });
+      italicBtn.addEventListener("click", function(){
+        if (!savedRange) return;
+        var sel = window.getSelection();
+        sel.removeAllRanges(); sel.addRange(savedRange);
+        body.focus();
+        document.execCommand("italic");
+        commitBody();
+      });
+    }
+    var sizeSel = block.querySelector('[data-fmt="size"]');
+    if (sizeSel) {
+      sizeSel.addEventListener("change", function(ev){
+        var val = ev.target.value;
+        ev.target.value = "";
+        if (!val || !savedRange) return;
+        var sel = window.getSelection();
+        sel.removeAllRanges(); sel.addRange(savedRange);
+        body.focus();
+        wrapSelectionInline(function(span){ span.style.fontSize = val + "px"; });
+        commitBody();
+      });
+    }
+  });
+}
+function renderPlayScriptPage(ps) {
+  if (ps.elements === undefined) ps.elements = [];
+  var main = document.getElementById("main");
+  var playOf = PLAYS.find(function(p){ return p.id === ps.playId; });
+  var workId = playOf ? playOf.workId : null;
+  var charDocs = DOCS.filter(function(d){ return d.workId===workId && d.category==="등장인물"; });
+  var charDatalistHtml = '<datalist id="playCharacterList">' + charDocs.map(function(d){ return '<option value="'+esc(d.title||"")+'">'; }).join("") + '</datalist>';
+
+  var elementsHtml = (ps.elements||[]).length ?
+    ps.elements.map(function(el, idx){ return renderPlayElementHtml(el, idx, ps.elements.length); }).join("") :
+    '<div class="sb-empty">아직 아무 요소도 없습니다. 아래에서 추가해보세요.</div>';
+
+  var addMenuHtml = PLAY_ELEMENT_ORDER.map(function(type){
+    var def = PLAY_ELEMENT_TYPES[type];
+    return '<button type="button" class="play-add-btn" data-addel="'+type+'">'+ic(def.icon,13)+'<span>'+esc(def.label)+'</span></button>';
+  }).join("");
+
+  main.innerHTML =
+    '<div class="graph-shell">' +
+      '<div class="graph-title-bar"><input class="graph-title" id="psTitle" value="'+esc(ps.title)+'" placeholder="대본 제목"><span class="ms-save-indicator saved" id="psSaveIndicator">'+ic("checkmark",11)+' 저장됨</span><button class="page-del" id="deletePsBtn" style="margin-top:0">'+ic("trash",13)+'<span>대본 삭제</span></button></div>' +
+      '<div class="page-pad" style="padding-top:26px">' +
+        '<div class="play-el-list" id="playElList">' + elementsHtml + '</div>' +
+        '<div class="play-addmenu-wrap"><div class="play-addmenu-label">+ 요소 추가</div><div class="play-addmenu">' + addMenuHtml + '</div></div>' +
+        charDatalistHtml +
+      '</div>' +
+    '</div>';
+
+  document.getElementById("psTitle").addEventListener("input", function(ev){ ps.title = ev.target.value; saveData(); renderSidebar(); flashPsSaveIndicator(); });
+  document.getElementById("deletePsBtn").addEventListener("click", function(){ deletePlayScript(ps.id); });
+  main.querySelectorAll("[data-addel]").forEach(function(btn){
+    btn.addEventListener("click", function(){ addPlayElement(ps, btn.dataset.addel); });
+  });
+  wirePlayScriptElements(ps);
 }
 
 /* ---------------- custom script (hand-drawn alphabet) ---------------- */
@@ -15453,6 +16142,10 @@ function render() {
     var esE = ESSAY_ENTRIES.find(function(x){ return x.id === state.activeId; });
     if (esE) { renderEssayEntryPage(esE); return; }
   }
+  if (state.mode === "playscript") {
+    var psE = PLAY_SCRIPTS.find(function(x){ return x.id === state.activeId; });
+    if (psE) { renderPlayScriptPage(psE); return; }
+  }
   if (state.mode === "script") {
     var sc = currentScript();
     if (sc) { renderScriptPage(sc); return; }
@@ -15477,7 +16170,7 @@ function isValidBackupData(data) {
   });
 }
 function exportData() {
-  var data = { docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS, exportedAt: new Date().toISOString(), appVersion: 1 };
+  var data = { docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS, plays: PLAYS, playScripts: PLAY_SCRIPTS, exportedAt: new Date().toISOString(), appVersion: 1 };
   var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   var url = URL.createObjectURL(blob);
   var a = document.createElement("a");
@@ -15516,6 +16209,8 @@ function importDataFile(file) {
         SCRIPTS = parsed.scripts || [];
         ESSAYS = parsed.essays || [];
         ESSAY_ENTRIES = parsed.essayEntries || [];
+        PLAYS = parsed.plays || [];
+        PLAY_SCRIPTS = parsed.playScripts || [];
         RELATIONSHIPS = parsed.relationships || [];
         state.mode = "empty"; state.activeId = null; state.collapsed = {};
         saveData(); render();
