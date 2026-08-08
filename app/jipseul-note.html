@@ -1605,6 +1605,8 @@ function openPreferencesModal() {
             '</div>'
           ) : "")
         ) : "") +
+        '<div class="modal-picker-label" style="margin-top:14px">글쓰기</div>' +
+        '<label class="modal-check"><input type="checkbox" id="autoIndentToggle" '+(AUTO_INDENT_PREF.enabled?"checked":"")+'> 자동 들여쓰기 — 문단(Enter)이 시작될 때 전각 '+AUTO_INDENT_PREF.size+'칸을 자동으로 넣어줍니다</label>' +
         '<div class="modal-picker-label" style="margin-top:14px">사이드바 표시 — 체크 해제하면 작품 폴더 안 "고급 기능"으로 접어둡니다</div>' +
         SIDEBAR_SECTIONS.map(function(s){
           return '<label class="modal-check"><input type="checkbox" data-sidebarpref="'+s.key+'" '+(SIDEBAR_PREFS[s.key]?"checked":"")+'> '+esc(s.label)+'</label>';
@@ -1627,6 +1629,8 @@ function openPreferencesModal() {
     overlay.querySelectorAll("[data-sidebarpref]").forEach(function(cb){
       cb.addEventListener("change", function(){ setSidebarSectionPinned(cb.dataset.sidebarpref, cb.checked); });
     });
+    var autoIndentCb = document.getElementById("autoIndentToggle");
+    if (autoIndentCb) autoIndentCb.addEventListener("change", function(){ setAutoIndentPref({ enabled: autoIndentCb.checked }); });
     overlay.querySelector("#themeModalClose").addEventListener("click", closeModal);
   }
   paint();
@@ -1840,7 +1844,72 @@ var MANUSCRIPT_PAPER_SIZES = {
   400:  { cols: 20, rows: 20 },
   1000: { cols: 20, rows: 50 }
 };
-var PAPER_INDENT_CHAR = "　"; // 전각 공백 -- 문단 들여쓰기를 "실제 글자"로 표현
+/* ---------------- 자동 들여쓰기(전역, 모든 장문 텍스트 입력 영역 공통) ----------------
+ * 문단이 시작될 때(Enter) 자동으로 들여쓰기 글자를 넣어준다. 기본 ON, 크기는
+ * 한국 출판 원고 관례인 전각(U+3000) 공백 2칸을 기본값으로 하되 하드코딩하지
+ * 않고 설정값(AUTO_INDENT_PREF.size)으로 뺐다 -- 나중에 크기를 바꾸거나 다른
+ * 들여쓰기 문자를 쓰고 싶어지면 이 값 하나만 바꾸면 된다. 원고지(paper)
+ * 쓰기 화면은 이미 자체 문단 규칙(그리드 언어에서만 들여쓰기)이 있으므로,
+ * 이 전역 설정은 "켜져 있는지 / 몇 칸인지"만 원고지 쪽에 제공하고 어떤
+ * 언어에 적용할지는 원고지 자신의 규칙이 그대로 우선한다(요구사항: "원고지의
+ * 문단 시작 규칙이 이미 존재하는 경우 해당 규칙을 우선 적용"). */
+var AUTO_INDENT_KEY = "jipseul_autoindent_v1";
+var AUTO_INDENT_CHAR = "　"; // 전각 공백(U+3000) -- 원고지 칸 계산에서도 전각 1칸으로 인식됨
+function loadAutoIndentPref() {
+  try {
+    var raw = localStorage.getItem(AUTO_INDENT_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p === "object") {
+        return { enabled: p.enabled !== false, size: (typeof p.size === "number" && p.size > 0) ? p.size : 2 };
+      }
+    }
+  } catch (e) {}
+  return { enabled: true, size: 2 };
+}
+var AUTO_INDENT_PREF = loadAutoIndentPref();
+function setAutoIndentPref(patch) {
+  AUTO_INDENT_PREF = Object.assign({}, AUTO_INDENT_PREF, patch);
+  try { localStorage.setItem(AUTO_INDENT_KEY, JSON.stringify(AUTO_INDENT_PREF)); } catch (e) {}
+}
+function autoIndentString() { return AUTO_INDENT_CHAR.repeat(Math.max(0, AUTO_INDENT_PREF.size || 0)); }
+/* 일반 textarea(장문 프로즈 입력 영역) 공용 Enter-들여쓰기 배선 -- 일반
+ * 집필창/양장본/문서/수필/연표 등 여러 화면이 전부 이 함수 하나로 같은
+ * 규칙을 공유한다(설정을 바꾸면 다음 Enter부터 즉시 반영 -- 매번 AUTO_INDENT_PREF를
+ * 새로 읽으므로 리스너를 다시 걸 필요가 없다). Shift+Enter(문단 안 줄바꿈)와
+ * IME 조합 중에는 개입하지 않는다. 붙여넣기는 Enter keydown 자체가 발생하지
+ * 않고 브라우저가 값만 바꿔 input 이벤트만 쏘므로 이 핸들러를 거치지 않아
+ * "붙여넣은 텍스트에 중복으로 들여쓰기가 또 들어가는" 문제가 애초에 생기지
+ * 않는다. */
+function wireAutoIndent(el) {
+  if (!el) return;
+  el.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+    if (!AUTO_INDENT_PREF.enabled) return;
+    var indent = autoIndentString();
+    if (!indent) return;
+    e.preventDefault();
+    var s = el.selectionStart, en = el.selectionEnd;
+    el.setRangeText("\n" + indent, s, en, "end");
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+}
+/* contenteditable(양장본 두쪽 보기 전용)에서는 setRangeText를 못 쓰므로
+ * execCommand("insertText")로 넣는다 -- 브라우저 자체 텍스트 삽입 파이프라인을
+ * 그대로 타서 이 앱의 다른 입력 표면들과 마찬가지로 실행취소·IME와 충돌하지
+ * 않는다. */
+function wireAutoIndentContentEditable(el) {
+  if (!el) return;
+  el.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+    if (!AUTO_INDENT_PREF.enabled) return;
+    var indent = autoIndentString();
+    if (!indent) return;
+    e.preventDefault();
+    document.execCommand("insertText", false, "\n" + indent);
+  });
+}
+var PAPER_INDENT_CHAR = AUTO_INDENT_CHAR; // 전각 공백 -- 문단 들여쓰기를 "실제 글자"로 표현(원고지는 자동 들여쓰기 전역 설정과 문자를 공유)
 
 /* 원고지 칸선 색상 -- 앱 전체에 적용되는 사용자 선호(작품/화 단위가 아니라
  * "이 사람이 평소에 원고지를 어떤 색으로 보는가"이므로 테마 설정과 같은
@@ -10907,7 +10976,7 @@ function renderDocPage(doc, containerId) {
 
   // blocks
   main.querySelectorAll("[data-block]").forEach(function(el){
-    if (el.tagName === "TEXTAREA") autoGrow(el);
+    if (el.tagName === "TEXTAREA") { autoGrow(el); wireAutoIndent(el); }
     el.addEventListener("input", function(){
       var b = doc.blocks.find(function(b){ return b.id === el.dataset.block; });
       if (b) { b.text = el.value; }
@@ -13570,6 +13639,7 @@ function renderTimelinePage(tl) {
   if (!parallelTl || !tl.showParallel) {
     sorted.forEach(function(ev){
       autoGrow(document.getElementById("tlDesc-"+ev.id));
+      wireAutoIndent(document.getElementById("tlDesc-"+ev.id));
       document.getElementById("tlOrder-"+ev.id).addEventListener("input", function(e){ ev.order = parseFloat(e.target.value) || 0; saveData(); });
       document.getElementById("tlOrder-"+ev.id).addEventListener("blur", function(){ renderTimelinePage(tl); });
       document.getElementById("tlLabel-"+ev.id).addEventListener("input", function(e){ ev.label = e.target.value; saveData(); });
@@ -13587,7 +13657,7 @@ function renderTimelinePage(tl) {
     var leftCol = main.querySelectorAll(".tl-col")[0];
     sorted.forEach(function(ev){
       var descEl = leftCol.querySelector("#tlDesc-"+ev.id);
-      if (descEl) autoGrow(descEl);
+      if (descEl) { autoGrow(descEl); wireAutoIndent(descEl); }
       var orderEl = leftCol.querySelector("#tlOrder-"+ev.id);
       if (orderEl) { orderEl.addEventListener("input", function(e){ ev.order = parseFloat(e.target.value) || 0; saveData(); }); orderEl.addEventListener("blur", function(){ renderTimelinePage(tl); }); }
       var labelEl = leftCol.querySelector("#tlLabel-"+ev.id);
@@ -13770,6 +13840,7 @@ function renderBookArea(m) {
       '<div class="book-hint">두 쪽 보기로 씁니다 — 옆으로 스크롤하면 다음 쪽으로 이어져요</div>';
     var flowEl = document.getElementById("bookEditFlow");
     flowEl.textContent = m.text || "";
+    wireAutoIndentContentEditable(flowEl);
     flowEl.addEventListener("input", function(){
       m.text = flowEl.innerText.split(String.fromCharCode(160)).join(" ");
       var denom0 = flowEl.scrollWidth - flowEl.clientWidth;
@@ -13790,6 +13861,7 @@ function renderBookArea(m) {
       '<div class="book-outer"><div class="book-shell"><textarea class="book-edit-textarea" id="bookEditText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요.">'+esc(m.text||"")+'</textarea></div></div>' +
       '<div class="book-hint">쓰기 모드는 스크롤로 이어 씁니다 — 미리보기에서 페이지 단위로 넘겨볼 수 있어요</div>';
     var editEl = document.getElementById("bookEditText");
+    wireAutoIndent(editEl);
     editEl.addEventListener("input", function(e){ m.text = e.target.value; m.editScrollFrac = editScrollFraction(); schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); updateContextPanel(m, bookWorkId); flashSaveIndicator(); });
     editEl.addEventListener("blur", flushPaperSave);
     editEl.addEventListener("scroll", function(){ m.editScrollFrac = editScrollFraction(); });
@@ -14003,11 +14075,14 @@ function renderManuscriptPaperWrite(m) {
   });
   textEl.addEventListener("keydown", function (e) {
     if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+    if (!AUTO_INDENT_PREF.enabled) return; // 전역 자동 들여쓰기 설정이 꺼져 있으면 평범한 줄바꿈만
     var curLang = (m.paperLang && m.paperLang !== "auto") ? m.paperLang : detectManuscriptLang(textEl.value).lang;
-    if (!(MANUSCRIPT_LANG_RULES[curLang] || MANUSCRIPT_LANG_RULES.ko).grid) return;
+    if (!(MANUSCRIPT_LANG_RULES[curLang] || MANUSCRIPT_LANG_RULES.ko).grid) return; // 원고지 자신의 문단 규칙(그리드 언어에서만)이 우선
+    var indent = autoIndentString();
+    if (!indent) return;
     e.preventDefault();
     var s = textEl.selectionStart, en = textEl.selectionEnd;
-    textEl.setRangeText("\n" + PAPER_INDENT_CHAR, s, en, "end");
+    textEl.setRangeText("\n" + indent, s, en, "end");
     textEl.dispatchEvent(new Event("input", { bubbles: true }));
   });
   textEl.addEventListener("keyup", function () { scheduleStatsRefresh(false); });
@@ -14494,6 +14569,7 @@ function renderManuscriptPage(m) {
   } else {
     applyMsStyle(m);
     var msTextEl = document.getElementById("msText");
+    wireAutoIndent(msTextEl);
     msTextEl.addEventListener("input", function(e){ m.text = e.target.value; schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId); updateContextPanel(m, msWorkId); flashSaveIndicator(); });
     msTextEl.addEventListener("blur", flushPaperSave);
     wireMentionAutocomplete(msTextEl, msWorkId);
@@ -14736,6 +14812,7 @@ function renderEssayEntryPage(e) {
   });
 
   applyEsStyle(e);
+  wireAutoIndent(document.getElementById("esText"));
   document.getElementById("esText").addEventListener("input", function(ev){ e.text = ev.target.value; saveData(); updateEsCharCount(e); updateEsStatsBar(e); updateEsGoalBar(e); flashEsSaveIndicator(); });
   document.getElementById("esDarkToggle").addEventListener("click", function(){ e.previewDark = !e.previewDark; saveData(); renderEssayEntryPage(e); });
   document.getElementById("esFontDec").addEventListener("click", function(){ e.previewFontSize = Math.max(13, e.previewFontSize-1); saveData(); applyEsStyle(e); document.getElementById("esFontVal").textContent = e.previewFontSize+"px"; });
