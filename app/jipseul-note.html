@@ -927,6 +927,38 @@
   .paper-view-nav button { background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:7px 14px; color:var(--ink); }
   .paper-view-nav button:disabled { opacity:.35; }
 
+  /* ---------- 페이지 개요 보기: 원고 전체 탐색용(양면 보기 대체) ----------
+   * "책처럼 보이기"가 목적이었던 양면 보기 대신, 지금까지 쓴 모든 매를 한
+   * 화면에서 훑어보고 원하는 매를 바로 찾아 확대해서 읽는(검수) 용도다.
+   * 각 썸네일은 실제 그 매의 내용을 축소해서 보여준다(칸 하나하나가 아니라
+   * 행 단위 텍스트 한 줄 + 배경 격자선으로 -- 수백~수천 매에서도 DOM이
+   * 가벼워야 하므로). IntersectionObserver로 화면 근처에 들어온 썸네일만
+   * 실제로 채워 그리고(지연 렌더링), 멀어지면 다시 비워서(가상 스크롤에
+   * 준하는 효과) DOM에 항상 떠 있는 실제 내용량을 제한한다. 한 번 그린
+   * 내용은 layout 객체에 캐시해 다시 스크롤해 돌아와도 재계산하지 않는다. */
+  .paper-overview-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:16px 14px; max-height:min(72vh, 780px); overflow-y:auto; padding:4px 6px 12px; }
+  .paper-overview-cell { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; background:none; border:none; padding:0; font:inherit; }
+  .paper-overview-thumb { width:100%; aspect-ratio:var(--ov-aspect, 20/26); background:#FBF9F2; border:1px solid var(--border-strong); border-radius:3px; box-shadow:0 2px 8px var(--shadow); overflow:hidden; display:flex; flex-direction:column; padding:5% 6%; box-sizing:border-box; transition:transform .12s ease, box-shadow .12s ease; background-image:repeating-linear-gradient(to bottom, var(--paper-line, #d1453d) 0, var(--paper-line, #d1453d) 1px, transparent 1px, transparent calc(100% / var(--ov-rows, 20))); background-size:100% 100%; }
+  .paper-overview-cell:hover .paper-overview-thumb { transform:translateY(-2px); box-shadow:0 6px 16px var(--shadow); }
+  .paper-overview-cell.current .paper-overview-thumb { outline:2px solid var(--accent); outline-offset:1px; }
+  .paper-thumb-row { flex:1 0 0; font-size:5px; line-height:1; font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif; color:#4a4230; white-space:pre; overflow:hidden; letter-spacing:-0.3px; }
+  .paper-overview-label { font-size:11px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .paper-overview-cell.current .paper-overview-label { color:var(--accent); font-weight:600; }
+  .paper-overview-hint { text-align:center; font-size:12px; color:var(--ink-faint); margin-bottom:10px; }
+
+  /* ---------- 확대 열람(원고 검수용, 읽기 전용) ---------- */
+  .paper-zoom-overlay { position:fixed; inset:0; background:rgba(10,10,10,0.72); z-index:200; display:flex; flex-direction:column; animation:paperZoomFadeIn .15s ease; touch-action:pan-y; }
+  @keyframes paperZoomFadeIn { from { opacity:0; } to { opacity:1; } }
+  .paper-zoom-topbar { display:flex; align-items:center; justify-content:center; position:relative; padding:16px; flex:none; }
+  .paper-zoom-page-label { color:#fff; font-size:14px; font-variant-numeric:tabular-nums; opacity:.9; }
+  .paper-zoom-close { position:absolute; right:16px; top:10px; background:rgba(255,255,255,0.12); border:none; color:#fff; padding:8px; border-radius:8px; display:flex; }
+  .paper-zoom-close:hover { background:rgba(255,255,255,0.22); }
+  .paper-zoom-body { flex:1; display:flex; align-items:center; justify-content:center; gap:16px; padding:0 16px 24px; min-height:0; }
+  .paper-zoom-nav { flex:none; width:48px; height:48px; border-radius:50%; border:none; background:rgba(255,255,255,0.12); color:#fff; display:flex; align-items:center; justify-content:center; }
+  .paper-zoom-nav:hover { background:rgba(255,255,255,0.24); }
+  .paper-zoom-nav:disabled { opacity:.25; }
+  .paper-zoom-sheet-wrap .paper-view-sheet { box-shadow:0 12px 40px rgba(0,0,0,0.5); }
+
   /* body blocks */
   .blocks { display:flex; flex-direction:column; }
   .block { display:flex; align-items:flex-start; gap:6px; position:relative; padding: 3px 0; }
@@ -14025,18 +14057,26 @@ function renderManuscriptPaperWrite(m) {
 /* 뷰포트에 맞춰 미리보기 칸 크기(px)를 계산한다 -- "세로 스크롤 강제 발생 금지
  * + 세부 글자도 읽을 수 있는 크기"를 만족시키려면 고정 크기 대신 매번
  * 다시 계산해야 한다. wrapEl의 실제 위치(뷰포트 기준)와 남은 세로 공간,
- * 가로 폭(양면일 땐 반으로 나눔)을 재서 cols/rows에 맞는 최대 정사각형 칸
- * 크기를 구하고, 너무 작거나 커지지 않게 12~34px로 자른다. */
-function fitPaperViewCellSize(wrapEl, cols, rowsPerPage, spread) {
+ * 가로 폭을 재서 cols/rows에 맞는 최대 정사각형 칸 크기를 구하고, 너무
+ * 작거나 커지지 않게 12~34px로 자른다. */
+function fitPaperViewCellSize(wrapEl, cols, rowsPerPage) {
   if (!wrapEl) return 22;
   var rect = wrapEl.getBoundingClientRect();
   var availH = Math.max(160, window.innerHeight - rect.top - 96);
   var availW = wrapEl.clientWidth;
-  if (spread) availW = (availW - 22) / 2;
   var chromeH = 54, chromeW = 34;
   var byW = Math.floor((availW - chromeW) / cols);
   var byH = Math.floor((availH - chromeH) / rowsPerPage);
   return Math.max(12, Math.min(34, Math.min(byW, byH)));
+}
+/* 확대 열람은 "화면 대부분 사용 + 읽기 쉬운 크기"가 목표라 임베디드
+ * 미리보기보다 여유 공간을 넉넉히 잡고 상한도 더 크게 둔다. */
+function fitZoomReaderCellSize(cols, rowsPerPage) {
+  var availW = window.innerWidth - 160;
+  var availH = window.innerHeight - 140;
+  var byW = Math.floor((availW - 40) / cols);
+  var byH = Math.floor((availH - 60) / rowsPerPage);
+  return Math.max(14, Math.min(46, Math.min(byW, byH)));
 }
 function renderPaperViewSheetHtml(layout, pageIdx) {
   var page = layout.pages[pageIdx];
@@ -14060,7 +14100,23 @@ function renderPaperViewSheetHtml(layout, pageIdx) {
     '</div>'
   );
 }
+/* 개요 보기 썸네일의 실제 내용 -- 칸 하나하나(cols×rows개 div)가 아니라 행
+ * 하나에 div 하나(rowsPerPage개)만 써서 실제 텍스트를 보여준다. 수백~수천
+ * 매를 동시에 켜둬도 DOM이 가벼운 이유가 이것 -- 배경 격자선은 CSS
+ * repeating-linear-gradient로 그려서(.paper-overview-thumb) 별도 DOM 없이도
+ * "진짜 원고지처럼" 보인다. */
+function renderPaperThumbRowsHtml(layout, pageIdx) {
+  var page = layout.pages[pageIdx];
+  var rowsHtml = "";
+  for (var r = 0; r < layout.rowsPerPage; r++) {
+    var row = page ? page.rows[r] : null;
+    var text = row && row.chars ? row.chars.split("　").join(" ") : "";
+    rowsHtml += '<div class="paper-thumb-row">' + esc(text) + '</div>';
+  }
+  return rowsHtml;
+}
 var _paperViewResizeHandler = null;
+var _paperOverviewObserver = null;
 function renderManuscriptPaperView(m) {
   var area = document.getElementById("paperArea");
   if (!area) return;
@@ -14072,54 +14128,59 @@ function renderManuscriptPaperView(m) {
   if (m.paperPage < 0) m.paperPage = 0;
 
   if (_paperViewResizeHandler) { window.removeEventListener("resize", _paperViewResizeHandler); _paperViewResizeHandler = null; }
+  if (_paperOverviewObserver) { _paperOverviewObserver.disconnect(); _paperOverviewObserver = null; }
+
+  area.innerHTML =
+    '<div class="paper-view-wrap">' +
+      '<div class="paper-view-toolbar">' +
+        '<div class="paper-mode-toggle">' +
+          '<button type="button" id="paperWriteTabBtn">'+ic("p",13)+'<span>쓰기</span></button>' +
+          '<button type="button" class="on" id="paperViewTabBtn">'+ic("docIcon",13)+'<span>미리보기</span></button>' +
+        '</div>' +
+        '<div class="paper-view-spread-toggle">' +
+          '<button type="button" id="paperViewSingleBtn" class="'+(!m.paperOverview?"on":"")+'">단면 보기</button>' +
+          '<button type="button" id="paperViewOverviewBtn" class="'+(m.paperOverview?"on":"")+'">페이지 개요</button>' +
+        '</div>' +
+        '<button type="button" id="paperViewLineColorBtn"><span class="paper-line-swatch" style="background:'+esc(PAPER_LINE_COLOR)+'"></span><span>칸선 색상</span></button>' +
+      '</div>' +
+      '<div id="paperViewBody"></div>' +
+    '</div>';
+  document.getElementById("paperWriteTabBtn").addEventListener("click", function () {
+    m.paperMode = "write"; saveData(); renderManuscriptPaperArea(m);
+  });
+  document.getElementById("paperViewSingleBtn").addEventListener("click", function () {
+    if (!m.paperOverview) return;
+    m.paperOverview = false; saveData(); renderManuscriptPaperView(m);
+  });
+  document.getElementById("paperViewOverviewBtn").addEventListener("click", function () {
+    if (m.paperOverview) return;
+    m.paperOverview = true; saveData(); renderManuscriptPaperView(m);
+  });
+  document.getElementById("paperViewLineColorBtn").addEventListener("click", openPaperLineColorModal);
+
+  if (m.paperOverview) paintPaperOverview(m, layout);
+  else paintPaperSingle(m, layout);
+}
+function paintPaperSingle(m, layout) {
+  var body = document.getElementById("paperViewBody");
+  if (!body) return;
 
   function fitNow() {
     var wrap = document.getElementById("paperViewSheetsWrap");
     if (!wrap) return;
-    var cell = fitPaperViewCellSize(wrap, layout.cols, layout.rowsPerPage, m.paperSpread);
+    var cell = fitPaperViewCellSize(wrap, layout.cols, layout.rowsPerPage);
     wrap.style.setProperty("--paper-cell", cell + "px");
   }
 
   function paint() {
-    var left = m.paperSpread ? (m.paperPage - (m.paperPage % 2)) : m.paperPage;
-    var right = left + 1;
-    var sheetsHtml = renderPaperViewSheetHtml(layout, left);
-    if (m.paperSpread) sheetsHtml += renderPaperViewSheetHtml(layout, right);
-    var canGoNext = m.paperSpread ? right < layout.totalPages - 1 : left < layout.totalPages - 1;
-    area.innerHTML =
-      '<div class="paper-view-wrap">' +
-        '<div class="paper-view-toolbar">' +
-          '<div class="paper-mode-toggle">' +
-            '<button type="button" id="paperWriteTabBtn">'+ic("p",13)+'<span>쓰기</span></button>' +
-            '<button type="button" class="on" id="paperViewTabBtn">'+ic("docIcon",13)+'<span>미리보기</span></button>' +
-          '</div>' +
-          '<div class="paper-view-spread-toggle">' +
-            '<button type="button" id="paperViewSingleBtn" class="'+(!m.paperSpread?"on":"")+'">단면 보기</button>' +
-            '<button type="button" id="paperViewSpreadBtn" class="'+(m.paperSpread?"on":"")+'">양면 보기</button>' +
-          '</div>' +
-          '<button type="button" id="paperViewLineColorBtn"><span class="paper-line-swatch" style="background:'+esc(PAPER_LINE_COLOR)+'"></span><span>칸선 색상</span></button>' +
-        '</div>' +
-        '<div class="paper-view-sheets" id="paperViewSheetsWrap">' + sheetsHtml + '</div>' +
-        '<div class="paper-view-nav">' +
-          '<button type="button" id="paperViewPrev" '+(left<=0?"disabled":"")+'>'+ic("chevL",13)+'</button>' +
-          '<span>'+(left+1)+(m.paperSpread && right<layout.totalPages ? "-"+(right+1) : "")+' / '+layout.totalPages+'매</span>' +
-          '<button type="button" id="paperViewNext" '+(!canGoNext?"disabled":"")+'>'+ic("chevR",13)+'</button>' +
-        '</div>' +
+    body.innerHTML =
+      '<div class="paper-view-sheets" id="paperViewSheetsWrap">' + renderPaperViewSheetHtml(layout, m.paperPage) + '</div>' +
+      '<div class="paper-view-nav">' +
+        '<button type="button" id="paperViewPrev" '+(m.paperPage<=0?"disabled":"")+'>'+ic("chevL",13)+'</button>' +
+        '<span>'+(m.paperPage+1)+' / '+layout.totalPages+'매</span>' +
+        '<button type="button" id="paperViewNext" '+(m.paperPage>=layout.totalPages-1?"disabled":"")+'>'+ic("chevR",13)+'</button>' +
       '</div>';
     fitNow();
-
-    document.getElementById("paperWriteTabBtn").addEventListener("click", function () {
-      m.paperMode = "write"; saveData(); renderManuscriptPaperArea(m);
-    });
-    document.getElementById("paperViewSingleBtn").addEventListener("click", function () {
-      if (!m.paperSpread) return;
-      m.paperSpread = false; saveData(); renderManuscriptPaperView(m);
-    });
-    document.getElementById("paperViewSpreadBtn").addEventListener("click", function () {
-      if (m.paperSpread) return;
-      m.paperSpread = true; saveData(); renderManuscriptPaperView(m);
-    });
-    document.getElementById("paperViewLineColorBtn").addEventListener("click", openPaperLineColorModal);
     var prevBtn = document.getElementById("paperViewPrev"), nextBtn = document.getElementById("paperViewNext");
     if (prevBtn) prevBtn.addEventListener("click", function () { turnPaperViewPage(m, layout, -1); });
     if (nextBtn) nextBtn.addEventListener("click", function () { turnPaperViewPage(m, layout, 1); });
@@ -14139,13 +14200,125 @@ function renderManuscriptPaperView(m) {
   window.addEventListener("resize", _paperViewResizeHandler);
 }
 function turnPaperViewPage(m, layout, dir) {
-  var step = m.paperSpread ? dir * 2 : dir;
-  var next = Math.max(0, Math.min(layout.totalPages - 1, m.paperPage + step));
+  var next = Math.max(0, Math.min(layout.totalPages - 1, m.paperPage + dir));
   if (next === m.paperPage) return;
   var sheetEls = document.querySelectorAll(".paper-view-sheet");
   if (!sheetEls.length) { m.paperPage = next; saveData(); renderManuscriptPaperView(m); return; }
   sheetEls.forEach(function (el) { el.classList.add(dir > 0 ? "fo-next" : "fo-prev"); });
   setTimeout(function () { m.paperPage = next; saveData(); renderManuscriptPaperView(m); }, 150);
+}
+/* 페이지 개요 보기 -- 지금까지 쓴 모든 매를 한 화면에서 훑어보고(전체 분량·
+ * 흐름 파악) 원하는 매를 클릭해 바로 확대 열람(검수)한다. 수백~수천 매까지
+ * 늘어날 수 있으므로 칸 하나하나를 처음부터 다 그리지 않는다:
+ *  - placeholder(페이지 번호만 있는 빈 칸)를 총 매수만큼 우선 배치하고
+ *  - IntersectionObserver로 화면 근처에 들어온 것만 실제 내용을 채우고
+ *    (지연 렌더링), 멀어지면 다시 비운다(가상 스크롤에 준하는 메모리 절약)
+ *  - 한 번 채운 내용은 layout 객체에 캐시해 재스크롤 시 다시 계산하지 않는다
+ *    (layout은 텍스트/규격이 바뀔 때만 새로 만들어지므로 캐시 무효화도 저절로 된다) */
+function paintPaperOverview(m, layout) {
+  var body = document.getElementById("paperViewBody");
+  if (!body) return;
+  if (!layout._thumbCache) layout._thumbCache = {};
+
+  var cellsHtml = "";
+  for (var i = 0; i < layout.totalPages; i++) {
+    cellsHtml +=
+      '<button type="button" class="paper-overview-cell'+(i===m.paperPage?" current":"")+'" data-pageidx="'+i+'" id="paperOvCell'+i+'">' +
+        '<div class="paper-overview-thumb" id="paperOvThumb'+i+'"></div>' +
+        '<span class="paper-overview-label">'+(i+1)+'</span>' +
+      '</button>';
+  }
+  body.innerHTML =
+    '<div class="paper-overview-hint">전체 '+fmtNum(layout.totalPages)+'매 · 매를 클릭하면 크게 열람합니다</div>' +
+    '<div class="paper-overview-grid" id="paperOverviewGrid" style="--ov-aspect:'+layout.cols+'/'+layout.rowsPerPage+';--ov-rows:'+layout.rowsPerPage+'">' + cellsHtml + '</div>';
+
+  var grid = document.getElementById("paperOverviewGrid");
+  grid.querySelectorAll("[data-pageidx]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      openPaperZoomReader(m, layout, parseInt(btn.dataset.pageidx, 10));
+    });
+  });
+
+  _paperOverviewObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      var idx = parseInt(entry.target.dataset.pageidx, 10);
+      var thumb = document.getElementById("paperOvThumb" + idx);
+      if (!thumb) return;
+      if (entry.isIntersecting) {
+        if (layout._thumbCache[idx] === undefined) layout._thumbCache[idx] = renderPaperThumbRowsHtml(layout, idx);
+        thumb.innerHTML = layout._thumbCache[idx];
+      } else {
+        thumb.innerHTML = "";
+      }
+    });
+  }, { root: grid, rootMargin: "600px 0px 600px 0px" });
+  grid.querySelectorAll("[data-pageidx]").forEach(function (btn) { _paperOverviewObserver.observe(btn); });
+}
+/* 확대 열람 -- 순수 읽기 전용(입력 요소 없음). 페이지 개요에서 클릭한 매를
+ * 화면 대부분을 써서 정독 가능한 크기로 보여준다. Esc/배경 클릭으로 닫고,
+ * 좌우 화살표·버튼·스와이프로 다음/이전 매를 오갈 수 있다. */
+function openPaperZoomReader(m, layout, startIdx) {
+  var idx = Math.max(0, Math.min(layout.totalPages - 1, startIdx));
+  var overlay = document.createElement("div");
+  overlay.className = "paper-zoom-overlay";
+  document.body.appendChild(overlay);
+
+  function paint() {
+    var cell = fitZoomReaderCellSize(layout.cols, layout.rowsPerPage);
+    overlay.innerHTML =
+      '<div class="paper-zoom-topbar">' +
+        '<span class="paper-zoom-page-label">'+(idx+1)+' / '+layout.totalPages+'매</span>' +
+        '<button type="button" class="paper-zoom-close" id="paperZoomCloseBtn" title="닫기(Esc)">'+ic("close",18)+'</button>' +
+      '</div>' +
+      '<div class="paper-zoom-body">' +
+        '<button type="button" class="paper-zoom-nav" id="paperZoomPrev" '+(idx<=0?"disabled":"")+' title="이전 페이지(←)">'+ic("chevL",20)+'</button>' +
+        '<div class="paper-zoom-sheet-wrap" style="--paper-cell:'+cell+'px">' + renderPaperViewSheetHtml(layout, idx) + '</div>' +
+        '<button type="button" class="paper-zoom-nav" id="paperZoomNext" '+(idx>=layout.totalPages-1?"disabled":"")+' title="다음 페이지(→)">'+ic("chevR",20)+'</button>' +
+      '</div>';
+    document.getElementById("paperZoomCloseBtn").addEventListener("click", closeZoom);
+    document.getElementById("paperZoomPrev").addEventListener("click", function () { go(-1); });
+    document.getElementById("paperZoomNext").addEventListener("click", function () { go(1); });
+  }
+  function go(dir) {
+    var next = Math.max(0, Math.min(layout.totalPages - 1, idx + dir));
+    if (next === idx) return;
+    idx = next;
+    m.paperPage = idx; saveData();
+    paint();
+  }
+  function closeZoom() {
+    document.removeEventListener("keydown", onKey);
+    window.removeEventListener("resize", onResize);
+    overlay.remove();
+    /* 확대 화면에서 매를 옮겨 다녔을 수 있으니(m.paperPage 갱신됨), 뒤에 있는
+     * 개요/단면 화면도 그 위치를 반영하도록 다시 그린다. */
+    if (m.paperMode === "view") renderManuscriptPaperView(m);
+  }
+  function onKey(e) {
+    if (e.key === "Escape") closeZoom();
+    else if (e.key === "ArrowLeft") go(-1);
+    else if (e.key === "ArrowRight") go(1);
+  }
+  var resizeDebounce = null;
+  function onResize() { clearTimeout(resizeDebounce); resizeDebounce = setTimeout(paint, 150); }
+  var touchStartX = null;
+  overlay.addEventListener("touchstart", function (e) { touchStartX = e.touches[0].clientX; }, { passive: true });
+  overlay.addEventListener("touchend", function (e) {
+    if (touchStartX == null) return;
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+    touchStartX = null;
+  }, { passive: true });
+  /* "배경(외부) 클릭 시 닫기" -- overlay는 flex 레이아웃이라 topbar/body가
+   * 사실상 전체를 덮어서 클릭 지점이 overlay 자기 자신(e.target===overlay)
+   * 인 경우가 거의 없다(안쪽 요소들이 항상 target이 됨). 그래서 "낱장·버튼
+   * 위가 아닌 곳"을 배경 클릭으로 취급한다. */
+  overlay.addEventListener("mousedown", function (e) {
+    if (!e.target.closest(".paper-zoom-sheet-wrap, .paper-zoom-nav, .paper-zoom-close")) closeZoom();
+  });
+  document.addEventListener("keydown", onKey);
+  window.addEventListener("resize", onResize);
+  paint();
 }
 
 function renderManuscriptPage(m) {
@@ -14162,7 +14335,7 @@ function renderManuscriptPage(m) {
   if (m.paperVertical === undefined) m.paperVertical = false;
   if (m.paperScrollFrac === undefined) m.paperScrollFrac = 0;
   if (m.paperMode === undefined) m.paperMode = "write";
-  if (m.paperSpread === undefined) m.paperSpread = false;
+  if (m.paperOverview === undefined) m.paperOverview = false;
   if (m.paperPage === undefined) m.paperPage = 0;
 
   var main = document.getElementById("main");
