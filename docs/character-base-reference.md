@@ -11,6 +11,7 @@ assets/character-base/female/seed0_female_base_medium.png   (가슴 크기: 보�
 assets/character-base/female/seed0_female_base_big.png      (가슴 크기: 큼)
 assets/character-base/female/seed0_female_base_verybig.png  (가슴 크기: 매우 큼)
 assets/character-base/male/seed42_male_base.png
+assets/character-base/male/seed42_male_base_opt.png  (팔레트 축소판, 앱에 실제 임베드된 버전)
 ```
 
 원본은 `C:\Users\youngjune\AppData\Local\Comfy-Desktop\ComfyUI-Shared\input\`(여자, 이전 세션에서 이미 검증됨)와 `...\ComfyUI-Shared\output\seed42_male_base_00003_.png`(남자, 이번 세션에서 생성)에도 남아있음.
@@ -33,6 +34,12 @@ assets/character-base/male/seed42_male_base.png
 - `ModelSamplingAuraFlow` shift 3.0 (Z-Image Turbo 권장값).
 - `EmptySD3LatentImage` 832×1216.
 
+## 앱에 이미 반영한 부분
+
+`app/jipseul-note.html`의 `APPEAR_RASTER_PREVIEW.m`(외형 편집 "얼굴 확인"·"키·체형 비교" 패널의 남자 래스터 미리보기)을 이번에 만든 `seed42_male_base_opt.png`로 교체함. 기존에 박혀 있던 남자 이미지는 짧은 머리 실루엣과 젖꼭지가 그려져 있고 손 모서리가 들쭉날쭉해 이 기준 문서 §공통 기준(대머리·이목구비 없음·화풍 일관성)과 어긋나 있었음 — 여자 쪽(`APPEAR_RASTER_PREVIEW.f`)은 이미 기준에 맞는 이미지가 들어있어 손대지 않음. 색상 팔레트를 48색으로 낮춰 44KB로 최적화해서 임베드(기존 남자 임베드 약 99KB보다 오히려 작음). 헤드리스 Chrome 스크린샷으로 앱이 정상 로드되는지 확인함.
+
 ## 다음 단계 (미완료, `jipseul-note-sync.md` §③ 참고)
 
-부위별로 분리된 투명 PNG 레이어(헤어/의상/신발 등)를 받기 전까지는 이 기준 이미지들을 실제 앱(`app/jipseul-note.html`)의 렌더링 로직에 아직 연결하지 않음 — 지금은 향후 에셋 제작의 비율·화풍 기준으로만 사용.
+- "외형 확인"(AI 원화 베타) 패널은 아직 이 기준 이미지들과 연결하지 않음 — 부위별로 분리된 투명 PNG 레이어(헤어/의상/신발 등)가 없으면 의상을 표현할 수 없어서, 기존 안내 문구("AI 원화(베타)는 아직 의상을 표현하지 못해요")를 그대로 유지함.
+- 가슴 5단계 이미지는 아직 `bustSize` 선택에 따라 실제로 바뀌지 않음(현재 래스터 미리보기는 성별당 이미지 1장 고정). 체형 변형 방식 비교 데모(아티팩트 `6e233096`)에서 검증된 `buildMesh`/`warpTriangle`/`widthRatioAtY` 메시 워프 코드를 이 기준 이미지들에 적용하면, 이미지 1장을 16종 체형 수치(`BODY_PRESETS`)에 맞게 실시간으로 변형할 수 있음 — 다음 세션에서 이어서 할 만한 작업.
+- 부위별 분리 레이어를 받으면 Cozy Human Parser 대신 이 환경에 이미 설치된 mediapipe(`hair_segmenter.tflite`, `selfie_multiclass_256x256.tflite`)로 부위 마스크를 뽑는 방법도 시도해볼 것(무거운 커스텀 노드 설치 없이 재현 가능했음).
