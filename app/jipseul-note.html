@@ -140,6 +140,14 @@
   #wsTabBar { position:sticky; top:0; z-index:6; background:var(--bg); }
   #wsTabBar:empty { display:none; }
   .ws-work-title { font-family:var(--serif); font-weight:700; font-size:14px; color:var(--ink); padding:14px 20px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* 상위 카테고리 → 하위 탭 2단 구성 -- 상위(.ws-cat-tabs)는 큰 카테고리를
+   * 고르는 곳이라 밑줄 강조로 "지금 어느 카테고리인가"가 항상 보이고, 그
+   * 아래 하위 탭(.ws-tabs, 기존 것 그대로)은 그 카테고리에 속한 기능만
+   * 추려서 보여준다. */
+  .ws-cat-tabs { display:flex; gap:4px; padding:10px 20px 0; border-bottom:1px solid var(--border); }
+  .ws-cat-tab { flex:none; display:flex; align-items:center; gap:6px; padding:8px 4px 10px; border:none; background:none; border-bottom:2px solid transparent; color:var(--ink-faint); font-size:13px; font-weight:600; margin-right:14px; }
+  .ws-cat-tab:hover { color:var(--ink-soft); }
+  .ws-cat-tab.on { color:var(--ink); border-bottom-color:var(--accent); }
   .ws-tabs-wrap { position:relative; }
   .ws-tabs { display:flex; gap:2px; padding:8px 20px; overflow-x:auto; scrollbar-width:none; cursor:grab; }
   .ws-tabs.dragging { cursor:grabbing; scroll-behavior:auto; user-select:none; }
@@ -148,6 +156,45 @@
   .ws-tab:hover { background:var(--bg-card-hover); color:var(--ink); }
   .ws-tab.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
   .ws-tab .cnt { font-size:11px; opacity:.75; }
+  /* 시나리오·희곡 요소 블록 -- 타입별 기본 서식(왼쪽 색 테두리·아이콘·지문
+   * 이탤릭 등)은 CSS class로, 특정 구간만의 서식(이탤릭/글씨크기)은 그 요소의
+   * html 안 인라인 태그(<i>, <span style>)로 처리한다. 서로 다른 메커니즘이라
+   * "타입 기본 서식"과 "특정 영역 오버라이드"가 항상 구분된다. */
+  .play-el-list { display:flex; flex-direction:column; gap:10px; margin-bottom:18px; }
+  .play-el { border-left:3px solid var(--border-strong); border-radius:8px; background:var(--bg-card); padding:10px 14px; box-shadow:var(--shadow-1); }
+  .play-el-headbar { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .play-el-typebadge { flex:none; font-size:11px; font-weight:700; color:var(--ink-faint); letter-spacing:.02em; padding:2px 7px; border-radius:5px; background:var(--bg-panel); }
+  .play-el-speaker { flex:none; width:110px; font-size:13px; font-weight:700; color:var(--ink); border:1px solid var(--border); border-radius:5px; padding:4px 7px; background:var(--bg-panel); }
+  .play-el-tools { display:flex; gap:2px; margin-left:auto; }
+  .play-el-tools button { width:22px; height:22px; display:flex; align-items:center; justify-content:center; border:none; background:none; color:var(--ink-faint); border-radius:5px; }
+  .play-el-tools button:hover:not(:disabled) { background:var(--bg-card-hover); color:var(--ink); }
+  .play-el-tools button:disabled { opacity:.3; }
+  .play-el-fmtbar { display:flex; gap:6px; margin-bottom:6px; }
+  .play-fmt-btn { width:26px; height:24px; border:1px solid var(--border); border-radius:5px; background:var(--bg-panel); color:var(--ink-soft); font-style:italic; font-size:13px; }
+  .play-fmt-btn:hover { background:var(--bg-card-hover); color:var(--ink); }
+  .play-fmt-size { border:1px solid var(--border); border-radius:5px; background:var(--bg-panel); color:var(--ink-soft); font-size:12px; padding:2px 4px; }
+  .play-el-body { min-height:1.6em; font-size:14.5px; line-height:1.7; color:var(--ink); outline:none; white-space:pre-wrap; word-break:break-word; }
+  .play-el-body:empty:before { content:attr(data-placeholder); color:var(--ink-faint); }
+  .play-el-body span[style*="font-size"] { line-height:1.5; }
+  .play-el-dialogue { border-left-color:var(--accent); }
+  .play-el-aside { border-left-color:var(--tide); }
+  .play-el-aside .play-el-body { font-style:italic; color:var(--tide); }
+  .play-el-direction { border-left-color:var(--ink-faint); }
+  .play-el-direction .play-el-body { font-style:italic; color:var(--ink-soft); }
+  .play-el-sceneDesc, .play-el-location, .play-el-spaceTransition { border-left-color:var(--moss); }
+  .play-el-timeTransition { border-left-color:var(--moss); font-style:italic; }
+  .play-el-prologue { border-left-color:var(--rose); }
+  .play-el-character { border-left-color:var(--accent-strong); }
+  .play-el-character .play-el-body { font-weight:600; }
+  .play-el-note { border-left-style:dashed; border-left-color:var(--ink-faint); }
+  .play-el-heading { text-align:center; border-left:none; border-top:2px solid var(--border-strong); border-bottom:2px solid var(--border-strong); border-radius:0; background:transparent; padding:12px 8px; box-shadow:none; }
+  .play-el-heading .play-el-headbar { justify-content:center; }
+  .play-el-headinput { text-align:center; font-family:var(--serif); font-weight:700; font-size:15px; color:var(--ink); border:none; background:none; flex:1; max-width:420px; }
+  .play-addmenu-wrap { border-top:1px solid var(--border); padding-top:14px; }
+  .play-addmenu-label { font-size:12px; font-weight:700; color:var(--ink-faint); margin-bottom:8px; }
+  .play-addmenu { display:flex; flex-wrap:wrap; gap:6px; }
+  .play-add-btn { display:flex; align-items:center; gap:5px; padding:6px 11px; border:1px solid var(--border); border-radius:20px; background:var(--bg-card); color:var(--ink-soft); font-size:12.5px; }
+  .play-add-btn:hover { background:var(--bg-card-hover); color:var(--ink); border-color:var(--border-strong); }
   .ws-tabs-wrap::before, .ws-tabs-wrap::after { content:""; position:absolute; top:0; bottom:0; width:28px; pointer-events:none; z-index:1; transition:opacity .15s; opacity:0; }
   .ws-tabs-wrap::before { left:0; background:linear-gradient(to right, var(--bg), transparent); }
   .ws-tabs-wrap::after { right:0; background:linear-gradient(to left, var(--bg), transparent); }
@@ -243,7 +290,7 @@
    * .graph-shell-based workspace pages (map/graph/table/manuscript/etc.) and the
    * split list+detail view are left to use the full available width. */
   main { padding:0; width:100%; }
-  .page-pad { padding:44px 48px 90px; max-width:960px; margin:0 auto; }
+  .page-pad { width:100%; padding:44px 48px 90px; max-width:960px; margin:0 auto; min-width:0; }
   .doccat-split-pad { max-width:none; }
 
   .home-view { padding:48px 48px 90px; max-width:1080px; margin:0 auto; }
@@ -323,6 +370,26 @@
   .doc-card-del { position:absolute; top:10px; right:10px; opacity:0; }
   .doc-card:hover .doc-card-del { opacity:1; }
   .doc-card-selected { border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 1px var(--accent) inset; }
+
+  /* ---------- 소설 원고(회차) 목록 전용 페이지 ---------- */
+  .novel-page-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .novel-page-title { font-family:var(--serif); font-size:28px; font-weight:600; margin:0; }
+  .novel-page-meta { font-size:12.5px; color:var(--ink-faint); margin-top:4px; }
+  .novel-page-actions { display:flex; align-items:center; gap:8px; flex:none; }
+  .novel-jump-wrap { position:relative; margin-bottom:14px; }
+  .novel-jump-input { width:100%; box-sizing:border-box; padding:11px 14px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); background:var(--bg-card); color:var(--ink); font-size:14px; outline:none; }
+  .novel-jump-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  .novel-jump-hint { font-size:11.5px; color:var(--ink-faint); margin-top:6px; }
+  .novel-toolbar-row { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+  .novel-ep-list { display:flex; flex-direction:column; gap:6px; }
+  .novel-ep-row { display:flex; align-items:center; gap:12px; padding:11px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-card); cursor:pointer; }
+  .novel-ep-row:hover { border-color:var(--border-strong); background:var(--bg-card-hover); }
+  .novel-ep-row.selected { border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 1px var(--accent) inset; }
+  .novel-ep-row.active { border-color:var(--accent); }
+  .novel-ep-ord { flex:none; width:40px; text-align:center; font-family:var(--serif); font-weight:700; font-size:13px; color:var(--ink-faint); }
+  .novel-ep-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; color:var(--ink); }
+  .novel-ep-meta { flex:none; display:flex; align-items:center; gap:10px; font-size:11.5px; color:var(--ink-faint); }
+  .novel-ep-row .row-move, .novel-ep-row .row-del, .novel-ep-row .row-insert { flex:none; }
 
   .doccat-viewtoggle { display:flex; gap:6px; flex:none; }
   .doccat-split-pad { padding-bottom:0; }
@@ -514,6 +581,26 @@
   .cat-menu-item svg { color:var(--ink-faint); flex:none; }
   .cat-menu-item:hover svg { color:var(--accent); }
 
+  /* ---------- 집필창 내부 회차 이동(이전/현재/다음) ---------- */
+  .ep-switcher-row { display:flex; align-items:center; gap:6px; padding:8px 20px 0; }
+  .ep-switch-btn { display:flex; align-items:center; gap:5px; flex:none; border:1px solid var(--border); background:var(--bg-card); border-radius:20px; padding:6px 12px; font-size:12.5px; color:var(--ink-soft); max-width:160px; }
+  .ep-switch-btn span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ep-switch-btn:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+  .ep-switch-btn:disabled { opacity:.35; }
+  .ep-switch-current { flex:1; min-width:0; display:flex; align-items:center; gap:6px; justify-content:center; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:20px; padding:6px 14px; font-size:13px; font-weight:600; color:var(--ink); }
+  .ep-switch-current span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ep-switch-current:hover { border-color:var(--accent); background:var(--accent-soft); }
+  .ep-switch-popover { position:fixed; z-index:200; background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-md); box-shadow:var(--shadow-2); width:320px; max-height:400px; display:flex; flex-direction:column; }
+  .ep-switch-popover-input { margin:8px; padding:8px 10px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); background:var(--bg-panel); color:var(--ink); font-size:13px; outline:none; }
+  .ep-switch-popover-input:focus { border-color:var(--accent); }
+  .ep-switch-popover-list { overflow-y:auto; padding:4px 8px 8px; }
+  .ep-switch-popover-row { display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:var(--radius-sm); font-size:12.5px; color:var(--ink-soft); cursor:pointer; }
+  .ep-switch-popover-row .ord { flex:none; width:26px; text-align:center; color:var(--ink-faint); font-weight:700; }
+  .ep-switch-popover-row .t { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ep-switch-popover-row:hover { background:var(--bg-card-hover); }
+  .ep-switch-popover-row.selected { background:var(--accent-soft); color:var(--accent); }
+  .ep-switch-popover-row.active .t { color:var(--accent); font-weight:600; }
+
   /* ---------- 홈 빠른 시작 ---------- */
   .home-quickstart { margin:var(--sp-7) 0 0; }
   .home-quickstart-for { font-size:var(--fs-sm); color:var(--ink-faint); margin-bottom:var(--sp-3); }
@@ -668,6 +755,7 @@
   .sb-template-divider { display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-faint); margin:14px 4px 6px; letter-spacing:0.02em; }
   .template-folder { border-style:dashed; border-color:var(--border-strong); background:var(--bg-card); }
   .template-badge { flex:none; font-size:10px; padding:2px 7px; border-radius:10px; background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .template-badge.stale { background:var(--rose-soft); color:var(--rose); }
   .work-row .row-del, .work-row .row-settings { opacity:.55; }
   .work-row:hover .row-del, .work-row:hover .row-settings { opacity:1; }
 
@@ -799,6 +887,8 @@
   .ms-notch { width:64px; height:5px; border-radius:4px; background:var(--border-strong); margin:0 auto 10px; }
   .ms-screen { border-radius:16px; overflow:hidden; }
   .ms-textarea { width:100%; height:460px; border:none; outline:none; resize:none; box-sizing:border-box; overflow-y:auto; }
+  .ms-format-preview { white-space:pre-wrap; word-break:break-word; overflow-y:auto; cursor:default; }
+  .ms-format-preview.ms-textarea { padding:0; }
 
   /* ---------- 일반 집필창 (워드/HWP 스타일) ---------- */
   .ms-doc-page { width:100%; max-width:820px; margin:0 auto; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; box-shadow:0 2px 16px var(--shadow); overflow:hidden; }
@@ -874,51 +964,89 @@
   .paper-toolbar .sep { width:1px; align-self:stretch; background:var(--border); margin:2px 4px; }
   .paper-toolbar button { display:flex; align-items:center; gap:5px; background:none; border:none; padding:6px 8px; border-radius:6px; font-size:12px; color:var(--ink-soft); }
   .paper-toolbar button:hover { background:var(--bg-card-hover); color:var(--ink); }
+  .paper-line-swatch { width:12px; height:12px; border-radius:3px; border:1px solid var(--border-strong); flex:none; }
   .paper-toolbar button.on { color:var(--accent); background:var(--accent-soft); }
   .paper-lang-badge { font-size:11px; padding:4px 10px; border-radius:20px; background:var(--accent-soft); color:var(--accent); font-weight:600; flex:none; }
   .paper-size-toggle { display:flex; gap:2px; background:var(--bg); border-radius:6px; padding:2px; }
   .paper-size-toggle button { border:none; background:none; border-radius:5px; padding:5px 9px; font-size:11.5px; color:var(--ink-soft); }
   .paper-size-toggle button.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .paper-mode-toggle { display:flex; gap:6px; }
+  .paper-mode-toggle button { border:1px solid var(--border-strong); background:var(--bg-card); border-radius:20px; padding:6px 14px; font-size:12.5px; color:var(--ink-soft); }
+  .paper-mode-toggle button.on { background:var(--accent-soft); color:var(--accent); border-color:var(--accent); font-weight:600; }
   .paper-stats-bar { display:flex; flex-wrap:wrap; gap:4px 16px; font-size:11.5px; color:var(--ink-faint); margin-bottom:10px; font-variant-numeric:tabular-nums; }
   .paper-stats-bar b { color:var(--ink); font-weight:600; }
-  .paper-outer { display:flex; justify-content:center; padding:6px 0 16px; overflow-x:auto; }
-  .paper-sheet-wrap { flex:none; }
-  .paper-text { box-sizing:border-box; border:1px solid var(--border-strong); background:#FBF9F2; color:#2A2015; outline:none; resize:none; box-shadow:0 4px 18px var(--shadow); --paper-line:#B9AF95; }
-  .paper-text.grid {
-    font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR','Hiragino Sans','Noto Sans JP','Noto Sans SC',sans-serif;
-    font-size:17px; line-height:26px; letter-spacing:0;
-    width:calc(20em + 60px); max-width:100%; height:640px;
-    padding:26px 30px;
-    white-space:pre-wrap; word-break:normal; overflow-wrap:normal; line-break:strict;
-    background-image:
-      repeating-linear-gradient(to right, var(--paper-line) 0, var(--paper-line) 1px, transparent 1px, transparent 1em),
-      repeating-linear-gradient(to bottom, var(--paper-line) 0, var(--paper-line) 1px, transparent 1px, transparent 26px);
-    background-position:30px 26px, 30px 26px;
-    background-repeat:repeat, repeat;
-    background-size:1em 1em, 100% 26px;
-    background-attachment:local, local;
-  }
-  .paper-text.grid.vertical {
-    writing-mode:vertical-rl; text-orientation:mixed;
-    width:min(720px, 100%); height:72vh; max-height:760px;
-    background-image:
-      repeating-linear-gradient(to bottom, var(--paper-line) 0, var(--paper-line) 1px, transparent 1px, transparent 1em),
-      repeating-linear-gradient(to left, var(--paper-line) 0, var(--paper-line) 1px, transparent 1px, transparent 26px);
-    background-position:30px 26px, 30px 26px;
-    background-repeat:repeat, repeat;
-    background-size:1em 1em, 26px 100%;
-    background-attachment:local, local;
-  }
-  .paper-text.flow {
-    font-family:var(--serif); font-size:15.5px; line-height:1.95;
-    width:640px; max-width:100%; height:640px;
-    padding:34px 40px;
-    white-space:pre-wrap; word-break:normal; overflow-wrap:break-word;
-  }
+
+  /* ---------- 집필 화면: 현대적인 일반 에디터(격자 없음) ----------
+   * 원고지 "규칙"(칸/줄/페이지 계산, 행두·행말 금칙)은 computeManuscriptLayout()
+   * 으로 계속 실시간 적용되지만, 쓰는 동안 화면에는 격자를 그리지 않는다 --
+   * Notion/Scrivener류의 깔끔한 집필 경험이 목표다. 실물 원고지 모양은 아래
+   * "미리보기" 화면에서만 정확히 재현한다("보이는 건 현대적 에디터, 동작은
+   * 원고지"). */
+  .paper-outer { display:flex; justify-content:center; padding:6px 0 16px; }
+  .paper-sheet-wrap { flex:none; width:100%; max-width:720px; }
+  .paper-text { box-sizing:border-box; border:1px solid var(--border-strong); border-radius:10px; background:var(--bg-card); color:var(--ink); outline:none; resize:none; width:100%; font-family:var(--serif); font-size:16px; line-height:1.95; padding:34px 40px; height:min(66vh, 680px); white-space:pre-wrap; word-break:normal; overflow-wrap:break-word; }
+  .paper-text.vertical, .ms-textarea.ms-doc-textarea.vertical { writing-mode:vertical-rl; text-orientation:mixed; height:72vh; max-height:760px; width:min(720px, 100%); }
   .paper-page-nav { display:flex; align-items:center; justify-content:center; gap:16px; margin-top:4px; font-size:13px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
   .paper-page-nav button { background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:7px 14px; color:var(--ink); }
   .paper-page-nav button:disabled { opacity:.35; }
   .paper-page-label { min-width:160px; text-align:center; }
+
+  /* ---------- 원고지 미리보기: 별도 화면(모달 아님, 탭 전환) ----------
+   * computeManuscriptLayout()의 정밀 계산 결과를 그대로 실물 원고지 낱장
+   * (칸선·NO.N 페이지 번호·cols×rows 캡션)으로 그린다. 읽기 전용이고 집필화면과
+   * 완전히 분리된 화면이다 -- 편집은 항상 집필화면에서만 일어난다. 칸 크기는
+   * JS가 뷰포트에 맞춰 --paper-cell로 동적 계산한다(세로 스크롤 없이 한 장이
+   * 통째로 들어오면서도 글자를 읽을 수 있는 크기). */
+  .paper-view-wrap { animation:paperViewFadeIn .18s ease; }
+  @keyframes paperViewFadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  .paper-view-toolbar { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .paper-view-spread-toggle { display:flex; gap:2px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; padding:2px; }
+  .paper-view-spread-toggle button { border:none; background:none; border-radius:5px; padding:6px 12px; font-size:11.5px; color:var(--ink-soft); }
+  .paper-view-spread-toggle button.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .paper-view-sheets { display:flex; justify-content:center; align-items:flex-start; gap:22px; }
+  .paper-view-sheet { flex:none; background:#FBF9F2; border-radius:2px; box-shadow:0 4px 18px var(--shadow); padding:14px 16px 10px; transition:transform .18s ease, opacity .18s ease; }
+  .paper-view-sheet.fo-next { transform:translateX(-14px); opacity:0; }
+  .paper-view-sheet.fo-prev { transform:translateX(14px); opacity:0; }
+  .paper-view-sheet-head { display:flex; justify-content:flex-end; padding:0 2px 6px; font-size:11px; color:#7a715c; font-variant-numeric:tabular-nums; }
+  .paper-view-grid { border:1px solid var(--paper-line, #d1453d); }
+  .paper-view-row { display:flex; }
+  .paper-view-cell { flex:none; width:var(--paper-cell, 22px); height:var(--paper-cell, 22px); box-sizing:border-box; border:1px solid var(--paper-line, #d1453d); margin:-1px 0 0 -1px; display:flex; align-items:center; justify-content:center; font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif; font-size:calc(var(--paper-cell, 22px) * 0.56); line-height:1; color:#2A2015; overflow:hidden; }
+  .paper-view-sheet-foot { padding:6px 2px 0; font-size:10.5px; color:#8a8168; }
+  .paper-view-nav { display:flex; align-items:center; justify-content:center; gap:14px; margin-top:16px; font-size:13px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .paper-view-nav button { background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:7px 14px; color:var(--ink); }
+  .paper-view-nav button:disabled { opacity:.35; }
+
+  /* ---------- 페이지 개요 보기: 원고 전체 탐색용(양면 보기 대체) ----------
+   * "책처럼 보이기"가 목적이었던 양면 보기 대신, 지금까지 쓴 모든 매를 한
+   * 화면에서 훑어보고 원하는 매를 바로 찾아 확대해서 읽는(검수) 용도다.
+   * 각 썸네일은 실제 그 매의 내용을 축소해서 보여준다(칸 하나하나가 아니라
+   * 행 단위 텍스트 한 줄 + 배경 격자선으로 -- 수백~수천 매에서도 DOM이
+   * 가벼워야 하므로). IntersectionObserver로 화면 근처에 들어온 썸네일만
+   * 실제로 채워 그리고(지연 렌더링), 멀어지면 다시 비워서(가상 스크롤에
+   * 준하는 효과) DOM에 항상 떠 있는 실제 내용량을 제한한다. 한 번 그린
+   * 내용은 layout 객체에 캐시해 다시 스크롤해 돌아와도 재계산하지 않는다. */
+  .paper-overview-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:16px 14px; max-height:min(72vh, 780px); overflow-y:auto; padding:4px 6px 12px; }
+  .paper-overview-cell { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; background:none; border:none; padding:0; font:inherit; }
+  .paper-overview-thumb { width:100%; aspect-ratio:var(--ov-aspect, 20/26); background:#FBF9F2; border:1px solid var(--border-strong); border-radius:3px; box-shadow:0 2px 8px var(--shadow); overflow:hidden; display:flex; flex-direction:column; padding:5% 6%; box-sizing:border-box; transition:transform .12s ease, box-shadow .12s ease; background-image:repeating-linear-gradient(to bottom, var(--paper-line, #d1453d) 0, var(--paper-line, #d1453d) 1px, transparent 1px, transparent calc(100% / var(--ov-rows, 20))); background-size:100% 100%; }
+  .paper-overview-cell:hover .paper-overview-thumb { transform:translateY(-2px); box-shadow:0 6px 16px var(--shadow); }
+  .paper-overview-cell.current .paper-overview-thumb { outline:2px solid var(--accent); outline-offset:1px; }
+  .paper-thumb-row { flex:1 0 0; font-size:5px; line-height:1; font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif; color:#4a4230; white-space:pre; overflow:hidden; letter-spacing:-0.3px; }
+  .paper-overview-label { font-size:11px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .paper-overview-cell.current .paper-overview-label { color:var(--accent); font-weight:600; }
+  .paper-overview-hint { text-align:center; font-size:12px; color:var(--ink-faint); margin-bottom:10px; }
+
+  /* ---------- 확대 열람(원고 검수용, 읽기 전용) ---------- */
+  .paper-zoom-overlay { position:fixed; inset:0; background:rgba(10,10,10,0.72); z-index:200; display:flex; flex-direction:column; animation:paperZoomFadeIn .15s ease; touch-action:pan-y; }
+  @keyframes paperZoomFadeIn { from { opacity:0; } to { opacity:1; } }
+  .paper-zoom-topbar { display:flex; align-items:center; justify-content:center; position:relative; padding:16px; flex:none; }
+  .paper-zoom-page-label { color:#fff; font-size:14px; font-variant-numeric:tabular-nums; opacity:.9; }
+  .paper-zoom-close { position:absolute; right:16px; top:10px; background:rgba(255,255,255,0.12); border:none; color:#fff; padding:8px; border-radius:8px; display:flex; }
+  .paper-zoom-close:hover { background:rgba(255,255,255,0.22); }
+  .paper-zoom-body { flex:1; display:flex; align-items:center; justify-content:center; gap:16px; padding:0 16px 24px; min-height:0; }
+  .paper-zoom-nav { flex:none; width:48px; height:48px; border-radius:50%; border:none; background:rgba(255,255,255,0.12); color:#fff; display:flex; align-items:center; justify-content:center; }
+  .paper-zoom-nav:hover { background:rgba(255,255,255,0.24); }
+  .paper-zoom-nav:disabled { opacity:.25; }
+  .paper-zoom-sheet-wrap .paper-view-sheet { box-shadow:0 12px 40px rgba(0,0,0,0.5); }
 
   /* body blocks */
   .blocks { display:flex; flex-direction:column; }
@@ -936,6 +1064,28 @@
   .graph-shell { display:flex; flex-direction:column; height:100vh; }
   .graph-title-bar { display:flex; align-items:center; gap:10px; padding:16px 22px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
   .graph-title { font-family:var(--serif); font-size:18px; font-weight:600; border:none; background:none; outline:none; flex:1; }
+  /* ---------- 원고지 전용 축소 제목 바 ----------
+   * "정보 영역이 원고지 본문보다 눈에 띄면 안 된다"는 요구에 맞춰 다른
+   * 포맷의 크고 굵은 제목 바 대신 훨씬 작고 얇게 짠다. 이름 바꾸기 input은
+   * 기능을 지키기 위해 그대로 두되(단, 아주 작게), 화수 배지를 덧붙인다. */
+  .paper-compact-bar { padding:10px 22px; gap:8px; }
+  .paper-info-tag-label { font-size:10px; color:var(--ink-faint); letter-spacing:0.04em; text-transform:uppercase; flex:none; }
+  .paper-ep-badge { font-size:11px; color:var(--accent); background:var(--accent-soft); border-radius:10px; padding:2px 8px; flex:none; font-weight:600; }
+  .paper-compact-title { font-family:inherit; font-size:12.5px; font-weight:500; color:var(--ink-soft); border:none; background:none; outline:none; flex:1; min-width:40px; max-width:220px; padding:2px 4px; }
+  .paper-compact-title.dim { color:var(--ink-faint); max-width:70px; opacity:.65; }
+  .paper-compact-title.dim:focus { opacity:1; max-width:220px; color:var(--ink-soft); }
+  .paper-info-settings-btn { color:var(--ink-faint); display:flex; align-items:center; justify-content:center; background:none; border:none; padding:3px; border-radius:5px; flex:none; }
+  .paper-info-settings-btn:hover { color:var(--accent); background:var(--bg-card); }
+  /* 원고지 화면에서는 등장인물 칩·통계·목표·이전화 이어보기·맞춤법 안내까지
+   * 전부 본문보다 작고 얇게 -- 기능은 그대로 두고 시각적 비중만 낮춘다. */
+  .page-pad.paper-info-compact > .pov-row { font-size:11px; margin-bottom:4px; }
+  .page-pad.paper-info-compact > .pov-row .pov-label { font-size:10.5px; }
+  .page-pad.paper-info-compact .ms-stats-bar { font-size:10.5px; opacity:.85; }
+  .page-pad.paper-info-compact .ms-goal-row { font-size:11px; margin:2px 0; }
+  .page-pad.paper-info-compact .ms-goal-label { font-size:10.5px; }
+  .page-pad.paper-info-compact .ms-spellcheck-hint { font-size:10px; opacity:.7; margin-bottom:6px; }
+  .page-pad.paper-info-compact .ms-peek-toggle { font-size:10.5px; }
+  .page-pad.paper-info-compact .ms-tabs { margin-bottom:6px; }
   .graph-hint { font-size:11.5px; color:var(--ink-faint); }
   .map-breadcrumb { display:flex; align-items:center; gap:4px; padding:8px 22px 0; flex-wrap:wrap; font-size:12px; }
   .map-breadcrumb-crumb { color:var(--ink-faint); background:none; border:none; padding:2px 2px; font-family:inherit; font-size:12px; }
@@ -1259,9 +1409,15 @@
     .sidebar-scrim.show { opacity:1; pointer-events:auto; }
     .page-pad { padding:28px 20px 60px; }
     .two-col { grid-template-columns:1fr; }
+    /* .ms-ctx-section 두 칸이 좁은 화면에서 나란히 꽉 차 보이지 않도록 한 섹션이
+     * 한 줄 전체를 쓰게 한다(진짜 가로 넘침 버그는 .page-pad에 min-width:0을
+     * 주는 것으로 별도로 고쳤다 -- .graph-shell이 flex column이라 .page-pad가
+     * flex item으로서 기본 min-width:auto를 가져 원고지 텍스트 영역처럼 줄바꿈
+     * 안 되는 후손 폭만큼 페이지 전체가 밀려나던 문제였다). */
+    .ms-context-panel.stacked .ms-ctx-section, .ms-editor-row .ms-context-panel .ms-ctx-section { min-width:0; flex:1 1 100%; }
   }
 </style>
-<script>(function(){try{var t=JSON.parse(localStorage.getItem("jipseul_theme_v1")||"{}");var mode=t.mode||"auto";if(mode==="light"||mode==="dark"){document.documentElement.setAttribute("data-theme",mode);}else if(mode==="rgb"){document.documentElement.setAttribute("data-theme","rgb");document.documentElement.setAttribute("data-rgbvariant",t.rgbVariant||"cyber");}}catch(e){}})();</script>
+<script>(function(){try{var t=JSON.parse(localStorage.getItem("jipseul_theme_v1")||"{}");var mode=t.mode||"auto";if(mode==="light"||mode==="dark"){document.documentElement.setAttribute("data-theme",mode);}else if(mode==="rgb"){document.documentElement.setAttribute("data-theme","rgb");if(t.rgbVariant==="custom"){var root=document.documentElement;root.style.setProperty("--bg",t.customBg||"#0a0e14");root.style.setProperty("--accent",t.customAccent||"#00e5ff");}else{document.documentElement.setAttribute("data-rgbvariant",t.rgbVariant||"cyber");}}}catch(e){}})();</script>
 
 <div class="mobile-topbar">
   <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" title="메뉴 열기" aria-label="메뉴 열기"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="2.5" y1="4.5" x2="13.5" y2="4.5"/><line x1="2.5" y1="8" x2="13.5" y2="8"/><line x1="2.5" y1="11.5" x2="13.5" y2="11.5"/></svg></button>
@@ -1394,17 +1550,63 @@ var RGB_VARIANTS = {
 };
 function loadThemePref() {
   try { var raw = localStorage.getItem(THEME_KEY); if (raw) { var t = JSON.parse(raw); if (t && t.mode) return t; } } catch (e) {}
-  return { mode: "auto", rgbVariant: "cyber" };
+  return { mode: "auto", rgbVariant: "cyber", customBg: "#0a0e14", customAccent: "#00e5ff" };
 }
 var THEME_PREF = loadThemePref();
+if (!THEME_PREF.customBg) THEME_PREF.customBg = "#0a0e14";
+if (!THEME_PREF.customAccent) THEME_PREF.customAccent = "#00e5ff";
+/* 프리셋 4종(사이버/네온/오로라/신스웨이브)은 그대로 두고, "커스텀"을 골랐을
+ * 때만 이 토큰들을 :root 인라인 스타일로 덮어써서 임의의 RGB 배경·강조색을
+ * 쓸 수 있게 한다. 프리셋으로 되돌아가면 인라인 스타일을 지워서 원래
+ * CSS 블록(:root[data-theme="rgb"][data-rgbvariant=...])이 다시 먹히게 한다. */
+var CUSTOM_THEME_PROPS = ["--bg","--bg-panel","--bg-card","--bg-card-hover","--ink","--ink-soft","--ink-faint","--border","--border-strong","--accent","--accent-soft","--accent-strong","--shadow","--tide","--tide-soft","--rose","--rose-soft","--moss","--moss-soft"];
+function clearCustomThemeProps() {
+  var root = document.documentElement;
+  CUSTOM_THEME_PROPS.forEach(function (p) { root.style.removeProperty(p); });
+}
+function hexIsDark(hex) {
+  var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  if (isNaN(r)||isNaN(g)||isNaN(b)) return true;
+  return (0.299*r + 0.587*g + 0.114*b) / 255 < 0.5;
+}
+function applyCustomRgbColors() {
+  var root = document.documentElement;
+  var bg = THEME_PREF.customBg || "#0a0e14";
+  var accent = THEME_PREF.customAccent || "#00e5ff";
+  var isDark = hexIsDark(bg);
+  var ink = isDark ? "#EDEDED" : "#1A1A1A";
+  var mixDir = isDark ? "white" : "black";
+  root.style.setProperty("--bg", bg);
+  root.style.setProperty("--bg-panel", "color-mix(in srgb, "+bg+" 94%, "+mixDir+" 6%)");
+  root.style.setProperty("--bg-card", "color-mix(in srgb, "+bg+" 88%, "+mixDir+" 12%)");
+  root.style.setProperty("--bg-card-hover", "color-mix(in srgb, "+bg+" 80%, "+mixDir+" 20%)");
+  root.style.setProperty("--ink", ink);
+  root.style.setProperty("--ink-soft", "color-mix(in srgb, "+ink+" 70%, "+bg+" 30%)");
+  root.style.setProperty("--ink-faint", "color-mix(in srgb, "+ink+" 45%, "+bg+" 55%)");
+  root.style.setProperty("--border", "color-mix(in srgb, "+ink+" 15%, "+bg+" 85%)");
+  root.style.setProperty("--border-strong", "color-mix(in srgb, "+ink+" 30%, "+bg+" 70%)");
+  root.style.setProperty("--accent", accent);
+  root.style.setProperty("--accent-soft", "color-mix(in srgb, "+accent+" 16%, transparent)");
+  root.style.setProperty("--accent-strong", "color-mix(in srgb, "+accent+" 80%, "+mixDir+")");
+  root.style.setProperty("--shadow", isDark ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.18)");
+  root.style.setProperty("--tide", "#39d3c6"); root.style.setProperty("--tide-soft", "rgba(57,211,198,0.16)");
+  root.style.setProperty("--rose", "#ff5c7a"); root.style.setProperty("--rose-soft", "rgba(255,92,122,0.16)");
+  root.style.setProperty("--moss", "#7CFFB2"); root.style.setProperty("--moss-soft", "rgba(124,255,178,0.16)");
+}
 function applyThemePref() {
   var root = document.documentElement;
+  clearCustomThemeProps();
   if (THEME_PREF.mode === "light" || THEME_PREF.mode === "dark") {
     root.setAttribute("data-theme", THEME_PREF.mode);
     root.removeAttribute("data-rgbvariant");
   } else if (THEME_PREF.mode === "rgb") {
     root.setAttribute("data-theme", "rgb");
-    root.setAttribute("data-rgbvariant", THEME_PREF.rgbVariant || "cyber");
+    if (THEME_PREF.rgbVariant === "custom") {
+      root.removeAttribute("data-rgbvariant");
+      applyCustomRgbColors();
+    } else {
+      root.setAttribute("data-rgbvariant", THEME_PREF.rgbVariant || "cyber");
+    }
   } else {
     root.removeAttribute("data-theme");
     root.removeAttribute("data-rgbvariant");
@@ -1415,6 +1617,11 @@ function setThemePref(mode, rgbVariant) {
   if (rgbVariant) THEME_PREF.rgbVariant = rgbVariant;
   try { localStorage.setItem(THEME_KEY, JSON.stringify(THEME_PREF)); } catch (e) {}
   applyThemePref();
+}
+function setCustomThemeColor(which, hex) {
+  if (which === "bg") THEME_PREF.customBg = hex; else THEME_PREF.customAccent = hex;
+  try { localStorage.setItem(THEME_KEY, JSON.stringify(THEME_PREF)); } catch (e) {}
+  if (THEME_PREF.mode === "rgb" && THEME_PREF.rgbVariant === "custom") applyCustomRgbColors();
 }
 /* ---------------- 사이드바 섹션 표시 설정 ----------------
  * "설정 노트" 하위 섹션 중 자주 쓰지 않는 것들을 작품 폴더 안 "고급 기능"
@@ -1472,8 +1679,23 @@ function openPreferencesModal() {
               var v = RGB_VARIANTS[k];
               return '<button type="button" class="modal-pick'+(THEME_PREF.rgbVariant===k?" on":"")+'" data-themergb="'+k+'" style="--pc:'+v.swatch+'">'+esc(v.label)+'</button>';
             }).join("") +
-          '</div>'
+            '<button type="button" class="modal-pick'+(THEME_PREF.rgbVariant==="custom"?" on":"")+'" data-themergb="custom" style="--pc:'+esc(THEME_PREF.customAccent)+'">직접 선택</button>' +
+          '</div>' +
+          (THEME_PREF.rgbVariant === "custom" ? (
+            '<div class="modal-picker-label" style="margin-top:10px">배경 RGB</div>' +
+            '<div class="modal-accent-custom-row" style="display:flex; align-items:center; gap:8px">' +
+              '<input type="color" id="customBgPicker" value="'+esc(THEME_PREF.customBg)+'">' +
+              '<input type="text" id="customBgHex" class="modal-input" style="flex:1" value="'+esc(THEME_PREF.customBg)+'" placeholder="#0A0E14">' +
+            '</div>' +
+            '<div class="modal-picker-label" style="margin-top:10px">강조 RGB</div>' +
+            '<div class="modal-accent-custom-row" style="display:flex; align-items:center; gap:8px">' +
+              '<input type="color" id="customAccentPicker" value="'+esc(THEME_PREF.customAccent)+'">' +
+              '<input type="text" id="customAccentHex" class="modal-input" style="flex:1" value="'+esc(THEME_PREF.customAccent)+'" placeholder="#00E5FF">' +
+            '</div>'
+          ) : "")
         ) : "") +
+        '<div class="modal-picker-label" style="margin-top:14px">글쓰기</div>' +
+        '<label class="modal-check"><input type="checkbox" id="autoIndentToggle" '+(AUTO_INDENT_PREF.enabled?"checked":"")+'> 자동 들여쓰기 — 문단(Enter)이 시작될 때 전각 '+AUTO_INDENT_PREF.size+'칸을 자동으로 넣어줍니다</label>' +
         '<div class="modal-picker-label" style="margin-top:14px">사이드바 표시 — 체크 해제하면 작품 폴더 안 "고급 기능"으로 접어둡니다</div>' +
         SIDEBAR_SECTIONS.map(function(s){
           return '<label class="modal-check"><input type="checkbox" data-sidebarpref="'+s.key+'" '+(SIDEBAR_PREFS[s.key]?"checked":"")+'> '+esc(s.label)+'</label>';
@@ -1486,13 +1708,28 @@ function openPreferencesModal() {
     overlay.querySelectorAll("[data-themergb]").forEach(function(btn){
       btn.addEventListener("click", function(){ setThemePref("rgb", btn.dataset.themergb); paint(); });
     });
+    var bgPicker = document.getElementById("customBgPicker"), bgHex = document.getElementById("customBgHex");
+    var accentPicker = document.getElementById("customAccentPicker"), accentHex = document.getElementById("customAccentHex");
+    function isValidHex6(v) { return /^#[0-9a-fA-F]{6}$/.test(v.trim()); }
+    if (bgPicker) bgPicker.addEventListener("input", function(){ setCustomThemeColor("bg", bgPicker.value); if (bgHex) bgHex.value = bgPicker.value; });
+    if (bgHex) bgHex.addEventListener("change", function(){ if (!isValidHex6(bgHex.value)) { bgHex.value = THEME_PREF.customBg; return; } setCustomThemeColor("bg", bgHex.value.trim()); if (bgPicker) bgPicker.value = bgHex.value.trim(); });
+    if (accentPicker) accentPicker.addEventListener("input", function(){ setCustomThemeColor("accent", accentPicker.value); if (accentHex) accentHex.value = accentPicker.value; });
+    if (accentHex) accentHex.addEventListener("change", function(){ if (!isValidHex6(accentHex.value)) { accentHex.value = THEME_PREF.customAccent; return; } setCustomThemeColor("accent", accentHex.value.trim()); if (accentPicker) accentPicker.value = accentHex.value.trim(); });
     overlay.querySelectorAll("[data-sidebarpref]").forEach(function(cb){
       cb.addEventListener("change", function(){ setSidebarSectionPinned(cb.dataset.sidebarpref, cb.checked); });
     });
+    var autoIndentCb = document.getElementById("autoIndentToggle");
+    if (autoIndentCb) autoIndentCb.addEventListener("change", function(){ setAutoIndentPref({ enabled: autoIndentCb.checked }); });
     overlay.querySelector("#themeModalClose").addEventListener("click", closeModal);
   }
   paint();
   overlay.addEventListener("mousedown", function(e){ if (e.target === overlay) closeModal(); });
+  /* overlay 자신에 keydown을 걸면 포커스가 overlay 안으로 들어간 적이 없는 한
+   * 버블링을 못 타서 Esc가 씹힌다 -- document에 걸고 지금 열린 모달이 이
+   * overlay가 맞는지만 확인한다. */
+  document.addEventListener("keydown", function onEsc(e){
+    if (e.key === "Escape" && document.getElementById("modalOverlay") === overlay) closeModal();
+  });
 }
 applyThemePref();
 
@@ -1696,7 +1933,188 @@ var MANUSCRIPT_PAPER_SIZES = {
   400:  { cols: 20, rows: 20 },
   1000: { cols: 20, rows: 50 }
 };
-var PAPER_INDENT_CHAR = "　"; // 전각 공백 -- 문단 들여쓰기를 "실제 글자"로 표현
+/* ---------------- 자동 들여쓰기(전역, 모든 장문 텍스트 입력 영역 공통) ----------------
+ * 문단이 시작될 때(Enter) 자동으로 들여쓰기 글자를 넣어준다. 기본 ON, 크기는
+ * 한국 출판 원고 관례인 전각(U+3000) 공백 2칸을 기본값으로 하되 하드코딩하지
+ * 않고 설정값(AUTO_INDENT_PREF.size)으로 뺐다 -- 나중에 크기를 바꾸거나 다른
+ * 들여쓰기 문자를 쓰고 싶어지면 이 값 하나만 바꾸면 된다. 원고지(paper)
+ * 쓰기 화면은 이미 자체 문단 규칙(그리드 언어에서만 들여쓰기)이 있으므로,
+ * 이 전역 설정은 "켜져 있는지 / 몇 칸인지"만 원고지 쪽에 제공하고 어떤
+ * 언어에 적용할지는 원고지 자신의 규칙이 그대로 우선한다(요구사항: "원고지의
+ * 문단 시작 규칙이 이미 존재하는 경우 해당 규칙을 우선 적용"). */
+var AUTO_INDENT_KEY = "jipseul_autoindent_v1";
+var AUTO_INDENT_CHAR = "　"; // 전각 공백(U+3000) -- 원고지 칸 계산에서도 전각 1칸으로 인식됨
+function loadAutoIndentPref() {
+  try {
+    var raw = localStorage.getItem(AUTO_INDENT_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p === "object") {
+        return { enabled: p.enabled !== false, size: (typeof p.size === "number" && p.size > 0) ? p.size : 2 };
+      }
+    }
+  } catch (e) {}
+  return { enabled: true, size: 2 };
+}
+var AUTO_INDENT_PREF = loadAutoIndentPref();
+function setAutoIndentPref(patch) {
+  AUTO_INDENT_PREF = Object.assign({}, AUTO_INDENT_PREF, patch);
+  try { localStorage.setItem(AUTO_INDENT_KEY, JSON.stringify(AUTO_INDENT_PREF)); } catch (e) {}
+}
+function autoIndentString() { return AUTO_INDENT_CHAR.repeat(Math.max(0, AUTO_INDENT_PREF.size || 0)); }
+/* 일반 textarea(장문 프로즈 입력 영역) 공용 Enter-들여쓰기 배선 -- 일반
+ * 집필창/양장본/문서/수필/연표 등 여러 화면이 전부 이 함수 하나로 같은
+ * 규칙을 공유한다(설정을 바꾸면 다음 Enter부터 즉시 반영 -- 매번 AUTO_INDENT_PREF를
+ * 새로 읽으므로 리스너를 다시 걸 필요가 없다). Shift+Enter(문단 안 줄바꿈)와
+ * IME 조합 중에는 개입하지 않는다. 붙여넣기는 Enter keydown 자체가 발생하지
+ * 않고 브라우저가 값만 바꿔 input 이벤트만 쏘므로 이 핸들러를 거치지 않아
+ * "붙여넣은 텍스트에 중복으로 들여쓰기가 또 들어가는" 문제가 애초에 생기지
+ * 않는다. */
+function wireAutoIndent(el) {
+  if (!el) return;
+  el.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+    if (!AUTO_INDENT_PREF.enabled) return;
+    var indent = autoIndentString();
+    if (!indent) return;
+    e.preventDefault();
+    var s = el.selectionStart, en = el.selectionEnd;
+    el.setRangeText("\n" + indent, s, en, "end");
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+}
+/* contenteditable(양장본 두쪽 보기 전용)에서는 setRangeText를 못 쓰므로
+ * execCommand("insertText")로 넣는다 -- 브라우저 자체 텍스트 삽입 파이프라인을
+ * 그대로 타서 이 앱의 다른 입력 표면들과 마찬가지로 실행취소·IME와 충돌하지
+ * 않는다. */
+function wireAutoIndentContentEditable(el) {
+  if (!el) return;
+  el.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+    if (!AUTO_INDENT_PREF.enabled) return;
+    var indent = autoIndentString();
+    if (!indent) return;
+    e.preventDefault();
+    document.execCommand("insertText", false, "\n" + indent);
+  });
+}
+var PAPER_INDENT_CHAR = AUTO_INDENT_CHAR; // 전각 공백 -- 문단 들여쓰기를 "실제 글자"로 표현(원고지는 자동 들여쓰기 전역 설정과 문자를 공유)
+
+/* 원고지 칸선 색상 -- 앱 전체에 적용되는 사용자 선호(작품/화 단위가 아니라
+ * "이 사람이 평소에 원고지를 어떤 색으로 보는가"이므로 테마 설정과 같은
+ * 급의 전역 preference로 취급한다). 내용(m.text)과는 완전히 분리된 순수
+ * 표시 설정이라, 색을 바꿔도 저장된 원고 데이터는 전혀 건드리지 않는다. */
+var PAPER_LINE_KEY = "jipseul_paper_line_v1";
+var PAPER_LINE_PRESETS = [
+  { key: "red",   label: "빨강", hex: "#D1453D" },
+  { key: "black", label: "검정", hex: "#3A3A3A" },
+  { key: "gray",  label: "회색", hex: "#9B9B9B" },
+  { key: "brown", label: "갈색", hex: "#B9AF95" },
+  { key: "blue",  label: "파랑", hex: "#5B7FB5" },
+  { key: "green", label: "녹색", hex: "#5E9770" }
+];
+function loadPaperLineColor() {
+  try { var raw = localStorage.getItem(PAPER_LINE_KEY); if (raw && /^#[0-9a-fA-F]{6}$/.test(raw)) return raw; } catch (e) {}
+  return PAPER_LINE_PRESETS[0].hex; // 빨강 -- 실물 원고지 관례상 기본값
+}
+var PAPER_LINE_COLOR = loadPaperLineColor();
+function setPaperLineColor(hex) {
+  PAPER_LINE_COLOR = hex;
+  try { localStorage.setItem(PAPER_LINE_KEY, hex); } catch (e) {}
+  /* 칸선 색은 이제 미리보기 화면에만 쓰인다(집필화면은 격자를 안 그린다) --
+   * 열려 있는 미리보기가 있으면 다시 그리지 않고 즉시 색만 갈아 끼운다. */
+  document.querySelectorAll(".paper-view-grid, .paper-view-cell").forEach(function (el) { el.style.setProperty("--paper-line", hex); });
+  document.querySelectorAll(".paper-line-swatch").forEach(function (el) { el.style.background = hex; });
+}
+/* 원고지 화면에서 "제목/화수" 표시 방식 -- 원고지 모드는 정보 영역이 본문보다
+ * 눈에 띄면 안 되므로, 큰 제목 대신 작은 라벨 하나로 줄인다. 이 라벨을
+ * 제목+화수/화수만/제목만/숨김 중 사용자가 고르게 한다(전역 preference). */
+var PAPER_INFO_KEY = "jipseul_paper_info_v1";
+var PAPER_INFO_MODES = [
+  { key: "title_ep", label: "제목 + 화수" },
+  { key: "ep_only", label: "화수만" },
+  { key: "title_only", label: "제목만" },
+  { key: "hidden", label: "숨김" }
+];
+function loadPaperInfoMode() {
+  try { var raw = localStorage.getItem(PAPER_INFO_KEY); if (PAPER_INFO_MODES.some(function (x) { return x.key === raw; })) return raw; } catch (e) {}
+  return "title_ep";
+}
+var PAPER_INFO_MODE = loadPaperInfoMode();
+function setPaperInfoMode(mode) {
+  PAPER_INFO_MODE = mode;
+  try { localStorage.setItem(PAPER_INFO_KEY, mode); } catch (e) {}
+}
+/* 원고의 "N화" 표시는 저장된 필드가 아니라, 같은 소설 안에서 만들어진 순서로
+ * 매길 때마다 계산한다(화수는 정렬 방식(최신순/시간순) 설정과 무관하게 항상
+ * 먼저 쓴 순서를 기준으로 세야 "화수"라는 말의 뜻과 맞는다). */
+function episodeOrdinal(m) {
+  var eps = MANUSCRIPTS.filter(function (x) { return x.novelId === m.novelId; })
+    .slice().sort(function (a, b) { return (a.createdAt||0) - (b.createdAt||0); });
+  var idx = eps.findIndex(function (x) { return x.id === m.id; });
+  return idx === -1 ? null : idx + 1;
+}
+function openPaperInfoModeModal() {
+  closeModal();
+  openModal({
+    title: "원고지 정보 표시",
+    pickers: [{ key: "mode", label: "제목/화수 표시 방식", default: PAPER_INFO_MODE, noDot: true,
+      options: PAPER_INFO_MODES.map(function (x) { return { value: x.key, label: x.label }; }) }],
+    confirmLabel: "적용",
+    onConfirm: function (values, checked, picks) {
+      setPaperInfoMode(picks.mode || PAPER_INFO_MODE);
+      var m = currentManuscript();
+      if (m) renderManuscriptPage(m);
+    }
+  });
+}
+function openPaperLineColorModal() {
+  closeModal();
+  var overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.id = "modalOverlay";
+  document.body.appendChild(overlay);
+  function paint() {
+    overlay.innerHTML =
+      '<div class="modal-box">' +
+        '<div class="modal-title">원고지 칸선 색상</div>' +
+        '<div class="modal-msg">본문 내용은 그대로 두고 격자 선 색만 바뀝니다.</div>' +
+        '<div class="modal-picker-row">' +
+          PAPER_LINE_PRESETS.map(function (p) {
+            return '<button type="button" class="modal-pick'+(PAPER_LINE_COLOR.toUpperCase()===p.hex.toUpperCase()?" on":"")+'" data-linecolor="'+p.hex+'" style="--pc:'+p.hex+'">'+esc(p.label)+'</button>';
+          }).join("") +
+        '</div>' +
+        '<div class="modal-picker-label" style="margin-top:12px">사용자 지정</div>' +
+        '<div class="modal-accent-custom-row" style="display:flex; align-items:center; gap:8px">' +
+          '<input type="color" id="paperLineColorPicker" value="'+esc(PAPER_LINE_COLOR)+'">' +
+          '<input type="text" id="paperLineColorHex" class="modal-input" style="flex:1" value="'+esc(PAPER_LINE_COLOR)+'" placeholder="#B9AF95">' +
+        '</div>' +
+        '<div class="modal-actions"><button type="button" class="btn primary" id="paperLineColorClose">닫기</button></div>' +
+      '</div>';
+    overlay.querySelectorAll("[data-linecolor]").forEach(function (btn) {
+      btn.addEventListener("click", function () { setPaperLineColor(btn.dataset.linecolor); paint(); });
+    });
+    var picker = document.getElementById("paperLineColorPicker");
+    var hexInput = document.getElementById("paperLineColorHex");
+    if (picker) picker.addEventListener("input", function () { setPaperLineColor(picker.value); if (hexInput) hexInput.value = picker.value; });
+    if (hexInput) hexInput.addEventListener("change", function () {
+      var v = hexInput.value.trim();
+      if (!/^#[0-9a-fA-F]{6}$/.test(v)) { hexInput.value = PAPER_LINE_COLOR; return; }
+      setPaperLineColor(v);
+      if (picker) picker.value = v;
+    });
+    overlay.querySelector("#paperLineColorClose").addEventListener("click", closeModal);
+  }
+  paint();
+  overlay.addEventListener("mousedown", function (e) { if (e.target === overlay) closeModal(); });
+  /* overlay 자신에 keydown을 걸면 포커스가 overlay 안으로 들어간 적이 없는 한
+   * (여기선 openModal()처럼 입력 필드에 자동 포커스를 주지 않는다) 버블링을
+   * 못 타서 Esc가 씹힌다 -- document에 걸고 "지금 열려 있는 모달이 바로 이
+   * overlay인가"만 확인한다. */
+  document.addEventListener("keydown", function onEsc(e) {
+    if (e.key === "Escape" && document.getElementById("modalOverlay") === overlay) closeModal();
+  });
+}
 
 var MANUSCRIPT_LANG_RULES = {
   ko: { label: "한국어", grid: true, vertical: false },
@@ -1772,7 +2190,9 @@ function manuscriptStats(m) {
   var words = manuscriptWordCount(text);
   var paras = manuscriptParagraphCount(text);
   var units = manuscriptWidthUnits(text);
-  var sheets = rf.rules.grid ? Math.max(1, Math.ceil(units / (size.cols * size.rows))) : null;
+  // 원고지 매수는 근사치(글자폭 합계÷용량)가 아니라 computeManuscriptLayout()의
+  // 정밀 계산을 그대로 쓴다 -- 미리보기에서 보이는 매수와 항상 같아야 하므로.
+  var sheets = rf.rules.grid ? getManuscriptLayoutCached(m, size).totalPages : null;
   // A4 한 장 환산: 원고지 기준 약 1000자 / 영문 출판 관례 250단어(더블스페이스)
   var a4Pages = rf.rules.grid ? Math.max(0.1, Math.round(units / 1000 * 10) / 10) : Math.max(0.1, Math.round(words / 250 * 10) / 10);
   // 출판 분량(추정): 한국 단행본 1페이지 ≈ 500자 / 영미 단행본 1페이지 ≈ 300단어
@@ -1782,26 +2202,25 @@ function manuscriptStats(m) {
     a4Pages: a4Pages, pubPages: pubPages };
 }
 /* 커서 위치로부터 현재 줄/칸/페이지(매)를 계산한다 -- "현재 페이지 표시/현재
- * 줄 표시/현재 칸 표시" 요구사항. 페이지는 별도로 잘라서 그리지 않고(그러면
- * 다시 "변환 후 미리보기" 구조가 되므로), 커서 앞 텍스트의 분량으로부터
- * 역산한 논리적 페이지 번호만 보여준다. */
+ * 줄 표시/현재 칸 표시" 요구사항. 그리드 언어(한국어/중국어/일본어)는
+ * computeManuscriptLayout()의 정밀 계산을 그대로 써서, 이 숫자가 미리보기에서
+ * 보이는 매/줄/칸과 항상 일치하도록 한다(근사치가 아니라 같은 엔진의 결과).
+ * 영어처럼 격자가 없는 언어는 여전히 출판 관례(더블스페이스 250단어/페이지)
+ * 기준의 근사치를 쓴다 -- 애초에 칸 개념이 없으므로 "정밀 일치"가 의미가 없다. */
 function manuscriptCaretInfo(m, caretPos) {
   var text = m.text || "";
+  var stats = manuscriptStats(m);
+  if (stats.rules.grid) {
+    var layout = getManuscriptLayoutCached(m, stats.size);
+    var pos = manuscriptLayoutPosAt(layout, caretPos);
+    return { line: pos.row, col: pos.col, page: pos.page, totalPages: layout.totalPages };
+  }
   var head = text.slice(0, caretPos);
   var lines = head.split("\n");
   var line = lines.length;
-  var rawCol = Array.from(lines[lines.length - 1]).length + 1;
-  var stats = manuscriptStats(m);
-  // 그리드 언어에서는 "현재 칸"이 원고지 한 줄(20칸) 안에서의 위치를 뜻하므로
-  // 논리 줄(단락) 안의 절대 글자 위치를 20칸 단위로 접어 보여준다
-  var col = stats.rules.grid ? (((rawCol - 1) % stats.size.cols) + 1) : rawCol;
-  var page;
-  if (stats.rules.grid) {
-    page = Math.max(1, Math.ceil(manuscriptWidthUnits(head) / (stats.size.cols * stats.size.rows)) || 1);
-  } else {
-    page = Math.max(1, Math.ceil(manuscriptWordCount(head) / 250) || 1);
-  }
-  return { line: line, col: col, page: page, totalPages: stats.sheets || Math.max(1, Math.ceil(stats.words / 250)) };
+  var col = Array.from(lines[lines.length - 1]).length + 1;
+  var page = Math.max(1, Math.ceil(manuscriptWordCount(head) / 250) || 1);
+  return { line: line, col: col, page: page, totalPages: Math.max(1, Math.ceil(stats.words / 250)) };
 }
 /* 페이지 N의 시작 지점(문자 오프셋)을 찾는다 -- 페이지 이동 버튼에서 캐럿을
  * 옮기고 그 위치로 스크롤하는 데 쓴다. */
@@ -1810,12 +2229,10 @@ function manuscriptOffsetForPage(m, pageNum) {
   var stats = manuscriptStats(m);
   var target = Math.max(1, pageNum);
   if (stats.rules.grid) {
-    var capacity = stats.size.cols * stats.size.rows;
-    var acc = 0;
-    for (var i = 0; i < text.length; i++) {
-      if (Math.floor(acc / capacity) + 1 >= target) return i;
-      if (text[i] !== "\n") acc += isFullWidthChar(text[i]) ? 1 : 0.5;
-    }
+    var layout = getManuscriptLayoutCached(m, stats.size);
+    var pageIdx = Math.min(target, layout.totalPages) - 1;
+    var pg = layout.pages[pageIdx];
+    if (pg && pg.rows.length) return pg.rows[0].startOffset;
     return text.length;
   } else {
     var wordCap = 250, wc = 0;
@@ -1826,6 +2243,81 @@ function manuscriptOffsetForPage(m, pageNum) {
     }
     return text.length;
   }
+}
+/* ---------- 원고지 정밀 레이아웃 엔진 ----------
+ * 집필화면(캐럿의 현재 매/줄/칸 표시)과 미리보기(실제 셀 격자 렌더링)가 서로
+ * 다른 계산을 각자 하면 두 화면의 매수·줄수·문장부호 위치가 어긋날 수 있어서,
+ * "텍스트를 실제로 몇 칸/몇 줄/몇 매로 나눌 것인가"를 이 함수 하나로만 계산하고
+ * 두 화면 모두 이 결과만 가져다 쓴다(DOM 비의존 순수 함수). 브라우저 네이티브
+ * line-break:strict가 라이브 타이핑 중 시각적 줄바꿈을 처리하는 것과는 별개로,
+ * "정확한 매/줄/칸 번호"가 필요한 곳은 전부 이 엔진을 쓴다. */
+var MANUSCRIPT_KINSOKU_LINE_START_FORBIDDEN = ")]｝〉》」』】〕、。，．,.!?！？:：;；·ㆍ'\"’”";
+var MANUSCRIPT_KINSOKU_LINE_END_FORBIDDEN = "([｛〈《「『【〔‘“'\"";
+/* 텍스트를 cols×rows 격자 규격에 맞춰 행/페이지로 나눈다. 문단(\n)은 항상 새
+ * 줄에서 시작하고, 문단 안에서는 cols칸마다 자동으로 줄을 바꾸되, 행두 금지
+ * 문자(닫는 괄호·따옴표·대부분의 문장부호)는 앞 줄 끝으로 당기고, 행말 금지
+ * 문자(여는 괄호·따옴표)는 다음 줄로 넘긴다 -- 실무에서 가장 흔한 경우만 다루는
+ * 실용적 부분집합이며, 완전한 국어 조판 금칙(구두점 압축 등)까지는 다루지 않는다. */
+function computeManuscriptLayout(text, size) {
+  var cols = size.cols, rows = size.rows;
+  var paragraphs = (text || "").split("\n");
+  var allRows = [];
+  var offset = 0;
+  var maxRowLen = cols * 3; // 병적인 입력(연속된 금칙 문자 등)에서 한 행이 무한정 커지는 것 방지
+  paragraphs.forEach(function (para, paraIdx) {
+    var chars = Array.from(para);
+    var i = 0;
+    var paraStartOffset = offset;
+    if (chars.length === 0) {
+      allRows.push({ chars: "", startOffset: paraStartOffset, paraIndex: paraIdx });
+    }
+    while (i < chars.length) {
+      var rowStartOffset = paraStartOffset + i;
+      var take = Math.min(cols, chars.length - i);
+      var rowChars = chars.slice(i, i + take);
+      var nextIdx = i + take;
+      while (nextIdx < chars.length && rowChars.length < maxRowLen &&
+             MANUSCRIPT_KINSOKU_LINE_START_FORBIDDEN.indexOf(chars[nextIdx]) !== -1) {
+        rowChars.push(chars[nextIdx]);
+        nextIdx++;
+      }
+      while (rowChars.length > 1 && nextIdx < chars.length &&
+             MANUSCRIPT_KINSOKU_LINE_END_FORBIDDEN.indexOf(rowChars[rowChars.length - 1]) !== -1) {
+        nextIdx--;
+        rowChars.pop();
+      }
+      allRows.push({ chars: rowChars.join(""), startOffset: rowStartOffset, paraIndex: paraIdx });
+      i = nextIdx;
+    }
+    offset = paraStartOffset + chars.length + 1; // "\n" 구분자 한 칸
+  });
+  var pages = [];
+  for (var r = 0; r < allRows.length; r += rows) {
+    pages.push({ rows: allRows.slice(r, r + rows), startRow: r });
+  }
+  if (!pages.length) pages.push({ rows: [], startRow: 0 });
+  return { rows: allRows, pages: pages, totalRows: allRows.length, totalPages: pages.length, cols: cols, rowsPerPage: rows };
+}
+/* 캐럿(문자 오프셋)이 위 레이아웃의 몇 매/몇 줄/몇 칸에 해당하는지 역조회 */
+function manuscriptLayoutPosAt(layout, caretOffset) {
+  var rows = layout.rows;
+  for (var i = rows.length - 1; i >= 0; i--) {
+    if (caretOffset >= rows[i].startOffset) {
+      return { page: Math.floor(i / layout.rowsPerPage) + 1, row: i + 1, col: caretOffset - rows[i].startOffset + 1 };
+    }
+  }
+  return { page: 1, row: 1, col: 1 };
+}
+/* 레이아웃 계산은 O(n)이지만 원고가 커지면(수십만 자) 매 키 입력마다 다시 돌리면
+ * 무겁다. 텍스트/규격이 실제로 안 바뀌었으면(캐럿만 이동) 재계산을 건너뛴다. */
+var _paperLayoutCache = { id: null, text: null, size: null, layout: null };
+function getManuscriptLayoutCached(m, size) {
+  if (_paperLayoutCache.id === m.id && _paperLayoutCache.text === m.text && _paperLayoutCache.size === m.paperSize) {
+    return _paperLayoutCache.layout;
+  }
+  var layout = computeManuscriptLayout(m.text || "", size);
+  _paperLayoutCache = { id: m.id, text: m.text, size: m.paperSize, layout: layout };
+  return layout;
 }
 /* 영어 모드 스마트 문장부호: 입력 중 라틴 문자열에 한해 "--"를 em dash로,
  * 곧은따옴표를 문맥에 맞는 여는/닫는 따옴표로 바꿔 출판 원고 스타일을
@@ -2312,10 +2804,10 @@ function colorReadoutHtml(hex) {
 }
 
 var STORE_KEY = "settingnote_v1";
-var DATA_COLLECTIONS = ["docs", "graphs", "manuscripts", "novels", "works", "tables", "timelines", "maps", "recentColors", "sports", "scripts", "essays", "essayEntries", "relationships"];
+var DATA_COLLECTIONS = ["docs", "graphs", "manuscripts", "novels", "works", "tables", "timelines", "maps", "recentColors", "sports", "scripts", "essays", "essayEntries", "relationships", "plays", "playScripts"];
 var _bootIssue = null;
 function emptyData() {
-  return { docs: [], graphs: [], manuscripts: [], novels: [], works: [], tables: [], timelines: [], maps: [], recentColors: [], sports: [], scripts: [], essays: [], essayEntries: [], relationships: [] };
+  return { docs: [], graphs: [], manuscripts: [], novels: [], works: [], tables: [], timelines: [], maps: [], recentColors: [], sports: [], scripts: [], essays: [], essayEntries: [], relationships: [], plays: [], playScripts: [] };
 }
 function normalizeData(data) {
   var normalized = emptyData();
@@ -2384,7 +2876,7 @@ function loadData() {
 }
 function saveData() {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS }));
+    localStorage.setItem(STORE_KEY, JSON.stringify({ docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS, plays: PLAYS, playScripts: PLAY_SCRIPTS }));
     storageSaveErrorShown = false;
     var oldNotice = document.getElementById("storageSaveError");
     if (oldNotice) oldNotice.remove();
@@ -2548,6 +3040,14 @@ var SCRIPTS = _boot.scripts || [];
  * drag-reorder, and font/size/dark preview mechanics as episodes. */
 var ESSAYS = _boot.essays || [];
 var ESSAY_ENTRIES = _boot.essayEntries || [];
+/* 시나리오·희곡 (screenplay/play): PLAYS is a collection folder (parallel to
+ * NOVELS/ESSAYS), PLAY_SCRIPTS are its individual 대본(script) pieces (parallel to
+ * MANUSCRIPTS/ESSAY_ENTRIES). Unlike 원고/수필 which store one big plain-text
+ * string, each PLAY_SCRIPT stores an ordered `elements` array -- one entry per
+ * 등장인물/대사/방백/지문/장면설명/... block -- so dialogue, stage directions and
+ * scene/act breaks are structurally distinct types rather than mixed plain text. */
+var PLAYS = _boot.plays || [];
+var PLAY_SCRIPTS = _boot.playScripts || [];
 /* 구조화된 관계(Relationship) -- 인물-인물뿐 아니라 인물-세력·인물-장소·아이템-소유자·
  * 사건-참여자까지 모든 DOCS 카테고리 쌍을 다룬다. 기존 "관계도"(GRAPHS/edges)는 캔버스
  * 위에 수동 배치하는 시각화 도구라 그대로 두고, 이건 각 문서 상세 페이지의 목록형
@@ -3780,7 +4280,7 @@ function openFindReplace(textareaId, triggerEl, onUpdate) {
 }
 
 /* ---------------- state ---------------- */
-var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, pendingMapFocusMarker: null, focusMode: false, appearTab: {}, splitView: false, splitSelectedId: null, wsHomeTab: {} };
+var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, pendingMapFocusMarker: null, focusMode: false, appearTab: {}, splitView: false, splitSelectedId: null, wsHomeTab: {}, wsLastTabByCat: {} };
 function applyFocusModeClass() {
   var appEl = document.querySelector(".app");
   if (!appEl) return;
@@ -3788,8 +4288,15 @@ function applyFocusModeClass() {
 }
 
 /* ---------------- works (top-level project folders) ---------------- */
+/* 이 함수가 만드는 예시 데이터(캐릭터·문서·원고 등)의 내용을 앞으로 바꿀
+ * 때마다 이 숫자를 올린다. work.templateVersion과 비교해서 "이 사용자가
+ * 갖고 있는 템플릿이 지금 코드의 예시보다 오래됐는지"를 판단하는 데만 쓰고,
+ * 자동으로 지우거나 덮어쓰지는 않는다(사용자가 그 안에서 직접 편집했을 수
+ * 있으므로) -- 대신 오래됐다는 걸 알려주고, 원하면 명시적으로
+ * resetGenreTemplateWork()를 눌러 초기화하게 한다. */
+var TEMPLATE_CONTENT_VERSION = 1;
 function createGenreTemplateWork() {
-  var w = { id: uid(), title: "📎 장르별 기능 템플릿", isTemplate: true };
+  var w = { id: uid(), title: "📎 장르별 기능 템플릿", isTemplate: true, templateVersion: TEMPLATE_CONTENT_VERSION };
   WORKS.push(w);
   var wid = w.id;
 
@@ -4221,6 +4728,47 @@ function toggleGenreTemplateWork() {
   state.mode = "empty"; state.activeId = null;
   render();
 }
+/* 숨기기/보이기(toggleGenreTemplateWork)는 데이터를 절대 지우지 않는다. 하지만
+ * createGenreTemplateWork()의 예시 콘텐츠 자체를 나중에 고치면(TEMPLATE_CONTENT_VERSION을
+ * 올리면), 이미 만들어진 템플릿 작품은 그 변경을 자동으로 받지 못한다 --
+ * 사용자가 그 안에서 직접 뭔가 편집해놨을 수도 있어서 함부로 덮어쓸 수 없기
+ * 때문이다. 그래서 "최신 예시로 초기화"는 여기, 명시적으로 확인을 받는
+ * 별도 동작으로만 존재한다 -- 예전처럼 숨기기 버튼을 누를 때마다 조용히
+ * 일어나지 않는다. */
+function resetGenreTemplateWork() {
+  var existing = WORKS.find(function (w) { return w.isTemplate; });
+  if (!existing) return;
+  var id = existing.id;
+  openModal({
+    title: "예시 템플릿을 최신 내용으로 초기화할까요?",
+    message: "지금 템플릿 작품 안의 문서·원고·관계도 등 모든 내용이 사라지고, 최신 버전의 예시 데이터로 새로 만들어집니다. 이 템플릿 안에서 직접 편집한 내용이 있다면 되돌릴 수 없습니다.",
+    confirmLabel: "초기화", danger: true,
+    onConfirm: function () {
+      var novelIds = NOVELS.filter(function(n){ return n.workId===id; }).map(function(n){ return n.id; });
+      var essayIds = ESSAYS.filter(function(es){ return es.workId===id; }).map(function(es){ return es.id; });
+      WORKS = WORKS.filter(function(x){ return x.id !== id; });
+      DOCS = DOCS.filter(function(d){ return d.workId !== id; });
+      GRAPHS = GRAPHS.filter(function(g){ return g.workId !== id; });
+      TABLES = TABLES.filter(function(t){ return t.workId !== id; });
+      TIMELINES = TIMELINES.filter(function(tl){ return tl.workId !== id; });
+      MAPS = MAPS.filter(function(mp){ return mp.workId !== id; });
+      NOVELS = NOVELS.filter(function(n){ return n.workId !== id; });
+      MANUSCRIPTS = MANUSCRIPTS.filter(function(m){ return novelIds.indexOf(m.novelId)===-1; });
+      ESSAYS = ESSAYS.filter(function(es){ return es.workId !== id; });
+      ESSAY_ENTRIES = ESSAY_ENTRIES.filter(function(e){ return essayIds.indexOf(e.essayId)===-1; });
+      var playIds = PLAYS.filter(function(p){ return p.workId===id; }).map(function(p){ return p.id; });
+      PLAYS = PLAYS.filter(function(p){ return p.workId !== id; });
+      PLAY_SCRIPTS = PLAY_SCRIPTS.filter(function(ps){ return playIds.indexOf(ps.playId)===-1; });
+      SCRIPTS = SCRIPTS.filter(function(sc){ return sc.workId !== id; });
+      SPORTS = SPORTS.filter(function(sp){ return sp.workId !== id; });
+      if (state.mode === "workhome" && state.activeId === id) { state.mode = "empty"; state.activeId = null; }
+      var w = createGenreTemplateWork();
+      state.collapsed["work:"+w.id] = false;
+      saveData();
+      openWorkOverview(w.id);
+    }
+  });
+}
 function newWork() {
   openModal({
     title: "새 작품",
@@ -4236,13 +4784,13 @@ function newWork() {
 }
 function openWorkOverview(workId) {
   state.collapsed["work:"+workId] = false;
-  var firstMs = null;
-  NOVELS.filter(function(n){ return n.workId === workId; }).forEach(function(n){
-    var eps = MANUSCRIPTS.filter(function(m){ return m.novelId === n.id; });
-    eps.forEach(function(m){ if (!firstMs || (m.createdAt||0) < (firstMs.createdAt||0)) firstMs = m; });
-  });
-  if (firstMs) {
-    state.mode = "manuscript"; state.activeId = firstMs.id;
+  /* 예전에는 작품을 열면 가장 오래된 화의 집필창으로 곧장 들어갔다 -- "소설을
+   * 선택하면 화 목록을 먼저 보여준다"는 원칙과 맞지 않아, 이제는 소설 원고
+   * 여부와 무관하게 항상 작품 홈("소설 원고" 탭)에서 시작한다. 화가 하나도
+   * 없는 작품만 예전처럼 문서/관계도로 안내한다. */
+  var hasNovel = NOVELS.some(function(n){ return n.workId === workId; });
+  if (hasNovel) {
+    state.mode = "workhome"; state.activeId = workId; state.wsHomeTab[workId] = "ms";
   } else {
     var firstDoc = DOCS.filter(function(d){ return d.workId === workId; })[0];
     var firstGraph = GRAPHS.filter(function(g){ return g.workId === workId; })[0];
@@ -4266,9 +4814,12 @@ function deleteWork(id) {
   var essayIds = ESSAYS.filter(function(es){ return es.workId===id; }).map(function(es){ return es.id; });
   var essayCount = essayIds.length;
   var essayEntryCount = ESSAY_ENTRIES.filter(function(e){ return essayIds.indexOf(e.essayId)!==-1; }).length;
+  var playIds = PLAYS.filter(function(p){ return p.workId===id; }).map(function(p){ return p.id; });
+  var playCount = playIds.length;
+  var playScriptCount = PLAY_SCRIPTS.filter(function(ps){ return playIds.indexOf(ps.playId)!==-1; }).length;
   openModal({
     title: "작품을 삭제할까요?",
-    message: '"'+(w.title||"제목 없음")+'"을(를) 삭제하면 안에 있는 문서 '+docCount+'개, 관계도 '+graphCount+'개, 표 '+tableCount+'개, 연표 '+timelineCount+'개, 지도 '+mapCount+'개, 소설 폴더 '+novelCount+'개(화 '+msCount+'개 포함), 수필·자서전 폴더 '+essayCount+'개(글 '+essayEntryCount+'개 포함)가 모두 함께 삭제되고, 되돌릴 수 없습니다.',
+    message: '"'+(w.title||"제목 없음")+'"을(를) 삭제하면 안에 있는 문서 '+docCount+'개, 관계도 '+graphCount+'개, 표 '+tableCount+'개, 연표 '+timelineCount+'개, 지도 '+mapCount+'개, 소설 폴더 '+novelCount+'개(화 '+msCount+'개 포함), 수필·자서전 폴더 '+essayCount+'개(글 '+essayEntryCount+'개 포함), 시나리오·희곡 폴더 '+playCount+'개(대본 '+playScriptCount+'개 포함)가 모두 함께 삭제되고, 되돌릴 수 없습니다.',
     confirmLabel: "삭제", danger: true,
     onConfirm: function(){
       var removedDocIds = DOCS.filter(function(d){ return d.workId===id; }).map(function(d){ return d.id; });
@@ -4278,6 +4829,7 @@ function deleteWork(id) {
       var removedMapIds = MAPS.filter(function(mp){ return mp.workId===id; }).map(function(mp){ return mp.id; });
       var removedMsIds = MANUSCRIPTS.filter(function(m){ return novelIds.indexOf(m.novelId)!==-1; }).map(function(m){ return m.id; });
       var removedEssayEntryIds = ESSAY_ENTRIES.filter(function(e){ return essayIds.indexOf(e.essayId)!==-1; }).map(function(e){ return e.id; });
+      var removedPlayScriptIds = PLAY_SCRIPTS.filter(function(ps){ return playIds.indexOf(ps.playId)!==-1; }).map(function(ps){ return ps.id; });
       WORKS = WORKS.filter(function(x){ return x.id !== id; });
       DOCS = DOCS.filter(function(d){ return d.workId !== id; });
       GRAPHS = GRAPHS.filter(function(g){ return g.workId !== id; });
@@ -4288,6 +4840,8 @@ function deleteWork(id) {
       MANUSCRIPTS = MANUSCRIPTS.filter(function(m){ return novelIds.indexOf(m.novelId)===-1; });
       ESSAYS = ESSAYS.filter(function(es){ return es.workId !== id; });
       ESSAY_ENTRIES = ESSAY_ENTRIES.filter(function(e){ return essayIds.indexOf(e.essayId)===-1; });
+      PLAYS = PLAYS.filter(function(p){ return p.workId !== id; });
+      PLAY_SCRIPTS = PLAY_SCRIPTS.filter(function(ps){ return playIds.indexOf(ps.playId)===-1; });
       var removedScriptIds = SCRIPTS.filter(function(sc){ return sc.workId === id; }).map(function(sc){ return sc.id; });
       var removedSportsIds = SPORTS.filter(function(sp){ return sp.workId === id; }).map(function(sp){ return sp.id; });
       SCRIPTS = SCRIPTS.filter(function(sc){ return sc.workId !== id; });
@@ -4298,7 +4852,9 @@ function deleteWork(id) {
         (state.mode==="timeline"&&removedTimelineIds.indexOf(state.activeId)!==-1) ||
         (state.mode==="map"&&removedMapIds.indexOf(state.activeId)!==-1) ||
         (state.mode==="manuscript"&&removedMsIds.indexOf(state.activeId)!==-1) ||
+        (state.mode==="novel"&&novelIds.indexOf(state.activeId)!==-1) ||
         (state.mode==="essayentry"&&removedEssayEntryIds.indexOf(state.activeId)!==-1) ||
+        (state.mode==="playscript"&&removedPlayScriptIds.indexOf(state.activeId)!==-1) ||
         (state.mode==="script"&&removedScriptIds.indexOf(state.activeId)!==-1) ||
         (state.mode==="sports"&&removedSportsIds.indexOf(state.activeId)!==-1) ||
         ((state.mode==="workhome"||state.mode==="units"||state.mode==="fieldtemplates")&&state.activeId===id);
@@ -5651,7 +6207,7 @@ function openNovelSettings(novelId) {
     onConfirm: function(values, checked, picks){
       if (values[0]) n.title = values[0];
       n.epScheme = picks.epScheme || n.epScheme || "subtitle";
-      saveData(); renderSidebar();
+      saveData(); render();
     }
   });
 }
@@ -5668,6 +6224,7 @@ function deleteNovel(id) {
       NOVELS = NOVELS.filter(function(x){ return x.id !== id; });
       MANUSCRIPTS = MANUSCRIPTS.filter(function(m){ return m.novelId !== id; });
       if (state.mode === "manuscript" && removedIds.indexOf(state.activeId) !== -1) { state.mode = "empty"; state.activeId = null; }
+      if (state.mode === "novel" && state.activeId === id) { state.mode = "empty"; state.activeId = null; }
       saveData(); render();
     }
   });
@@ -6072,6 +6629,351 @@ function moveEssayEntry(id, dir) {
   saveData(); renderSidebar();
 }
 
+/* ---------------- 시나리오·희곡 (screenplay/play) ----------------
+ * PLAYS(폴더)/PLAY_SCRIPTS(대본)는 ESSAYS/ESSAY_ENTRIES와 같은 폴더-엔트리
+ * 2단 구조를 그대로 재사용한다(생성/삭제/정렬/드래그 로직도 동일 패턴). 다른
+ * 점은 본문 저장 형태뿐이다 -- 대사·지문·장면설명 등을 한 덩어리 텍스트가 아니라
+ * 타입이 있는 elements 배열로 저장해서, "대사와 지문이 구조적으로 분리"되고
+ * "장면/막 구분"이 그 자체로 하나의 요소 타입이 되도록 한다. */
+var PLAY_ELEMENT_TYPES = {
+  actBreak:        { label: "막/장 구분",     icon: "chevron",  hasSpeaker: false, isHeading: true,  placeholder: "예: 제1막 제2장" },
+  sceneBreak:       { label: "장면 구분",      icon: "chevron",  hasSpeaker: false, isHeading: true,  placeholder: "예: 장면 3 · # · 칸나눔" },
+  prologue:        { label: "서극",           icon: "docIcon",  hasSpeaker: false, isHeading: false, placeholder: "서극(프롤로그) 내용을 입력하세요" },
+  location:        { label: "공간·장소",       icon: "map",      hasSpeaker: false, isHeading: false, placeholder: "예: 낡은 여관방, 밤. 창밖으로 빗소리가 들린다." },
+  timeTransition:  { label: "시간·장면 전환",  icon: "calendar", hasSpeaker: false, isHeading: false, placeholder: "예: 다음날 아침. / 며칠 후." },
+  spaceTransition: { label: "공간 이동",       icon: "map",      hasSpeaker: false, isHeading: false, placeholder: "공간 이동에 따른 설명을 입력하세요" },
+  sceneDesc:       { label: "장면 설명",       icon: "docIcon",  hasSpeaker: false, isHeading: false, placeholder: "장면 전체의 상황을 설명하세요" },
+  character:       { label: "등장인물",       icon: "person",   hasSpeaker: false, isHeading: false, placeholder: "예: 민서 — 20대 후반, 신중한 성격의 형사" },
+  dialogue:        { label: "대사",           icon: "docIcon",  hasSpeaker: true,  isHeading: false, placeholder: "대사를 입력하세요" },
+  aside:           { label: "방백",           icon: "docIcon",  hasSpeaker: true,  isHeading: false, placeholder: "관객(독자)에게만 들리는 말을 입력하세요" },
+  direction:       { label: "지문",           icon: "pen",      hasSpeaker: false, isHeading: false, placeholder: "인물의 동작·표정 등 지문을 입력하세요" },
+  note:            { label: "설명문",         icon: "docIcon",  hasSpeaker: false, isHeading: false, placeholder: "필요한 경우 별도 설명을 남기세요" }
+};
+var PLAY_ELEMENT_ORDER = ["actBreak","sceneBreak","prologue","location","timeTransition","spaceTransition","sceneDesc","character","dialogue","aside","direction","note"];
+function newPlayElement(type) {
+  var def = PLAY_ELEMENT_TYPES[type];
+  if (!def) return null;
+  return def.isHeading ? { id: uid(), type: type, label: "" } : { id: uid(), type: type, speaker: "", html: "" };
+}
+function newPlayFolder(workId) {
+  openModal({
+    title: "새 시나리오·희곡 폴더",
+    fields: [{ placeholder: "제목 (예: 단편 희곡집, OO 시나리오)" }],
+    confirmLabel: "만들기",
+    onConfirm: function (values) {
+      var title = values[0]; if (!title) return;
+      var p = { id: uid(), workId: workId, title: title };
+      PLAYS.push(p); saveData();
+      state.collapsed["play:" + workId] = false; state.collapsed["playcol:" + p.id] = false;
+      render();
+    }
+  });
+}
+function openPlaySettings(playId) {
+  var p = PLAYS.find(function (x) { return x.id === playId; });
+  if (!p) return;
+  openModal({
+    title: "시나리오·희곡 폴더 설정",
+    fields: [{ placeholder: "제목", value: p.title || "" }],
+    confirmLabel: "저장",
+    onConfirm: function (values) {
+      if (values[0]) p.title = values[0];
+      saveData(); renderSidebar();
+    }
+  });
+}
+function deletePlayFolder(id) {
+  var p = PLAYS.find(function (x) { return x.id === id; });
+  if (!p) return;
+  var count = PLAY_SCRIPTS.filter(function (ps) { return ps.playId === id; }).length;
+  openModal({
+    title: "폴더를 삭제할까요?",
+    message: '"' + (p.title || "제목 없음") + '"을(를) 삭제하면 안에 있는 대본 ' + count + '개도 함께 삭제되고, 되돌릴 수 없습니다.',
+    confirmLabel: "삭제", danger: true,
+    onConfirm: function () {
+      var removedIds = PLAY_SCRIPTS.filter(function (ps) { return ps.playId === id; }).map(function (ps) { return ps.id; });
+      PLAYS = PLAYS.filter(function (x) { return x.id !== id; });
+      PLAY_SCRIPTS = PLAY_SCRIPTS.filter(function (ps) { return ps.playId !== id; });
+      if (state.mode === "playscript" && removedIds.indexOf(state.activeId) !== -1) { state.mode = "empty"; state.activeId = null; }
+      saveData(); render();
+    }
+  });
+}
+function createPlayScript(playId, createdAt) {
+  var ps = {
+    id: uid(), title: "", playId: playId, createdAt: createdAt,
+    elements: [newPlayElement("sceneBreak")]
+  };
+  PLAY_SCRIPTS.push(ps); saveData();
+  return ps;
+}
+function openNewPlayScript(ps, playId) {
+  state.mode = "playscript"; state.activeId = ps.id; state.collapsed["playcol:" + playId] = false;
+  render();
+  var t = document.getElementById("psTitle");
+  if (t) { t.focus(); t.select(); }
+}
+function newPlayScriptIn(playId) {
+  var ps = createPlayScript(playId, Date.now());
+  openNewPlayScript(ps, playId);
+}
+function sortedPlayScriptsOf(playId, excludeId) {
+  return PLAY_SCRIPTS.filter(function (x) { return x.playId === playId && x.id !== excludeId; }).slice().sort(function (a, b) {
+    return (a.createdAt || 0) - (b.createdAt || 0);
+  });
+}
+function insertPlayScriptAfter(playId, afterId) {
+  var scripts = sortedPlayScriptsOf(playId);
+  var idx = scripts.findIndex(function (x) { return x.id === afterId; });
+  if (idx === -1) return;
+  var after = scripts[idx], next = scripts[idx + 1];
+  var newCreatedAt = next ? ((after.createdAt || 0) + (next.createdAt || 0)) / 2 : Date.now();
+  var ps = createPlayScript(playId, newCreatedAt);
+  openNewPlayScript(ps, playId);
+}
+function movePlayScriptTo(draggedId, targetId, before) {
+  var dragged = PLAY_SCRIPTS.find(function (x) { return x.id === draggedId; });
+  var target = PLAY_SCRIPTS.find(function (x) { return x.id === targetId; });
+  if (!dragged || !target || dragged.playId !== target.playId || draggedId === targetId) return;
+  var playId = dragged.playId;
+  var scripts = sortedPlayScriptsOf(playId, draggedId);
+  var idx = scripts.findIndex(function (x) { return x.id === targetId; });
+  if (idx === -1) return;
+  var nb = before ? scripts[idx - 1] : scripts[idx];
+  var na = before ? scripts[idx] : scripts[idx + 1];
+  var newCreatedAt;
+  if (nb && na) newCreatedAt = ((nb.createdAt || 0) + (na.createdAt || 0)) / 2;
+  else if (!nb && na) newCreatedAt = (na.createdAt || Date.now()) - 1;
+  else if (nb && !na) newCreatedAt = (nb.createdAt || Date.now()) + 1;
+  else newCreatedAt = Date.now();
+  dragged.createdAt = newCreatedAt;
+  saveData(); renderSidebar();
+}
+var playScriptDragId = null;
+function wirePlayScriptDragDrop(el) {
+  var rows = el.querySelectorAll('.play-draggable[draggable="true"]');
+  function clearDragOverMarks() {
+    el.querySelectorAll(".drag-over-left,.drag-over-right").forEach(function (r) { r.classList.remove("drag-over-left", "drag-over-right"); });
+  }
+  rows.forEach(function (row) {
+    row.addEventListener("dragstart", function (e) {
+      playScriptDragId = row.dataset.openplayscript;
+      row.classList.add("dragging");
+      if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = "move";
+        try { e.dataTransfer.setData("text/plain", row.dataset.openplayscript); } catch (err) {}
+      }
+    });
+    row.addEventListener("dragend", function () {
+      row.classList.remove("dragging");
+      clearDragOverMarks();
+      playScriptDragId = null;
+    });
+    row.addEventListener("dragover", function (e) {
+      if (!playScriptDragId || playScriptDragId === row.dataset.openplayscript) return;
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+      var rect = row.getBoundingClientRect();
+      var before = (e.clientX - rect.left) < rect.width / 2;
+      row.classList.toggle("drag-over-left", before);
+      row.classList.toggle("drag-over-right", !before);
+    });
+    row.addEventListener("dragleave", function () {
+      row.classList.remove("drag-over-left", "drag-over-right");
+    });
+    row.addEventListener("drop", function (e) {
+      e.preventDefault();
+      var draggedId = playScriptDragId || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
+      var targetId = row.dataset.openplayscript;
+      var before = row.classList.contains("drag-over-left");
+      clearDragOverMarks();
+      if (!draggedId || draggedId === targetId) return;
+      movePlayScriptTo(draggedId, targetId, before);
+    });
+  });
+}
+function deletePlayScript(id) {
+  var ps = PLAY_SCRIPTS.find(function (x) { return x.id === id; });
+  if (!ps) return;
+  openModal({
+    title: "대본을 삭제할까요?",
+    message: '"' + (ps.title || "제목 없음") + '"을(를) 삭제하면 되돌릴 수 없습니다.',
+    confirmLabel: "삭제", danger: true,
+    onConfirm: function () {
+      PLAY_SCRIPTS = PLAY_SCRIPTS.filter(function (x) { return x.id !== id; });
+      if (state.activeId === id) { state.mode = "empty"; state.activeId = null; }
+      saveData(); render();
+    }
+  });
+}
+function movePlayScript(id, dir) {
+  var ps = PLAY_SCRIPTS.find(function (x) { return x.id === id; });
+  if (!ps) return;
+  var scripts = sortedPlayScriptsOf(ps.playId).concat([ps]).sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+  var idx = scripts.findIndex(function (x) { return x.id === id; });
+  var swapIdx = idx + dir;
+  if (idx === -1 || swapIdx < 0 || swapIdx >= scripts.length) return;
+  var other = scripts[swapIdx];
+  var tmp = ps.createdAt;
+  ps.createdAt = other.createdAt;
+  other.createdAt = tmp;
+  saveData(); renderSidebar();
+}
+/* 인라인 서식(이탤릭/글씨 크기)은 각 요소의 html 필드에 안전한 태그(i/em/b/strong/
+ * span[font-size]/br)만 허용해 저장한다 -- contenteditable에서 나올 수 있는 다른
+ * 태그·속성(스크립트, on* 핸들러, 임의 style 등)은 전부 제거한다. */
+var PLAY_INLINE_TAG_WHITELIST = { I: 1, EM: 1, B: 1, STRONG: 1, SPAN: 1, BR: 1 };
+function sanitizeInlineHtml(html) {
+  var tmp = document.createElement("div");
+  tmp.innerHTML = html || "";
+  (function clean(node) {
+    Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+      if (child.nodeType === 3) return;
+      if (child.nodeType !== 1) { node.removeChild(child); return; }
+      if (!PLAY_INLINE_TAG_WHITELIST[child.tagName]) {
+        while (child.firstChild) node.insertBefore(child.firstChild, child);
+        node.removeChild(child);
+        return;
+      }
+      Array.prototype.slice.call(child.attributes).forEach(function (attr) {
+        if (child.tagName === "SPAN" && attr.name === "style") {
+          var m = /font-size\s*:\s*(\d{1,3})px/i.exec(attr.value);
+          if (m) child.setAttribute("style", "font-size:" + Math.min(72, Math.max(8, parseInt(m[1], 10))) + "px");
+          else child.removeAttribute("style");
+        } else {
+          child.removeAttribute(attr.name);
+        }
+      });
+      clean(child);
+    });
+  })(tmp);
+  return tmp.innerHTML;
+}
+function plainTextOfHtml(html) {
+  var tmp = document.createElement("div");
+  tmp.innerHTML = html || "";
+  return tmp.textContent || "";
+}
+/* execCommand("fontSize")는 낡고 표현력이 부족해서, 선택 영역을 Range API로 직접
+ * <span style="font-size:...">로 감싼다. 여러 노드에 걸친 선택(surroundContents가
+ * 실패하는 경우)은 추출 후 다시 감싸는 방식으로 대체 처리한다. */
+function wrapSelectionInline(applyFn) {
+  var sel = window.getSelection();
+  if (!sel || !sel.rangeCount || sel.isCollapsed) return false;
+  var range = sel.getRangeAt(0);
+  var span = document.createElement("span");
+  applyFn(span);
+  try {
+    range.surroundContents(span);
+  } catch (err) {
+    var content = range.extractContents();
+    span.appendChild(content);
+    range.insertNode(span);
+  }
+  sel.removeAllRanges();
+  var newRange = document.createRange();
+  newRange.selectNodeContents(span);
+  sel.addRange(newRange);
+  return true;
+}
+
+/* ---------------- 원고·수필 부분 서식(이탤릭/글씨 크기) 공통 엔진 ----------------
+ * 원고지 글자수·금칙처리(computeManuscriptLayout)는 순수 텍스트를 전제로 하는
+ * 검증된 계산이라, 서식을 표시하려고 본문(m.text/e.text)에 마크업을 섞으면 그
+ * 계산이 전부 틀어진다. 그래서 서식은 본문과 분리된 문자 오프셋 구간 목록
+ * (formatRanges)으로 저장하고, 읽기 전용 화면에서만 그 구간을 입혀서 그린다 --
+ * 편집 중인 textarea 자체는 원래대로 순수 텍스트 그대로 남는다(textarea는
+ * 애초에 일부 구간만 다른 스타일로 보여줄 수 없는 구조라 이 부분은 리팩토링으로
+ * 피할 수 없는 HTML의 근본 한계다). 본문을 고치면 구간의 시작/끝도 같이
+ * 밀어줘야(rebase) 서식이 엉뚱한 자리로 밀리지 않는다. */
+function rebaseFormatRanges(ranges, oldVal, newVal) {
+  if (!ranges || !ranges.length || oldVal === newVal) return ranges || [];
+  var oldLen = oldVal.length, newLen = newVal.length;
+  var start = 0, maxStart = Math.min(oldLen, newLen);
+  while (start < maxStart && oldVal[start] === newVal[start]) start++;
+  var oldEnd = oldLen, newEnd = newLen;
+  while (oldEnd > start && newEnd > start && oldVal[oldEnd-1] === newVal[newEnd-1]) { oldEnd--; newEnd--; }
+  var delta = newEnd - oldEnd;
+  function shift(pos) {
+    if (pos <= start) return pos;
+    if (pos >= oldEnd) return pos + delta;
+    return start;
+  }
+  return ranges.map(function(r){ return { id:r.id, type:r.type, size:r.size, start:shift(r.start), end:shift(r.end) }; })
+    .filter(function(r){ return r.end > r.start; });
+}
+function toggleFormatRange(ranges, start, end, type, size) {
+  ranges = ranges || [];
+  if (start >= end) return ranges;
+  var sameType = function(r){ return r.type===type && (type!=="size" || r.size===size); };
+  var covered = ranges.some(function(r){ return sameType(r) && r.start<=start && r.end>=end; });
+  if (covered) {
+    var next = [];
+    ranges.forEach(function(r){
+      if (!sameType(r) || r.end<=start || r.start>=end) { next.push(r); return; }
+      if (r.start < start) next.push({ id: uid(), type:r.type, size:r.size, start:r.start, end:start });
+      if (r.end > end) next.push({ id: uid(), type:r.type, size:r.size, start:end, end:r.end });
+    });
+    return next;
+  }
+  var kept = ranges.filter(function(r){ return r.type!==type || r.end<=start || r.start>=end; });
+  kept.push({ id: uid(), type: type, size: size, start: start, end: end });
+  return kept;
+}
+function renderFormattedPlainText(text, ranges) {
+  text = text || "";
+  if (!ranges || !ranges.length) return esc(text).replace(/\n/g, "<br>");
+  var bounds = [0, text.length];
+  ranges.forEach(function(r){ bounds.push(Math.max(0,Math.min(text.length,r.start)), Math.max(0,Math.min(text.length,r.end))); });
+  bounds = bounds.filter(function(v,i,a){ return a.indexOf(v)===i; }).sort(function(a,b){ return a-b; });
+  var html = "";
+  for (var i=0; i<bounds.length-1; i++) {
+    var s = bounds[i], e = bounds[i+1];
+    if (s>=e) continue;
+    var seg = esc(text.slice(s,e)).replace(/\n/g, "<br>");
+    var active = ranges.filter(function(r){ return r.start<=s && r.end>=e; });
+    var italic = active.some(function(r){ return r.type==="italic"; });
+    var sizeR = active.filter(function(r){ return r.type==="size"; }).pop();
+    if (italic) seg = "<i>"+seg+"</i>";
+    if (sizeR) seg = '<span style="font-size:'+sizeR.size+'px">'+seg+'</span>';
+    html += seg;
+  }
+  return html;
+}
+/* 특정 char 오프셋이 이탤릭 구간에 들어있는지만 보는 가벼운 버전 -- 원고지처럼
+ * 글자 하나하나를 셀 단위로 그리는 화면(고정 칸 크기라 글씨크기 변경은 칸
+ * 구조를 깨뜨리므로 지원하지 않고, 이탤릭만 지원한다)에서 쓴다. */
+function isItalicAt(ranges, pos) {
+  if (!ranges) return false;
+  for (var i=0; i<ranges.length; i++) { if (ranges[i].type==="italic" && ranges[i].start<=pos && ranges[i].end>pos) return true; }
+  return false;
+}
+function wireFormatToolbarButtons(root, textareaEl, getRanges, setRanges, onChange) {
+  var italicBtn = root.querySelector("[data-fmtitalic]");
+  if (italicBtn) italicBtn.addEventListener("click", function(){
+    var s = textareaEl.selectionStart, e = textareaEl.selectionEnd;
+    if (s===e) return;
+    setRanges(toggleFormatRange(getRanges(), s, e, "italic"));
+    onChange();
+    textareaEl.focus(); textareaEl.setSelectionRange(s, e);
+  });
+  var sizeSel = root.querySelector("[data-fmtsize]");
+  if (sizeSel) sizeSel.addEventListener("change", function(ev){
+    var px = ev.target.value; ev.target.value = "";
+    var s = textareaEl.selectionStart, e = textareaEl.selectionEnd;
+    if (s===e || !px) return;
+    setRanges(toggleFormatRange(getRanges(), s, e, "size", parseInt(px,10)));
+    onChange();
+    textareaEl.focus(); textareaEl.setSelectionRange(s, e);
+  });
+}
+function formatToolbarHtml() {
+  return '<button type="button" data-fmtitalic title="이탤릭체(선택한 부분에만 적용)"><i>i</i></button>' +
+    '<select class="sel" data-fmtsize title="글씨 크기(선택한 부분에만 적용)" style="max-width:64px">' +
+      '<option value="">크기</option><option value="12">12</option><option value="14">14</option><option value="16">16</option><option value="18">18</option><option value="20">20</option><option value="24">24</option><option value="28">28</option>' +
+    '</select>';
+}
+
 function docMetaHtml(d) {
   var metaHtml = "";
   if (d.category==="등장인물" && d.lifeStatus && LIFE_STATUSES[d.lifeStatus]) {
@@ -6287,6 +7189,14 @@ function essayEntryMatches(e, q) {
   if (!q) return true;
   return ((e.title||"")+" "+(e.text||"")+" "+(e.period||"")+" "+(e.themeTags||[]).join(" ")).toLowerCase().includes(q);
 }
+function playScriptMatches(ps, q) {
+  if (!q) return true;
+  var hay = [ps.title||""];
+  (ps.elements||[]).forEach(function(el){
+    hay.push(el.speaker||""); hay.push(el.label||""); hay.push(plainTextOfHtml(el.html||""));
+  });
+  return hay.join(" ").toLowerCase().includes(q);
+}
 function highlightMatch(escapedSnippet, q) {
   if (!q) return escapedSnippet;
   var re = new RegExp(escRegExp(esc(q)), "ig");
@@ -6479,7 +7389,7 @@ function renderSearchPage(rawQuery) {
         (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
       '</div>';
     }).join(""));
-    html += section("원고", results.manuscripts.length, results.manuscripts.map(function(r){
+    html += section("소설 원고", results.manuscripts.length, results.manuscripts.map(function(r){
       return '<div class="search-result-row" data-openresult="ms:'+r.ms.id+'">' +
         '<div class="srr-top"><span class="srr-cat">'+(r.novel?esc(r.novel.title||""):"")+'</span><span class="srr-title">'+esc(r.ms.title||"제목 없음")+'</span>'+(r.work?'<span class="srr-work">'+esc(r.work.title||"")+'</span>':'')+'</div>' +
         (r.snippet ? '<div class="srr-snippet">'+r.snippet+'</div>' : '') +
@@ -6795,42 +7705,24 @@ function renderWorkSections(work, q) {
   var workMsIds = workNovels.map(function(n){ return n.id; });
   var workCharTotal = MANUSCRIPTS.filter(function(m){ return workMsIds.indexOf(m.novelId)!==-1; }).reduce(function(sum,m){ return sum+charCount(m.text); }, 0);
   var workCharacterDocs = DOCS.filter(function(d){ return d.workId===work.id && d.category==="등장인물"; });
-  var msHtml = '<div class="ws-section-head"><span class="t">원고'+(workCharTotal?' · '+fmtNum(workCharTotal)+'자':'')+'</span><button class="add" data-newnovel="'+work.id+'" title="새 소설">'+ic("plus",13)+'</button></div>';
+  var msHtml = '<div class="ws-section-head"><span class="t">소설 원고'+(workCharTotal?' · '+fmtNum(workCharTotal)+'자':'')+'</span><button class="add" data-newnovel="'+work.id+'" title="새 소설">'+ic("plus",13)+'</button></div>';
   var novelList = workNovels.filter(function(n){ return !q || n.title.toLowerCase().includes(q) || MANUSCRIPTS.some(function(m){ return m.novelId===n.id && msMatches(m, q); }); });
-  novelList.forEach(function(n){
+  /* 소설 폴더 행은 더 이상 화 목록을 인라인으로 펼치지 않는다 -- 소설을 클릭하면
+   * 검색·빠른 이동이 되는 전용 "소설 원고" 페이지(renderNovelPage)로 들어간다.
+   * "소설 클릭 → 바로 집필창 진입"을 막고, 항상 화 목록을 먼저 보게 하기 위함. */
+  msHtml += '<div class="ws-chip-wrap">' + novelList.map(function(n){
     var eps = MANUSCRIPTS.filter(function(m){ return m.novelId === n.id; });
     var novelCharTotal = eps.reduce(function(sum,m){ return sum+charCount(m.text); }, 0);
-    var sortMode = n.epSort === "newest" ? "newest" : "oldest";
-    eps = eps.slice().sort(function(a,b){
-      var ac = a.createdAt||0, bc = b.createdAt||0;
-      return sortMode === "newest" ? bc-ac : ac-bc;
-    });
-    var povSel = state.povFilter[n.id] || "";
-    if (povSel) eps = eps.filter(function(m){ return (m.characterIds||(m.povId?[m.povId]:[])).indexOf(povSel) !== -1; });
-    var nkey = "novel:"+n.id, ncollapsed = !!state.collapsed[nkey];
-    var povFilterHtml = workCharacterDocs.length ? '<select class="sel pov-filter-sel" data-povfilter="'+n.id+'" title="등장인물로 필터">' +
-      '<option value="">전체 인물</option>' +
-      workCharacterDocs.map(function(d){ return '<option value="'+d.id+'" '+(povSel===d.id?"selected":"")+'>'+esc(d.title||"제목 없음")+'</option>'; }).join("") +
-      '</select>' : '';
-    msHtml += '<div class="novel-folder"><div class="sb-head" data-toggle="'+nkey+'"><span class="chev '+(ncollapsed?"collapsed":"")+'">'+ic("chevron",12)+'</span><span class="t">'+esc(n.title||"제목 없는 소설")+' · 전체 '+eps.length+'화'+(novelCharTotal?' · '+fmtNum(novelCharTotal)+'자':'')+'</span><button class="add" data-newep="'+n.id+'" title="새 화(맨 아래에 추가)">'+ic("plus",12)+'</button><button class="row-settings" data-novelsettings="'+n.id+'" title="소설 설정">'+ic("gear",12)+'</button><button class="row-del" data-delnovel="'+n.id+'" title="폴더 삭제" style="margin-left:0">'+ic("trash",12)+'</button></div>';
-    if (!ncollapsed && (workCharacterDocs.length || eps.length > 1)) {
-      msHtml += '<div class="novel-subrow"><button class="ms-sort-btn" data-sortnovel="'+n.id+'" title="정렬 방식 전환">'+(sortMode==="newest"?"최신순":"시간순")+'</button>'+povFilterHtml+'</div>';
-    }
-    if (!ncollapsed) msHtml += '<div class="ws-chip-wrap">' + eps.map(function(m, epIdx){
-      var epChars = charCount(m.text);
-      var epCharIds = m.characterIds || (m.povId ? [m.povId] : []);
-      var epCharNames = epCharIds.map(function(id){ var d = workCharacterDocs.find(function(d){ return d.id===id; }); return d ? d.title : null; }).filter(Boolean);
-      var povBadge = epCharNames.length ? '<span class="pov-badge" title="'+esc(epCharNames.join(", "))+'">'+esc(epCharNames.slice(0,2).join(", "))+(epCharNames.length>2?" +"+(epCharNames.length-2):"")+'</span>' : '';
-      var canReorder = !povSel && eps.length > 1;
-      var insertHtml = !povSel ? '<button class="row-move row-insert" data-msinsertafter="'+m.id+'" title="이 화 다음에 새 화 삽입">+</button>' : '';
-      var moveHtml = canReorder ?
-        '<button class="row-move" data-msmoveup="'+m.id+'" title="위로 이동"'+(epIdx===0?" disabled":"")+'>'+ic("chevUp",9)+'</button>' +
-        '<button class="row-move" data-msmovedown="'+m.id+'" title="아래로 이동"'+(epIdx===eps.length-1?" disabled":"")+'>'+ic("chevDown",9)+'</button>' : '';
-      return '<div class="graph-row ms-draggable'+(state.mode==="manuscript"&&state.activeId===m.id?" active":"")+'" data-openms="'+m.id+'" draggable="'+(canReorder?"true":"false")+'">'+ic("docIcon",13)+'<span style="flex:1 1 0%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(m.title||"제목 없음")+'</span>'+povBadge+(epChars?'<span class="char-total">'+fmtNum(epChars)+'자</span>':'')+insertHtml+moveHtml+'<button class="row-del" data-delms="'+m.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
-    }).join("") + '</div>';
-    if (!eps.length) msHtml += '<div class="sb-empty">'+(povSel?"이 인물이 등장하는 화가 없습니다.":"아직 화가 없습니다.")+'</div>';
-    msHtml += '</div>';
-  });
+    var isActive = (state.mode==="novel" && state.activeId===n.id) ||
+      (state.mode==="manuscript" && (function(){ var m=currentManuscript(); return m && m.novelId===n.id; })());
+    return '<div class="graph-row'+(isActive?" active":"")+'" data-opennovel="'+n.id+'">'+ic("docIcon",13)+
+      '<span style="flex:1 1 0%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(n.title||"제목 없는 소설")+'</span>'+
+      '<span class="row-meta" style="color:var(--ink-faint);font-size:11px">전체 '+eps.length+'화'+(novelCharTotal?' · '+fmtNum(novelCharTotal)+'자':'')+'</span>'+
+      '<button class="row-move row-insert" data-newep="'+n.id+'" title="새 화(맨 아래에 추가)">+</button>'+
+      '<button class="row-settings" data-novelsettings="'+n.id+'" title="소설 설정">'+ic("gear",12)+'</button>'+
+      '<button class="row-del" data-delnovel="'+n.id+'" title="폴더 삭제">'+ic("trash",12)+'</button>'+
+    '</div>';
+  }).join("") + '</div>';
   if (!novelList.length) msHtml += '<div class="sb-empty">'+(q ? "일치하는 소설이 없습니다." : "아직 소설이 없습니다. + 를 눌러 만들어보세요.")+'</div>';
   sections.ms = msHtml;
 
@@ -6854,6 +7746,25 @@ function renderWorkSections(work, q) {
   });
   if (!essayList.length) essayHtml += '<div class="sb-empty">'+(q ? "일치하는 수필·자서전 글이 없습니다." : "아직 수필·자서전 폴더가 없습니다. + 를 눌러 만들어보세요.")+'</div>';
   sections.essay = essayHtml;
+
+  var workPlays = PLAYS.filter(function(p){ return p.workId === work.id; });
+  var workPlayIds = workPlays.map(function(p){ return p.id; });
+  var workPlayScriptTotal = PLAY_SCRIPTS.filter(function(ps){ return workPlayIds.indexOf(ps.playId)!==-1; }).length;
+  var playHtml = '<div class="ws-section-head"><span class="t">시나리오·희곡'+(workPlayScriptTotal?' · 대본 '+fmtNum(workPlayScriptTotal)+'개':'')+'</span><button class="add" data-newplay="'+work.id+'" title="새 폴더">'+ic("plus",13)+'</button></div>';
+  var playList = workPlays.filter(function(p){ return !q || p.title.toLowerCase().includes(q) || PLAY_SCRIPTS.some(function(ps){ return ps.playId===p.id && playScriptMatches(ps, q); }); });
+  playList.forEach(function(p){
+    var scripts = sortedPlayScriptsOf(p.id);
+    var pkey = "playcol:"+p.id, pcollapsed = !!state.collapsed[pkey];
+    playHtml += '<div class="novel-folder"><div class="sb-head" data-toggle="'+pkey+'"><span class="chev '+(pcollapsed?"collapsed":"")+'">'+ic("chevron",12)+'</span><span class="t">'+esc(p.title||"제목 없는 폴더")+' · 전체 '+scripts.length+'편</span><button class="add" data-newplayscript="'+p.id+'" title="새 대본(맨 아래에 추가)">'+ic("plus",12)+'</button><button class="row-settings" data-playsettings="'+p.id+'" title="폴더 설정">'+ic("gear",12)+'</button><button class="row-del" data-delplay="'+p.id+'" title="폴더 삭제" style="margin-left:0">'+ic("trash",12)+'</button></div>';
+    if (!pcollapsed) playHtml += '<div class="ws-chip-wrap">' + scripts.map(function(ps, psIdx){
+      var elCount = (ps.elements||[]).length;
+      return '<div class="graph-row play-draggable'+(state.mode==="playscript"&&state.activeId===ps.id?" active":"")+'" data-openplayscript="'+ps.id+'" draggable="true">'+ic("docIcon",13)+'<span style="flex:1 1 0%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(ps.title||"제목 없음")+'</span>'+(elCount?'<span class="char-total">'+elCount+'개 요소</span>':'')+'<button class="row-move row-insert" data-playinsertafter="'+ps.id+'" title="이 대본 다음에 새 대본 삽입">+</button><button class="row-move" data-playmoveup="'+ps.id+'" title="위로 이동"'+(psIdx===0?" disabled":"")+'>'+ic("chevUp",9)+'</button><button class="row-move" data-playmovedown="'+ps.id+'" title="아래로 이동"'+(psIdx===scripts.length-1?" disabled":"")+'>'+ic("chevDown",9)+'</button><button class="row-del" data-delplayscript="'+ps.id+'" title="삭제">'+ic("trash",12)+'</button></div>';
+    }).join("") + '</div>';
+    if (!scripts.length) playHtml += '<div class="sb-empty">아직 대본이 없습니다.</div>';
+    playHtml += '</div>';
+  });
+  if (!playList.length) playHtml += '<div class="sb-empty">'+(q ? "일치하는 시나리오·희곡이 없습니다." : "아직 시나리오·희곡 폴더가 없습니다. + 를 눌러 만들어보세요.")+'</div>';
+  sections.plays = playHtml;
 
   var docsHtml = '<div class="ws-section-head"><span class="add" data-newdoc="'+work.id+'" title="새 문서 종류 선택(등장인물·장소·세계관 등)">'+ic("plus",13)+'</span><span class="t" style="flex:1">문서</span></div>';
   Object.keys(byCat).forEach(function(cat){
@@ -6938,19 +7849,34 @@ function renderWorkSections(work, q) {
 }
 
 var WS_TABS = [
-  { key: "ms", label: "원고", icon: "docIcon" },
+  { key: "ms", label: "소설 원고", icon: "docIcon" },
   { key: "essay", label: "수필·자서전", icon: "docIcon" },
+  { key: "plays", label: "시나리오·희곡", icon: "docIcon" },
   { key: "docs", label: "문서", icon: "person" },
   { key: "graphs", label: "관계도", icon: "graph" },
   { key: "maps", label: "지도", icon: "map" },
+  { key: "timelines", label: "연표", icon: "calendar" },
+  { key: "fieldtemplates", label: "필드 템플릿", icon: "grid" },
   { key: "tables", label: "표", icon: "table" },
   { key: "scripts", label: "문자", icon: "pen" },
-  { key: "timelines", label: "연표", icon: "calendar" },
   { key: "sports", label: "스포츠", icon: "trophy" },
-  { key: "units", label: "단위·달력", icon: "scale" },
-  { key: "fieldtemplates", label: "필드 템플릿", icon: "grid" }
+  { key: "units", label: "단위·달력", icon: "scale" }
 ];
 var WS_SINGLE_ITEM_TABS = { units: true, fieldtemplates: true };
+/* ---------------- 상위 카테고리 → 하위 탭(WS_TABS) 2단 메뉴 ----------------
+ * 예전엔 위 WS_TABS 11(+1)개가 전부 한 줄에 뒤섞여 있었다. 상위 카테고리로
+ * 묶어서 "지금 큰 갈래로 어디에 있는지"가 항상 보이게 한다 -- 기존 탭 키·
+ * 라우팅(WS_SINGLE_ITEM_TABS, state.wsHomeTab 등)은 전혀 안 건드리고 그
+ * 위에 그룹 레이어만 하나 얹는다. */
+var WS_CATEGORIES = [
+  { key: "write", label: "집필", icon: "docIcon", tabs: ["ms", "essay", "plays"] },
+  { key: "notes", label: "설정 노트", icon: "person", tabs: ["docs", "graphs", "maps", "timelines", "fieldtemplates"] },
+  { key: "data", label: "자료·기록", icon: "table", tabs: ["tables", "scripts", "sports", "units"] }
+];
+function categoryOfTab(tabKey) {
+  var cat = WS_CATEGORIES.find(function(c){ return c.tabs.indexOf(tabKey) !== -1; });
+  return cat ? cat.key : WS_CATEGORIES[0].key;
+}
 /* 지금 화면(state.mode/activeId)이 어느 작품에 속하는지, 그리고 그 작품의 상단
  * 탭 중 어느 탭이 지금 상태와 맞는지를 계산한다. renderWorkspaceChrome이 매
  * render()마다 호출해서 탭 바를 그 작품·그 탭에 맞춰 그린다. */
@@ -6987,10 +7913,19 @@ function resolveWorkForState() {
     var novel = NOVELS.find(function(n){ return n.id===m.novelId; }); if (!novel) return null;
     var nw = workOf(novel.workId); return nw ? { work: nw, tab: "ms" } : null;
   }
+  if (mode === "novel") {
+    var nv = NOVELS.find(function(n){ return n.id===id; }); if (!nv) return null;
+    var nvw = workOf(nv.workId); return nvw ? { work: nvw, tab: "ms" } : null;
+  }
   if (mode === "essayentry") {
     var ee = ESSAY_ENTRIES.find(function(x){ return x.id===id; }); if (!ee) return null;
     var es = ESSAYS.find(function(x){ return x.id===ee.essayId; }); if (!es) return null;
     var ew = workOf(es.workId); return ew ? { work: ew, tab: "essay" } : null;
+  }
+  if (mode === "playscript") {
+    var pse = PLAY_SCRIPTS.find(function(x){ return x.id===id; }); if (!pse) return null;
+    var ply = PLAYS.find(function(x){ return x.id===pse.playId; }); if (!ply) return null;
+    var plw = workOf(ply.workId); return plw ? { work: plw, tab: "plays" } : null;
   }
   if (mode === "script") {
     var sc = currentScript(); if (!sc) return null;
@@ -7062,15 +7997,30 @@ function wireHorizontalScroll(el) {
   el.addEventListener("scroll", updateFade);
   requestAnimationFrame(updateFade);
 }
+function selectWsTab(work, key) {
+  state.wsLastTabByCat[work.id] = state.wsLastTabByCat[work.id] || {};
+  state.wsLastTabByCat[work.id][categoryOfTab(key)] = key;
+  if (WS_SINGLE_ITEM_TABS[key]) { state.mode = key; state.activeId = work.id; render(); return; }
+  state.wsHomeTab[work.id] = key;
+  state.mode = "workhome"; state.activeId = work.id;
+  render();
+}
 function renderWorkspaceChrome() {
   var bar = document.getElementById("wsTabBar");
   if (!bar) return;
   var resolved = resolveWorkForState();
   if (!resolved || !resolved.work) { bar.innerHTML = ""; return; }
   var work = resolved.work, activeTab = resolved.tab;
+  var activeCat = categoryOfTab(activeTab);
   var sections = renderWorkSections(work, "");
 
-  var tabsHtml = WS_TABS.map(function(t){
+  var catTabsHtml = WS_CATEGORIES.map(function(c){
+    return '<button type="button" class="ws-cat-tab'+(c.key===activeCat?" on":"")+'" data-wscat="'+c.key+'">'+ic(c.icon,14)+'<span>'+esc(c.label)+'</span></button>';
+  }).join("");
+  var subTabDefs = WS_CATEGORIES.find(function(c){ return c.key === activeCat; }).tabs
+    .map(function(key){ return WS_TABS.find(function(t){ return t.key === key; }); })
+    .filter(Boolean);
+  var tabsHtml = subTabDefs.map(function(t){
     return '<button type="button" class="ws-tab'+(t.key===activeTab?" on":"")+'" data-wstab="'+t.key+'">'+ic(t.icon,13)+'<span>'+esc(t.label)+'</span></button>';
   }).join("");
   var bodyHtml = WS_SINGLE_ITEM_TABS[activeTab]
@@ -7079,17 +8029,21 @@ function renderWorkspaceChrome() {
 
   bar.innerHTML =
     '<div class="ws-work-title">'+esc(work.title||"제목 없는 작품")+'</div>' +
+    '<div class="ws-cat-tabs">'+catTabsHtml+'</div>' +
     '<div class="ws-tabs-wrap"><div class="ws-tabs" id="wsTabsScroll">'+tabsHtml+'</div></div>' +
     '<div class="ws-chiprow-outer">'+bodyHtml+'</div>';
 
-  bar.querySelectorAll("[data-wstab]").forEach(function(btn){
+  bar.querySelectorAll("[data-wscat]").forEach(function(btn){
     btn.addEventListener("click", function(){
-      var key = btn.dataset.wstab;
-      if (WS_SINGLE_ITEM_TABS[key]) { state.mode = key; state.activeId = work.id; render(); return; }
-      state.wsHomeTab[work.id] = key;
-      state.mode = "workhome"; state.activeId = work.id;
-      render();
+      var cat = WS_CATEGORIES.find(function(c){ return c.key === btn.dataset.wscat; });
+      if (!cat) return;
+      var remembered = state.wsLastTabByCat[work.id] && state.wsLastTabByCat[work.id][cat.key];
+      var target = (remembered && cat.tabs.indexOf(remembered) !== -1) ? remembered : cat.tabs[0];
+      selectWsTab(work, target);
     });
+  });
+  bar.querySelectorAll("[data-wstab]").forEach(function(btn){
+    btn.addEventListener("click", function(){ selectWsTab(work, btn.dataset.wstab); });
   });
   wireWorkTreeHandlers(bar);
   wireHorizontalScroll(document.getElementById("wsTabsScroll"));
@@ -7104,6 +8058,181 @@ function renderWorkHomePage(work) {
       '<h1 style="font-family:var(--serif); font-size:26px; line-height:1.4; margin-bottom:12px;">위 탭에서 섹션을 고르고, 그 아래 목록에서 항목을 열어보세요.</h1>' +
       '<p style="color:var(--ink-faint); font-size:14px;">아직 아무것도 선택하지 않았습니다. 목록 옆의 + 버튼으로 새로 만들 수도 있습니다.</p>' +
     '</div>';
+}
+
+/* ---------------- 소설 원고(회차) 목록 페이지 ----------------
+ * 소설을 클릭해도 곧장 특정 화의 집필창으로 들어가지 않고, 이 전용 페이지에서
+ * 항상 화 목록(검색/빠른 이동 포함)을 먼저 보여준다. 회차가 많아져도(수십~수백
+ * 화) 번호나 제목 일부만으로 원하는 화를 빠르게 찾아 들어갈 수 있게 하는 것이
+ * 목적이라, 검색은 실시간 필터 + 우선순위 기반 Enter 이동 + 방향키 선택을
+ * 함께 지원한다. */
+function epMatchTier(query, title, ordinal) {
+  var q = (query||"").trim();
+  if (!q) return 0;
+  var qLower = q.toLowerCase();
+  var t = (title||"").trim();
+  var tLower = t.toLowerCase();
+  var ordLabel = ordinal != null ? (ordinal + "화") : null;
+  var qDigits = /^\d+$/.test(q) ? parseInt(q, 10) : null;
+  if ((t && tLower === qLower) || (ordLabel && ordLabel === q)) return 1; // 완전 일치
+  if (qDigits !== null && ordinal === qDigits) return 2; // 회차 번호 정확히 일치
+  if (t && tLower.indexOf(qLower) === 0) return 3; // 제목 앞부분 일치
+  if ((t && tLower.indexOf(qLower) !== -1) || (ordLabel && ordLabel.indexOf(q) !== -1) ||
+      (qDigits !== null && ordinal !== null && String(ordinal).indexOf(String(qDigits)) !== -1)) return 4; // 제목/회차번호 포함
+  var norm = function(s){ return (s||"").replace(/[\s\-_·.]/g, "").toLowerCase(); };
+  if (norm(t).indexOf(norm(q)) !== -1) return 5; // 그 외 부분 일치(공백·기호 무시)
+  return null; // 불일치
+}
+function novelEpisodesFiltered(novelId, query, povSel) {
+  var n = NOVELS.find(function(x){ return x.id === novelId; });
+  var sortMode = (n && n.epSort === "newest") ? "newest" : "oldest";
+  var all = MANUSCRIPTS.filter(function(m){ return m.novelId === novelId; });
+  if (povSel) all = all.filter(function(m){ return (m.characterIds||(m.povId?[m.povId]:[])).indexOf(povSel) !== -1; });
+  var q = (query||"").trim();
+  if (!q) {
+    return all.slice().sort(function(a,b){
+      var ac=a.createdAt||0, bc=b.createdAt||0;
+      return sortMode==="newest" ? bc-ac : ac-bc;
+    }).map(function(m){ return { m: m, tier: 0 }; });
+  }
+  var scored = all.map(function(m){ return { m: m, tier: epMatchTier(q, m.title, episodeOrdinal(m)) }; }).filter(function(x){ return x.tier !== null; });
+  scored.sort(function(a,b){
+    if (a.tier !== b.tier) return a.tier - b.tier;
+    return (episodeOrdinal(a.m)||0) - (episodeOrdinal(b.m)||0);
+  });
+  return scored;
+}
+function renderNovelPage(n) {
+  var main = document.getElementById("main");
+  if (!main) return;
+  var work = WORKS.find(function(w){ return w.id === n.workId; });
+  var workCharacterDocs = DOCS.filter(function(d){ return d.workId===n.workId && d.category==="등장인물"; });
+
+  var breadcrumbHtml = '<div class="breadcrumb-row">' +
+    '<button type="button" class="breadcrumb-link" data-backtowork="'+n.workId+'">'+esc(work?work.title:"")+'</button>' +
+    '<span class="breadcrumb-sep">'+ic("chevR",9)+'</span>' +
+    '<span class="breadcrumb-item breadcrumb-current">'+esc(n.title||"제목 없는 소설")+'</span>' +
+  '</div>';
+
+  var povSelInit = state.povFilter[n.id] || "";
+  var povFilterHtml = workCharacterDocs.length ? '<select class="sel" id="novelPovFilter" title="등장인물로 필터">' +
+    '<option value="">전체 인물</option>' +
+    workCharacterDocs.map(function(d){ return '<option value="'+d.id+'" '+(povSelInit===d.id?"selected":"")+'>'+esc(d.title||"제목 없음")+'</option>'; }).join("") +
+    '</select>' : '';
+
+  var headHtml = '<div class="novel-page-head">' +
+    '<div><h2 class="novel-page-title">'+esc(n.title||"제목 없는 소설")+'</h2>' +
+      '<div class="novel-page-meta" id="novelPageMeta"></div>' +
+    '</div>' +
+    '<div class="novel-page-actions">' +
+      '<button type="button" class="btn" id="novelSettingsBtn">'+ic("gear",13)+' 소설 설정</button>' +
+      '<button type="button" class="btn primary" id="novelNewEpBtn">'+ic("plus",13)+' 새 화 쓰기</button>' +
+    '</div>' +
+  '</div>';
+
+  var jumpHtml = '<div class="novel-jump-wrap">' +
+    '<input type="text" class="novel-jump-input" id="novelJumpInput" placeholder="회차 번호 또는 제목으로 검색... (Enter로 바로 이동, ↑↓로 후보 선택)" autocomplete="off">' +
+    '<div class="novel-jump-hint">숫자나 제목 일부를 입력하면 실시간으로 좁혀집니다. Enter를 누르면 가장 잘 맞는 화의 집필창으로 바로 이동합니다.</div>' +
+  '</div>';
+
+  var toolbarHtml = '<div class="novel-toolbar-row">' +
+    '<button type="button" class="ms-sort-btn" id="novelSortBtn" title="정렬 방식 전환">'+((n.epSort==="newest")?"최신순":"시간순")+'</button>' +
+    povFilterHtml +
+  '</div>';
+
+  main.innerHTML =
+    '<div class="graph-shell"><div class="page-pad">' +
+      breadcrumbHtml + headHtml + jumpHtml + toolbarHtml +
+      '<div class="novel-ep-list" id="novelEpList"></div>' +
+    '</div></div>';
+
+  var back = main.querySelector("[data-backtowork]");
+  if (back) back.addEventListener("click", function(){ state.mode="workhome"; state.activeId=n.workId; state.wsHomeTab[n.workId]="ms"; render(); });
+  document.getElementById("novelSettingsBtn").addEventListener("click", function(){ openNovelSettings(n.id); });
+  document.getElementById("novelNewEpBtn").addEventListener("click", function(){ newManuscriptIn(n.id); });
+  var sortBtn = document.getElementById("novelSortBtn");
+  if (sortBtn) sortBtn.addEventListener("click", function(){ toggleNovelSort(n.id); });
+  var povFilterSel = document.getElementById("novelPovFilter");
+  if (povFilterSel) povFilterSel.addEventListener("change", function(ev){ state.povFilter[n.id] = ev.target.value; selIdx = 0; refreshList(); });
+
+  var selIdx = 0;
+  var jumpInput = document.getElementById("novelJumpInput");
+
+  function currentFiltered() {
+    return novelEpisodesFiltered(n.id, jumpInput ? jumpInput.value : "", state.povFilter[n.id] || "");
+  }
+  function refreshMeta() {
+    var epsAll = MANUSCRIPTS.filter(function(m){ return m.novelId === n.id; });
+    var charTotal = epsAll.reduce(function(sum,m){ return sum+charCount(m.text); }, 0);
+    var meta = document.getElementById("novelPageMeta");
+    if (meta) meta.textContent = "전체 "+epsAll.length+"화" + (charTotal ? " · "+fmtNum(charTotal)+"자" : "");
+  }
+  function openEpisode(id) { state.mode = "manuscript"; state.activeId = id; render(); }
+  function epRowHtml(item, idx, list) {
+    var m = item.m;
+    var ord = episodeOrdinal(m);
+    var epChars = charCount(m.text);
+    var epCharIds = m.characterIds || (m.povId ? [m.povId] : []);
+    var epCharNames = epCharIds.map(function(id){ var d = workCharacterDocs.find(function(d){ return d.id===id; }); return d ? d.title : null; }).filter(Boolean);
+    var povBadge = epCharNames.length ? '<span title="'+esc(epCharNames.join(", "))+'">'+esc(epCharNames.slice(0,2).join(", "))+(epCharNames.length>2?" +"+(epCharNames.length-2):"")+'</span>' : '';
+    var hasQuery = !!(jumpInput && jumpInput.value.trim());
+    var canReorder = !state.povFilter[n.id] && !hasQuery && list.length > 1;
+    var isActive = state.mode==="manuscript" && state.activeId===m.id;
+    var moveHtml = canReorder ?
+      '<button class="row-move" data-msmoveup="'+m.id+'" title="위로 이동"'+(idx===0?" disabled":"")+'>'+ic("chevUp",9)+'</button>' +
+      '<button class="row-move" data-msmovedown="'+m.id+'" title="아래로 이동"'+(idx===list.length-1?" disabled":"")+'>'+ic("chevDown",9)+'</button>' : '';
+    var insertHtml = (!state.povFilter[n.id] && !hasQuery) ? '<button class="row-move row-insert" data-msinsertafter="'+m.id+'" title="이 화 다음에 새 화 삽입">+</button>' : '';
+    return '<div class="novel-ep-row'+(isActive?" active":"")+(idx===selIdx?" selected":"")+'" data-openms="'+m.id+'" data-idx="'+idx+'">' +
+      '<span class="novel-ep-ord">'+(ord!=null?ord:"")+'</span>' +
+      '<span class="novel-ep-title">'+esc(m.title||"제목 없음")+'</span>' +
+      '<span class="novel-ep-meta">'+povBadge+(epChars?fmtNum(epChars)+'자':'')+'</span>' +
+      insertHtml + moveHtml +
+      '<button class="row-del" data-delms="'+m.id+'" title="삭제">'+ic("trash",12)+'</button>' +
+    '</div>';
+  }
+  function wireRows() {
+    var box = document.getElementById("novelEpList");
+    box.querySelectorAll("[data-openms]").forEach(function(row){
+      row.addEventListener("click", function(e){
+        if (e.target.closest("[data-msinsertafter],[data-msmoveup],[data-msmovedown],[data-delms]")) return;
+        openEpisode(row.dataset.openms);
+      });
+    });
+    box.querySelectorAll("[data-msmoveup]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); moveManuscript(b.dataset.msmoveup, -1); refreshList(); }); });
+    box.querySelectorAll("[data-msmovedown]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); moveManuscript(b.dataset.msmovedown, 1); refreshList(); }); });
+    box.querySelectorAll("[data-msinsertafter]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); insertManuscriptAfter(n.id, b.dataset.msinsertafter); }); });
+    box.querySelectorAll("[data-delms]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteManuscript(b.dataset.delms); }); });
+  }
+  function refreshList() {
+    var list = currentFiltered();
+    if (selIdx >= list.length) selIdx = Math.max(0, list.length-1);
+    var box = document.getElementById("novelEpList");
+    if (!box) return;
+    var hasQuery = !!(jumpInput && jumpInput.value.trim());
+    if (!list.length) {
+      box.innerHTML = '<div class="sb-empty">'+(hasQuery ? "일치하는 화가 없습니다." : (state.povFilter[n.id] ? "이 인물이 등장하는 화가 없습니다." : "아직 화가 없습니다. \"새 화 쓰기\"로 만들어보세요."))+'</div>';
+    } else {
+      box.innerHTML = list.map(function(item, idx){ return epRowHtml(item, idx, list); }).join("");
+    }
+    wireRows();
+    refreshMeta();
+  }
+  if (jumpInput) {
+    jumpInput.addEventListener("input", function(){ selIdx = 0; refreshList(); });
+    jumpInput.addEventListener("keydown", function(e){
+      var list;
+      if (e.key === "ArrowDown") { e.preventDefault(); list = currentFiltered(); if (list.length) { selIdx = Math.min(list.length-1, selIdx+1); refreshList(); } }
+      else if (e.key === "ArrowUp") { e.preventDefault(); list = currentFiltered(); if (list.length) { selIdx = Math.max(0, selIdx-1); refreshList(); } }
+      else if (e.key === "Enter") {
+        e.preventDefault();
+        list = currentFiltered();
+        if (list.length) { var pick = list[Math.min(selIdx, list.length-1)]; openEpisode(pick.m.id); }
+      } else if (e.key === "Escape") {
+        jumpInput.value = ""; selIdx = 0; refreshList();
+      }
+    });
+  }
+  refreshList();
 }
 
 function renderSidebar() {
@@ -7145,11 +8274,14 @@ function renderSidebar() {
   function renderWorkRow(work) {
     var msIds = NOVELS.filter(function(n){ return n.workId===work.id; }).map(function(n){ return n.id; });
     var charTotal = MANUSCRIPTS.filter(function(m){ return msIds.indexOf(m.novelId)!==-1; }).reduce(function(sum,m){ return sum+charCount(m.text); }, 0);
+    var isStaleTemplate = work.isTemplate && (work.templateVersion||0) < TEMPLATE_CONTENT_VERSION;
     return '<div class="work-row'+(work.isTemplate?" template-folder":"")+(work.id===activeWorkId?" active":"")+'" data-openwork="'+work.id+'">' +
       '<span class="gt work-title">'+esc(work.title||"제목 없는 작품")+'</span>' +
       (work.isTemplate?'<span class="template-badge">예시</span>':'') +
+      (isStaleTemplate?'<span class="template-badge stale" title="예시 콘텐츠에 새 버전이 있어요">새 버전</span>':'') +
       (charTotal?'<span class="char-total">'+fmtNum(charTotal)+'자</span>':'') +
       '<button class="row-settings" data-exportzip="'+work.id+'" title="원고·설정집 내보내기(ZIP)">'+ic("upload",12)+'</button>' +
+      (work.isTemplate?'<button class="row-settings" data-resettemplate="'+work.id+'" title="최신 예시 콘텐츠로 초기화(현재 편집 내용은 사라집니다)">'+ic("rotate",12)+'</button>':'') +
       (work.isTemplate?'':'<button class="row-del" data-delwork="'+work.id+'" title="작품 삭제">'+ic("trash",12)+'</button>') +
     '</div>';
   }
@@ -7204,6 +8336,7 @@ function wireWorkTreeHandlers(el) {
   el.querySelectorAll("[data-opendoccat]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="doccat"; state.activeId=b.dataset.opendoccat; render(); }); });
   el.querySelectorAll("[data-opengraph]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="graph"; state.activeId=b.dataset.opengraph; state.addPropOpen=false; state.colorPickerOpen=false; render(); }); });
   el.querySelectorAll("[data-openms]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="manuscript"; state.activeId=b.dataset.openms; render(); }); });
+  el.querySelectorAll("[data-opennovel]").forEach(function(b){ b.addEventListener("click", function(e){ if (e.target.closest("[data-newep],[data-novelsettings],[data-delnovel]")) return; state.mode="novel"; state.activeId=b.dataset.opennovel; render(); }); });
   el.querySelectorAll("[data-opentable]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="table"; state.activeId=b.dataset.opentable; render(); }); });
   el.querySelectorAll("[data-openscript]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="script"; state.activeId=b.dataset.openscript; render(); }); });
   el.querySelectorAll("[data-opensports]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="sports"; state.activeId=b.dataset.opensports; render(); }); });
@@ -7230,6 +8363,16 @@ function wireWorkTreeHandlers(el) {
   el.querySelectorAll("[data-essaymovedown]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); moveEssayEntry(b.dataset.essaymovedown, 1); }); });
   el.querySelectorAll("[data-essayinsertafter]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); var essayRow = b.closest(".novel-folder").querySelector("[data-newessayentry]"); insertEssayEntryAfter(essayRow.dataset.newessayentry, b.dataset.essayinsertafter); }); });
   wireEssayEntryDragDrop(el);
+  el.querySelectorAll("[data-newplay]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); newPlayFolder(b.dataset.newplay); }); });
+  el.querySelectorAll("[data-newplayscript]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); newPlayScriptIn(b.dataset.newplayscript); }); });
+  el.querySelectorAll("[data-playsettings]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); openPlaySettings(b.dataset.playsettings); }); });
+  el.querySelectorAll("[data-delplay]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deletePlayFolder(b.dataset.delplay); }); });
+  el.querySelectorAll("[data-openplayscript]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="playscript"; state.activeId=b.dataset.openplayscript; render(); }); });
+  el.querySelectorAll("[data-delplayscript]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deletePlayScript(b.dataset.delplayscript); }); });
+  el.querySelectorAll("[data-playmoveup]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); movePlayScript(b.dataset.playmoveup, -1); }); });
+  el.querySelectorAll("[data-playmovedown]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); movePlayScript(b.dataset.playmovedown, 1); }); });
+  el.querySelectorAll("[data-playinsertafter]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); var playRow = b.closest(".novel-folder").querySelector("[data-newplayscript]"); insertPlayScriptAfter(playRow.dataset.newplayscript, b.dataset.playinsertafter); }); });
+  wirePlayScriptDragDrop(el);
   el.querySelectorAll("[data-deltable]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteTable(b.dataset.deltable); }); });
   el.querySelectorAll("[data-delscript]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteScript(b.dataset.delscript); }); });
   el.querySelectorAll("[data-delsports]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteSports(b.dataset.delsports); }); });
@@ -7237,6 +8380,7 @@ function wireWorkTreeHandlers(el) {
   el.querySelectorAll("[data-delmap]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteMap(b.dataset.delmap); }); });
   el.querySelectorAll("[data-delwork]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteWork(b.dataset.delwork); }); });
   el.querySelectorAll("[data-exportzip]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); openExportZipModal(b.dataset.exportzip); }); });
+  el.querySelectorAll("[data-resettemplate]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); resetGenreTemplateWork(); }); });
 }
 
 /* ---------------- doc page ---------------- */
@@ -10524,7 +11668,7 @@ function renderDocPage(doc, containerId) {
 
   // blocks
   main.querySelectorAll("[data-block]").forEach(function(el){
-    if (el.tagName === "TEXTAREA") autoGrow(el);
+    if (el.tagName === "TEXTAREA") { autoGrow(el); wireAutoIndent(el); }
     el.addEventListener("input", function(){
       var b = doc.blocks.find(function(b){ return b.id === el.dataset.block; });
       if (b) { b.text = el.value; }
@@ -13187,6 +14331,7 @@ function renderTimelinePage(tl) {
   if (!parallelTl || !tl.showParallel) {
     sorted.forEach(function(ev){
       autoGrow(document.getElementById("tlDesc-"+ev.id));
+      wireAutoIndent(document.getElementById("tlDesc-"+ev.id));
       document.getElementById("tlOrder-"+ev.id).addEventListener("input", function(e){ ev.order = parseFloat(e.target.value) || 0; saveData(); });
       document.getElementById("tlOrder-"+ev.id).addEventListener("blur", function(){ renderTimelinePage(tl); });
       document.getElementById("tlLabel-"+ev.id).addEventListener("input", function(e){ ev.label = e.target.value; saveData(); });
@@ -13204,7 +14349,7 @@ function renderTimelinePage(tl) {
     var leftCol = main.querySelectorAll(".tl-col")[0];
     sorted.forEach(function(ev){
       var descEl = leftCol.querySelector("#tlDesc-"+ev.id);
-      if (descEl) autoGrow(descEl);
+      if (descEl) { autoGrow(descEl); wireAutoIndent(descEl); }
       var orderEl = leftCol.querySelector("#tlOrder-"+ev.id);
       if (orderEl) { orderEl.addEventListener("input", function(e){ ev.order = parseFloat(e.target.value) || 0; saveData(); }); orderEl.addEventListener("blur", function(){ renderTimelinePage(tl); }); }
       var labelEl = leftCol.querySelector("#tlLabel-"+ev.id);
@@ -13387,12 +14532,14 @@ function renderBookArea(m) {
       '<div class="book-hint">두 쪽 보기로 씁니다 — 옆으로 스크롤하면 다음 쪽으로 이어져요</div>';
     var flowEl = document.getElementById("bookEditFlow");
     flowEl.textContent = m.text || "";
+    wireAutoIndentContentEditable(flowEl);
     flowEl.addEventListener("input", function(){
       m.text = flowEl.innerText.split(String.fromCharCode(160)).join(" ");
       var denom0 = flowEl.scrollWidth - flowEl.clientWidth;
       m.editScrollFrac = denom0 > 0 ? Math.max(0, Math.min(1, flowEl.scrollLeft/denom0)) : 0;
-      saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); flashSaveIndicator();
+      schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); flashSaveIndicator();
     });
+    flowEl.addEventListener("blur", flushPaperSave);
     flowEl.addEventListener("scroll", function(){
       var denom = flowEl.scrollWidth - flowEl.clientWidth;
       m.editScrollFrac = denom > 0 ? Math.max(0, Math.min(1, flowEl.scrollLeft/denom)) : 0;
@@ -13406,7 +14553,9 @@ function renderBookArea(m) {
       '<div class="book-outer"><div class="book-shell"><textarea class="book-edit-textarea" id="bookEditText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요.">'+esc(m.text||"")+'</textarea></div></div>' +
       '<div class="book-hint">쓰기 모드는 스크롤로 이어 씁니다 — 미리보기에서 페이지 단위로 넘겨볼 수 있어요</div>';
     var editEl = document.getElementById("bookEditText");
-    editEl.addEventListener("input", function(e){ m.text = e.target.value; m.editScrollFrac = editScrollFraction(); saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); updateContextPanel(m, bookWorkId); flashSaveIndicator(); });
+    wireAutoIndent(editEl);
+    editEl.addEventListener("input", function(e){ m.text = e.target.value; m.editScrollFrac = editScrollFraction(); schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); updateContextPanel(m, bookWorkId); flashSaveIndicator(); });
+    editEl.addEventListener("blur", flushPaperSave);
     editEl.addEventListener("scroll", function(){ m.editScrollFrac = editScrollFraction(); });
     wireMentionAutocomplete(editEl, bookWorkId);
     requestAnimationFrame(function(){
@@ -13453,10 +14602,12 @@ function paperScrollFraction(el) {
 }
 /* 대형 원고(10만~100만자) 대응: 이 앱은 편집마다 전체 상태를 동기적으로
  * JSON.stringify해서 localStorage에 저장하는 구조라(saveData 참고), 키 입력마다
- * 그걸 그대로 부르면 원고가 커질수록 타이핑이 버벅인다. 원고지 편집기는 입력을
- * 멈춘 뒤 짧게 디바운스해서 저장하고(포커스를 벗어나면 즉시 flush해 유실을
- * 막는다), 화면 자체는 순수 textarea라 브라우저가 렌더링을 알아서 가상화하므로
- * 글자 수가 늘어도 표시 성능은 별도 최적화 없이 유지된다. */
+ * 그걸 그대로 부르면 원고가 커질수록 타이핑이 버벅인다. 원고지(paper)뿐 아니라
+ * 양장본(book, textarea·두쪽보기 모두)과 일반 집필창(plain)의 본문 입력도 전부
+ * 이 디바운스를 함께 쓴다(입력을 멈춘 뒤 짧게 디바운스해서 저장하고, 포커스를
+ * 벗어나면 즉시 flush해 유실을 막는다) -- 세 형식 다 본문은 같은 "긴 글 입력"
+ * 이라 저장 비용 문제가 동일하게 있다. 화면 자체는 재렌더링하지 않으므로
+ * 글자 수가 늘어도 타이핑 반응성은 별도 최적화 없이 유지된다. */
 var msPaperSaveTimer = null;
 function schedulePaperSave() {
   clearTimeout(msPaperSaveTimer);
@@ -13465,7 +14616,39 @@ function schedulePaperSave() {
 function flushPaperSave() {
   if (msPaperSaveTimer) { clearTimeout(msPaperSaveTimer); msPaperSaveTimer = null; saveData(); }
 }
+/* ---------- 원고지 기능 전면 개편 ----------
+ * 이전 구조는 집필화면 자체를 격자로 그려서 "쓰는 동안에도 원고지처럼 보이게"
+ * 했지만, 그 결과 일반 텍스트 에디터로서의 입력 경험이 나빴다(칸선 배경이
+ * 타이핑 중 계속 보여 산만하고, 좁은 칸 폭 때문에 자연스러운 줄바꿈 감각이
+ * 없었다). 지금은 역할을 완전히 분리한다.
+ *   - 집필화면(renderManuscriptPaperWrite): Notion/Scrivener류의 평범하고
+ *     깔끔한 textarea. 격자는 전혀 안 그린다. 그래도 내부적으로는 매 입력마다
+ *     computeManuscriptLayout()이 칸/줄/페이지/금칙 규칙을 계산해 상단
+ *     통계줄에 실시간으로 보여준다("보이는 건 현대적 에디터, 동작은 원고지").
+ *   - 미리보기화면(renderManuscriptPaperView): 팝업이 아니라 #paperArea를
+ *     완전히 갈아 끼우는 별도 화면(양장본의 쓰기/미리보기 탭과 동일한 패턴).
+ *     같은 computeManuscriptLayout() 결과를 실물 원고지 낱장(칸선·NO.N 페이지
+ *     번호·cols×rows 캡션)으로 그리므로 집필화면 통계와 절대 어긋나지 않는다.
+ *     단면/양면(책 펼친 모양) 전환, 뷰포트에 맞춘 동적 칸 크기(세로 스크롤
+ *     강제 없이 한 장이 한눈에 들어오되 글자는 읽을 수 있는 크기)를 지원한다.
+ * 편집은 항상 집필화면에서만 일어나므로(미리보기는 완전히 읽기 전용) 예전에
+ * 없앤 "쓰기/미리보기를 오가야만 편집되는" 구조가 아니다.
+ *
+ * TODO(다음 우선순위 -- 한국어 이후 과제): 미리보기는 지금 항상 가로 낱장
+ * 으로만 그린다. 일본어 세로쓰기(m.paperVertical)는 집필화면에서는 세로로
+ * 쓸 수 있지만 미리보기가 그 배치를 반영하지 못한다(세로 조판 낱장 렌더링은
+ * 별도 작업 필요). 중국어는 한국어와 같은 금칙 문자 집합을 쓰는데 조판 관례상
+ * 완전히 같지는 않아 나중에 언어별로 분리해야 한다. 영어는 격자가 없는
+ * 자유흐름이라 미리보기 대상이 아니다(출판 관례 기준 근사치 유지). */
 function renderManuscriptPaperArea(m) {
+  var area = document.getElementById("paperArea");
+  if (!area) return;
+  if (m.paperMode === "view" && !manuscriptStats(m).rules.grid) m.paperMode = "write";
+  if (m.paperMode === "view") renderManuscriptPaperView(m);
+  else renderManuscriptPaperWrite(m);
+}
+
+function renderManuscriptPaperWrite(m) {
   var area = document.getElementById("paperArea");
   if (!area) return;
   var novelForPaper = NOVELS.find(function(n){ return n.id === m.novelId; });
@@ -13483,11 +14666,15 @@ function renderManuscriptPaperArea(m) {
       '</select>' +
       '<span id="paperToolbarExtras" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap"></span>' +
       '<div class="sep"></div>' +
+      formatToolbarHtml() +
+      '<button type="button" id="paperFormatPreviewToggle" class="'+(m.showFormatPreview?"on":"")+'" title="이탤릭·글씨크기 서식이 실제로 어떻게 보이는지 확인(읽기 전용)">'+ic("eye",13)+'<span>서식 미리보기</span></button>' +
+      '<div class="sep"></div>' +
       '<button type="button" id="msPaperFindBtn">'+ic("search",13)+'<span>찾아바꾸기</span></button>' +
     '</div>' +
     '<div class="paper-stats-bar" id="paperStatsBar"></div>' +
-    '<div class="paper-outer"><div class="paper-sheet-wrap">' +
-      '<textarea class="paper-text'+(initStats.rules.grid?" grid":" flow")+((m.paperVertical&&initStats.rules.vertical)?" vertical":"")+'" id="paperText" spellcheck="true" placeholder="여기에 바로 쓰세요 — 이 화면이 곧 완성된 원고입니다." lang="'+esc(initStats.rules.lang)+'">'+esc(m.text||"")+'</textarea>' +
+    '<div class="ms-doc-page"><div class="ms-doc-ruler"></div><div class="ms-doc-screen">' +
+      '<textarea class="ms-textarea ms-doc-textarea'+((m.paperVertical&&initStats.rules.vertical)?" vertical":"")+'" id="paperText" spellcheck="true" placeholder="여기에 편하게 쓰세요 — 칸·줄·페이지는 내부적으로 원고지 규칙 그대로 계산됩니다." lang="'+esc(initStats.rules.lang)+'"'+(m.showFormatPreview?' style="display:none"':'')+'>'+esc(m.text||"")+'</textarea>' +
+      '<div class="ms-format-preview ms-textarea ms-doc-textarea" id="paperFormatPreview"'+(m.showFormatPreview?'':' style="display:none"')+'>'+renderFormattedPlainText(m.text||"", m.formatRanges)+'</div>' +
     '</div></div>' +
     '<div class="paper-page-nav">' +
       '<button type="button" id="paperPrevPage">'+ic("chevL",13)+'</button>' +
@@ -13497,9 +14684,9 @@ function renderManuscriptPaperArea(m) {
 
   var textEl = document.getElementById("paperText");
 
-  /* 언어/규칙(격자냐 자유흐름이냐, 매수 표시 여부, 세로쓰기 가능 여부)이 자동
-   * 감지에 따라 타이핑 도중 바뀔 수 있으므로, textarea 자체는 다시 만들지
-   * 않고(포커스·캐럿·IME 조합·undo 이력이 끊기지 않도록) className과 툴바
+  /* 언어/규칙(격자 규칙 언어냐 자유흐름이냐, 세로쓰기 가능 여부)이 자동 감지에
+   * 따라 타이핑 도중 바뀔 수 있으므로, textarea 자체는 다시 만들지 않고
+   * (포커스·캐럿·IME 조합·undo 이력이 끊기지 않도록) className과 툴바
    * 부속물만 갱신한다. */
   function refreshToolbarExtras(st) {
     var extras = document.getElementById("paperToolbarExtras");
@@ -13512,7 +14699,10 @@ function renderManuscriptPaperArea(m) {
       var verticalToggleHtml = st.rules.vertical
         ? '<button type="button" class="'+(m.paperVertical?"on":"")+'" id="paperVerticalBtn" title="세로쓰기">'+ic("docIcon",13)+'<span>세로쓰기</span></button>'
         : '';
-      extras.innerHTML = langBadgeHtml + sizeToggleHtml + verticalToggleHtml;
+      var modeToggleHtml = st.rules.grid
+        ? '<div class="paper-mode-toggle"><button type="button" class="on" id="paperWriteTabBtn">'+ic("p",13)+'<span>쓰기</span></button><button type="button" id="paperViewTabBtn">'+ic("docIcon",13)+'<span>미리보기</span></button></div>'
+        : '';
+      extras.innerHTML = langBadgeHtml + sizeToggleHtml + verticalToggleHtml + modeToggleHtml;
       extras.querySelectorAll("[data-papersize]").forEach(function (btn) {
         btn.addEventListener("click", function () {
           m.paperSize = parseInt(btn.dataset.papersize, 10); saveData(); refreshStatsBar();
@@ -13522,17 +14712,15 @@ function renderManuscriptPaperArea(m) {
       if (vBtn) vBtn.addEventListener("click", function () {
         m.paperVertical = !m.paperVertical; saveData(); refreshStatsBar();
       });
+      var viewTabBtn = document.getElementById("paperViewTabBtn");
+      if (viewTabBtn) viewTabBtn.addEventListener("click", function () {
+        var caret = manuscriptCaretInfo(m, textEl.selectionStart || 0);
+        m.paperPage = Math.max(0, caret.page - 1);
+        m.paperMode = "view"; saveData(); renderManuscriptPaperArea(m);
+      });
     }
     if (!st.rules.vertical) m.paperVertical = false;
-    /* 대형 원고에서 격자 눈금 배경을 끄면 타이핑이 살짝 빨라지긴 하지만
-     * (실측 5% 안팎) "입력 화면이 곧 원고지"라는 원칙과 충돌해서 배경이 사라진
-     * 순간 그냥 메모장처럼 보인다 -- 그 정도 이득으로는 격자를 꺼둘 이유가
-     * 못 된다(원고가 극단적으로 커졌을 때 타이핑이 느려지는 진짜 원인은 배경이
-     * 아니라 브라우저 자체의 줄바꿈 레이아웃 비용이라 배경을 꺼도 크게
-     * 좋아지지 않는다). 그래서 격자는 문서 크기와 상관없이 항상 그린다.
-     */
-    textEl.className = "paper-text" + (st.rules.grid ? " grid" : " flow") +
-      ((m.paperVertical && st.rules.vertical) ? " vertical" : "");
+    textEl.className = "ms-textarea ms-doc-textarea" + ((m.paperVertical && st.rules.vertical) ? " vertical" : "");
     textEl.lang = st.rules.lang;
   }
 
@@ -13558,10 +14746,9 @@ function renderManuscriptPaperArea(m) {
   refreshStatsBar();
 
   /* 키 입력마다 동기 실행하는 건 값 대입/저장 예약/시각 표시뿐이다. 원고지
-   * 통계(여러 번의 정규식 전수 스캔)와 등장인물·장소 자동 감지(문서마다
-   * text.indexOf 전수 검색)는 글자 수가 클수록 무거워지므로 타이핑이 멈춘
-   * 뒤로 미룬다 -- 그래야 원고가 몇십만 자로 커져도 타이핑 자체는 매 키
-   * 입력마다 O(1)로 남아 버벅이지 않는다. */
+   * 통계(computeManuscriptLayout 포함)와 등장인물·장소 자동 감지는 글자 수가
+   * 클수록 무거워지므로 타이핑이 멈춘 뒤로 미룬다 -- 그래야 원고가 몇십만 자로
+   * 커져도 타이핑 자체는 매 키 입력마다 O(1)로 남아 버벅이지 않는다. */
   var statsDebounce = null;
   function scheduleStatsRefresh(withSideEffects) {
     clearTimeout(statsDebounce);
@@ -13573,22 +14760,31 @@ function renderManuscriptPaperArea(m) {
       }
     }, 180);
   }
+  function refreshPaperFormatPreview() {
+    var pv = document.getElementById("paperFormatPreview");
+    if (pv) pv.innerHTML = renderFormattedPlainText(m.text||"", m.formatRanges);
+  }
   textEl.addEventListener("input", function (e) {
     if (e.isComposing) return;
     var liveLang = (m.paperLang && m.paperLang !== "auto") ? m.paperLang : detectManuscriptLang(textEl.value).lang;
     if (liveLang === "en") applySmartPunctuation(textEl);
+    m.formatRanges = rebaseFormatRanges(m.formatRanges, m.text||"", textEl.value);
     m.text = textEl.value;
     schedulePaperSave();
     flashSaveIndicator();
+    refreshPaperFormatPreview();
     scheduleStatsRefresh(true);
   });
   textEl.addEventListener("keydown", function (e) {
     if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+    if (!AUTO_INDENT_PREF.enabled) return; // 전역 자동 들여쓰기 설정이 꺼져 있으면 평범한 줄바꿈만
     var curLang = (m.paperLang && m.paperLang !== "auto") ? m.paperLang : detectManuscriptLang(textEl.value).lang;
-    if (!(MANUSCRIPT_LANG_RULES[curLang] || MANUSCRIPT_LANG_RULES.ko).grid) return;
+    if (!(MANUSCRIPT_LANG_RULES[curLang] || MANUSCRIPT_LANG_RULES.ko).grid) return; // 원고지 자신의 문단 규칙(그리드 언어에서만)이 우선
+    var indent = autoIndentString();
+    if (!indent) return;
     e.preventDefault();
     var s = textEl.selectionStart, en = textEl.selectionEnd;
-    textEl.setRangeText("\n" + PAPER_INDENT_CHAR, s, en, "end");
+    textEl.setRangeText("\n" + indent, s, en, "end");
     textEl.dispatchEvent(new Event("input", { bubbles: true }));
   });
   textEl.addEventListener("keyup", function () { scheduleStatsRefresh(false); });
@@ -13608,12 +14804,16 @@ function renderManuscriptPaperArea(m) {
   var findBtnPaper = document.getElementById("msPaperFindBtn");
   if (findBtnPaper) findBtnPaper.addEventListener("click", function (e) {
     openFindReplace("paperText", e.currentTarget, function (newVal) {
+      m.formatRanges = rebaseFormatRanges(m.formatRanges, m.text||"", newVal);
       m.text = newVal; textEl.value = newVal;
       saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m);
       updateCharacterChips(m, paperWorkId, true); updateContextPanel(m, paperWorkId); flashSaveIndicator();
-      refreshStatsBar();
+      refreshStatsBar(); refreshPaperFormatPreview();
     });
   });
+  var paperFormatPreviewToggle = document.getElementById("paperFormatPreviewToggle");
+  if (paperFormatPreviewToggle) paperFormatPreviewToggle.addEventListener("click", function(){ m.showFormatPreview = !m.showFormatPreview; saveData(); renderManuscriptPaperArea(m); });
+  wireFormatToolbarButtons(document.querySelector(".paper-toolbar"), textEl, function(){ return m.formatRanges; }, function(r){ m.formatRanges = r; }, function(){ saveData(); refreshPaperFormatPreview(); flashSaveIndicator(); });
   var prevPageBtn = document.getElementById("paperPrevPage"), nextPageBtn = document.getElementById("paperNextPage");
   function jumpToPage(pageNum) {
     var offset = manuscriptOffsetForPage(m, pageNum);
@@ -13635,6 +14835,336 @@ function renderManuscriptPaperArea(m) {
   });
 }
 
+/* 뷰포트에 맞춰 미리보기 칸 크기(px)를 계산한다 -- "세로 스크롤 강제 발생 금지
+ * + 세부 글자도 읽을 수 있는 크기"를 만족시키려면 고정 크기 대신 매번
+ * 다시 계산해야 한다. wrapEl의 실제 위치(뷰포트 기준)와 남은 세로 공간,
+ * 가로 폭을 재서 cols/rows에 맞는 최대 정사각형 칸 크기를 구하고, 너무
+ * 작거나 커지지 않게 12~34px로 자른다. */
+function fitPaperViewCellSize(wrapEl, cols, rowsPerPage) {
+  if (!wrapEl) return 22;
+  var rect = wrapEl.getBoundingClientRect();
+  var availH = Math.max(160, window.innerHeight - rect.top - 96);
+  var availW = wrapEl.clientWidth;
+  var chromeH = 54, chromeW = 34;
+  var byW = Math.floor((availW - chromeW) / cols);
+  var byH = Math.floor((availH - chromeH) / rowsPerPage);
+  return Math.max(12, Math.min(34, Math.min(byW, byH)));
+}
+/* 확대 열람은 "화면 대부분 사용 + 읽기 쉬운 크기"가 목표라 임베디드
+ * 미리보기보다 여유 공간을 넉넉히 잡고 상한도 더 크게 둔다. */
+function fitZoomReaderCellSize(cols, rowsPerPage) {
+  var availW = window.innerWidth - 160;
+  var availH = window.innerHeight - 140;
+  var byW = Math.floor((availW - 40) / cols);
+  var byH = Math.floor((availH - 60) / rowsPerPage);
+  return Math.max(14, Math.min(46, Math.min(byW, byH)));
+}
+function renderPaperViewSheetHtml(layout, pageIdx) {
+  var page = layout.pages[pageIdx];
+  var rowsHtml = "";
+  for (var r = 0; r < layout.rowsPerPage; r++) {
+    var row = page ? page.rows[r] : null;
+    var chars = row ? Array.from(row.chars) : [];
+    var cellCount = Math.max(layout.cols, chars.length);
+    var cellsHtml = "";
+    for (var c = 0; c < cellCount; c++) {
+      var ch = chars[c];
+      cellsHtml += '<div class="paper-view-cell">' + (ch && ch !== " " && ch !== "　" ? esc(ch) : "") + '</div>';
+    }
+    rowsHtml += '<div class="paper-view-row">' + cellsHtml + '</div>';
+  }
+  return (
+    '<div class="paper-view-sheet" data-pageidx="'+pageIdx+'">' +
+      '<div class="paper-view-sheet-head">NO. '+(pageIdx+1)+'</div>' +
+      '<div class="paper-view-grid" style="--paper-line:'+esc(PAPER_LINE_COLOR)+'">' + rowsHtml + '</div>' +
+      '<div class="paper-view-sheet-foot">'+layout.cols+'×'+layout.rowsPerPage+'</div>' +
+    '</div>'
+  );
+}
+/* 개요 보기 썸네일의 실제 내용 -- 칸 하나하나(cols×rows개 div)가 아니라 행
+ * 하나에 div 하나(rowsPerPage개)만 써서 실제 텍스트를 보여준다. 수백~수천
+ * 매를 동시에 켜둬도 DOM이 가벼운 이유가 이것 -- 배경 격자선은 CSS
+ * repeating-linear-gradient로 그려서(.paper-overview-thumb) 별도 DOM 없이도
+ * "진짜 원고지처럼" 보인다. */
+function renderPaperThumbRowsHtml(layout, pageIdx) {
+  var page = layout.pages[pageIdx];
+  var rowsHtml = "";
+  for (var r = 0; r < layout.rowsPerPage; r++) {
+    var row = page ? page.rows[r] : null;
+    var text = row && row.chars ? row.chars.split("　").join(" ") : "";
+    rowsHtml += '<div class="paper-thumb-row">' + esc(text) + '</div>';
+  }
+  return rowsHtml;
+}
+var _paperViewResizeHandler = null;
+var _paperOverviewObserver = null;
+function renderManuscriptPaperView(m) {
+  var area = document.getElementById("paperArea");
+  if (!area) return;
+  var stats = manuscriptStats(m);
+  if (!stats.rules.grid) { m.paperMode = "write"; renderManuscriptPaperWrite(m); return; }
+  var layout = getManuscriptLayoutCached(m, stats.size);
+  if (m.paperPage == null) m.paperPage = 0;
+  if (m.paperPage >= layout.totalPages) m.paperPage = layout.totalPages - 1;
+  if (m.paperPage < 0) m.paperPage = 0;
+
+  if (_paperViewResizeHandler) { window.removeEventListener("resize", _paperViewResizeHandler); _paperViewResizeHandler = null; }
+  if (_paperOverviewObserver) { _paperOverviewObserver.disconnect(); _paperOverviewObserver = null; }
+
+  area.innerHTML =
+    '<div class="paper-view-wrap">' +
+      '<div class="paper-view-toolbar">' +
+        '<div class="paper-mode-toggle">' +
+          '<button type="button" id="paperWriteTabBtn">'+ic("p",13)+'<span>쓰기</span></button>' +
+          '<button type="button" class="on" id="paperViewTabBtn">'+ic("docIcon",13)+'<span>미리보기</span></button>' +
+        '</div>' +
+        '<div class="paper-view-spread-toggle">' +
+          '<button type="button" id="paperViewSingleBtn" class="'+(!m.paperOverview?"on":"")+'">단면 보기</button>' +
+          '<button type="button" id="paperViewOverviewBtn" class="'+(m.paperOverview?"on":"")+'">페이지 개요</button>' +
+        '</div>' +
+        '<button type="button" id="paperViewLineColorBtn"><span class="paper-line-swatch" style="background:'+esc(PAPER_LINE_COLOR)+'"></span><span>칸선 색상</span></button>' +
+      '</div>' +
+      '<div id="paperViewBody"></div>' +
+    '</div>';
+  document.getElementById("paperWriteTabBtn").addEventListener("click", function () {
+    m.paperMode = "write"; saveData(); renderManuscriptPaperArea(m);
+  });
+  document.getElementById("paperViewSingleBtn").addEventListener("click", function () {
+    if (!m.paperOverview) return;
+    m.paperOverview = false; saveData(); renderManuscriptPaperView(m);
+  });
+  document.getElementById("paperViewOverviewBtn").addEventListener("click", function () {
+    if (m.paperOverview) return;
+    m.paperOverview = true; saveData(); renderManuscriptPaperView(m);
+  });
+  document.getElementById("paperViewLineColorBtn").addEventListener("click", openPaperLineColorModal);
+
+  if (m.paperOverview) paintPaperOverview(m, layout);
+  else paintPaperSingle(m, layout);
+}
+function paintPaperSingle(m, layout) {
+  var body = document.getElementById("paperViewBody");
+  if (!body) return;
+
+  function fitNow() {
+    var wrap = document.getElementById("paperViewSheetsWrap");
+    if (!wrap) return;
+    var cell = fitPaperViewCellSize(wrap, layout.cols, layout.rowsPerPage);
+    wrap.style.setProperty("--paper-cell", cell + "px");
+  }
+
+  function paint() {
+    body.innerHTML =
+      '<div class="paper-view-sheets" id="paperViewSheetsWrap">' + renderPaperViewSheetHtml(layout, m.paperPage) + '</div>' +
+      '<div class="paper-view-nav">' +
+        '<button type="button" id="paperViewPrev" '+(m.paperPage<=0?"disabled":"")+'>'+ic("chevL",13)+'</button>' +
+        '<span>'+(m.paperPage+1)+' / '+layout.totalPages+'매</span>' +
+        '<button type="button" id="paperViewNext" '+(m.paperPage>=layout.totalPages-1?"disabled":"")+'>'+ic("chevR",13)+'</button>' +
+      '</div>';
+    fitNow();
+    var prevBtn = document.getElementById("paperViewPrev"), nextBtn = document.getElementById("paperViewNext");
+    if (prevBtn) prevBtn.addEventListener("click", function () { turnPaperViewPage(m, layout, -1); });
+    if (nextBtn) nextBtn.addEventListener("click", function () { turnPaperViewPage(m, layout, 1); });
+  }
+  paint();
+
+  var resizeDebounce = null;
+  _paperViewResizeHandler = function () {
+    clearTimeout(resizeDebounce);
+    resizeDebounce = setTimeout(function () {
+      if (!document.getElementById("paperViewSheetsWrap")) {
+        window.removeEventListener("resize", _paperViewResizeHandler); _paperViewResizeHandler = null; return;
+      }
+      fitNow();
+    }, 150);
+  };
+  window.addEventListener("resize", _paperViewResizeHandler);
+}
+function turnPaperViewPage(m, layout, dir) {
+  var next = Math.max(0, Math.min(layout.totalPages - 1, m.paperPage + dir));
+  if (next === m.paperPage) return;
+  var sheetEls = document.querySelectorAll(".paper-view-sheet");
+  if (!sheetEls.length) { m.paperPage = next; saveData(); renderManuscriptPaperView(m); return; }
+  sheetEls.forEach(function (el) { el.classList.add(dir > 0 ? "fo-next" : "fo-prev"); });
+  setTimeout(function () { m.paperPage = next; saveData(); renderManuscriptPaperView(m); }, 150);
+}
+/* 페이지 개요 보기 -- 지금까지 쓴 모든 매를 한 화면에서 훑어보고(전체 분량·
+ * 흐름 파악) 원하는 매를 클릭해 바로 확대 열람(검수)한다. 수백~수천 매까지
+ * 늘어날 수 있으므로 칸 하나하나를 처음부터 다 그리지 않는다:
+ *  - placeholder(페이지 번호만 있는 빈 칸)를 총 매수만큼 우선 배치하고
+ *  - IntersectionObserver로 화면 근처에 들어온 것만 실제 내용을 채우고
+ *    (지연 렌더링), 멀어지면 다시 비운다(가상 스크롤에 준하는 메모리 절약)
+ *  - 한 번 채운 내용은 layout 객체에 캐시해 재스크롤 시 다시 계산하지 않는다
+ *    (layout은 텍스트/규격이 바뀔 때만 새로 만들어지므로 캐시 무효화도 저절로 된다) */
+function paintPaperOverview(m, layout) {
+  var body = document.getElementById("paperViewBody");
+  if (!body) return;
+  if (!layout._thumbCache) layout._thumbCache = {};
+
+  var cellsHtml = "";
+  for (var i = 0; i < layout.totalPages; i++) {
+    cellsHtml +=
+      '<button type="button" class="paper-overview-cell'+(i===m.paperPage?" current":"")+'" data-pageidx="'+i+'" id="paperOvCell'+i+'">' +
+        '<div class="paper-overview-thumb" id="paperOvThumb'+i+'"></div>' +
+        '<span class="paper-overview-label">'+(i+1)+'</span>' +
+      '</button>';
+  }
+  body.innerHTML =
+    '<div class="paper-overview-hint">전체 '+fmtNum(layout.totalPages)+'매 · 매를 클릭하면 크게 열람합니다</div>' +
+    '<div class="paper-overview-grid" id="paperOverviewGrid" style="--ov-aspect:'+layout.cols+'/'+layout.rowsPerPage+';--ov-rows:'+layout.rowsPerPage+'">' + cellsHtml + '</div>';
+
+  var grid = document.getElementById("paperOverviewGrid");
+  grid.querySelectorAll("[data-pageidx]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      openPaperZoomReader(m, layout, parseInt(btn.dataset.pageidx, 10));
+    });
+  });
+
+  _paperOverviewObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      var idx = parseInt(entry.target.dataset.pageidx, 10);
+      var thumb = document.getElementById("paperOvThumb" + idx);
+      if (!thumb) return;
+      if (entry.isIntersecting) {
+        if (layout._thumbCache[idx] === undefined) layout._thumbCache[idx] = renderPaperThumbRowsHtml(layout, idx);
+        thumb.innerHTML = layout._thumbCache[idx];
+      } else {
+        thumb.innerHTML = "";
+      }
+    });
+  }, { root: grid, rootMargin: "600px 0px 600px 0px" });
+  grid.querySelectorAll("[data-pageidx]").forEach(function (btn) { _paperOverviewObserver.observe(btn); });
+}
+/* 확대 열람 -- 순수 읽기 전용(입력 요소 없음). 페이지 개요에서 클릭한 매를
+ * 화면 대부분을 써서 정독 가능한 크기로 보여준다. Esc/배경 클릭으로 닫고,
+ * 좌우 화살표·버튼·스와이프로 다음/이전 매를 오갈 수 있다. */
+function openPaperZoomReader(m, layout, startIdx) {
+  var idx = Math.max(0, Math.min(layout.totalPages - 1, startIdx));
+  var overlay = document.createElement("div");
+  overlay.className = "paper-zoom-overlay";
+  document.body.appendChild(overlay);
+
+  function paint() {
+    var cell = fitZoomReaderCellSize(layout.cols, layout.rowsPerPage);
+    overlay.innerHTML =
+      '<div class="paper-zoom-topbar">' +
+        '<span class="paper-zoom-page-label">'+(idx+1)+' / '+layout.totalPages+'매</span>' +
+        '<button type="button" class="paper-zoom-close" id="paperZoomCloseBtn" title="닫기(Esc)">'+ic("close",18)+'</button>' +
+      '</div>' +
+      '<div class="paper-zoom-body">' +
+        '<button type="button" class="paper-zoom-nav" id="paperZoomPrev" '+(idx<=0?"disabled":"")+' title="이전 페이지(←)">'+ic("chevL",20)+'</button>' +
+        '<div class="paper-zoom-sheet-wrap" style="--paper-cell:'+cell+'px">' + renderPaperViewSheetHtml(layout, idx) + '</div>' +
+        '<button type="button" class="paper-zoom-nav" id="paperZoomNext" '+(idx>=layout.totalPages-1?"disabled":"")+' title="다음 페이지(→)">'+ic("chevR",20)+'</button>' +
+      '</div>';
+    document.getElementById("paperZoomCloseBtn").addEventListener("click", closeZoom);
+    document.getElementById("paperZoomPrev").addEventListener("click", function () { go(-1); });
+    document.getElementById("paperZoomNext").addEventListener("click", function () { go(1); });
+  }
+  function go(dir) {
+    var next = Math.max(0, Math.min(layout.totalPages - 1, idx + dir));
+    if (next === idx) return;
+    idx = next;
+    m.paperPage = idx; saveData();
+    paint();
+  }
+  function closeZoom() {
+    document.removeEventListener("keydown", onKey);
+    window.removeEventListener("resize", onResize);
+    overlay.remove();
+    /* 확대 화면에서 매를 옮겨 다녔을 수 있으니(m.paperPage 갱신됨), 뒤에 있는
+     * 개요/단면 화면도 그 위치를 반영하도록 다시 그린다. */
+    if (m.paperMode === "view") renderManuscriptPaperView(m);
+  }
+  function onKey(e) {
+    if (e.key === "Escape") closeZoom();
+    else if (e.key === "ArrowLeft") go(-1);
+    else if (e.key === "ArrowRight") go(1);
+  }
+  var resizeDebounce = null;
+  function onResize() { clearTimeout(resizeDebounce); resizeDebounce = setTimeout(paint, 150); }
+  var touchStartX = null;
+  overlay.addEventListener("touchstart", function (e) { touchStartX = e.touches[0].clientX; }, { passive: true });
+  overlay.addEventListener("touchend", function (e) {
+    if (touchStartX == null) return;
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+    touchStartX = null;
+  }, { passive: true });
+  /* "배경(외부) 클릭 시 닫기" -- overlay는 flex 레이아웃이라 topbar/body가
+   * 사실상 전체를 덮어서 클릭 지점이 overlay 자기 자신(e.target===overlay)
+   * 인 경우가 거의 없다(안쪽 요소들이 항상 target이 됨). 그래서 "낱장·버튼
+   * 위가 아닌 곳"을 배경 클릭으로 취급한다. */
+  overlay.addEventListener("mousedown", function (e) {
+    if (!e.target.closest(".paper-zoom-sheet-wrap, .paper-zoom-nav, .paper-zoom-close")) closeZoom();
+  });
+  document.addEventListener("keydown", onKey);
+  window.addEventListener("resize", onResize);
+  paint();
+}
+
+var _epSwitchOutsideHandler = null;
+function closeEpSwitchPopover() {
+  var p = document.getElementById("epSwitchPopover"); if (p) p.remove();
+  if (_epSwitchOutsideHandler) { document.removeEventListener("mousedown", _epSwitchOutsideHandler); _epSwitchOutsideHandler = null; }
+}
+/* 집필창 안에서 "현재 회차" 버튼을 누르면 뜨는 검색 가능한 회차 선택 팝오버 --
+ * 소설 원고 목록 페이지와 같은 매칭 엔진(novelEpisodesFiltered/epMatchTier)을
+ * 그대로 써서, 어디서 회차를 찾든 같은 우선순위로 움직인다. */
+function openEpSwitchPopover(anchorEl, m, novel, onPick) {
+  closeEpSwitchPopover();
+  var pop = document.createElement("div");
+  pop.className = "ep-switch-popover";
+  pop.id = "epSwitchPopover";
+  pop.innerHTML =
+    '<input type="text" class="ep-switch-popover-input" id="epSwitchSearch" placeholder="회차 번호 또는 제목 검색..." autocomplete="off">' +
+    '<div class="ep-switch-popover-list" id="epSwitchList"></div>';
+  document.body.appendChild(pop);
+  var r = anchorEl.getBoundingClientRect();
+  var top = Math.min(r.bottom+6, window.innerHeight-Math.min(400, pop.offsetHeight||400)-8);
+  var left = Math.min(r.left, window.innerWidth-320-8);
+  pop.style.top = Math.max(8,top)+"px";
+  pop.style.left = Math.max(8,left)+"px";
+
+  var selIdx = 0;
+  var input = document.getElementById("epSwitchSearch");
+  function currentList() { return novelEpisodesFiltered(novel.id, input.value, ""); }
+  function rowHtml(item, idx) {
+    var ord = episodeOrdinal(item.m);
+    var isActive = item.m.id === m.id;
+    return '<div class="ep-switch-popover-row'+(idx===selIdx?" selected":"")+(isActive?" active":"")+'" data-epid="'+item.m.id+'">' +
+      '<span class="ord">'+(ord!=null?ord:"")+'</span><span class="t">'+esc(item.m.title||"제목 없음")+'</span>' +
+    '</div>';
+  }
+  function refresh() {
+    var list = currentList();
+    if (selIdx >= list.length) selIdx = Math.max(0, list.length-1);
+    var box = document.getElementById("epSwitchList");
+    if (!box) return;
+    box.innerHTML = list.length ? list.map(rowHtml).join("") : '<div class="sb-empty" style="padding:10px">일치하는 화가 없습니다.</div>';
+    box.querySelectorAll("[data-epid]").forEach(function(row){
+      row.addEventListener("click", function(){ var id = row.dataset.epid; closeEpSwitchPopover(); onPick(id); });
+    });
+  }
+  input.addEventListener("input", function(){ selIdx = 0; refresh(); });
+  input.addEventListener("keydown", function(e){
+    var list;
+    if (e.key === "ArrowDown") { e.preventDefault(); list = currentList(); if (list.length) { selIdx = Math.min(list.length-1, selIdx+1); refresh(); } }
+    else if (e.key === "ArrowUp") { e.preventDefault(); list = currentList(); if (list.length) { selIdx = Math.max(0, selIdx-1); refresh(); } }
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      list = currentList();
+      if (list.length) { var pick = list[Math.min(selIdx, list.length-1)].m.id; closeEpSwitchPopover(); onPick(pick); }
+    } else if (e.key === "Escape") { closeEpSwitchPopover(); }
+  });
+  refresh();
+  input.focus();
+  setTimeout(function(){
+    _epSwitchOutsideHandler = function(e){
+      if (!pop.contains(e.target) && e.target !== anchorEl && !anchorEl.contains(e.target)) closeEpSwitchPopover();
+    };
+    document.addEventListener("mousedown", _epSwitchOutsideHandler);
+  }, 0);
+}
 function renderManuscriptPage(m) {
   if (m.previewFontSize === undefined) m.previewFontSize = 16;
   if (m.previewFont === undefined) m.previewFont = "sans";
@@ -13648,6 +15178,11 @@ function renderManuscriptPage(m) {
   if (m.paperSize === undefined) m.paperSize = 400;
   if (m.paperVertical === undefined) m.paperVertical = false;
   if (m.paperScrollFrac === undefined) m.paperScrollFrac = 0;
+  if (m.paperMode === undefined) m.paperMode = "write";
+  if (m.paperOverview === undefined) m.paperOverview = false;
+  if (m.paperPage === undefined) m.paperPage = 0;
+  if (m.formatRanges === undefined) m.formatRanges = [];
+  if (m.showFormatPreview === undefined) m.showFormatPreview = false;
 
   var main = document.getElementById("main");
   var isBook = m.format === "general";
@@ -13695,7 +15230,8 @@ function renderManuscriptPage(m) {
       '<div class="ms-controls">' + focusBtnHtml + '</div>' +
       '<div id="paperArea"></div>';
   } else {
-    var textareaHtml = '<textarea class="ms-textarea'+(isPlain?" ms-doc-textarea":"")+'" id="msText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요.">'+esc(m.text||"")+'</textarea>';
+    var textareaHtml = '<textarea class="'+(isPlain?"paper-text":"ms-textarea")+'" id="msText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요."'+(m.showFormatPreview?' style="display:none"':'')+'>'+esc(m.text||"")+'</textarea>';
+    var formatPreviewHtml = '<div class="ms-format-preview'+(isPlain?" paper-text":" ms-textarea")+'" id="msFormatPreview"'+(m.showFormatPreview?'':' style="display:none"')+'>'+renderFormattedPlainText(m.text||"", m.formatRanges)+'</div>';
     bodyHtml =
       '<div class="ms-controls">' +
         focusBtnHtml +
@@ -13707,22 +15243,84 @@ function renderManuscriptPage(m) {
         '<div class="sep"></div>' +
         '<select class="sel" id="msFontFamily">' + Object.keys(MS_FONTS).map(function(k){ return '<option value="'+k+'" '+(m.previewFont===k?"selected":"")+'>'+MS_FONTS[k].label+'</option>'; }).join("") + '</select>' +
         '<div class="sep"></div>' +
+        formatToolbarHtml() +
+        '<button type="button" id="msFormatPreviewToggle" class="'+(m.showFormatPreview?"on":"")+'" title="이탤릭·글씨크기 서식이 실제로 어떻게 보이는지 확인(읽기 전용)">'+ic("eye",13)+'<span>서식 미리보기</span></button>' +
+        '<div class="sep"></div>' +
         '<button type="button" id="msFindBtn">'+ic("search",13)+'<span>찾아바꾸기</span></button>' +
       '</div>' +
       (isPlain
-        ? '<div class="ms-doc-page"><div class="ms-doc-ruler"></div><div class="ms-doc-screen">' + textareaHtml + '</div></div>'
-        : '<div class="ms-frame"><div class="ms-notch"></div><div class="ms-screen">' + textareaHtml + '</div></div>');
+        ? '<div class="paper-outer"><div class="paper-sheet-wrap">' + textareaHtml + formatPreviewHtml + '</div></div>'
+        : '<div class="ms-frame"><div class="ms-notch"></div><div class="ms-screen">' + textareaHtml + formatPreviewHtml + '</div></div>');
   }
+
+  /* 원고지 모드는 "정보 영역이 원고지 본문보다 눈에 띄면 안 된다"는 요구에
+   * 맞춰 제목 바를 따로 짠다 -- 제목 input은 그대로 두되(이름 바꾸기 기능이
+   * 없어지면 안 되므로) 아주 작게 줄이고, 그 위에 "N화" 같은 화수 배지를
+   * 붙인다. 표시 방식(제목+화수/화수만/제목만/숨김)은 PAPER_INFO_MODE로
+   * 사용자가 고른다. */
+  var titleBarHtml;
+  if (isPaper) {
+    var ord = episodeOrdinal(m);
+    var epBadgeHtml = (ord && PAPER_INFO_MODE !== "title_only" && PAPER_INFO_MODE !== "hidden")
+      ? '<span class="paper-ep-badge">'+ord+'화</span>' : '';
+    var showTitleText = PAPER_INFO_MODE === "title_ep" || PAPER_INFO_MODE === "title_only";
+    titleBarHtml =
+      '<div class="graph-title-bar paper-compact-bar">' +
+        '<span class="paper-info-tag-label">원고지</span>' +
+        epBadgeHtml +
+        '<input class="graph-title paper-compact-title'+(showTitleText?"":" dim")+'" id="msTitle" value="'+esc(m.title)+'" placeholder="제목">' +
+        '<button type="button" class="paper-info-settings-btn" id="paperInfoSettingsBtn" title="제목/화수 표시 방식 설정">'+ic("gear",12)+'</button>' +
+        '<span class="ms-save-indicator saved" id="msSaveIndicator">'+ic("checkmark",11)+' 저장됨</span>' +
+        '<span class="ms-char-count" id="msCharCount">'+fmtNum(charCount(m.text))+'자</span>' +
+        '<button class="page-del" id="deleteMsBtn" style="margin-top:0">'+ic("trash",13)+'<span>원고 삭제</span></button>' +
+      '</div>';
+  } else {
+    titleBarHtml = '<div class="graph-title-bar"><input class="graph-title" id="msTitle" value="'+esc(m.title)+'" placeholder="원고(화) 제목"><span class="ms-save-indicator saved" id="msSaveIndicator">'+ic("checkmark",11)+' 저장됨</span><span class="ms-char-count" id="msCharCount">'+fmtNum(charCount(m.text))+'자</span><button class="page-del" id="deleteMsBtn" style="margin-top:0">'+ic("trash",13)+'<span>원고 삭제</span></button></div>';
+  }
+
+  /* 집필창 안에서 다른 회차로 옮겨갈 때, 목록 화면으로 나갔다 다시 들어오지
+   * 않고 바로 전/현재/다음 화를 오갈 수 있게 한다. "현재 회차" 버튼은 소설
+   * 원고 페이지와 같은 검색·빠른 이동 엔진(novelEpisodesFiltered)을 쓰는
+   * 팝오버를 띄운다 -- 회차가 아주 많아도 스크롤 없이 번호/제목으로 바로
+   * 찾아갈 수 있다. */
+  var epSiblings = novelOfMs ? sortedEpsOf(novelOfMs.id) : [];
+  var epIdxInSiblings = epSiblings.findIndex(function(x){ return x.id===m.id; });
+  var prevEpSwitch = epIdxInSiblings>0 ? epSiblings[epIdxInSiblings-1] : null;
+  var nextEpSwitch = (epIdxInSiblings!==-1 && epIdxInSiblings<epSiblings.length-1) ? epSiblings[epIdxInSiblings+1] : null;
+  var epSwitcherHtml = novelOfMs ? (
+    '<div class="ep-switcher-row">' +
+      '<button type="button" class="ep-switch-btn" id="epPrevBtn"'+(prevEpSwitch?'':' disabled')+' title="'+(prevEpSwitch?esc(prevEpSwitch.title||"이전 화"):"이전 화 없음")+'">'+ic("chevL",13)+'<span>'+(prevEpSwitch?esc(prevEpSwitch.title||"이전 화"):"이전 화")+'</span></button>' +
+      '<button type="button" class="ep-switch-current" id="epCurrentBtn" title="다른 회차로 빠르게 이동(검색 가능)">'+ic("docIcon",13)+'<span>'+esc(m.title||"제목 없음")+'</span>'+ic("chevron",11)+'</button>' +
+      '<button type="button" class="ep-switch-btn" id="epNextBtn"'+(nextEpSwitch?'':' disabled')+' title="'+(nextEpSwitch?esc(nextEpSwitch.title||"다음 화"):"다음 화 없음")+'"><span>'+(nextEpSwitch?esc(nextEpSwitch.title||"다음 화"):"다음 화")+'</span>'+ic("chevR",13)+'</button>' +
+    '</div>'
+  ) : '';
 
   main.innerHTML =
     '<div class="graph-shell">' +
-      '<div class="graph-title-bar"><input class="graph-title" id="msTitle" value="'+esc(m.title)+'" placeholder="원고(화) 제목"><span class="ms-save-indicator saved" id="msSaveIndicator">'+ic("checkmark",11)+' 저장됨</span><span class="ms-char-count" id="msCharCount">'+fmtNum(charCount(m.text))+'자</span><button class="page-del" id="deleteMsBtn" style="margin-top:0">'+ic("trash",13)+'<span>원고 삭제</span></button></div>' +
-      '<div class="page-pad" style="padding-top:26px">' + povHtml + statsHtml + tabsHtml +
+      titleBarHtml + epSwitcherHtml +
+      '<div class="page-pad'+(isPaper?" paper-info-compact":"")+'" style="padding-top:26px">' + povHtml + statsHtml + tabsHtml +
         ((isBook || isPaper)
           ? '<div class="ms-editor-stack">' + bodyHtml + '<div class="ms-context-panel stacked" id="msContextPanel"></div></div>'
           : '<div class="ms-editor-row"><div class="ms-editor-main">' + bodyHtml + '</div><div class="ms-context-panel" id="msContextPanel"></div></div>') +
       '</div>' +
     '</div>';
+  if (novelOfMs) {
+    var switchToEpisode = function(id) {
+      if (!id || id === m.id) return;
+      flushPaperSave();
+      state.mode = "manuscript"; state.activeId = id; render();
+    };
+    var epPrevBtn = document.getElementById("epPrevBtn");
+    var epNextBtn = document.getElementById("epNextBtn");
+    var epCurrentBtn = document.getElementById("epCurrentBtn");
+    if (epPrevBtn && prevEpSwitch) epPrevBtn.addEventListener("click", function(){ switchToEpisode(prevEpSwitch.id); });
+    if (epNextBtn && nextEpSwitch) epNextBtn.addEventListener("click", function(){ switchToEpisode(nextEpSwitch.id); });
+    if (epCurrentBtn) epCurrentBtn.addEventListener("click", function(){ openEpSwitchPopover(epCurrentBtn, m, novelOfMs, switchToEpisode); });
+  }
+  if (isPaper) {
+    var infoSettingsBtn = document.getElementById("paperInfoSettingsBtn");
+    if (infoSettingsBtn) infoSettingsBtn.addEventListener("click", openPaperInfoModeModal);
+  }
 
   document.getElementById("msTitle").addEventListener("input", function(e){ m.title = e.target.value; saveData(); renderSidebar(); updateMsStatsBar(m); flashSaveIndicator(); });
   document.getElementById("deleteMsBtn").addEventListener("click", function(){ deleteManuscript(m.id); });
@@ -13776,15 +15374,29 @@ function renderManuscriptPage(m) {
   } else {
     applyMsStyle(m);
     var msTextEl = document.getElementById("msText");
-    msTextEl.addEventListener("input", function(e){ m.text = e.target.value; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId); updateContextPanel(m, msWorkId); flashSaveIndicator(); });
+    wireAutoIndent(msTextEl);
+    function refreshMsFormatPreview() {
+      var pv = document.getElementById("msFormatPreview");
+      if (pv) pv.innerHTML = renderFormattedPlainText(m.text||"", m.formatRanges);
+    }
+    msTextEl.addEventListener("input", function(e){
+      var oldVal = m.text||"";
+      m.formatRanges = rebaseFormatRanges(m.formatRanges, oldVal, e.target.value);
+      m.text = e.target.value;
+      schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId); updateContextPanel(m, msWorkId); flashSaveIndicator(); refreshMsFormatPreview();
+    });
+    msTextEl.addEventListener("blur", flushPaperSave);
     wireMentionAutocomplete(msTextEl, msWorkId);
     document.getElementById("msDarkToggle").addEventListener("click", function(){ m.previewDark = !m.previewDark; saveData(); renderManuscriptPage(m); });
     document.getElementById("msFontDec").addEventListener("click", function(){ m.previewFontSize = Math.max(13, m.previewFontSize-1); saveData(); applyMsStyle(m); document.getElementById("msFontVal").textContent = m.previewFontSize+"px"; });
     document.getElementById("msFontInc").addEventListener("click", function(){ m.previewFontSize = Math.min(20, m.previewFontSize+1); saveData(); applyMsStyle(m); document.getElementById("msFontVal").textContent = m.previewFontSize+"px"; });
     document.getElementById("msFontFamily").addEventListener("change", function(e){ m.previewFont = e.target.value; saveData(); applyMsStyle(m); });
+    document.getElementById("msFormatPreviewToggle").addEventListener("click", function(){ m.showFormatPreview = !m.showFormatPreview; saveData(); renderManuscriptPage(m); });
+    wireFormatToolbarButtons(document.querySelector(".ms-controls"), msTextEl, function(){ return m.formatRanges; }, function(r){ m.formatRanges = r; }, function(){ saveData(); refreshMsFormatPreview(); flashSaveIndicator(); });
     document.getElementById("msFindBtn").addEventListener("click", function(e){
       openFindReplace("msText", e.currentTarget, function(newVal){
-        m.text = newVal; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId, true); updateContextPanel(m, msWorkId); flashSaveIndicator();
+        m.formatRanges = rebaseFormatRanges(m.formatRanges, m.text||"", newVal);
+        m.text = newVal; saveData(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId, true); updateContextPanel(m, msWorkId); flashSaveIndicator(); refreshMsFormatPreview();
       });
     });
   }
@@ -13906,6 +15518,8 @@ function renderEssayEntryPage(e) {
   if (e.relatedCharacterIds === undefined) e.relatedCharacterIds = [];
   if (e.linkedCompareId === undefined) e.linkedCompareId = null;
   if (e.showCompare === undefined) e.showCompare = false;
+  if (e.formatRanges === undefined) e.formatRanges = [];
+  if (e.showFormatPreview === undefined) e.showFormatPreview = false;
 
   var main = document.getElementById("main");
   var essayOf = ESSAYS.find(function(es){ return es.id === e.essayId; });
@@ -13939,7 +15553,8 @@ function renderEssayEntryPage(e) {
       '<div class="ms-goal-bar-wrap" id="esGoalBarWrap"></div>' +
     '</div>';
 
-  var textareaHtml = '<textarea class="ms-textarea ms-doc-textarea" id="esText" spellcheck="true" placeholder="여기에 글을 적어보세요.">'+esc(e.text||"")+'</textarea>';
+  var textareaHtml = '<textarea class="ms-textarea ms-doc-textarea" id="esText" spellcheck="true" placeholder="여기에 글을 적어보세요."'+(e.showFormatPreview?' style="display:none"':'')+'>'+esc(e.text||"")+'</textarea>';
+  var esFormatPreviewHtml = '<div class="ms-format-preview ms-textarea ms-doc-textarea" id="esFormatPreview"'+(e.showFormatPreview?'':' style="display:none"')+'>'+renderFormattedPlainText(e.text||"", e.formatRanges)+'</div>';
   var editorHtml =
     '<div class="ms-controls">' +
       '<button type="button" id="esDarkToggle" class="'+(e.previewDark?"on":"")+'">'+ic(e.previewDark?"moon":"sun",13)+'<span>다크 모드</span></button>' +
@@ -13950,9 +15565,12 @@ function renderEssayEntryPage(e) {
       '<div class="sep"></div>' +
       '<select class="sel" id="esFontFamily">' + Object.keys(MS_FONTS).map(function(k){ return '<option value="'+k+'" '+(e.previewFont===k?"selected":"")+'>'+MS_FONTS[k].label+'</option>'; }).join("") + '</select>' +
       '<div class="sep"></div>' +
+      formatToolbarHtml() +
+      '<button type="button" id="esFormatPreviewToggle" class="'+(e.showFormatPreview?"on":"")+'" title="이탤릭·글씨크기 서식이 실제로 어떻게 보이는지 확인(읽기 전용)">'+ic("eye",13)+'<span>서식 미리보기</span></button>' +
+      '<div class="sep"></div>' +
       '<button type="button" id="esFindBtn">'+ic("search",13)+'<span>찾아바꾸기</span></button>' +
     '</div>' +
-    '<div class="ms-doc-page"><div class="ms-doc-ruler"></div><div class="ms-doc-screen">' + textareaHtml + '</div></div>';
+    '<div class="ms-doc-page"><div class="ms-doc-ruler"></div><div class="ms-doc-screen">' + textareaHtml + esFormatPreviewHtml + '</div></div>';
 
   var bodyHtml;
   if (e.showCompare && compareEntry) {
@@ -14017,16 +15635,180 @@ function renderEssayEntryPage(e) {
   });
 
   applyEsStyle(e);
-  document.getElementById("esText").addEventListener("input", function(ev){ e.text = ev.target.value; saveData(); updateEsCharCount(e); updateEsStatsBar(e); updateEsGoalBar(e); flashEsSaveIndicator(); });
+  var esTextEl = document.getElementById("esText");
+  wireAutoIndent(esTextEl);
+  function refreshEsFormatPreview() {
+    var pv = document.getElementById("esFormatPreview");
+    if (pv) pv.innerHTML = renderFormattedPlainText(e.text||"", e.formatRanges);
+  }
+  esTextEl.addEventListener("input", function(ev){
+    var oldVal = e.text||"";
+    e.formatRanges = rebaseFormatRanges(e.formatRanges, oldVal, ev.target.value);
+    e.text = ev.target.value;
+    saveData(); updateEsCharCount(e); updateEsStatsBar(e); updateEsGoalBar(e); flashEsSaveIndicator(); refreshEsFormatPreview();
+  });
   document.getElementById("esDarkToggle").addEventListener("click", function(){ e.previewDark = !e.previewDark; saveData(); renderEssayEntryPage(e); });
   document.getElementById("esFontDec").addEventListener("click", function(){ e.previewFontSize = Math.max(13, e.previewFontSize-1); saveData(); applyEsStyle(e); document.getElementById("esFontVal").textContent = e.previewFontSize+"px"; });
   document.getElementById("esFontInc").addEventListener("click", function(){ e.previewFontSize = Math.min(20, e.previewFontSize+1); saveData(); applyEsStyle(e); document.getElementById("esFontVal").textContent = e.previewFontSize+"px"; });
   document.getElementById("esFontFamily").addEventListener("change", function(ev){ e.previewFont = ev.target.value; saveData(); applyEsStyle(e); });
+  document.getElementById("esFormatPreviewToggle").addEventListener("click", function(){ e.showFormatPreview = !e.showFormatPreview; saveData(); renderEssayEntryPage(e); });
+  wireFormatToolbarButtons(document.querySelector(".ms-controls"), esTextEl, function(){ return e.formatRanges; }, function(r){ e.formatRanges = r; }, function(){ saveData(); refreshEsFormatPreview(); flashEsSaveIndicator(); });
   document.getElementById("esFindBtn").addEventListener("click", function(ev){
     openFindReplace("esText", ev.currentTarget, function(newVal){
-      e.text = newVal; saveData(); updateEsCharCount(e); updateEsStatsBar(e); updateEsGoalBar(e); flashEsSaveIndicator();
+      e.formatRanges = rebaseFormatRanges(e.formatRanges, e.text||"", newVal);
+      e.text = newVal; saveData(); updateEsCharCount(e); updateEsStatsBar(e); updateEsGoalBar(e); flashEsSaveIndicator(); refreshEsFormatPreview();
     });
   });
+}
+
+/* ---------------- 시나리오·희곡 집필 화면 ---------------- */
+function flashPsSaveIndicator() {
+  var ind = document.getElementById("psSaveIndicator");
+  if (!ind) return;
+  ind.classList.remove("saved"); void ind.offsetWidth; ind.classList.add("saved");
+}
+function playElToolbarHtml(idx, total) {
+  return '<span class="play-el-tools">' +
+    '<button type="button" data-elmoveup title="위로"'+(idx===0?" disabled":"")+'>'+ic("chevUp",11)+'</button>' +
+    '<button type="button" data-elmovedown title="아래로"'+(idx===total-1?" disabled":"")+'>'+ic("chevDown",11)+'</button>' +
+    '<button type="button" data-eldel title="삭제">'+ic("trash",12)+'</button>' +
+  '</span>';
+}
+function renderPlayElementHtml(el, idx, total) {
+  var def = PLAY_ELEMENT_TYPES[el.type] || PLAY_ELEMENT_TYPES.note;
+  if (def.isHeading) {
+    return '<div class="play-el play-el-heading" data-elid="'+el.id+'">' +
+      '<div class="play-el-headbar"><span class="play-el-typebadge">'+esc(def.label)+'</span>' +
+        '<input type="text" class="play-el-headinput" data-elfield="label" value="'+esc(el.label||"")+'" placeholder="'+esc(def.placeholder)+'">' +
+        playElToolbarHtml(idx, total) +
+      '</div>' +
+    '</div>';
+  }
+  var speakerHtml = def.hasSpeaker ?
+    '<input type="text" class="play-el-speaker" data-elfield="speaker" value="'+esc(el.speaker||"")+'" placeholder="인물 이름" list="playCharacterList">' : '';
+  return '<div class="play-el play-el-'+el.type+'" data-elid="'+el.id+'">' +
+    '<div class="play-el-headbar">'+ic(def.icon,13)+'<span class="play-el-typebadge">'+esc(def.label)+'</span>' + speakerHtml + playElToolbarHtml(idx, total) + '</div>' +
+    '<div class="play-el-fmtbar">' +
+      '<button type="button" class="play-fmt-btn" data-fmt="italic" title="이탤릭체(선택한 부분에만 적용)"><i>i</i></button>' +
+      '<select class="play-fmt-size" data-fmt="size" title="글씨 크기(선택한 부분에만 적용)">' +
+        '<option value="">크기</option><option value="12">12</option><option value="14">14</option><option value="16">16</option><option value="18">18</option><option value="20">20</option><option value="24">24</option><option value="28">28</option>' +
+      '</select>' +
+    '</div>' +
+    '<div class="play-el-body" contenteditable="true" data-elbody="'+el.id+'" data-placeholder="'+esc(def.placeholder)+'">'+(el.html||"")+'</div>' +
+  '</div>';
+}
+function addPlayElement(ps, type) {
+  var el = newPlayElement(type);
+  if (!el) return;
+  ps.elements = ps.elements || [];
+  ps.elements.push(el);
+  saveData();
+  renderPlayScriptPage(ps);
+  var target = document.querySelector('[data-elid="'+el.id+'"] .play-el-headinput, [data-elid="'+el.id+'"] .play-el-speaker, [data-elid="'+el.id+'"] [data-elbody]');
+  if (target) target.focus();
+  var list = document.getElementById("playElList");
+  if (list) list.scrollTop = list.scrollHeight;
+}
+function movePlayElement(ps, elId, dir) {
+  var idx = ps.elements.findIndex(function(x){ return x.id===elId; });
+  var swap = idx + dir;
+  if (idx === -1 || swap < 0 || swap >= ps.elements.length) return;
+  var tmp = ps.elements[idx]; ps.elements[idx] = ps.elements[swap]; ps.elements[swap] = tmp;
+  saveData(); renderPlayScriptPage(ps);
+}
+function deletePlayElement(ps, elId) {
+  ps.elements = (ps.elements||[]).filter(function(x){ return x.id!==elId; });
+  saveData(); renderPlayScriptPage(ps);
+}
+/* body(contenteditable)는 el.html을 읽어 그릴 뿐, 입력 중에는 절대로 다시 그리지
+ * 않는다(bookEditFlow와 동일한 원칙) -- 별도 tmp div에서 innerHTML을 정제해
+ * el.html에만 저장하고, 실제로 포커스가 가 있는 DOM 노드는 건드리지 않으므로
+ * 한국어 IME 조합 중에도 안전하다. */
+function wirePlayScriptElements(ps) {
+  (ps.elements||[]).forEach(function(el){
+    var block = document.querySelector('[data-elid="'+el.id+'"]');
+    if (!block) return;
+    var headInput = block.querySelector('[data-elfield="label"]');
+    if (headInput) headInput.addEventListener("input", function(ev){ el.label = ev.target.value; saveData(); renderSidebar(); flashPsSaveIndicator(); });
+    var speakerInput = block.querySelector('[data-elfield="speaker"]');
+    if (speakerInput) speakerInput.addEventListener("input", function(ev){ el.speaker = ev.target.value; saveData(); flashPsSaveIndicator(); });
+    var upBtn = block.querySelector("[data-elmoveup]");
+    if (upBtn) upBtn.addEventListener("click", function(){ movePlayElement(ps, el.id, -1); });
+    var downBtn = block.querySelector("[data-elmovedown]");
+    if (downBtn) downBtn.addEventListener("click", function(){ movePlayElement(ps, el.id, 1); });
+    var delBtn = block.querySelector("[data-eldel]");
+    if (delBtn) delBtn.addEventListener("click", function(){ deletePlayElement(ps, el.id); });
+    var body = block.querySelector("[data-elbody]");
+    if (!body) return;
+    var savedRange = null;
+    function captureSelection() {
+      var s = window.getSelection();
+      if (s && s.rangeCount && !s.isCollapsed && body.contains(s.anchorNode)) savedRange = s.getRangeAt(0).cloneRange();
+    }
+    body.addEventListener("mouseup", captureSelection);
+    body.addEventListener("keyup", captureSelection);
+    function commitBody() { el.html = sanitizeInlineHtml(body.innerHTML); saveData(); flashPsSaveIndicator(); }
+    body.addEventListener("input", commitBody);
+    var italicBtn = block.querySelector('[data-fmt="italic"]');
+    if (italicBtn) {
+      italicBtn.addEventListener("mousedown", function(ev){ ev.preventDefault(); });
+      italicBtn.addEventListener("click", function(){
+        if (!savedRange) return;
+        var sel = window.getSelection();
+        sel.removeAllRanges(); sel.addRange(savedRange);
+        body.focus();
+        document.execCommand("italic");
+        commitBody();
+      });
+    }
+    var sizeSel = block.querySelector('[data-fmt="size"]');
+    if (sizeSel) {
+      sizeSel.addEventListener("change", function(ev){
+        var val = ev.target.value;
+        ev.target.value = "";
+        if (!val || !savedRange) return;
+        var sel = window.getSelection();
+        sel.removeAllRanges(); sel.addRange(savedRange);
+        body.focus();
+        wrapSelectionInline(function(span){ span.style.fontSize = val + "px"; });
+        commitBody();
+      });
+    }
+  });
+}
+function renderPlayScriptPage(ps) {
+  if (ps.elements === undefined) ps.elements = [];
+  var main = document.getElementById("main");
+  var playOf = PLAYS.find(function(p){ return p.id === ps.playId; });
+  var workId = playOf ? playOf.workId : null;
+  var charDocs = DOCS.filter(function(d){ return d.workId===workId && d.category==="등장인물"; });
+  var charDatalistHtml = '<datalist id="playCharacterList">' + charDocs.map(function(d){ return '<option value="'+esc(d.title||"")+'">'; }).join("") + '</datalist>';
+
+  var elementsHtml = (ps.elements||[]).length ?
+    ps.elements.map(function(el, idx){ return renderPlayElementHtml(el, idx, ps.elements.length); }).join("") :
+    '<div class="sb-empty">아직 아무 요소도 없습니다. 아래에서 추가해보세요.</div>';
+
+  var addMenuHtml = PLAY_ELEMENT_ORDER.map(function(type){
+    var def = PLAY_ELEMENT_TYPES[type];
+    return '<button type="button" class="play-add-btn" data-addel="'+type+'">'+ic(def.icon,13)+'<span>'+esc(def.label)+'</span></button>';
+  }).join("");
+
+  main.innerHTML =
+    '<div class="graph-shell">' +
+      '<div class="graph-title-bar"><input class="graph-title" id="psTitle" value="'+esc(ps.title)+'" placeholder="대본 제목"><span class="ms-save-indicator saved" id="psSaveIndicator">'+ic("checkmark",11)+' 저장됨</span><button class="page-del" id="deletePsBtn" style="margin-top:0">'+ic("trash",13)+'<span>대본 삭제</span></button></div>' +
+      '<div class="page-pad" style="padding-top:26px">' +
+        '<div class="play-el-list" id="playElList">' + elementsHtml + '</div>' +
+        '<div class="play-addmenu-wrap"><div class="play-addmenu-label">+ 요소 추가</div><div class="play-addmenu">' + addMenuHtml + '</div></div>' +
+        charDatalistHtml +
+      '</div>' +
+    '</div>';
+
+  document.getElementById("psTitle").addEventListener("input", function(ev){ ps.title = ev.target.value; saveData(); renderSidebar(); flashPsSaveIndicator(); });
+  document.getElementById("deletePsBtn").addEventListener("click", function(){ deletePlayScript(ps.id); });
+  main.querySelectorAll("[data-addel]").forEach(function(btn){
+    btn.addEventListener("click", function(){ addPlayElement(ps, btn.dataset.addel); });
+  });
+  wirePlayScriptElements(ps);
 }
 
 /* ---------------- custom script (hand-drawn alphabet) ---------------- */
@@ -14316,7 +16098,7 @@ function renderScriptPage(sc) {
 
   main.innerHTML =
     '<div class="graph-shell">' +
-      '<div class="graph-title-bar"><input class="graph-title" id="scTitle" value="'+esc(sc.title)+'" placeholder="문자 체계 이름"><button class="page-del" id="deleteScriptBtn" style="margin-top:0">'+ic("trash",13)+'<span>삭제</span></button></div>' +
+      '<div class="graph-title-bar"><input class="graph-title" id="scTitle" value="'+esc(sc.title)+'" placeholder="문자 체계 이름"><button class="page-del" id="deleteScriptBtn" style="margin-top:0">'+ic("trash",13)+'<span>문자 삭제</span></button></div>' +
       '<div class="page-pad" style="padding-top:26px">' +
         glyphSectionHtml +
         typingSectionHtml +
@@ -14653,9 +16435,17 @@ function render() {
     var m = currentManuscript();
     if (m) { renderManuscriptPage(m); return; }
   }
+  if (state.mode === "novel") {
+    var nv = NOVELS.find(function(n){ return n.id === state.activeId; });
+    if (nv) { renderNovelPage(nv); return; }
+  }
   if (state.mode === "essayentry") {
     var esE = ESSAY_ENTRIES.find(function(x){ return x.id === state.activeId; });
     if (esE) { renderEssayEntryPage(esE); return; }
+  }
+  if (state.mode === "playscript") {
+    var psE = PLAY_SCRIPTS.find(function(x){ return x.id === state.activeId; });
+    if (psE) { renderPlayScriptPage(psE); return; }
   }
   if (state.mode === "script") {
     var sc = currentScript();
@@ -14681,7 +16471,7 @@ function isValidBackupData(data) {
   });
 }
 function exportData() {
-  var data = { docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS, exportedAt: new Date().toISOString(), appVersion: 1 };
+  var data = { docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS, plays: PLAYS, playScripts: PLAY_SCRIPTS, exportedAt: new Date().toISOString(), appVersion: 1 };
   var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   var url = URL.createObjectURL(blob);
   var a = document.createElement("a");
@@ -14720,6 +16510,8 @@ function importDataFile(file) {
         SCRIPTS = parsed.scripts || [];
         ESSAYS = parsed.essays || [];
         ESSAY_ENTRIES = parsed.essayEntries || [];
+        PLAYS = parsed.plays || [];
+        PLAY_SCRIPTS = parsed.playScripts || [];
         RELATIONSHIPS = parsed.relationships || [];
         state.mode = "empty"; state.activeId = null; state.collapsed = {};
         saveData(); render();
