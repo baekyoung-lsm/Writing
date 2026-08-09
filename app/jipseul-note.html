@@ -262,10 +262,12 @@
   .row-del:hover { opacity:1; color:var(--rose); background:var(--rose-soft); }
   .row-settings { flex:none; display:flex; align-items:center; justify-content:center; color:var(--ink-faint); opacity:.55; background:none; border:none; padding:3px; border-radius:5px; font-size:12px; }
   .row-settings:hover { opacity:1; color:var(--accent); background:var(--bg-card-hover); }
-  .ms-draggable[draggable="true"] { cursor:grab; }
-  .ms-draggable.dragging { opacity:.4; cursor:grabbing; }
-  .ms-draggable.drag-over-left { box-shadow:inset 2px 0 0 0 var(--accent); }
-  .ms-draggable.drag-over-right { box-shadow:inset -2px 0 0 0 var(--accent); }
+  .ms-draggable[draggable="true"], .essay-draggable[draggable="true"], .play-draggable[draggable="true"], .novel-ep-row[draggable="true"] { cursor:grab; }
+  .ms-draggable.dragging, .essay-draggable.dragging, .play-draggable.dragging, .novel-ep-row.dragging { opacity:.4; cursor:grabbing; }
+  .ms-draggable.drag-over-before, .essay-draggable.drag-over-before, .play-draggable.drag-over-before { box-shadow:inset 2px 0 0 0 var(--accent); }
+  .ms-draggable.drag-over-after, .essay-draggable.drag-over-after, .play-draggable.drag-over-after { box-shadow:inset -2px 0 0 0 var(--accent); }
+  .novel-ep-row.drag-over-before { box-shadow:inset 0 2px 0 0 var(--accent); }
+  .novel-ep-row.drag-over-after { box-shadow:inset 0 -2px 0 0 var(--accent); }
   .sb-empty { font-size:12px; color:var(--ink-faint); padding:4px 8px 10px; }
 
   .sidebar-foot { margin-top:auto; padding-top:12px; border-top:1px solid var(--border); font-size:11px; color:var(--ink-faint); line-height:1.6; }
@@ -390,6 +392,7 @@
   .novel-ep-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; color:var(--ink); }
   .novel-ep-meta { flex:none; display:flex; align-items:center; gap:10px; font-size:11.5px; color:var(--ink-faint); }
   .novel-ep-row .row-move, .novel-ep-row .row-del, .novel-ep-row .row-insert { flex:none; }
+  .novel-ep-row:hover .row-move { display:inline-flex; }
 
   .doccat-viewtoggle { display:flex; gap:6px; flex:none; }
   .doccat-split-pad { padding-bottom:0; }
@@ -6197,6 +6200,20 @@ var EP_SCHEMES = {
   subtitle: { label: "소제목" }
 };
 function newNovel(workId) {
+  /* 사용자는 이미 작품을 만들면서 작품명을 정했다. 그 작품 안의 첫 소설
+   * 폴더까지 또 이름을 물어보면 "작품 생성 -> 이름 입력 -> 또 이름 입력 ->
+   * 그제서야 집필"이 되어 어색하다. 이 작품에 소설 폴더가 하나도 없는
+   * 첫 진입에서는 모달 없이 작품명을 그대로 써서 폴더를 만들고 첫 화까지
+   * 곧장 만들어 집필창으로 들어간다. 이미 소설 폴더가 있는데 하나 더
+   * 추가하는 경우(외전 등 의도적인 추가)는 기존처럼 이름을 물어본다. */
+  if (!NOVELS.some(function(n){ return n.workId === workId; })) {
+    var w = WORKS.find(function(x){ return x.id === workId; });
+    var n0 = { id: uid(), workId: workId, title: (w && w.title) || "새 소설", epScheme: "subtitle" };
+    NOVELS.push(n0); saveData();
+    state.collapsed["manuscript:"+workId] = false; state.collapsed["novel:"+n0.id] = false;
+    newManuscriptIn(n0.id);
+    return;
+  }
   openModal({
     title: "새 소설 폴더",
     fields: [{ placeholder: "소설 제목" }],
@@ -6312,52 +6329,61 @@ function moveManuscriptTo(draggedId, targetId, before) {
   dragged.createdAt = newCreatedAt;
   saveData(); renderSidebar();
 }
-var msDragId = null;
-function wireManuscriptDragDrop(el) {
-  var rows = el.querySelectorAll('.ms-draggable[draggable="true"]');
-  /* 화 목록이 예전엔 사이드바 트리에서 세로로 쌓여 있었지만, 지금은 상단
-   * 워크스페이스 탭 아래 칩 목록에서 가로로 늘어선다(renderWorkspaceChrome).
-   * 그래서 삽입 위치 판정도 마우스의 세로 위치(위/아래 절반)가 아니라 가로
-   * 위치(왼쪽/오른쪽 절반)로 봐야 한다. */
+/* 작품 내부 원고 목록(소설 화/수필 글/시나리오 대본)은 어디서 보여주든 같은
+ * 드래그 정렬 규칙을 따라야 한다 -- 항목 위뿐 아니라 항목과 항목 "사이"에
+ * 드롭했을 때도 삽입 위치가 정확해야 하고, 이 계산을 세 목록이 각자 복제해서
+ * 들고 있으면 한쪽만 고치고 다른 쪽은 그대로 버그가 남는 문제가 생긴다. 그래서
+ * 판정·시각 피드백·드롭 처리를 이 함수 하나로 모은다. axis:"x"는 가로로
+ * 늘어선 칩 목록(왼쪽/오른쪽 절반), axis:"y"는 세로 목록(위/아래 절반) 기준으로
+ * "이 항목의 앞/뒤에 넣는다"를 판정한다. */
+function wireDragReorder(el, opts) {
+  var rows = el.querySelectorAll(opts.selector + '[draggable="true"]');
+  var draggedId = null;
   function clearDragOverMarks() {
-    el.querySelectorAll(".drag-over-left,.drag-over-right").forEach(function(r){ r.classList.remove("drag-over-left","drag-over-right"); });
+    el.querySelectorAll(".drag-over-before,.drag-over-after").forEach(function(r){ r.classList.remove("drag-over-before","drag-over-after"); });
   }
   rows.forEach(function(row){
+    var rowId = row.dataset[opts.dataKey];
     row.addEventListener("dragstart", function(e){
-      msDragId = row.dataset.openms;
+      draggedId = rowId;
       row.classList.add("dragging");
       if (e.dataTransfer) {
         e.dataTransfer.effectAllowed = "move";
-        try { e.dataTransfer.setData("text/plain", row.dataset.openms); } catch (err) {}
+        try { e.dataTransfer.setData("text/plain", rowId); } catch (err) {}
       }
     });
     row.addEventListener("dragend", function(){
       row.classList.remove("dragging");
       clearDragOverMarks();
-      msDragId = null;
+      draggedId = null;
     });
     row.addEventListener("dragover", function(e){
-      if (!msDragId || msDragId === row.dataset.openms) return;
+      if (!draggedId || draggedId === rowId) return;
       e.preventDefault();
       if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
       var rect = row.getBoundingClientRect();
-      var before = (e.clientX - rect.left) < rect.width/2;
-      row.classList.toggle("drag-over-left", before);
-      row.classList.toggle("drag-over-right", !before);
+      var before = opts.axis === "y" ? (e.clientY - rect.top) < rect.height/2 : (e.clientX - rect.left) < rect.width/2;
+      row.classList.toggle("drag-over-before", before);
+      row.classList.toggle("drag-over-after", !before);
     });
     row.addEventListener("dragleave", function(){
-      row.classList.remove("drag-over-left","drag-over-right");
+      row.classList.remove("drag-over-before","drag-over-after");
     });
     row.addEventListener("drop", function(e){
       e.preventDefault();
-      var draggedId = msDragId || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
-      var targetId = row.dataset.openms;
-      var before = row.classList.contains("drag-over-left");
+      var sourceId = draggedId || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
+      var targetId = rowId;
+      var before = row.classList.contains("drag-over-before");
       clearDragOverMarks();
-      if (!draggedId || draggedId === targetId) return;
-      moveManuscriptTo(draggedId, targetId, before);
+      if (!sourceId || sourceId === targetId) return;
+      opts.onDrop(sourceId, targetId, before);
     });
   });
+}
+function wireManuscriptDragDrop(el) {
+  /* 화 목록이 상단 워크스페이스 탭 아래 칩 목록에서 가로로 늘어서므로(renderWorkspaceChrome)
+   * 왼쪽/오른쪽 절반 기준으로 삽입 위치를 판정한다. */
+  wireDragReorder(el, { selector: ".ms-draggable", dataKey: "openms", axis: "x", onDrop: moveManuscriptTo });
 }
 function toggleNovelSort(novelId) {
   var n = NOVELS.find(function(n){ return n.id === novelId; });
@@ -6478,6 +6504,17 @@ function moveManuscript(id, dir) {
  * toggle, since chronological (oldest-first) is already the natural order for a
  * memoir/autobiography. */
 function newEssayCollection(workId) {
+  /* newNovel과 같은 이유로, 이 작품에 수필·자서전 폴더가 하나도 없는 첫
+   * 진입에서는 이름을 다시 묻지 않고 작품명으로 폴더를 만들어 첫 글까지
+   * 곧장 열어준다. */
+  if (!ESSAYS.some(function(x){ return x.workId === workId; })) {
+    var w = WORKS.find(function(x){ return x.id === workId; });
+    var es0 = { id: uid(), workId: workId, title: (w && w.title) || "새 수필·자서전" };
+    ESSAYS.push(es0); saveData();
+    state.collapsed["essay:"+workId] = false; state.collapsed["essaycol:"+es0.id] = false;
+    newEssayEntryIn(es0.id);
+    return;
+  }
   openModal({
     title: "새 수필·자서전 폴더",
     fields: [{ placeholder: "제목 (예: 나의 20대, 여행 수필집)" }],
@@ -6573,50 +6610,8 @@ function moveEssayEntryTo(draggedId, targetId, before) {
   dragged.createdAt = newCreatedAt;
   saveData(); renderSidebar();
 }
-var essayDragId = null;
 function wireEssayEntryDragDrop(el) {
-  var rows = el.querySelectorAll('.essay-draggable[draggable="true"]');
-  /* wireManuscriptDragDrop과 같은 이유로 세로(위/아래) 대신 가로(왼쪽/오른쪽)
-   * 절반으로 삽입 위치를 판정한다 -- 글 목록도 이제 가로 칩 목록이다. */
-  function clearDragOverMarks() {
-    el.querySelectorAll(".drag-over-left,.drag-over-right").forEach(function (r) { r.classList.remove("drag-over-left", "drag-over-right"); });
-  }
-  rows.forEach(function (row) {
-    row.addEventListener("dragstart", function (e) {
-      essayDragId = row.dataset.openessayentry;
-      row.classList.add("dragging");
-      if (e.dataTransfer) {
-        e.dataTransfer.effectAllowed = "move";
-        try { e.dataTransfer.setData("text/plain", row.dataset.openessayentry); } catch (err) {}
-      }
-    });
-    row.addEventListener("dragend", function () {
-      row.classList.remove("dragging");
-      clearDragOverMarks();
-      essayDragId = null;
-    });
-    row.addEventListener("dragover", function (e) {
-      if (!essayDragId || essayDragId === row.dataset.openessayentry) return;
-      e.preventDefault();
-      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
-      var rect = row.getBoundingClientRect();
-      var before = (e.clientX - rect.left) < rect.width / 2;
-      row.classList.toggle("drag-over-left", before);
-      row.classList.toggle("drag-over-right", !before);
-    });
-    row.addEventListener("dragleave", function () {
-      row.classList.remove("drag-over-left", "drag-over-right");
-    });
-    row.addEventListener("drop", function (e) {
-      e.preventDefault();
-      var draggedId = essayDragId || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
-      var targetId = row.dataset.openessayentry;
-      var before = row.classList.contains("drag-over-left");
-      clearDragOverMarks();
-      if (!draggedId || draggedId === targetId) return;
-      moveEssayEntryTo(draggedId, targetId, before);
-    });
-  });
+  wireDragReorder(el, { selector: ".essay-draggable", dataKey: "openessayentry", axis: "x", onDrop: moveEssayEntryTo });
 }
 function deleteEssayEntry(id) {
   var e = ESSAY_ENTRIES.find(function (x) { return x.id === id; });
@@ -6635,7 +6630,10 @@ function deleteEssayEntry(id) {
 function moveEssayEntry(id, dir) {
   var e = ESSAY_ENTRIES.find(function (x) { return x.id === id; });
   if (!e) return;
-  var entries = sortedEssayEntriesOf(e.essayId).concat([e]).sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+  /* sortedEssayEntriesOf(essayId)를 excludeId 없이 부르고 e를 다시 concat하면
+   * 자기 자신이 목록에 두 번 들어가 "아래로 이동"이 자기 복제본과 스왑하는
+   * 것으로 끝나 항상 제자리에 머무는 버그가 있었다 -- 목록을 한 번만 필터링한다. */
+  var entries = ESSAY_ENTRIES.filter(function (x) { return x.essayId === e.essayId; }).slice().sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
   var idx = entries.findIndex(function (x) { return x.id === id; });
   var swapIdx = idx + dir;
   if (idx === -1 || swapIdx < 0 || swapIdx >= entries.length) return;
@@ -6673,6 +6671,17 @@ function newPlayElement(type) {
   return def.isHeading ? { id: uid(), type: type, label: "" } : { id: uid(), type: type, speaker: "", html: "" };
 }
 function newPlayFolder(workId) {
+  /* newNovel과 같은 이유로, 이 작품에 시나리오·희곡 폴더가 하나도 없는 첫
+   * 진입에서는 이름을 다시 묻지 않고 작품명으로 폴더를 만들어 첫 대본까지
+   * 곧장 열어준다. */
+  if (!PLAYS.some(function(x){ return x.workId === workId; })) {
+    var w = WORKS.find(function(x){ return x.id === workId; });
+    var p0 = { id: uid(), workId: workId, title: (w && w.title) || "새 시나리오·희곡" };
+    PLAYS.push(p0); saveData();
+    state.collapsed["play:"+workId] = false; state.collapsed["playcol:"+p0.id] = false;
+    newPlayScriptIn(p0.id);
+    return;
+  }
   openModal({
     title: "새 시나리오·희곡 폴더",
     fields: [{ placeholder: "제목 (예: 단편 희곡집, OO 시나리오)" }],
@@ -6766,48 +6775,8 @@ function movePlayScriptTo(draggedId, targetId, before) {
   dragged.createdAt = newCreatedAt;
   saveData(); renderSidebar();
 }
-var playScriptDragId = null;
 function wirePlayScriptDragDrop(el) {
-  var rows = el.querySelectorAll('.play-draggable[draggable="true"]');
-  function clearDragOverMarks() {
-    el.querySelectorAll(".drag-over-left,.drag-over-right").forEach(function (r) { r.classList.remove("drag-over-left", "drag-over-right"); });
-  }
-  rows.forEach(function (row) {
-    row.addEventListener("dragstart", function (e) {
-      playScriptDragId = row.dataset.openplayscript;
-      row.classList.add("dragging");
-      if (e.dataTransfer) {
-        e.dataTransfer.effectAllowed = "move";
-        try { e.dataTransfer.setData("text/plain", row.dataset.openplayscript); } catch (err) {}
-      }
-    });
-    row.addEventListener("dragend", function () {
-      row.classList.remove("dragging");
-      clearDragOverMarks();
-      playScriptDragId = null;
-    });
-    row.addEventListener("dragover", function (e) {
-      if (!playScriptDragId || playScriptDragId === row.dataset.openplayscript) return;
-      e.preventDefault();
-      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
-      var rect = row.getBoundingClientRect();
-      var before = (e.clientX - rect.left) < rect.width / 2;
-      row.classList.toggle("drag-over-left", before);
-      row.classList.toggle("drag-over-right", !before);
-    });
-    row.addEventListener("dragleave", function () {
-      row.classList.remove("drag-over-left", "drag-over-right");
-    });
-    row.addEventListener("drop", function (e) {
-      e.preventDefault();
-      var draggedId = playScriptDragId || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
-      var targetId = row.dataset.openplayscript;
-      var before = row.classList.contains("drag-over-left");
-      clearDragOverMarks();
-      if (!draggedId || draggedId === targetId) return;
-      movePlayScriptTo(draggedId, targetId, before);
-    });
-  });
+  wireDragReorder(el, { selector: ".play-draggable", dataKey: "openplayscript", axis: "x", onDrop: movePlayScriptTo });
 }
 function deletePlayScript(id) {
   var ps = PLAY_SCRIPTS.find(function (x) { return x.id === id; });
@@ -6826,7 +6795,8 @@ function deletePlayScript(id) {
 function movePlayScript(id, dir) {
   var ps = PLAY_SCRIPTS.find(function (x) { return x.id === id; });
   if (!ps) return;
-  var scripts = sortedPlayScriptsOf(ps.playId).concat([ps]).sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+  /* moveEssayEntry와 같은 이유로 자기 자신을 중복 없이 한 번만 필터링한다. */
+  var scripts = PLAY_SCRIPTS.filter(function (x) { return x.playId === ps.playId; }).slice().sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
   var idx = scripts.findIndex(function (x) { return x.id === id; });
   var swapIdx = idx + dir;
   if (idx === -1 || swapIdx < 0 || swapIdx >= scripts.length) return;
@@ -8199,7 +8169,7 @@ function renderNovelPage(n) {
       '<button class="row-move" data-msmoveup="'+m.id+'" title="위로 이동"'+(idx===0?" disabled":"")+'>'+ic("chevUp",9)+'</button>' +
       '<button class="row-move" data-msmovedown="'+m.id+'" title="아래로 이동"'+(idx===list.length-1?" disabled":"")+'>'+ic("chevDown",9)+'</button>' : '';
     var insertHtml = (!state.povFilter[n.id] && !hasQuery) ? '<button class="row-move row-insert" data-msinsertafter="'+m.id+'" title="이 화 다음에 새 화 삽입">+</button>' : '';
-    return '<div class="novel-ep-row'+(isActive?" active":"")+(idx===selIdx?" selected":"")+'" data-openms="'+m.id+'" data-idx="'+idx+'">' +
+    return '<div class="novel-ep-row'+(isActive?" active":"")+(idx===selIdx?" selected":"")+'" data-openms="'+m.id+'" data-idx="'+idx+'"'+(canReorder?' draggable="true"':'')+'>' +
       '<span class="novel-ep-ord">'+(ord!=null?ord:"")+'</span>' +
       '<span class="novel-ep-title">'+esc(m.title||"제목 없음")+'</span>' +
       '<span class="novel-ep-meta">'+povBadge+(epChars?fmtNum(epChars)+'자':'')+'</span>' +
@@ -8219,6 +8189,9 @@ function renderNovelPage(n) {
     box.querySelectorAll("[data-msmovedown]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); moveManuscript(b.dataset.msmovedown, 1); refreshList(); }); });
     box.querySelectorAll("[data-msinsertafter]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); insertManuscriptAfter(n.id, b.dataset.msinsertafter); }); });
     box.querySelectorAll("[data-delms]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteManuscript(b.dataset.delms); }); });
+    wireDragReorder(box, { selector: ".novel-ep-row", dataKey: "openms", axis: "y", onDrop: function(draggedId, targetId, before){
+      moveManuscriptTo(draggedId, targetId, before); refreshList();
+    } });
   }
   function refreshList() {
     var list = currentFiltered();
