@@ -47,13 +47,15 @@ assets/character-base/male/seed42_male_base_opt.png  (팔레트 축소판, 앱�
 - `APPEAR_RASTER_PREVIEW.f`를 문자열 하나에서 `{ none, small, medium, large, xlarge }` 객체로 바꾸고, `appearRasterSrc(apLike)` 헬퍼로 성별+`bustSize`에 맞는 이미지를 고르도록 함. 여자 5단계 기준 이미지 전부(48색 팔레트, 각 약 25KB)를 임베드해서 가슴 크기 픽커를 누르면 "얼굴 확인"·"키·체형 비교" 패널의 래스터 미리보기가 실제로 바뀜(`refreshPreview()`도 함께 수정 — 기존엔 피부색 필터만 갱신하고 `bustSize` 변경은 무시했음).
 - 헤드리스 Chrome 스크린샷 + Node로 임베드된 base64를 직접 디코드해 5장 전부와 남자 이미지가 깨지지 않고 그대로 들어있는지 확인함.
 
-## 조사했지만 보류한 것 — 체형(bodyType) 16종 메시 워프
+## 체형(bodyType) 16종 메시 워프 — 해결됨, 앱에 반영함
 
-체형 변형 방식 비교 데모(아티팩트 `6e233096`)의 `buildMesh`/`warpTriangle`/`widthRatioAtY`를 이 기준 이미지에 그대로 적용해보려고 실제 픽셀 좌표를 분석했는데, VectorDoll의 랜드마크 Y좌표(`VY`: shoulder=84, waist=164, hip=190 등, 총 302유닛)를 기준 이미지에 비율로 매핑해보니 **A/T-pose로 뻗은 팔이 waist·hip 랜드마크 Y 밴드를 가로질러**, 그 지점의 실루콘 반너비를 측정하면 팔 폭까지 같이 잡혀버림(예: medium 이미지 waist 지점 반너비가 314px로 실제 허리보다 훨씬 넓게 나옴). 팔 영역을 제외한 몸통만 분리하지 않고는 이 랜드마크 기반 워프를 안전하게 못 씀 — 그대로 적용하면 체형을 바꿀 때마다 몸통이 부자연스럽게 부풀거나 팔이 뒤틀리는 식으로 보일 위험이 커서 이번엔 넣지 않음. 시도할 거면:
-1. mediapipe `selfie_multiclass_256x256.tflite`로 팔/몸통 마스크를 먼저 분리하고 몸통만의 실제 랜드마크 반너비를 다시 측정하거나,
-2. 손으로 각 기준 이미지의 어깨/허리/골반/무릎/발목 Y좌표와 반너비를 직접 재서(`assets/character-base/*/landmarks.json` 같은 파일로) 하드코딩하는 방법이 더 안전함.
+처음엔 VectorDoll의 랜드마크 Y좌표(`VY`)를 기준 이미지에 비율로 매핑해서 풀려고 했는데, **A/T-pose로 뻗은 팔이 waist·hip Y밴드를 가로질러** 실루엣 반너비 측정에 팔 폭이 섞여 들어가는 문제가 있었음(예: medium 이미지 waist 지점이 314px로 나와 실제 허리보다 훨씬 넓게 측정됨).
 
-현재는 raster 모드의 체형 차이는 기존처럼 `bodyRatio`(수동 슬라이더, `scaleX`)로만 근사되고, `bodyType`(16종) 자체는 raster 미리보기에 반영되지 않음 — 이건 이번 변경 이전과 동일한 동작이라 회귀는 아님.
+해결책: SAM 등 새 마스킹 노드를 설치하는 대신, 이미 설치돼 있던 `comfyui_controlnet_aux`의 `OpenposePreprocessor`로 두 기준 이미지(여자 medium, 남자)에서 실제 관절 좌표(어깨/팔꿈치/손목/골반/무릎/발목)를 뽑았음. 관절 좌표를 알고 나면 어깨·가슴·허리·골반 Y지점에서 "몸통 중심 ± (어깨 반span + 40px)" 범위로만 좌우 스캔해서 반너비를 재는 것만으로 팔 간섭 없이 깨끗한 값을 얻을 수 있었음(무릎·발목은 그 자체로 팔과 안 겹쳐서 문제 없음). 실측값은 `app/jipseul-note.html`의 `APPEAR_RASTER_LANDMARKS`에 하드코딩돼 있음.
+
+이 실측 반너비에 VectorDoll의 `VectorDoll.bodyMetrics(bodyType, gender, bustSize)` 비율(체형별 목표값 / normal 기준값)을 곱해서, 데모 아티팩트(`6e233096`)에서 검증된 것과 같은 `buildMesh`/`warpTriangle` 삼각형 워프를 실제 raster 미리보기에 적용함(`appearRasterWarpMesh`/`appearRasterWarpTriangle`/`appearRasterDrawInto`). "얼굴 확인"·"키·체형 비교" 패널의 `<img>`를 `<canvas>`로 바꾸고, `bodyType`을 포함한 모든 픽커가 `refreshPreview()`에서 캔버스를 다시 그리도록 연결함. 헤드리스 Chrome으로 여성(글래머+가슴 매우 큼)·남성(슬림) 등 여러 조합을 실제로 렌더링해서 팔이 안 뒤틀리고 몸통만 자연스럽게 변형되는 것을 스크린샷으로 확인함.
+
+버그 하나 발견·수정: 이미지 로더(`appearRasterLoadImage`)가 같은 이미지를 기다리는 콜백을 하나만 저장해서 덮어쓰는 구조였음 — 남자처럼 기준(baseline)과 현재(current) 캔버스가 같은 소스 이미지(성별당 이미지 1장)를 동시에 요청하면 먼저 등록된 콜백이 씹혀서 캔버스 하나가 안 그려지는 문제가 있었음(스크린샷으로 발견). 콜백을 배열로 큐잉해서 전부 실행하도록 고쳐서 해결.
 
 ## 조사했지만 보류한 것 — 헤어 레이어 생성 (Z-Image Turbo omni 편집 방식)
 
@@ -70,6 +72,6 @@ assets/character-base/male/seed42_male_base_opt.png  (팔레트 축소판, 앱�
 ## 다음 단계 (미완료, `jipseul-note-sync.md` §③ 참고)
 
 - "외형 확인"(AI 원화 베타) 패널은 아직 이 기준 이미지들과 연결하지 않음 — 부위별로 분리된 투명 PNG 레이어(헤어/의상/신발 등)가 없으면 의상을 표현할 수 없어서, 기존 안내 문구("AI 원화(베타)는 아직 의상을 표현하지 못해요")를 그대로 유지함.
-- 체형(bodyType) 16종 메시 워프는 위 "조사했지만 보류한 것 — 체형 16종 메시 워프" 참고.
 - 헤어 레이어 생성은 위 "조사했지만 보류한 것 — 헤어 레이어 생성" 참고 — 부위별 분리 레이어(헤어/의상/신발) 자체가 아직 없는 것이 이 프로젝트의 가장 큰 미해결 병목임.
+- 의상은 VTON 계열(외부 유료 API·실사풍 학습이라 화풍 불일치 위험) 대신, 지금까지와 같은 방식(Z-Image Turbo + 기준 이미지 스타일 참조)으로 의상 1개를 흰 배경에 단독으로 생성한 뒤 이미 설치된 `rembg`로 배경만 투명화하는 방향으로 다음에 시도할 것.
 - 부위별 분리 레이어를 받으면 Cozy Human Parser 대신 이 환경에 이미 설치된 mediapipe(`hair_segmenter.tflite`, `selfie_multiclass_256x256.tflite`)로 부위 마스크를 뽑는 방법도 시도해볼 것(무거운 커스텀 노드 설치 없이 재현 가능했음).

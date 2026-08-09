@@ -498,7 +498,7 @@
   .appear-compare-stage { display:flex; align-items:flex-end; justify-content:center; gap:10px; min-height:150px; overflow-x:auto; }
   .appear-compare-col { display:flex; flex-direction:column; align-items:center; gap:6px; flex:none; }
   .appear-compare-figure, .appear-outfit-figure { display:flex; align-items:flex-end; flex:none; }
-  .appear-compare-figure svg, .appear-compare-figure img, .appear-outfit-figure svg, .appear-outfit-figure img { display:block; height:100%; width:auto; }
+  .appear-compare-figure svg, .appear-compare-figure img, .appear-compare-figure canvas, .appear-outfit-figure svg, .appear-outfit-figure img { display:block; height:100%; width:auto; }
   .appear-compare-tag { font-size:11px; color:var(--ink-soft); font-variant-numeric:tabular-nums; white-space:nowrap; margin-top:6px; }
   .appear-outfit-placeholder { display:flex; align-items:center; justify-content:center; width:100%; min-height:140px; border:1px dashed var(--border-strong); border-radius:8px; background:var(--bg); padding:14px; box-sizing:border-box; }
   .appear-outfit-placeholder-text { font-size:11.5px; color:var(--ink-faint); text-align:center; line-height:1.6; }
@@ -10456,6 +10456,140 @@ function appearRasterSrc(apLike) {
   return APPEAR_RASTER_PREVIEW.f[apLike.bustSize] || APPEAR_RASTER_PREVIEW.f.medium;
 }
 
+/* ---------------- AI 원화(raster) 체형 워프 ----------------
+ * 기준 이미지 1장(성별당)을 bodyType(16종, VectorDoll의 BODY_PRESETS)에 맞게 실시간으로
+ * 늘려서 그린다. 랜드마크 Y좌표/반너비는 OpenPose로 두 기준 이미지에서 실측한 값 -- 팔이
+ * A/T-pose로 벌어져 있어서 그냥 가로 한 줄을 스캔하면 팔 폭까지 같이 잡히므로, 몸통 중심에서
+ * 어깨 반span + 40px 만큼만 좌우로 스캔하는 방식으로 골라냈다(자세한 경위는
+ * docs/character-base-reference.md 참고). thigh/calf는 BODY_PRESETS에서 같은 limbW로
+ * 움직이므로 무릎/발목 반너비를 그대로 재사용한다. */
+var APPEAR_RASTER_LANDMARKS = {
+  f: { shoulder: { y: 312, halfw: 123.0 }, chest: { y: 409, halfw: 126.5 }, waist: { y: 519, halfw: 87.5 }, hip: { y: 588, halfw: 108.0 }, knee: { y: 815, halfw: 71.5 }, ankle: { y: 1031, halfw: 71.5 } },
+  m: { shoulder: { y: 300, halfw: 117.0 }, chest: { y: 394, halfw: 120.5 }, waist: { y: 502, halfw: 80.5 }, hip: { y: 569, halfw: 95.5 }, knee: { y: 816, halfw: 68.0 }, ankle: { y: 1040, halfw: 68.0 } }
+};
+var APPEAR_RASTER_CANVAS_W = 832, APPEAR_RASTER_CANVAS_H = 1216;
+
+function appearRasterWidthRatios(bodyType, gender) {
+  var g = gender === "m" ? "m" : "f";
+  var cur = VectorDoll.bodyMetrics(bodyType || "normal", g, "medium");
+  var base = VectorDoll.bodyMetrics("normal", g, "medium");
+  return {
+    shoulder: cur.shoulder / base.shoulder,
+    chest: cur.chest / base.chest,
+    waist: cur.waist / base.waist,
+    hip: cur.hip / base.hip,
+    knee: cur.thigh / base.thigh,
+    ankle: cur.calf / base.calf
+  };
+}
+
+/* headTop/footBottom엔 랜드마크가 없으니 ratio 1로 고정해서, 체형이 달라져도 머리 폭과
+ * 발끝 폭은 원본 그대로 유지되게 한다(그래야 머리 크기가 체형에 따라 같이 늘어나는 어색함이 없다). */
+function appearRasterWarpMesh(gender, bodyType) {
+  var g = gender === "m" ? "m" : "f";
+  var L = APPEAR_RASTER_LANDMARKS[g];
+  var ratios = appearRasterWidthRatios(bodyType, g);
+  var cx = APPEAR_RASTER_CANVAS_W / 2;
+  var stops = [
+    { y: 0, ratio: 1 },
+    { y: L.shoulder.y, ratio: ratios.shoulder },
+    { y: L.chest.y, ratio: ratios.chest },
+    { y: L.waist.y, ratio: ratios.waist },
+    { y: L.hip.y, ratio: ratios.hip },
+    { y: L.knee.y, ratio: ratios.knee },
+    { y: L.ankle.y, ratio: ratios.ankle },
+    { y: APPEAR_RASTER_CANVAS_H, ratio: 1 }
+  ];
+  function ratioAtY(y) {
+    if (y <= stops[0].y) return stops[0].ratio;
+    if (y >= stops[stops.length - 1].y) return stops[stops.length - 1].ratio;
+    for (var i = 0; i < stops.length - 1; i++) {
+      if (y >= stops[i].y && y <= stops[i + 1].y) {
+        var t = (y - stops[i].y) / (stops[i + 1].y - stops[i].y);
+        var s = t * t * (3 - 2 * t);
+        return stops[i].ratio + (stops[i + 1].ratio - stops[i].ratio) * s;
+      }
+    }
+    return 1;
+  }
+  var cols = 6, rows = 24;
+  var srcPts = [], dstPts = [];
+  for (var r = 0; r <= rows; r++) {
+    var y = APPEAR_RASTER_CANVAS_H * r / rows;
+    var ratio = ratioAtY(y);
+    var srcRow = [], dstRow = [];
+    for (var c = 0; c <= cols; c++) {
+      var x = APPEAR_RASTER_CANVAS_W * c / cols;
+      srcRow.push([x, y]);
+      dstRow.push([cx + (x - cx) * ratio, y]);
+    }
+    srcPts.push(srcRow); dstPts.push(dstRow);
+  }
+  return { srcPts: srcPts, dstPts: dstPts, cols: cols, rows: rows };
+}
+
+function appearRasterWarpTriangle(ctx, src, sp, dp) {
+  var x0 = sp[0][0], y0 = sp[0][1], x1 = sp[1][0], y1 = sp[1][1], x2 = sp[2][0], y2 = sp[2][1];
+  var u0 = dp[0][0], v0 = dp[0][1], u1 = dp[1][0], v1 = dp[1][1], u2 = dp[2][0], v2 = dp[2][1];
+  var denom = x0 * (y1 - y2) + x1 * (y2 - y0) + x2 * (y0 - y1);
+  if (Math.abs(denom) < 1e-6) return;
+  var a = (u0 * (y1 - y2) + u1 * (y2 - y0) + u2 * (y0 - y1)) / denom;
+  var b = (u0 * (x2 - x1) + u1 * (x0 - x2) + u2 * (x1 - x0)) / denom;
+  var c = (u0 * (x1 * y2 - x2 * y1) + u1 * (x2 * y0 - x0 * y2) + u2 * (x0 * y1 - x1 * y0)) / denom;
+  var d = (v0 * (y1 - y2) + v1 * (y2 - y0) + v2 * (y0 - y1)) / denom;
+  var e = (v0 * (x2 - x1) + v1 * (x0 - x2) + v2 * (x1 - x0)) / denom;
+  var f = (v0 * (x1 * y2 - x2 * y1) + v1 * (x2 * y0 - x0 * y2) + v2 * (x0 * y1 - x1 * y0)) / denom;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(u0, v0); ctx.lineTo(u1, v1); ctx.lineTo(u2, v2); ctx.closePath();
+  ctx.clip();
+  ctx.transform(a, d, b, e, c, f);
+  ctx.drawImage(src, 0, 0);
+  ctx.restore();
+}
+
+var APPEAR_RASTER_IMG_CACHE = {};
+var APPEAR_RASTER_IMG_WAITERS = {};
+function appearRasterLoadImage(src, cb) {
+  var cached = APPEAR_RASTER_IMG_CACHE[src];
+  if (cached && cached.complete) { cb(cached); return; }
+  if (APPEAR_RASTER_IMG_WAITERS[src]) { APPEAR_RASTER_IMG_WAITERS[src].push(cb); return; }
+  APPEAR_RASTER_IMG_WAITERS[src] = [cb];
+  var img = new Image();
+  APPEAR_RASTER_IMG_CACHE[src] = img;
+  img.onload = function () {
+    var waiters = APPEAR_RASTER_IMG_WAITERS[src] || [];
+    delete APPEAR_RASTER_IMG_WAITERS[src];
+    waiters.forEach(function (w) { w(img); });
+  };
+  img.src = src;
+}
+
+/* canvasEl의 width/height는 실제 픽셀 해상도(=원본 이미지 캔버스, 832x1216)로 고정하고,
+ * 화면 표시 크기는 CSS로만 줄인다 -- 그래야 워프 연산이 항상 랜드마크 좌표와 같은 좌표계에서
+ * 돌아간다. */
+function appearRasterDrawInto(canvasEl, ap) {
+  if (!canvasEl) return;
+  var src = appearRasterSrc(ap);
+  appearRasterLoadImage(src, function (img) {
+    if (!canvasEl.isConnected) return;
+    canvasEl.width = APPEAR_RASTER_CANVAS_W;
+    canvasEl.height = APPEAR_RASTER_CANVAS_H;
+    var ctx = canvasEl.getContext("2d");
+    ctx.clearRect(0, 0, APPEAR_RASTER_CANVAS_W, APPEAR_RASTER_CANVAS_H);
+    ctx.filter = appearSkinFilterCss(ap.skinTone);
+    var mesh = appearRasterWarpMesh(ap.gender, ap.bodyType);
+    for (var r = 0; r < mesh.rows; r++) {
+      for (var c = 0; c < mesh.cols; c++) {
+        var s00 = mesh.srcPts[r][c], s10 = mesh.srcPts[r][c + 1], s01 = mesh.srcPts[r + 1][c], s11 = mesh.srcPts[r + 1][c + 1];
+        var d00 = mesh.dstPts[r][c], d10 = mesh.dstPts[r][c + 1], d01 = mesh.dstPts[r + 1][c], d11 = mesh.dstPts[r + 1][c + 1];
+        appearRasterWarpTriangle(ctx, img, [s00, s10, s01], [d00, d10, d01]);
+        appearRasterWarpTriangle(ctx, img, [s10, s11, s01], [d10, d11, d01]);
+      }
+    }
+  });
+}
+
 function defaultAppearance() {
   return {
     system: "pixel_v1", gender: "u",
@@ -10898,7 +11032,7 @@ function renderAppearanceEditor(doc) {
         '<div class="appear-compare-col">' +
         '<div class="appear-compare-figure" style="height:' + Math.round(appearComparePx(APPEAR_HEIGHT_BASELINE, activeCount) * zoom) + 'px">' +
         (rasterOn
-          ? '<img src="' + rasterSrcTemplate + '" alt="기준 체형" style="filter:' + appearSkinFilterCss(templateAp.skinTone) + '">'
+          ? '<canvas id="appearCompareTemplateCanvas" class="appear-raster-canvas" aria-label="기준 체형"></canvas>'
           : renderAppearanceBodySvg(templateAp)) +
         '</div>' +
         '<div class="appear-compare-tag">기준 ' + APPEAR_HEIGHT_BASELINE + 'cm</div>' +
@@ -10906,7 +11040,7 @@ function renderAppearanceEditor(doc) {
         '<div class="appear-compare-col">' +
         '<div class="appear-compare-figure" id="appearCompareFigure" style="height:' + comparePxNow + 'px;transform:scaleX(' + bodyRatio + ')">' +
         (rasterOn
-          ? '<img id="appearCompareImg" src="' + rasterSrc + '" alt="현재 체형" style="filter:' + appearSkinFilterCss(ap.skinTone) + '">'
+          ? '<canvas id="appearCompareImg" class="appear-raster-canvas" aria-label="현재 체형"></canvas>'
           : renderAppearanceBodySvg(ap)) +
         '</div>' +
         '<div class="appear-compare-tag">현재 <span class="appear-cm-readout">' + curCm + '</span>cm</div>' +
@@ -10949,6 +11083,10 @@ function renderAppearanceEditor(doc) {
 
 function wireAppearanceEditor(doc) {
   var ap = doc.appearance;
+  if (state.appearRasterMode && state.appearRasterMode[doc.id]) {
+    appearRasterDrawInto(document.getElementById("appearCompareImg"), ap);
+    appearRasterDrawInto(document.getElementById("appearCompareTemplateCanvas"), Object.assign({}, defaultAppearance(), { gender: ap.gender }));
+  }
   function refreshPreview() {
     var rasterOn = !!(state.appearRasterMode && state.appearRasterMode[doc.id]);
     var panelsOn = appearPanelVisible(doc.id);
@@ -10967,14 +11105,11 @@ function wireAppearanceEditor(doc) {
       }
     } else {
       /* AI 원화 미리보기는 옷·머리 등 대부분의 픽커에 반응할 그림이 아직 없으니 그대로 두고,
-       * 이 자산이 표현할 수 있는 피부색(필터)과 가슴 크기(이미지 교체)만 다시 계산해 반영한다.
+       * 이 자산이 실제로 표현할 수 있는 것들(피부색·가슴 크기·체형 워프)만 다시 그린다.
        * 외형 확인 패널은 이 모드에서 안내 문구로 대체되므로 갱신할 이미지가 없다. */
-      var filter = appearSkinFilterCss(ap.skinTone);
-      var src = appearRasterSrc(ap);
       var faceImg = document.getElementById("appearFaceImg");
-      if (faceImg) { faceImg.style.filter = filter; faceImg.src = src; }
-      var compareImg = document.getElementById("appearCompareImg");
-      if (compareImg) { compareImg.style.filter = filter; compareImg.src = src; }
+      if (faceImg) { faceImg.style.filter = appearSkinFilterCss(ap.skinTone); faceImg.src = appearRasterSrc(ap); }
+      appearRasterDrawInto(document.getElementById("appearCompareImg"), ap);
     }
     saveData();
   }
