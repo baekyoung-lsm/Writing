@@ -1754,8 +1754,8 @@ function openPreferencesModal() {
 applyThemePref();
 
 /* ---------------- data ---------------- */
-var CATS = ["등장인물","세력","장소","세계관","사건","아이템","떡밥","부·사이드","기타"];
-var CAT_ICON = { "등장인물":"person", "세력":"crown", "장소":"pin", "세계관":"magic", "사건":"battle", "아이템":"gift", "떡밥":"eye", "부·사이드":"link", "기타":"tag" };
+var CATS = ["등장인물","세력","장소","세계관","사건","아이템","떡밥","복선","부·사이드","기타"];
+var CAT_ICON = { "등장인물":"person", "세력":"crown", "장소":"pin", "세계관":"magic", "사건":"battle", "아이템":"gift", "떡밥":"eye", "복선":"connect", "부·사이드":"link", "기타":"tag" };
 var _catMenuOutsideHandler = null;
 function closeCatMenu() {
   var p = document.getElementById("catMenuFixed"); if (p) p.remove();
@@ -1863,7 +1863,12 @@ var PROP_PRESETS = [
   { key:"상태", type:"text", icon:"list" },
   { key:"첫 등장", type:"link", icon:"link" },
   { key:"영문명", type:"text", icon:"__en" },
-  { key:"설명", type:"text", icon:"docIcon" }
+  { key:"설명", type:"text", icon:"docIcon" },
+  { key:"수도", type:"text", icon:"building" },
+  { key:"정치체제", type:"text", icon:"crown" },
+  { key:"지도자", type:"text", icon:"crown" },
+  { key:"힌트 강도", type:"rank", icon:"eye" },
+  { key:"진짜 답", type:"text", icon:"mask" }
 ];
 /* 카테고리별 필드 템플릿의 기본 프리셋 -- 등장인물 쪽은 이미 있는 PROP_PRESETS(속성
  * 추가하기 자동완성 목록)에서 타입을 그대로 가져와 두 목록이 어긋나지 않게 했다.
@@ -1902,6 +1907,10 @@ var DEFAULT_FIELD_TEMPLATES = {
     { key:"시기", type:"text", required:false, defaultValue:"" },
     { key:"장소", type:"text", required:false, defaultValue:"" },
     { key:"결과", type:"text", required:false, defaultValue:"" }
+  ],
+  "떡밥": [
+    { key:"힌트 강도", type:"rank", required:false, defaultValue:"" },
+    { key:"진짜 답", type:"text", required:false, defaultValue:"" }
   ]
 };
 var LIFE_STATUSES = {
@@ -3958,6 +3967,129 @@ function renderFieldTemplatesPage(work) {
       getWorkFieldTemplate(work, btn.dataset.ftadd).push({ id: uid(), key:"새 필드", type:"text", required:false, defaultValue:"" });
       saveData(); renderFieldTemplatesPage(work);
     });
+  });
+}
+/* ---------------- 설정 검증 (Rule-Based) ----------------
+ * 작품 바이블의 "설정 충돌 검증"을 AI 없이 구현한다 -- 텍스트 내용을 읽고
+ * 판단하는 종류(예: 캐릭터가 성격에 맞게 행동했는가)는 규칙으로 확정할 수
+ * 없으므로 자동화하지 않고 자가 점검 체크리스트로만 제공하고, 대신 데이터
+ * 구조에서 100% 결정적으로 판별 가능한 것들(계층 순환 참조, 끊어진 참조,
+ * 미회수 복선/떡밥)만 자동 검사한다. 이 페이지는 오프라인에서 완전히
+ * 동작하고 외부 API를 전혀 호출하지 않는다. */
+function findHierarchyCycles(docs, parentField) {
+  var byId = {}; docs.forEach(function(d){ byId[d.id] = d; });
+  var out = [];
+  docs.forEach(function(d){
+    var seen = {}; seen[d.id] = true;
+    var cur = d, steps = 0;
+    while (cur && cur[parentField] && steps <= docs.length) {
+      var pid = cur[parentField];
+      if (seen[pid]) { out.push(d); return; }
+      seen[pid] = true;
+      cur = byId[pid];
+      steps++;
+    }
+  });
+  return out;
+}
+function findOrphanManuscriptRefs(manuscripts, field) {
+  var out = [];
+  manuscripts.forEach(function(m){
+    (m[field] || []).forEach(function(refId){
+      if (!DOCS.find(function(d){ return d.id === refId; })) out.push({ m: m, refId: refId });
+    });
+  });
+  return out;
+}
+var CHARACTER_COLLAPSE_CHECKLIST = [
+  "가치관과 반대되는 선택을 설명 없이 했다",
+  "말투가 맥락 없이 갑자기 달라졌다",
+  "‘넘지 않는 선’을 이유 없이 넘었다",
+  "과거 트라우마와 모순되는 반응을 보였다",
+  "설정된 능력/규칙을 근거 없이 어겼다",
+  "이 장면이 없어도 다음 장면 전개에 지장이 없다(존재 이유 불명확)"
+];
+function renderValidationPage(work) {
+  var main = document.getElementById("main");
+  var workDocs = DOCS.filter(function(d){ return d.workId === work.id; });
+  var novelIds = NOVELS.filter(function(n){ return n.workId === work.id; }).map(function(n){ return n.id; });
+  var workManuscripts = MANUSCRIPTS.filter(function(m){ return novelIds.indexOf(m.novelId) !== -1; });
+
+  var openForeshadows = workDocs.filter(function(d){ return (d.category==="떡밥"||d.category==="복선") && !d.resolved && !d.abandoned; });
+  var houseCycles = findHierarchyCycles(workDocs.filter(function(d){ return d.category==="세력"; }), "parentHouseId");
+  var locationCycles = findHierarchyCycles(workDocs.filter(function(d){ return d.category==="장소"; }), "parentLocationId");
+  var brokenRels = RELATIONSHIPS.filter(function(r){
+    var fromDoc = DOCS.find(function(d){ return d.id === r.fromId; });
+    var toDoc = DOCS.find(function(d){ return d.id === r.toId; });
+    var involvesWork = (fromDoc && fromDoc.workId === work.id) || (toDoc && toDoc.workId === work.id);
+    return involvesWork && (!fromDoc || !toDoc);
+  });
+  var orphanRefFields = [
+    { field:"characterIds", label:"등장인물" }, { field:"locationIds", label:"장소" },
+    { field:"factionIds", label:"세력" }, { field:"eventIds", label:"사건" }, { field:"foreshadowIds", label:"떡밥·복선" }
+  ];
+  var orphanRefs = [];
+  orphanRefFields.forEach(function(f){
+    findOrphanManuscriptRefs(workManuscripts, f.field).forEach(function(x){ orphanRefs.push({ m:x.m, label:f.label }); });
+  });
+  var brokenForeshadowLinks = workDocs.filter(function(d){
+    if (d.category!=="떡밥" && d.category!=="복선") return false;
+    var badResolved = d.resolvedMsId && !MANUSCRIPTS.find(function(m){ return m.id===d.resolvedMsId; });
+    var badExpected = d.expectedResolveMsId && !MANUSCRIPTS.find(function(m){ return m.id===d.expectedResolveMsId; });
+    return badResolved || badExpected;
+  });
+
+  function issueRow(iconName, title, subtitle, gotoAttr, gotoId) {
+    return '<div class="backlink-ep" '+(gotoAttr?'data-'+gotoAttr+'="'+gotoId+'"':'')+'>'+ic(iconName,12)+
+      '<span style="flex:1">'+esc(title)+(subtitle?' <span style="color:var(--ink-faint)">· '+esc(subtitle)+'</span>':'')+'</span>' +
+    '</div>';
+  }
+  function checkCard(title, count, bodyHtml) {
+    var badgeColor = count ? "var(--rose)" : "var(--moss)";
+    var badgeLabel = count ? count+"건 발견" : "문제 없음";
+    return '<div class="unit-cat">' +
+      '<div class="unit-cat-head"><div class="unit-cat-title">'+esc(title)+'</div><span class="life-badge" style="--lc:'+badgeColor+'">'+badgeLabel+'</span></div>' +
+      (count ? '<div class="backlink-list">'+bodyHtml+'</div>' : '<div class="chip-empty-hint">현재 이 작품에는 해당하는 문제가 없습니다.</div>') +
+    '</div>';
+  }
+
+  var foreshadowBody = openForeshadows.map(function(d){ return issueRow(CAT_ICON[d.category], d.title||"제목 없음", d.category, "gotovalidatedoc", d.id); }).join("");
+  var houseCycleBody = houseCycles.map(function(d){ return issueRow("crown", d.title||"제목 없음", "세력 소속 관계가 자기 자신으로 되돌아옵니다", "gotovalidatedoc", d.id); }).join("");
+  var locationCycleBody = locationCycles.map(function(d){ return issueRow("pin", d.title||"제목 없음", "상위 장소 관계가 자기 자신으로 되돌아옵니다", "gotovalidatedoc", d.id); }).join("");
+  var brokenRelBody = brokenRels.map(function(r){
+    var survivor = DOCS.find(function(d){ return d.id === r.fromId; }) || DOCS.find(function(d){ return d.id === r.toId; });
+    return issueRow("link", survivor ? (survivor.title||"제목 없음") : "알 수 없음", "관계의 한쪽 문서가 삭제되어 참조가 끊어졌습니다", survivor ? "gotovalidatedoc" : null, survivor ? survivor.id : "");
+  }).join("");
+  var orphanRefBody = orphanRefs.map(function(x){ return issueRow("docIcon", x.m.title||"제목 없음", x.label+" 참조 중 삭제된 문서가 있습니다", "gotobacklink", x.m.id); }).join("");
+  var brokenForeshadowBody = brokenForeshadowLinks.map(function(d){ return issueRow(CAT_ICON[d.category], d.title||"제목 없음", "연결된 화가 삭제되었습니다", "gotovalidatedoc", d.id); }).join("");
+
+  var checklistHtml = '<div class="unit-cat">' +
+    '<div class="unit-cat-head"><div class="unit-cat-title">캐릭터 붕괴 자가 점검</div></div>' +
+    '<div class="graph-hint" style="margin-bottom:10px">텍스트 내용을 읽고 판단해야 하는 항목이라 자동 검사 대신 참고용 체크리스트로 제공합니다. 장면을 쓰거나 퇴고할 때 훑어보세요.</div>' +
+    '<div class="backlink-list">' + CHARACTER_COLLAPSE_CHECKLIST.map(function(t){
+      return '<div class="backlink-ep" style="cursor:default">'+ic("check",12)+'<span>'+esc(t)+'</span></div>';
+    }).join("") + '</div>' +
+  '</div>';
+
+  main.innerHTML =
+    '<div class="graph-shell">' +
+      '<div class="graph-title-bar"><div class="graph-title">설정 검증</div><span class="graph-hint">'+esc(work.title||"이 작품")+'의 설정 데이터를 규칙 기반으로 점검합니다. 인터넷 연결이나 AI 없이 이 기기 안에서만 동작합니다.</span></div>' +
+      '<div class="page-pad" style="padding-top:22px; max-width:760px">' +
+        checkCard("미회수 복선·떡밥", openForeshadows.length, foreshadowBody) +
+        checkCard("세력 계층 순환 참조", houseCycles.length, houseCycleBody) +
+        checkCard("장소 계층 순환 참조", locationCycles.length, locationCycleBody) +
+        checkCard("끊어진 관계도 참조", brokenRels.length, brokenRelBody) +
+        checkCard("원고의 끊어진 연결 참조", orphanRefs.length, orphanRefBody) +
+        checkCard("복선·떡밥의 끊어진 화 연결", brokenForeshadowLinks.length, brokenForeshadowBody) +
+        checklistHtml +
+      '</div>' +
+    '</div>';
+
+  main.querySelectorAll("[data-gotovalidatedoc]").forEach(function(row){
+    row.addEventListener("click", function(){ state.mode="doc"; state.activeId=row.dataset.gotovalidatedoc; render(); });
+  });
+  main.querySelectorAll("[data-gotobacklink]").forEach(function(row){
+    row.addEventListener("click", function(){ state.mode="manuscript"; state.activeId=row.dataset.gotobacklink; render(); });
   });
 }
 function renderUnitsPage(work) {
@@ -6271,7 +6403,7 @@ function createManuscript(novelId, createdAt) {
   if (scheme === "chapter") title = (count+1) + "장";
   else if (scheme === "subtitle") title = "";
   else title = count === 0 ? "프롤로그" : count + "화";
-  var m = { id: uid(), title: title, text: "", format: "general", novelId: novelId, previewDark: false, previewFontSize: 16, previewFont: "sans", bookMode: "edit", bookPage: 0, bookSpread: false, editScrollFrac: 0, createdAt: createdAt, characterIds: [], excludedCharacterIds: [], locationIds: [], excludedLocationIds: [] };
+  var m = { id: uid(), title: title, text: "", format: "general", novelId: novelId, previewDark: false, previewFontSize: 16, previewFont: "sans", bookMode: "edit", bookPage: 0, bookSpread: false, editScrollFrac: 0, createdAt: createdAt, characterIds: [], excludedCharacterIds: [], locationIds: [], excludedLocationIds: [], factionIds: [], excludedFactionIds: [], eventIds: [], excludedEventIds: [], foreshadowIds: [], excludedForeshadowIds: [] };
   MANUSCRIPTS.push(m); saveData();
   return m;
 }
@@ -6436,8 +6568,9 @@ function deleteDoc(id) {
         (mp.markers||[]).forEach(function(mk){ if (mk.locationId === id) mk.locationId = null; });
       });
       MANUSCRIPTS.forEach(function(m){
-        if (m.characterIds) m.characterIds = m.characterIds.filter(function(x){ return x!==id; });
-        if (m.excludedCharacterIds) m.excludedCharacterIds = m.excludedCharacterIds.filter(function(x){ return x!==id; });
+        ["characterIds","excludedCharacterIds","locationIds","excludedLocationIds","factionIds","excludedFactionIds","eventIds","excludedEventIds","foreshadowIds","excludedForeshadowIds"].forEach(function(f){
+          if (m[f]) m[f] = m[f].filter(function(x){ return x!==id; });
+        });
       });
       ESSAY_ENTRIES.forEach(function(e){
         if (e.relatedCharacterIds) e.relatedCharacterIds = e.relatedCharacterIds.filter(function(x){ return x!==id; });
@@ -6472,6 +6605,10 @@ function deleteManuscript(id) {
     confirmLabel: "삭제", danger: true,
     onConfirm: function(){
       MANUSCRIPTS = MANUSCRIPTS.filter(function(x){ return x.id !== id; });
+      DOCS.forEach(function(d){
+        if (d.resolvedMsId === id) d.resolvedMsId = null;
+        if (d.expectedResolveMsId === id) d.expectedResolveMsId = null;
+      });
       if (state.activeId === id) { state.mode = "empty"; state.activeId = null; }
       saveData(); render();
     }
@@ -6966,8 +7103,10 @@ function docMetaHtml(d) {
   if (d.category==="등장인물" && d.lifeStatus && LIFE_STATUSES[d.lifeStatus]) {
     metaHtml += '<span class="life-badge" style="--lc:'+LIFE_STATUSES[d.lifeStatus].color+'">'+LIFE_STATUSES[d.lifeStatus].label+'</span>';
   }
-  if (d.category==="떡밥") {
-    metaHtml += '<span class="life-badge" style="--lc:'+(d.resolved?"var(--moss)":"var(--rose)")+'">'+(d.resolved?"회수됨":"미회수")+'</span>';
+  if (d.category==="떡밥" || d.category==="복선") {
+    var fsLabel = d.abandoned ? "폐기" : (d.resolved ? "회수됨" : "미회수");
+    var fsColor = d.abandoned ? "var(--ink-faint)" : (d.resolved ? "var(--moss)" : "var(--rose)");
+    metaHtml += '<span class="life-badge" style="--lc:'+fsColor+'">'+fsLabel+'</span>';
   }
   if (d.category==="세력" && d.houseType && HOUSE_TYPES[d.houseType]) {
     metaHtml += '<span class="life-badge" style="--lc:'+colorForFaction(d.title||d.id)+'">'+HOUSE_TYPES[d.houseType].label+'</span>';
@@ -7446,45 +7585,45 @@ function renderSearchPage(rawQuery) {
     });
   });
 }
-function detectCharactersInManuscript(m, workId) {
-  if (!m.characterIds) m.characterIds = [];
-  if (!m.excludedCharacterIds) m.excludedCharacterIds = [];
+/* 본문에 특정 카테고리 문서의 이름/별칭이 등장하면 자동으로 그 문서 ID를
+ * 원고에 연결한다 -- 등장인물·장소·세력·사건·떡밥/복선 전부 같은 이름-등장
+ * 탐지 방식을 공유하되, 카테고리별로 독립된 필드(및 제외 목록)에 쌓아서 서로의
+ * 제외 목록을 건드리지 않는다. "작품 바이블"이 요구하는 원고↔인물/지역/세력/
+ * 사건/복선 자동 연동을 새 시스템 없이 이 기존 감지 방식 하나로 전부 처리한다. */
+function detectDocRefsInManuscript(m, workId, idsField, excludedField, categories) {
+  if (!m[idsField]) m[idsField] = [];
+  if (!m[excludedField]) m[excludedField] = [];
   var text = m.text || "";
   if (!text.trim() || !workId) return false;
   var changed = false;
-  DOCS.filter(function(d){ return d.workId===workId && d.category==="등장인물"; }).forEach(function(d){
-    if (m.characterIds.indexOf(d.id) !== -1) return;
-    if (m.excludedCharacterIds.indexOf(d.id) !== -1) return;
+  DOCS.filter(function(d){ return d.workId===workId && categories.indexOf(d.category)!==-1; }).forEach(function(d){
+    if (m[idsField].indexOf(d.id) !== -1) return;
+    if (m[excludedField].indexOf(d.id) !== -1) return;
     var names = [d.title].concat(d.aliases||[]).filter(function(n){ return n && n.trim().length >= 2; });
-    if (names.some(function(n){ return text.indexOf(n) !== -1; })) { m.characterIds.push(d.id); changed = true; }
+    if (names.some(function(n){ return text.indexOf(n) !== -1; })) { m[idsField].push(d.id); changed = true; }
   });
   return changed;
 }
-/* detectCharactersInManuscript와 같은 이름-등장 탐지 방식을 "장소" 카테고리에도
- * 그대로 적용 -- 등장인물 자동 감지와 별개의 필드(locationIds)에 쌓아서, 두 감지
- * 로직이 서로의 제외 목록을 건드리지 않도록 완전히 분리해둔다. */
-function detectLocationsInManuscript(m, workId) {
-  if (!m.locationIds) m.locationIds = [];
-  if (!m.excludedLocationIds) m.excludedLocationIds = [];
-  var text = m.text || "";
-  if (!text.trim() || !workId) return false;
-  var changed = false;
-  DOCS.filter(function(d){ return d.workId===workId && d.category==="장소"; }).forEach(function(d){
-    if (m.locationIds.indexOf(d.id) !== -1) return;
-    if (m.excludedLocationIds.indexOf(d.id) !== -1) return;
-    var names = [d.title].concat(d.aliases||[]).filter(function(n){ return n && n.trim().length >= 2; });
-    if (names.some(function(n){ return text.indexOf(n) !== -1; })) { m.locationIds.push(d.id); changed = true; }
-  });
-  return changed;
-}
-/* 원고 편집기 옆 "컨텍스트 패널" -- 본문에서 자동 감지된 등장인물·장소를 한 곳에
- * 모아 보여주고 클릭하면 바로 그 문서로 이동한다. 기존 msCharacterChips(상단 POV
- * 줄)는 그대로 두고, 이건 별도의 사이드 패널로 추가한다. */
+function detectCharactersInManuscript(m, workId) { return detectDocRefsInManuscript(m, workId, "characterIds", "excludedCharacterIds", ["등장인물"]); }
+function detectLocationsInManuscript(m, workId) { return detectDocRefsInManuscript(m, workId, "locationIds", "excludedLocationIds", ["장소"]); }
+function detectFactionsInManuscript(m, workId) { return detectDocRefsInManuscript(m, workId, "factionIds", "excludedFactionIds", ["세력"]); }
+function detectEventsInManuscript(m, workId) { return detectDocRefsInManuscript(m, workId, "eventIds", "excludedEventIds", ["사건"]); }
+/* 떡밥과 복선은 "화 본문에 등장하면 연결"이라는 관점에서는 같은 축이라 원고
+ * 연결 필드 하나(foreshadowIds)를 공유한다 -- 회수 상태 등 세부 관리는 각
+ * 문서(11201번째 줄 부근)에서 카테고리별로 이미 분리되어 있다. */
+function detectForeshadowsInManuscript(m, workId) { return detectDocRefsInManuscript(m, workId, "foreshadowIds", "excludedForeshadowIds", ["떡밥","복선"]); }
+/* 원고 편집기 옆 "컨텍스트 패널" -- 본문에서 자동 감지된 등장인물·장소·세력·
+ * 사건·떡밥/복선을 한 곳에 모아 보여주고 클릭하면 바로 그 문서로 이동한다.
+ * 기존 msCharacterChips(상단 POV 줄)는 그대로 두고, 이건 별도의 사이드
+ * 패널로 추가한다. */
 function updateContextPanel(m, workId) {
   var container = document.getElementById("msContextPanel");
   if (!container) return;
   detectCharactersInManuscript(m, workId);
   detectLocationsInManuscript(m, workId);
+  detectFactionsInManuscript(m, workId);
+  detectEventsInManuscript(m, workId);
+  detectForeshadowsInManuscript(m, workId);
   function section(label, iconName, ids, cat) {
     var docs = ids.map(function(id){ return DOCS.find(function(d){ return d.id===id; }); }).filter(Boolean);
     var body = docs.length
@@ -7499,7 +7638,10 @@ function updateContextPanel(m, workId) {
   }
   container.innerHTML =
     section("등장인물", "person", m.characterIds||[], "등장인물") +
-    section("장소", "map", m.locationIds||[], "장소");
+    section("장소", "map", m.locationIds||[], "장소") +
+    section("세력", "crown", m.factionIds||[], "세력") +
+    section("사건", "battle", m.eventIds||[], "사건") +
+    section("떡밥·복선", "connect", m.foreshadowIds||[], "떡밥이나 복선");
   container.querySelectorAll("[data-ctxgoto]").forEach(function(btn){
     btn.addEventListener("click", function(){
       state.mode = "doc"; state.activeId = btn.dataset.ctxgoto; render();
@@ -7831,6 +7973,7 @@ function renderWorkSections(work, q) {
 
   sections.units = '<div class="doc-row '+(state.mode==="units"&&state.activeId===work.id?"active":"")+'" data-openunits="'+work.id+'">'+ic("scale",13)+'<span style="flex:1">단위·달력 열기</span></div>';
   sections.fieldtemplates = '<div class="doc-row '+(state.mode==="fieldtemplates"&&state.activeId===work.id?"active":"")+'" data-openfieldtemplates="'+work.id+'">'+ic("grid",13)+'<span style="flex:1">필드 템플릿 열기</span></div>';
+  sections.validate = '<div class="doc-row '+(state.mode==="validate"&&state.activeId===work.id?"active":"")+'" data-openvalidate="'+work.id+'">'+ic("check",13)+'<span style="flex:1">설정 검증 열기</span></div>';
 
   return sections;
 }
@@ -7847,9 +7990,10 @@ var WS_TABS = [
   { key: "tables", label: "표", icon: "table" },
   { key: "scripts", label: "문자", icon: "pen" },
   { key: "sports", label: "스포츠", icon: "trophy" },
-  { key: "units", label: "단위·달력", icon: "scale" }
+  { key: "units", label: "단위·달력", icon: "scale" },
+  { key: "validate", label: "설정 검증", icon: "check" }
 ];
-var WS_SINGLE_ITEM_TABS = { units: true, fieldtemplates: true };
+var WS_SINGLE_ITEM_TABS = { units: true, fieldtemplates: true, validate: true };
 /* ---------------- 상위 카테고리 → 하위 탭(WS_TABS) 2단 메뉴 ----------------
  * 예전엔 위 WS_TABS 11(+1)개가 전부 한 줄에 뒤섞여 있었다. 상위 카테고리로
  * 묶어서 "지금 큰 갈래로 어디에 있는지"가 항상 보이게 한다 -- 기존 탭 키·
@@ -7857,7 +8001,7 @@ var WS_SINGLE_ITEM_TABS = { units: true, fieldtemplates: true };
  * 위에 그룹 레이어만 하나 얹는다. */
 var WS_CATEGORIES = [
   { key: "write", label: "집필", icon: "docIcon", tabs: ["ms", "essay", "plays"] },
-  { key: "notes", label: "설정 노트", icon: "person", tabs: ["docs", "graphs", "maps", "timelines", "fieldtemplates"] },
+  { key: "notes", label: "설정 노트", icon: "person", tabs: ["docs", "graphs", "maps", "timelines", "fieldtemplates", "validate"] },
   { key: "data", label: "자료·기록", icon: "table", tabs: ["tables", "scripts", "sports", "units"] }
 ];
 function categoryOfTab(tabKey) {
@@ -8334,6 +8478,7 @@ function wireWorkTreeHandlers(el) {
   el.querySelectorAll("[data-openmap]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="map"; state.activeId=b.dataset.openmap; render(); }); });
   el.querySelectorAll("[data-openunits]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="units"; state.activeId=b.dataset.openunits; render(); }); });
   el.querySelectorAll("[data-openfieldtemplates]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="fieldtemplates"; state.activeId=b.dataset.openfieldtemplates; render(); }); });
+  el.querySelectorAll("[data-openvalidate]").forEach(function(b){ b.addEventListener("click", function(){ state.mode="validate"; state.activeId=b.dataset.openvalidate; render(); }); });
   el.querySelectorAll("[data-deldoc]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteDoc(b.dataset.deldoc); }); });
   el.querySelectorAll("[data-delgraph]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteGraph(b.dataset.delgraph); }); });
   el.querySelectorAll("[data-delms]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); deleteManuscript(b.dataset.delms); }); });
@@ -11089,18 +11234,31 @@ function wireAppearanceEditor(doc) {
     memoEl.addEventListener("input", function () { ap.memo = memoEl.value; autoGrow(memoEl); saveData(); });
   }
 }
+/* 카테고리별로 원고에 자동 연결되는 필드(및 그 필드를 채우는 감지 함수) --
+ * "등장 화" 백링크 카드를 등장인물 전용에서 장소·세력·사건·떡밥/복선까지
+ * 넓히기 위한 매핑. 작품 바이블이 요구하는 "국가/지역/세력/사건/복선이 원고와
+ * 자동으로 연결된다"는 항목을 새 카드 컴포넌트 없이 기존 카드 하나로 처리한다. */
+var APPEARANCE_BACKLINK = {
+  "등장인물": { field:"characterIds", detect:function(m,wid){ return detectCharactersInManuscript(m,wid); } },
+  "장소":     { field:"locationIds",  detect:function(m,wid){ return detectLocationsInManuscript(m,wid); } },
+  "세력":     { field:"factionIds",   detect:function(m,wid){ return detectFactionsInManuscript(m,wid); } },
+  "사건":     { field:"eventIds",     detect:function(m,wid){ return detectEventsInManuscript(m,wid); } },
+  "떡밥":     { field:"foreshadowIds", detect:function(m,wid){ return detectForeshadowsInManuscript(m,wid); } },
+  "복선":     { field:"foreshadowIds", detect:function(m,wid){ return detectForeshadowsInManuscript(m,wid); } }
+};
 function renderCharacterAppearancesCard(doc) {
-  if (doc.category !== "등장인물") return "";
+  var link = APPEARANCE_BACKLINK[doc.category];
+  if (!link) return "";
   var novelsInWork = NOVELS.filter(function(n){ return n.workId === doc.workId; });
   var novelIds = novelsInWork.map(function(n){ return n.id; });
   MANUSCRIPTS.filter(function(m){ return novelIds.indexOf(m.novelId) !== -1; }).forEach(function(m){
-    detectCharactersInManuscript(m, doc.workId);
+    link.detect(m, doc.workId);
   });
-  var eps = MANUSCRIPTS.filter(function(m){ return novelIds.indexOf(m.novelId) !== -1 && (m.characterIds||[]).indexOf(doc.id) !== -1; });
+  var eps = MANUSCRIPTS.filter(function(m){ return novelIds.indexOf(m.novelId) !== -1 && (m[link.field]||[]).indexOf(doc.id) !== -1; });
   var head = '<div class="appear-head">'+ic("link",15)+'<span>등장 화'+(eps.length?' · '+eps.length+'개':'')+'</span></div>';
   var body;
   if (!eps.length) {
-    body = '<div class="chip-empty-hint">아직 본문에서 이 인물이 감지된 화가 없어요. 원고 본문에 이름이나 별칭이 언급되면 자동으로 여기 나타나요.</div>';
+    body = '<div class="chip-empty-hint">아직 본문에서 이 항목이 감지된 화가 없어요. 원고 본문에 이름이나 별칭이 언급되면 자동으로 여기 나타나요.</div>';
   } else {
     var byNovel = {};
     eps.forEach(function(m){ (byNovel[m.novelId] = byNovel[m.novelId] || []).push(m); });
@@ -11198,18 +11356,29 @@ function renderDocPage(doc, containerId) {
       '<button type="button" class="life-pick clear '+(!doc.lifeStatus?"on":"")+'" data-lifeval="">표시 안 함</button>' +
     '</div>');
   }
-  if (doc.category === "떡밥") {
-    var epOptions = '<option value="">연결 안 함</option>' + NOVELS.filter(function(n){ return n.workId===doc.workId; }).map(function(n){
-      var eps = MANUSCRIPTS.filter(function(m){ return m.novelId===n.id; });
-      if (!eps.length) return "";
-      return '<optgroup label="'+esc(n.title||"제목 없는 소설")+'">' + eps.map(function(m){
-        return '<option value="'+m.id+'" '+(doc.resolvedMsId===m.id?"selected":"")+'>'+esc(m.title||"제목 없음")+'</option>';
-      }).join("") + '</optgroup>';
-    }).join("");
-    propsHtml += propRow("check", "회수 여부", '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
-      '<button type="button" class="life-pick '+(doc.resolved?"on":"")+'" id="resolveToggle" style="--lc:var(--moss)">'+(doc.resolved?"회수됨":"미회수")+'</button>' +
-      '<select class="sel" id="resolvedMsSelect" style="max-width:220px">'+epOptions+'</select>' +
+  /* 떡밥(미스터리성 힌트)과 복선(반드시 회수될 설정)은 "화 단위로 심고 회수를
+   * 추적한다"는 핵심 메커니즘이 동일해서 별도 카테고리를 만들되 이 블록은
+   * 공유한다 -- 작품 바이블의 30.복선 관리/31.떡밥 관리가 요구하는 "심은 화
+   * (자동, 아래 등장 화 백링크 카드가 대신함) · 회수 예정 화 · 실제 회수 화 ·
+   * 상태(미회수/회수완료/폐기)"를 여기서 전부 채운다. */
+  if (doc.category === "떡밥" || doc.category === "복선") {
+    var msOptionsFor = function(selectedId){
+      return '<option value="">연결 안 함</option>' + NOVELS.filter(function(n){ return n.workId===doc.workId; }).map(function(n){
+        var eps = MANUSCRIPTS.filter(function(m){ return m.novelId===n.id; });
+        if (!eps.length) return "";
+        return '<optgroup label="'+esc(n.title||"제목 없는 소설")+'">' + eps.map(function(m){
+          return '<option value="'+m.id+'" '+(selectedId===m.id?"selected":"")+'>'+esc(m.title||"제목 없음")+'</option>';
+        }).join("") + '</optgroup>';
+      }).join("");
+    };
+    var fsStatus = doc.abandoned ? "abandoned" : (doc.resolved ? "resolved" : "open");
+    propsHtml += propRow("check", "회수 상태", '<div class="life-pick-row" id="foreshadowStatusRow">' +
+      '<button type="button" class="life-pick '+(fsStatus==="open"?"on":"")+'" data-foreshadowstatus="open" style="--lc:var(--accent)">미회수</button>' +
+      '<button type="button" class="life-pick '+(fsStatus==="resolved"?"on":"")+'" data-foreshadowstatus="resolved" style="--lc:var(--moss)">회수완료</button>' +
+      '<button type="button" class="life-pick '+(fsStatus==="abandoned"?"on":"")+'" data-foreshadowstatus="abandoned" style="--lc:var(--ink-faint)">폐기</button>' +
     '</div>');
+    propsHtml += propRow("link", "회수 예정 화", '<select class="sel" id="expectedResolveMsSelect" style="max-width:220px">'+msOptionsFor(doc.expectedResolveMsId)+'</select>');
+    propsHtml += propRow("link", "실제 회수 화", '<select class="sel" id="resolvedMsSelect" style="max-width:220px">'+msOptionsFor(doc.resolvedMsId)+'</select>');
   }
   if (doc.category === "세력") {
     propsHtml += propRow("crown", "세력 유형", '<div class="life-pick-row" id="houseTypePickRow">' +
@@ -11338,7 +11507,7 @@ function renderDocPage(doc, containerId) {
     '<div class="prop-grid">' + propsHtml + '</div>' +
     (doc.category === "등장인물" ? renderAppearanceEditor(doc) : "") +
     (doc.category === "등장인물" ? renderStatusWindowCard(doc) : "") +
-    (doc.category === "등장인물" ? renderCharacterAppearancesCard(doc) : "") +
+    renderCharacterAppearancesCard(doc) +
     renderRelationshipsCard(doc) +
     '<div class="two-col">' +
       '<div class="toc-box" id="tocBox"></div>' +
@@ -11453,12 +11622,20 @@ function renderDocPage(doc, containerId) {
     });
   });
 
-  // foreshadowing resolved (떡밥)
-  var resolveToggle = document.getElementById("resolveToggle");
-  if (resolveToggle) {
-    resolveToggle.addEventListener("click", function(){
-      doc.resolved = !doc.resolved;
+  // foreshadowing resolved (떡밥·복선)
+  main.querySelectorAll("[data-foreshadowstatus]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var v = btn.dataset.foreshadowstatus;
+      doc.resolved = v === "resolved";
+      doc.abandoned = v === "abandoned";
       saveData(); renderDocPage(doc); renderSidebar();
+    });
+  });
+  var expectedResolveMsSelect = document.getElementById("expectedResolveMsSelect");
+  if (expectedResolveMsSelect) {
+    expectedResolveMsSelect.addEventListener("change", function(e){
+      doc.expectedResolveMsId = e.target.value || null;
+      saveData(); renderSidebar();
     });
   }
   var resolvedMsSelect = document.getElementById("resolvedMsSelect");
@@ -16424,6 +16601,10 @@ function render() {
     var ftw = WORKS.find(function(w){ return w.id === state.activeId; });
     if (ftw) { renderFieldTemplatesPage(ftw); return; }
   }
+  if (state.mode === "validate") {
+    var vw = WORKS.find(function(w){ return w.id === state.activeId; });
+    if (vw) { renderValidationPage(vw); return; }
+  }
   if (state.mode === "sports") {
     var sp = SPORTS.find(function(s){ return s.id === state.activeId; });
     if (sp) { renderSportsPage(sp); return; }
@@ -18663,7 +18844,7 @@ document.getElementById("mobileMenuBtn").addEventListener("click", toggleMobileS
 document.getElementById("sidebarScrim").addEventListener("click", closeMobileSidebar);
 document.getElementById("brandHome").addEventListener("click", closeMobileSidebar);
 document.getElementById("sbBody").addEventListener("click", function(e){
-  var el = e.target.closest("[data-openwork],[data-opendoc],[data-opendoccat],[data-opendoccard],[data-opengraph],[data-openmap],[data-opentable],[data-openscript],[data-opentimeline],[data-opensports],[data-openunits],[data-openfieldtemplates],[data-openms],[data-openessayentry]");
+  var el = e.target.closest("[data-openwork],[data-opendoc],[data-opendoccat],[data-opendoccard],[data-opengraph],[data-openmap],[data-opentable],[data-openscript],[data-opentimeline],[data-opensports],[data-openunits],[data-openfieldtemplates],[data-openvalidate],[data-openms],[data-openessayentry]");
   if (el) closeMobileSidebar();
 });
 
