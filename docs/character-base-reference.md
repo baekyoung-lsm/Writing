@@ -17,6 +17,9 @@ assets/character-base/female/seed0_female_base_large_opt.png    (bustSize: large
 assets/character-base/female/seed0_female_base_xlarge_opt.png   (bustSize: xlarge, 앱에 실제 임베드)
 assets/character-base/male/seed42_male_base.png
 assets/character-base/male/seed42_male_base_opt.png  (팔레트 축소판, 앱에 실제 임베드된 버전)
+assets/character-layers/hair/female_bob_black_medium.png            (헤어 레이어, 아직 앱에 미연결)
+assets/character-layers/tops/female_blouse_blue_transparent.png     (의상 원본, rembg 투명화만 된 상태)
+assets/character-layers/tops/female_blouse_blue_aligned_opt.png     (몸 랜드마크에 맞춰 정렬·축소, 앱에 실제 임베드)
 ```
 
 `_opt.png` 파일명의 `none/small/medium/large/xlarge`는 `app/jipseul-note.html`의 `bustSize`/`VD_BUST_SIZE_MULT` enum 키와 그대로 맞춘 이름이고, 원본 파일명의 `big/verybig`는 이전 세션 산출물 이름을 그대로 유지한 것 — 매핑은 big=large, verybig=xlarge.
@@ -72,14 +75,19 @@ assets/character-base/male/seed42_male_base_opt.png  (팔레트 축소판, 앱�
 - 레이어 추출: mediapipe `hair_segmenter.tflite`로 시도했으나 이 모델은 실사 사진으로 학습돼 있어서 플랫 벡터 그림체에서는 완전히 오작동함(머리카락 대신 팔 윤곽선 한 조각을 "머리"로 잘못 인식). 대신 **기준 원본과 인페인팅 결과물을 픽셀 단위로 diff한 뒤, 인페인팅에 실제로 쓴 마스크 영역으로만 diff를 제한**하는 방식으로 깨끗하게 추출함(diff는 마스크 바깥에서도 VAE 인코드/디코드 왕복 때문에 미세한 재구성 노이즈가 생기므로, 마스크 영역으로 반드시 제한해야 함).
 - 결과물: `assets/character-layers/hair/female_bob_black_medium.png`(투명 배경 헤어 레이어), 같은 폴더에 사용한 인페인팅 마스크도 참고용으로 같이 넣어둠.
 
-## 의상 레이어 — 방향 검증 완료 (자체 생성 + rembg)
+## 의상 레이어 — 해결됨, 앱에 반영함 (자체 생성 + rembg + 랜드마크 정렬 + 메시 워프 공유)
 
-VTON 계열(외부 유료 API·실사풍 학습이라 화풍 불일치 위험) 대신, 지금까지와 같은 방식(Z-Image Turbo + 기준 이미지를 style reference로 사용)으로 의상 1개(블라우스)를 "몸 없이 옷만" 흰 배경에 단독으로 생성한 뒤, 이미 설치된 `rembg`로 배경을 투명화하는 방식을 테스트함 — 결과: 화풍이 일관되게 유지되는 깨끗한 투명 PNG를 얻음(`assets/character-layers/tops/female_blouse_blue_raw.png`). VTON/LayerDiffusion 없이도 방향이 유효하다는 게 확인됨.
+VTON 계열(외부 유료 API·실사풍 학습이라 화풍 불일치 위험) 대신, Z-Image Turbo + 기준 이미지를 style reference로 삼아 의상 1개(블라우스)를 "몸 없이 옷만" 흰 배경에 단독 생성 → `rembg`로 배경 투명화까지는 지난 시도에서 이미 검증함(`assets/character-layers/tops/female_blouse_blue_transparent.png` — 파일명이 `_raw`였던 걸 실제 내용에 맞게 `_transparent`로 정정함, rembg를 거친 투명 PNG가 맞음).
 
-**아직 안 된 것**: 옷 이미지가 캔버스 전체를 거의 채우도록 생성돼서, 기준 몸 이미지의 실제 어깨·가슴·허리 위치(§ 위 "체형 메시 워프"에서 이미 실측한 `APPEAR_RASTER_LANDMARKS` 좌표)에 맞춰 축소·정렬하는 후처리가 아직 없음 — 지금 그대로 몸 위에 겹치면 옷이 몸보다 훨씬 크게 나옴. 다음엔 생성된 옷 이미지를 그 실측 랜드마크 좌표 기준으로 리사이즈·크롭하는 스크립트가 필요함.
+이번에 마저 풀어서 실제로 앱에 연결한 부분:
+- **정렬/스케일 문제 해결**: 생성된 옷이 캔버스를 거의 다 채워서 몸보다 훨씬 크게 나오는 문제를, 옷 이미지에서 칼라(옷깃) 폭·Y좌표를 알파 채널로 직접 실측한 뒤, 몸의 어깨 랜드마크(`APPEAR_RASTER_LANDMARKS`, 반너비 123px)에 여유폭 15%를 더한 값에 맞춰 등비 축소하고, 칼라 Y를 몸의 어깨 Y 근처로 옮기는 방식으로 정렬함(`assets/character-layers/tops/female_blouse_blue_aligned_opt.png`). 몸 이미지 위에 합성해서 실제로 잘 맞는지 눈으로 확인함.
+- **체형 변화에 옷도 같이 반응**: 옷을 위한 별도 계산을 만들지 않고, 몸에 이미 쓰는 `appearRasterWarpMesh`(bodyType·gender 기반 곡선 워프)를 옷 이미지에도 **그대로** 적용함(`appearRasterWarpDraw`로 삼각형 그리기 루프를 공용 함수로 뽑아냄). 이렇게 하면 체형이 바뀔 때 몸과 옷이 항상 같은 비율로 같이 늘어나서 어긋날 일이 없음 — 지난번에 검토했던 CSS 3분할 기법 대신 이 방식을 선택한 이유이기도 함(같은 코드를 재사용하고, 옷마다 사람이 분할 경계를 새로 잡아줄 필요가 없음).
+- **앱 반영**: "외형 확인" 패널에서 `gender !== "m"`이면(`appearRasterHasOutfit`) 안내 문구 대신 `<canvas id="appearOutfitCanvas">`에 몸+옷을 합성해서 보여줌(`appearRasterDrawOutfitInto`). 남자는 아직 의상 자산이 없어서 기존 안내 문구를 그대로 유지함(회귀 없음, 헤드리스로 확인). 헤드리스 Chrome으로 체형(글래머+가슴 매우 큼)·기본 체형 등에서 실제로 옷이 몸을 따라 늘어나는 것을 스크린샷으로 확인함.
+
+**남은 다듬을 점**: 기장이 다소 길고 헐렁하게(원피스에 가깝게) 나옴 — 옷 자체를 다시 생성하거나 밑단을 크롭하면 더 자연스러워짐. 지금은 상의 1종뿐이라 패널에 "지금은 상의 1종만 미리 입혀볼 수 있어요" 안내를 추가해 기대치를 정확히 알려줌.
 
 ## 다음 단계 (미완료, `jipseul-note-sync.md` §③ 참고)
 
-- "외형 확인"(AI 원화 베타) 패널을 실제 레이어 합성으로 바꾸는 작업 자체는 아직 안 함 — 지금까지는 개별 레이어(헤어 1종, 옷 1종)가 실제로 만들어질 수 있다는 걸 검증한 단계이고, 이걸 여러 종류로 늘리고 몸 위에 정확히 정렬해서 합성하는 앱 통합은 다음 단계임. 그 전까지는 기존 안내 문구("AI 원화(베타)는 아직 의상을 표현하지 못해요")를 그대로 유지함.
-- 옷 레이어를 몸 이미지의 실측 랜드마크에 맞춰 자동 정렬·리사이즈하는 후처리 스크립트가 필요함(위 "의상 레이어" 절 참고).
-- 지금 검증된 헤어·의상 파이프라인(인페인팅 or 단독 생성 + diff/rembg 추출)을 반복해서 종류를 늘리는 작업이 남음(헤어스타일 여러 종류, 하의·신발·액세서리 등).
+- 헤어 레이어(이미 만든 `female_bob_black_medium.png`)는 아직 앱에 연결 안 함 — 의상과 같은 방식(몸 캔버스에 랜드마크 정렬 + 같은 메시로 워프)으로 붙이면 될 것으로 예상되고, 코드 구조도 이미 준비돼 있음(`appearRasterWarpDraw` 재사용 가능).
+- 의상·헤어 종류를 늘리는 작업이 남음 — 검증된 파이프라인(인페인팅 or 단독 생성 + diff/rembg 추출 + 랜드마크 정렬)을 반복하면 됨. 남자용 의상은 아직 하나도 없음.
+- 옷 기장이 길게 나온 것 등 개별 에셋 품질은 다시 생성하거나 수동 보정하면 개선됨 — 파이프라인 자체의 한계는 아님.
