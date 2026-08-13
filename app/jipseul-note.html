@@ -897,8 +897,21 @@
   .ms-controls button.on { color:var(--accent); background:var(--accent-soft); }
   .ms-fontsize-val { font-size:12px; color:var(--ink-faint); min-width:32px; text-align:center; font-variant-numeric:tabular-nums; }
   .ms-textarea { width:100%; height:460px; border:none; outline:none; resize:none; box-sizing:border-box; overflow-y:auto; }
-  .ms-format-preview { white-space:pre-wrap; word-break:break-word; overflow-y:auto; cursor:default; }
-  .ms-format-preview.ms-textarea { padding:0; }
+  /* 서식 미리보기 -- 예전엔 원고 textarea와 똑같은 상자를 그대로 재사용해서
+   * "이게 입력창인지 미리보기인지" 구분이 안 됐고, 배경·글자색도 CSS 변수를
+   * 안 쓰는 자리가 있어 테마에 따라(특히 다크·RGB) 대비가 깨졌다. 지금은
+   * 배지 헤더 + 카드형 테두리/그림자로 시각적으로 분리하고, 색은 전부
+   * var(--...) 토큰만 써서 라이트/다크/RGB 어떤 테마에서도(각 테마가
+   * --bg-card/--ink/--accent 등을 알아서 재정의하므로) 자동으로 맞는
+   * 대비를 갖는다. */
+  .ms-format-preview { display:flex; flex-direction:column; padding:0 !important; overflow:hidden; cursor:default;
+    background:var(--bg-card); color:var(--ink); border:1px solid var(--border-strong); border-radius:var(--radius-md);
+    box-shadow:var(--shadow-2); }
+  .ms-fp-badge { flex:none; display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700;
+    letter-spacing:0.04em; color:var(--accent); background:var(--accent-soft); padding:8px 16px;
+    border-bottom:1px solid var(--border); }
+  .ms-fp-body { flex:1; min-height:0; overflow-y:auto; padding:28px 32px; white-space:pre-wrap; word-break:break-word; color:var(--ink); }
+  .fmt-mark { background:var(--accent-soft); color:var(--accent); border-radius:3px; padding:0 2px; }
 
   /* ---------- 일반 집필창 (워드/HWP 스타일) ---------- */
   .ms-doc-page { width:100%; max-width:820px; margin:0 auto; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; box-shadow:0 2px 16px var(--shadow); overflow:hidden; }
@@ -2079,9 +2092,13 @@ var LIFE_STATUSES = {
  * 워드/한글 같은 순수 집필 표면이어야 하므로 그 셋은 집필 포맷에서 뺐다 --
  * 플랫폼별 "독자가 실제로 보는 화면"은 renderReaderPreview()의 조판
  * 미리보기(READER_PLATFORMS)에서 담당한다. */
+/* 일반 집필창을 항상 맨 앞에 둔다 -- Word·한글·Google Docs·Notion·Scrivener
+ * 등 대부분의 집필 도구가 "일반 문서"를 기본값으로 주듯, 이 순서가 그대로
+ * 새 원고의 기본 서식이자 모드 드롭다운의 표시 순서가 된다(Object.keys
+ * 순회 순서를 그대로 쓰는 곳 전부에 영향). */
 var MS_FORMATS = {
-  general: { label:"양장본" },
   plain:   { label:"일반 집필창", lineHeight:"1.9", pad:"56px 64px", bg:"#FFFFFF", color:"#1A1A1A", spacing:"0" },
+  general: { label:"양장본" },
   paper:   { label:"원고지" }
 };
 /* ---------------- 원고지(manuscript paper) : 다국어 통합 집필 엔진 ----------------
@@ -6437,7 +6454,7 @@ function createManuscript(novelId, createdAt) {
   if (scheme === "chapter") title = (count+1) + "장";
   else if (scheme === "subtitle") title = "";
   else title = count === 0 ? "프롤로그" : count + "화";
-  var m = { id: uid(), title: title, text: "", format: "general", novelId: novelId, previewDark: false, previewFontSize: 16, previewFont: "sans", bookMode: "edit", bookPage: 0, bookSpread: false, editScrollFrac: 0, createdAt: createdAt, characterIds: [], excludedCharacterIds: [], locationIds: [], excludedLocationIds: [] };
+  var m = { id: uid(), title: title, text: "", format: "plain", novelId: novelId, previewDark: false, previewFontSize: 16, previewFont: "sans", bookMode: "edit", bookPage: 0, bookSpread: false, editScrollFrac: 0, createdAt: createdAt, characterIds: [], excludedCharacterIds: [], locationIds: [], excludedLocationIds: [] };
   MANUSCRIPTS.push(m); saveData();
   return m;
 }
@@ -7087,11 +7104,23 @@ function renderFormattedPlainText(text, ranges) {
     var active = ranges.filter(function(r){ return r.start<=s && r.end>=e; });
     var italic = active.some(function(r){ return r.type==="italic"; });
     var sizeR = active.filter(function(r){ return r.type==="size"; }).pop();
-    if (italic) seg = "<i>"+seg+"</i>";
-    if (sizeR) seg = '<span style="font-size:'+sizeR.size+'px">'+seg+'</span>';
+    /* fmt-mark: 서식이 적용된 구간을 옅은 강조색으로 표시한다 -- 이탤릭
+     * 하나만으로는(특히 짧은 구간이거나 본문 폰트에 따라) 눈에 잘 안 띄어서
+     * "어디에 서식이 적용됐는지 알아보기 어렵다"는 문제가 있었다. */
+    if (italic) seg = '<i class="fmt-mark">'+seg+'</i>';
+    if (sizeR) seg = '<span class="fmt-mark" style="font-size:'+sizeR.size+'px">'+seg+'</span>';
     html += seg;
   }
   return html;
+}
+/* 서식 미리보기 컨테이너(#msFormatPreview/#paperFormatPreview/#esFormatPreview)
+ * 셋이 공유하는 내부 마크업 -- "이건 원고가 아니라 미리보기다"를 첫눈에
+ * 알 수 있도록 배지를 얹고, 실제 렌더링 본문은 별도 스크롤 영역에 담는다. */
+function formatPreviewInnerHtml(text, ranges) {
+  return (
+    '<div class="ms-fp-badge">'+ic("eye",11)+'<span>미리보기 — 서식이 실제로 이렇게 보입니다</span></div>' +
+    '<div class="ms-fp-body">' + renderFormattedPlainText(text, ranges) + '</div>'
+  );
 }
 /* 특정 char 오프셋이 이탤릭 구간에 들어있는지만 보는 가벼운 버전 -- 원고지처럼
  * 글자 하나하나를 셀 단위로 그리는 화면(고정 칸 크기라 글씨크기 변경은 칸
@@ -14994,7 +15023,7 @@ function renderManuscriptPaperWrite(m) {
     '<div class="paper-stats-bar" id="paperStatsBar"></div>' +
     '<div class="ms-doc-page"><div class="ms-doc-ruler"></div><div class="ms-doc-screen">' +
       '<textarea class="ms-textarea ms-doc-textarea'+((m.paperVertical&&initStats.rules.vertical)?" vertical":"")+'" id="paperText" spellcheck="true" placeholder="여기에 편하게 쓰세요 — 칸·줄·페이지는 내부적으로 원고지 규칙 그대로 계산됩니다." lang="'+esc(initStats.rules.lang)+'"'+(m.showFormatPreview?' style="display:none"':'')+'>'+esc(m.text||"")+'</textarea>' +
-      '<div class="ms-format-preview ms-textarea ms-doc-textarea" id="paperFormatPreview"'+(m.showFormatPreview?'':' style="display:none"')+'>'+renderFormattedPlainText(m.text||"", m.formatRanges)+'</div>' +
+      '<div class="ms-format-preview ms-textarea ms-doc-textarea" id="paperFormatPreview"'+(m.showFormatPreview?'':' style="display:none"')+'>'+formatPreviewInnerHtml(m.text||"", m.formatRanges)+'</div>' +
     '</div></div>' +
     '<div class="paper-page-nav">' +
       '<button type="button" id="paperPrevPage">'+ic("chevL",13)+'</button>' +
@@ -15074,7 +15103,7 @@ function renderManuscriptPaperWrite(m) {
   }
   function refreshPaperFormatPreview() {
     var pv = document.getElementById("paperFormatPreview");
-    if (pv) pv.innerHTML = renderFormattedPlainText(m.text||"", m.formatRanges);
+    if (pv) pv.innerHTML = formatPreviewInnerHtml(m.text||"", m.formatRanges);
   }
   textEl.addEventListener("input", function (e) {
     if (e.isComposing) return;
@@ -15564,7 +15593,7 @@ function renderManuscriptPage(m) {
   if (m.bookPage === undefined) m.bookPage = 0;
   if (m.bookSpread === undefined) m.bookSpread = false;
   if (m.editScrollFrac === undefined) m.editScrollFrac = 0;
-  if (m.format === undefined) m.format = "general";
+  if (m.format === undefined) m.format = "plain";
   /* 예전 버전에서 저장된 조아라/문피아/네이버 포맷은 이제 집필 포맷이 아니라
    * 조판 미리보기 쪽 플랫폼이므로, 열람 시 집필 표면은 일반 집필창으로
    * 옮겨주고 그 플랫폼은 미리보기 기본 선택값으로 넘겨준다. */
@@ -15614,7 +15643,7 @@ function renderManuscriptPage(m) {
    * 바로 전환까지 되는 UI로 바꿔서 "도구 열기 -> 서식 탭 찾기 -> 클릭" 세 단계를
    * 한 번의 클릭으로 줄였다. 서식 탭(.ms-tabs)은 이 드롭다운과 중복이라 없앴다. */
   var toolsToggleHtml = '<button type="button" id="msToolsToggle" class="ms-tools-toggle'+(state.msToolsOpen?" on":"")+'">'+ic("chevron",11)+'<span>도구</span></button>';
-  var modeTriggerHtml = '<button type="button" id="msModeTrigger" class="ms-mode-trigger" title="집필 형식을 바꾸거나, 플랫폼별 독자 화면으로 바로 미리 봅니다">'+esc((MS_FORMATS[m.format]||{}).label||"")+ic("chevron",10)+'</button>';
+  var modeTriggerHtml = '<button type="button" id="msModeTrigger" class="ms-mode-trigger" title="집필 형식을 바꾸거나, 플랫폼별 독자 화면으로 바로 미리 봅니다">'+ic("docIcon",13)+'<span>'+esc((MS_FORMATS[m.format]||{}).label||"")+'</span>'+ic("chevron",10)+'</button>';
   var readerTriggerHtml = '<button type="button" id="rpTriggerBtn" class="rp-trigger'+(state.readerOpen?" on":"")+'" title="독자가 실제로 보는 화면으로 전환합니다">'+ic("phone",13)+'<span>미리보기</span></button>';
   var focusBtnHtml = '<button type="button" id="msFocusToggle" class="ms-focus-btn'+(state.focusMode?" on":"")+'" title="사이드바를 숨기고 집필에만 집중합니다">'+ic("eye",13)+'<span>전체 모드</span></button>';
   var quickbarHtml = '<div class="ms-quickbar">' + toolsToggleHtml + modeTriggerHtml + readerTriggerHtml + focusBtnHtml + '</div>';
@@ -15633,7 +15662,7 @@ function renderManuscriptPage(m) {
   } else {
     var textareaCls = "paper-text";
     var textareaHtml = '<textarea class="'+textareaCls+'" id="msText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요."'+(m.showFormatPreview?' style="display:none"':'')+'>'+esc(m.text||"")+'</textarea>';
-    var formatPreviewHtml = '<div class="ms-format-preview '+textareaCls+'" id="msFormatPreview"'+(m.showFormatPreview?'':' style="display:none"')+'>'+renderFormattedPlainText(m.text||"", m.formatRanges)+'</div>';
+    var formatPreviewHtml = '<div class="ms-format-preview '+textareaCls+'" id="msFormatPreview"'+(m.showFormatPreview?'':' style="display:none"')+'>'+formatPreviewInnerHtml(m.text||"", m.formatRanges)+'</div>';
     bodyHtml =
       '<div class="ms-controls">' +
         '<button type="button" id="msDarkToggle" class="'+(m.previewDark?"on":"")+'">'+ic(m.previewDark?"moon":"sun",13)+'<span>다크 모드</span></button>' +
@@ -15789,7 +15818,7 @@ function renderManuscriptPage(m) {
     }
     function refreshMsFormatPreview() {
       var pv = document.getElementById("msFormatPreview");
-      if (pv) pv.innerHTML = renderFormattedPlainText(m.text||"", m.formatRanges);
+      if (pv) pv.innerHTML = formatPreviewInnerHtml(m.text||"", m.formatRanges);
     }
     msTextEl.addEventListener("input", function(e){
       var oldVal = m.text||"";
@@ -16574,7 +16603,7 @@ function renderEssayEntryPage(e) {
     '</div>';
 
   var textareaHtml = '<textarea class="ms-textarea ms-doc-textarea" id="esText" spellcheck="true" placeholder="여기에 글을 적어보세요."'+(e.showFormatPreview?' style="display:none"':'')+'>'+esc(e.text||"")+'</textarea>';
-  var esFormatPreviewHtml = '<div class="ms-format-preview ms-textarea ms-doc-textarea" id="esFormatPreview"'+(e.showFormatPreview?'':' style="display:none"')+'>'+renderFormattedPlainText(e.text||"", e.formatRanges)+'</div>';
+  var esFormatPreviewHtml = '<div class="ms-format-preview ms-textarea ms-doc-textarea" id="esFormatPreview"'+(e.showFormatPreview?'':' style="display:none"')+'>'+formatPreviewInnerHtml(e.text||"", e.formatRanges)+'</div>';
   var editorHtml =
     '<div class="ms-controls">' +
       '<button type="button" id="esDarkToggle" class="'+(e.previewDark?"on":"")+'">'+ic(e.previewDark?"moon":"sun",13)+'<span>다크 모드</span></button>' +
@@ -16659,7 +16688,7 @@ function renderEssayEntryPage(e) {
   wireAutoIndent(esTextEl);
   function refreshEsFormatPreview() {
     var pv = document.getElementById("esFormatPreview");
-    if (pv) pv.innerHTML = renderFormattedPlainText(e.text||"", e.formatRanges);
+    if (pv) pv.innerHTML = formatPreviewInnerHtml(e.text||"", e.formatRanges);
   }
   esTextEl.addEventListener("input", function(ev){
     var oldVal = e.text||"";
