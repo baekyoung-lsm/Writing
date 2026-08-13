@@ -913,14 +913,60 @@
   .ms-peek-toggle.open svg { transform:rotate(90deg); }
   .ms-peek-body { margin-top:6px; padding:10px 12px; border:1px dashed var(--border-strong); border-radius:8px; font-size:12.5px; line-height:1.6; color:var(--ink-faint); background:var(--bg-card); white-space:pre-wrap; }
 
+  /* ---------- 집필 화면 상단 도구 모음(접이식) ----------
+   * "작품을 열면 원고부터 보인다"는 원칙에 맞춰, 원고 위에 있던 등장인물 칩·
+   * 통계·목표·이전화 이어보기·맞춤법 안내·서식 탭·글꼴/다크모드/원고지 툴바
+   * 전부를 기본적으로 접어 둔다. 이전화/다음화(ep-switcher)·집중 모드·도구
+   * 토글처럼 매번 쓰는 것만 상시 노출하고, 나머지는 "도구"를 눌러야 펼쳐진다.
+   * .graph-shell에 ms-tools-open 클래스가 없으면(기본값) 전부 숨긴다 -- 원고지
+   * 모드의 자체 툴바(.paper-toolbar)도 DOM 위치를 옮기지 않고 이 규칙 하나로
+   * 같이 접힌다. */
+  .ms-quickbar { display:flex; align-items:center; gap:8px; padding:6px 20px 12px; }
+  .ms-tools-toggle { display:flex; align-items:center; gap:6px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:20px; padding:6px 13px; font-size:12.5px; color:var(--ink-soft); }
+  .ms-tools-toggle:hover { border-color:var(--accent); color:var(--accent); }
+  .ms-tools-toggle.on { background:var(--accent-soft); color:var(--accent); border-color:var(--accent); font-weight:600; }
+  .ms-tools-toggle svg { transition:transform .15s; }
+  .ms-tools-toggle.on svg { transform:rotate(180deg); }
+  .ms-format-badge { font-size:11px; color:var(--ink-faint); background:var(--bg-card); border-radius:10px; padding:3px 9px; flex:none; }
+  .ms-focus-btn { display:flex; align-items:center; gap:5px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:20px; padding:6px 13px; font-size:12.5px; color:var(--ink-soft); margin-left:auto; }
+  .ms-focus-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .ms-focus-btn.on { background:var(--accent-soft); color:var(--accent); border-color:var(--accent); font-weight:600; }
+  .graph-shell:not(.ms-tools-open) .pov-row,
+  .graph-shell:not(.ms-tools-open) .ms-stats-bar,
+  .graph-shell:not(.ms-tools-open) .ms-goal-row,
+  .graph-shell:not(.ms-tools-open) .ms-peek,
+  .graph-shell:not(.ms-tools-open) .ms-spellcheck-hint,
+  .graph-shell:not(.ms-tools-open) .ms-tabs,
+  .graph-shell:not(.ms-tools-open) .ms-controls,
+  .graph-shell:not(.ms-tools-open) .paper-toolbar,
+  .graph-shell:not(.ms-tools-open) .paper-stats-bar,
+  .graph-shell:not(.ms-tools-open) .book-mode-toggle { display:none; }
+
   /* ---------- 집중 모드 ----------
    * 사이드바만 있던 시절엔 이거 하나만 숨기면 됐지만, 지금은 작품을 열면
    * 그 위에 상단 워크스페이스 탭 바(#wsTabBar)가 항상 붙어 있어서 그것도
-   * 같이 숨겨야 진짜 "집중" 모드가 된다. */
+   * 같이 숨겨야 진짜 "집중" 모드가 된다. 집중 모드에서는 도구 모음 자체를
+   * 열 수 없게 토글 버튼도 감추고, 제목·화수·이전/다음·저장만 남긴다. */
   .app.focus-mode { grid-template-columns:1fr; }
   .app.focus-mode .sidebar { display:none; }
   .app.focus-mode #wsTabBar { display:none; }
   .app.focus-mode .page-pad { max-width:900px; margin:0 auto; }
+  .app.focus-mode .ms-tools-toggle,
+  .app.focus-mode .ms-format-badge,
+  .app.focus-mode .ms-context-panel,
+  .app.focus-mode #msCharCount,
+  .app.focus-mode #deleteMsBtn,
+  .app.focus-mode #paperInfoSettingsBtn,
+  .app.focus-mode .pov-row,
+  .app.focus-mode .ms-stats-bar,
+  .app.focus-mode .ms-goal-row,
+  .app.focus-mode .ms-peek,
+  .app.focus-mode .ms-spellcheck-hint,
+  .app.focus-mode .ms-tabs,
+  .app.focus-mode .ms-controls,
+  .app.focus-mode .paper-toolbar,
+  .app.focus-mode .paper-stats-bar,
+  .app.focus-mode .book-mode-toggle { display:none !important; }
 
   /* ---------- book mode (양장본) ---------- */
   .book-outer { display:flex; justify-content:center; padding:6px 0 22px; overflow-x:auto; }
@@ -4300,7 +4346,7 @@ function openFindReplace(textareaId, triggerEl, onUpdate) {
 }
 
 /* ---------------- state ---------------- */
-var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, pendingMapFocusMarker: null, focusMode: false, appearTab: {}, splitView: false, splitSelectedId: null, wsHomeTab: {}, wsLastTabByCat: {} };
+var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, pendingMapFocusMarker: null, focusMode: false, msToolsOpen: false, appearTab: {}, splitView: false, splitSelectedId: null, wsHomeTab: {}, wsLastTabByCat: {} };
 function applyFocusModeClass() {
   var appEl = document.querySelector(".app");
   if (!appEl) return;
@@ -15313,7 +15359,13 @@ function openEpSwitchPopover(anchorEl, m, novel, onPick) {
     document.addEventListener("mousedown", _epSwitchOutsideHandler);
   }, 0);
 }
+var _msToolsResetForId = null;
 function renderManuscriptPage(m) {
+  /* "도구" 패널은 작품을 새로 열 때마다 기본 접힘 상태로 되돌아가야 하지만,
+   * 같은 회차 안에서 다크모드·서식 탭처럼 도구 패널 "안"의 버튼을 눌러
+   * 다시 그려지는 경우까지 접혀버리면 방금 누른 버튼이 사라져 어색하다.
+   * 그래서 회차(m.id)가 바뀔 때만 리셋한다. */
+  if (_msToolsResetForId !== m.id) { state.msToolsOpen = false; _msToolsResetForId = m.id; }
   if (m.previewFontSize === undefined) m.previewFontSize = 16;
   if (m.previewFont === undefined) m.previewFont = "sans";
   if (m.previewDark === undefined) m.previewDark = false;
@@ -15361,22 +15413,25 @@ function renderManuscriptPage(m) {
     return '<button type="button" class="ms-tab '+(m.format===key?"on":"")+'" data-msformat="'+key+'">'+esc(MS_FORMATS[key].label)+'</button>';
   }).join("") + '</div>';
 
-  var focusBtnHtml = '<button type="button" id="msFocusToggle" class="'+(state.focusMode?"on":"")+'" title="사이드바를 숨기고 집중해서 씁니다">'+ic("eye",13)+'<span>집중 모드</span></button><div class="sep"></div>';
+  /* 상시 노출 줄(quickbar): "가끔 쓰는" 설정류(등장인물/통계/서식/글꼴/원고지
+   * 툴바 등)는 전부 접이식 도구 패널 안으로 옮기고, 여기에는 도구 패널을 여는
+   * 토글 · 현재 서식 라벨(정보만, 클릭 불가) · 집중 모드만 남긴다. */
+  var toolsToggleHtml = '<button type="button" id="msToolsToggle" class="ms-tools-toggle'+(state.msToolsOpen?" on":"")+'">'+ic("chevron",11)+'<span>도구</span></button>';
+  var formatBadgeHtml = '<span class="ms-format-badge">'+esc((MS_FORMATS[m.format]||{}).label||"")+'</span>';
+  var focusBtnHtml = '<button type="button" id="msFocusToggle" class="ms-focus-btn'+(state.focusMode?" on":"")+'" title="사이드바를 숨기고 집중해서 씁니다">'+ic("eye",13)+'<span>집중 모드</span></button>';
+  var quickbarHtml = '<div class="ms-quickbar">' + toolsToggleHtml + formatBadgeHtml + focusBtnHtml + '</div>';
 
   var bodyHtml;
   if (isBook) {
     bodyHtml =
       '<div class="ms-controls">' +
-        focusBtnHtml +
         '<button type="button" class="'+(m.bookMode!=="view"?"on":"")+'" id="msEditBtn">'+ic("p",13)+'<span>쓰기</span></button>' +
         '<button type="button" class="'+(m.bookMode==="view"?"on":"")+'" id="msViewBtn">'+ic("docIcon",13)+'<span>미리보기</span></button>' +
         (m.bookMode!=="view" && !m.bookSpread ? '<div class="sep"></div><button type="button" id="msFindBtnBook">'+ic("search",13)+'<span>찾아바꾸기</span></button>' : '') +
       '</div>' +
       '<div id="bookArea"></div>';
   } else if (isPaper) {
-    bodyHtml =
-      '<div class="ms-controls">' + focusBtnHtml + '</div>' +
-      '<div id="paperArea"></div>';
+    bodyHtml = '<div id="paperArea"></div>';
   } else {
     var platformExtraCls = { joara:" joara-text", munpia:" munpia-text", naver:" naver-text" }[m.format] || "";
     var textareaCls = isPlain ? "paper-text" : ("ms-textarea"+platformExtraCls);
@@ -15384,7 +15439,6 @@ function renderManuscriptPage(m) {
     var formatPreviewHtml = '<div class="ms-format-preview '+textareaCls+'" id="msFormatPreview"'+(m.showFormatPreview?'':' style="display:none"')+'>'+renderFormattedPlainText(m.text||"", m.formatRanges)+'</div>';
     bodyHtml =
       '<div class="ms-controls">' +
-        focusBtnHtml +
         '<button type="button" id="msDarkToggle" class="'+(m.previewDark?"on":"")+'">'+ic(m.previewDark?"moon":"sun",13)+'<span>다크 모드</span></button>' +
         '<div class="sep"></div>' +
         '<button type="button" id="msFontDec">A-</button>' +
@@ -15450,9 +15504,9 @@ function renderManuscriptPage(m) {
   ) : '';
 
   main.innerHTML =
-    '<div class="graph-shell">' +
-      titleBarHtml + epSwitcherHtml +
-      '<div class="page-pad'+(isPaper?" paper-info-compact":"")+'" style="padding-top:26px">' + povHtml + statsHtml + tabsHtml +
+    '<div class="graph-shell'+(state.msToolsOpen?" ms-tools-open":"")+'">' +
+      titleBarHtml + epSwitcherHtml + quickbarHtml +
+      '<div class="page-pad'+(isPaper?" paper-info-compact":"")+'" style="padding-top:14px">' + povHtml + statsHtml + tabsHtml +
         ((isBook || isPaper)
           ? '<div class="ms-editor-stack">' + bodyHtml + '<div class="ms-context-panel stacked" id="msContextPanel"></div></div>'
           : '<div class="ms-editor-row"><div class="ms-editor-main">' + bodyHtml + '</div><div class="ms-context-panel" id="msContextPanel"></div></div>') +
@@ -15504,6 +15558,13 @@ function renderManuscriptPage(m) {
     applyFocusModeClass();
     focusToggle.classList.toggle("on", state.focusMode);
   });
+  var toolsToggle = document.getElementById("msToolsToggle");
+  if (toolsToggle) toolsToggle.addEventListener("click", function(){
+    state.msToolsOpen = !state.msToolsOpen;
+    var shell = document.querySelector(".graph-shell");
+    if (shell) shell.classList.toggle("ms-tools-open", state.msToolsOpen);
+    toolsToggle.classList.toggle("on", state.msToolsOpen);
+  });
 
   if (isBook) {
     document.getElementById("msEditBtn").addEventListener("click", function(){
@@ -15529,6 +15590,13 @@ function renderManuscriptPage(m) {
     applyMsStyle(m);
     var msTextEl = document.getElementById("msText");
     wireAutoIndent(msTextEl);
+    /* 화면에 들어오자마자 바로 이어 쓸 수 있도록, 커서를 본문 맨 끝에 두고
+     * 곧바로 포커스한다("서식 미리보기" 중엔 textarea 자체가 숨어 있으니 건너뛴다). */
+    if (!m.showFormatPreview) {
+      msTextEl.focus();
+      var _msTextLen = msTextEl.value.length;
+      msTextEl.setSelectionRange(_msTextLen, _msTextLen);
+    }
     function refreshMsFormatPreview() {
       var pv = document.getElementById("msFormatPreview");
       if (pv) pv.innerHTML = renderFormattedPlainText(m.text||"", m.formatRanges);
