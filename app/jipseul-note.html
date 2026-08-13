@@ -602,6 +602,15 @@
   .ep-switch-popover-row .ord { flex:none; width:26px; text-align:center; color:var(--ink-faint); font-weight:700; }
   .ep-switch-popover-row .t { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .ep-switch-popover-row:hover { background:var(--bg-card-hover); }
+  /* 범용 팝오버(모드 전환 드롭다운, 독자 모드 설정 시트가 공유) */
+  .generic-popover { position:fixed; z-index:310; background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-md); box-shadow:var(--shadow-2); padding:6px; max-width:280px; }
+  .mode-menu-label { font-size:10.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; padding:7px 10px 3px; }
+  .mode-menu-item { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; border-radius:8px; font-size:13px; color:var(--ink-soft); cursor:pointer; white-space:nowrap; }
+  .mode-menu-item:hover { background:var(--bg-card-hover); }
+  .mode-menu-item.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .mode-menu-divider { height:1px; background:var(--border); margin:5px 4px; }
+  .ms-mode-trigger { display:flex; align-items:center; gap:5px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:20px; padding:6px 12px; font-size:12.5px; color:var(--ink-soft); }
+  .ms-mode-trigger:hover { border-color:var(--accent); color:var(--accent); }
   .ep-switch-popover-row.selected { background:var(--accent-soft); color:var(--accent); }
   .ep-switch-popover-row.active .t { color:var(--accent); font-weight:600; }
 
@@ -928,7 +937,6 @@
   .ms-tools-toggle.on { background:var(--accent-soft); color:var(--accent); border-color:var(--accent); font-weight:600; }
   .ms-tools-toggle svg { transition:transform .15s; }
   .ms-tools-toggle.on svg { transform:rotate(180deg); }
-  .ms-format-badge { font-size:11px; color:var(--ink-faint); background:var(--bg-card); border-radius:10px; padding:3px 9px; flex:none; }
   .ms-focus-btn { display:flex; align-items:center; gap:5px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:20px; padding:6px 13px; font-size:12.5px; color:var(--ink-soft); margin-left:auto; }
   .ms-focus-btn:hover { border-color:var(--accent); color:var(--accent); }
   .ms-focus-btn.on { background:var(--accent-soft); color:var(--accent); border-color:var(--accent); font-weight:600; }
@@ -953,7 +961,7 @@
   .app.focus-mode #wsTabBar { display:none; }
   .app.focus-mode .page-pad { max-width:900px; margin:0 auto; }
   .app.focus-mode .ms-tools-toggle,
-  .app.focus-mode .ms-format-badge,
+  .app.focus-mode .ms-mode-trigger,
   .app.focus-mode .ms-context-panel,
   .app.focus-mode #msCharCount,
   .app.focus-mode #deleteMsBtn,
@@ -995,10 +1003,16 @@
 
   .rp-head { display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid var(--border); gap:8px; }
   .rp-head-title { font-size:12.5px; font-weight:600; color:var(--ink-soft); display:flex; align-items:center; gap:6px; }
+  .rp-head-actions { display:flex; align-items:center; gap:2px; flex:none; }
+  .rp-head-icon { background:none; border:none; color:var(--ink-faint); padding:5px; border-radius:6px; display:flex; }
+  .rp-head-icon:hover { color:var(--accent); background:var(--bg-card-hover); }
   .rp-close { background:none; border:none; color:var(--ink-faint); padding:4px; border-radius:6px; display:flex; }
   .rp-close:hover { color:var(--rose); background:var(--rose-soft); }
 
-  .rp-controls { display:flex; flex-direction:column; gap:8px; padding:10px 12px; border-bottom:1px solid var(--border); background:var(--bg-panel); }
+  /* 설정(⚙) 팝오버 안 컨트롤 -- 예전엔 패널 머리에 항상 떠 있던 것을 여기로
+   * 옮겼다. generic-popover 기본 폭(280px)보다 조금 더 넉넉하게 쓴다. */
+  .rp-settings-pop { width:280px; }
+  .rp-settings-controls { display:flex; flex-direction:column; gap:8px; padding:4px 2px 8px; }
   .rp-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .rp-row-label { font-size:10.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.05em; flex:none; width:52px; }
   .rp-pill { border:1px solid var(--border-strong); background:var(--bg-card); border-radius:20px; padding:5px 11px; font-size:12px; color:var(--ink-soft); display:flex; align-items:center; gap:4px; }
@@ -1032,7 +1046,8 @@
 
   /* 앱 헤더(뒤로가기/화 제목/더보기) -- 플랫폼마다 색·굵기만 다름 */
   .rp-appbar { flex:none; display:flex; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid rgba(0,0,0,0.06); }
-  .rp-appbar-back, .rp-appbar-more { flex:none; display:flex; color:#333; }
+  .rp-appbar-back, .rp-appbar-more { flex:none; display:flex; color:#333; background:none; border:none; padding:3px; border-radius:6px; cursor:pointer; }
+  .rp-appbar-back:hover, .rp-appbar-more:hover { background:rgba(0,0,0,0.06); }
   .rp-appbar-title { flex:1; min-width:0; font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#1a1a1a; }
   .rp-appbar.pf-joara { background:#fff; }
   .rp-appbar.pf-joara .rp-appbar-back, .rp-appbar.pf-joara .rp-appbar-more { color:#2FA89C; }
@@ -1068,16 +1083,21 @@
   .rp-text.pf-naver p { text-indent:0; margin:0 0 0.9em; }
   .rp-text-empty { color:var(--ink-faint); font-style:italic; }
 
-  .rp-bottombar { flex:none; display:flex; align-items:center; justify-content:space-around; padding:9px 10px; border-top:1px solid rgba(0,0,0,0.06); background:#fff; color:#666; }
-  .rp-bottombar button { background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; color:inherit; font-size:9.5px; padding:2px 6px; }
-  .rp-bottombar button:hover { color:#22A855; }
+  /* 스크롤 모드 하단 도구줄 -- 예전 "보관함" 자리는 실제 기능이 없어 뺐고
+   * (원칙: 동작 안 하는 버튼은 노출 금지), 실제로 동작하는 밝기·글자크기만
+   * 남겼다. */
+  .rp-toolbar { flex:none; display:flex; align-items:center; justify-content:center; gap:4px; padding:8px 10px; border-top:1px solid rgba(0,0,0,0.06); background:#fff; }
+  .rp-toolbar button { background:none; border:none; color:#555; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:600; display:flex; align-items:center; }
+  .rp-toolbar button:hover { background:rgba(0,0,0,0.06); color:#222; }
+  .rp-toolbar-sep { width:1px; align-self:stretch; background:rgba(0,0,0,0.08); margin:2px 4px; }
+  .rp-phone.frameless .rp-toolbar { background:var(--bg-card); border-top:1px solid var(--border); }
+  .rp-phone.frameless .rp-toolbar button { color:var(--ink-faint); }
+  .rp-phone.frameless .rp-toolbar button:hover { background:var(--bg-card-hover); color:var(--ink); }
 
   .rp-pagenav { flex:none; display:flex; align-items:center; justify-content:space-between; padding:8px 14px; border-top:1px solid rgba(0,0,0,0.06); background:rgba(255,255,255,0.9); font-size:11px; color:#555; font-variant-numeric:tabular-nums; }
   .rp-pagenav button { background:none; border:none; display:flex; color:#555; padding:4px; }
   .rp-pagenav button:disabled { opacity:.3; }
   .rp-phone.frameless .rp-pagenav { background:var(--bg-card); border-top:1px solid var(--border); color:var(--ink-faint); }
-
-  .rp-foot { flex:none; padding:8px 12px; border-top:1px solid var(--border); font-size:11px; color:var(--ink-faint); text-align:center; }
 
   /* 팝업 창(방식 B)에는 이 앱 스타일시트가 없으므로, 최소한의 동일 규칙을
    * writePopupHtml()이 별도로 문자열째 복제해서 넣는다(JS 쪽 주석 참고). */
@@ -15409,6 +15429,69 @@ function closeEpSwitchPopover() {
   var p = document.getElementById("epSwitchPopover"); if (p) p.remove();
   if (_epSwitchOutsideHandler) { document.removeEventListener("mousedown", _epSwitchOutsideHandler); _epSwitchOutsideHandler = null; }
 }
+/* 범용 팝오버 -- 모드 전환 드롭다운, 독자 모드의 "설정" 시트가 이 하나를
+ * 같이 쓴다. 열 때마다 이전 것부터 지운다(동시에 두 개가 뜨지 않도록). */
+var _genericPopoverOutsideHandler = null;
+function closeGenericPopover() {
+  var p = document.getElementById("genericPopover"); if (p) p.remove();
+  if (_genericPopoverOutsideHandler) { document.removeEventListener("mousedown", _genericPopoverOutsideHandler); _genericPopoverOutsideHandler = null; }
+}
+function openGenericPopover(anchorEl, innerHtml, opts) {
+  closeGenericPopover(); closeEpSwitchPopover();
+  var pop = document.createElement("div");
+  pop.className = "generic-popover" + (opts && opts.className ? " "+opts.className : "");
+  pop.id = "genericPopover";
+  pop.innerHTML = innerHtml;
+  document.body.appendChild(pop);
+  var r = anchorEl.getBoundingClientRect();
+  var w = pop.offsetWidth || 240;
+  var top = (opts && opts.align === "bottom") ? Math.max(8, r.top - (pop.offsetHeight||0) - 6) : r.bottom + 6;
+  top = Math.min(top, window.innerHeight - (pop.offsetHeight||200) - 8);
+  var left = Math.min(r.left, window.innerWidth - w - 8);
+  pop.style.top = Math.max(8, top) + "px";
+  pop.style.left = Math.max(8, left) + "px";
+  setTimeout(function(){
+    _genericPopoverOutsideHandler = function(e){
+      if (!pop.contains(e.target) && e.target !== anchorEl && !anchorEl.contains(e.target)) closeGenericPopover();
+    };
+    document.addEventListener("mousedown", _genericPopoverOutsideHandler);
+  }, 0);
+  return pop;
+}
+/* "양장본 ▾" 모드 드롭다운 -- 위 칸은 집필 형식(워드/한글 같은 순수 입력
+ * 표면끼리), 아래 칸은 조아라/문피아/네이버시리즈 독자 화면으로 바로 미리
+ * 보기다. 이 두 그룹은 성격이 다르다(하나는 "어떻게 쓸지", 하나는 "누구
+ * 화면으로 확인할지")는 걸 소제목으로 구분해두되, 사용자 입장에선 "지금
+ * 뭘로 볼지 바꾸는 메뉴" 하나로 보이게 한 드롭다운에 같이 담는다. */
+function openFormatModeMenu(anchorEl, m) {
+  var writeItems = Object.keys(MS_FORMATS).map(function(k){
+    var on = m.format === k;
+    return '<div class="mode-menu-item'+(on?" on":"")+'" data-modeformat="'+k+'"><span>'+esc(MS_FORMATS[k].label)+'</span>'+(on?ic("checkmark",12):"")+'</div>';
+  }).join("");
+  var readItems = Object.keys(READER_PLATFORMS).map(function(k){
+    return '<div class="mode-menu-item" data-modeplat="'+k+'"><span>'+esc(READER_PLATFORMS[k].label)+'</span>'+ic("chevR",11)+'</div>';
+  }).join("");
+  var html =
+    '<div class="mode-menu-label">집필 형식</div>' + writeItems +
+    '<div class="mode-menu-divider"></div>' +
+    '<div class="mode-menu-label">독자 화면으로 바로 보기</div>' + readItems;
+  var pop = openGenericPopover(anchorEl, html, { className: "mode-menu" });
+  pop.querySelectorAll("[data-modeformat]").forEach(function(row){
+    row.addEventListener("click", function(){
+      closeGenericPopover();
+      var fmt = row.dataset.modeformat;
+      if (fmt === m.format) return;
+      m.format = fmt; saveData(); renderManuscriptPage(m);
+    });
+  });
+  pop.querySelectorAll("[data-modeplat]").forEach(function(row){
+    row.addEventListener("click", function(){
+      closeGenericPopover();
+      m.readerPlatform = row.dataset.modeplat; m.readerPage = 0; saveData();
+      openReaderMode(m);
+    });
+  });
+}
 /* 집필창 안에서 "현재 회차" 버튼을 누르면 뜨는 검색 가능한 회차 선택 팝오버 --
  * 소설 원고 목록 페이지와 같은 매칭 엔진(novelEpisodesFiltered/epMatchTier)을
  * 그대로 써서, 어디서 회차를 찾든 같은 우선순위로 움직인다. */
@@ -15525,18 +15608,16 @@ function renderManuscriptPage(m) {
     peekHtml +
     '<div class="ms-spellcheck-hint">맞춤법 검사가 켜져 있어요 — 캐릭터 이름 같은 고유명사에 빨간 밑줄이 뜨면, 그 단어 위에서 마우스 오른쪽 버튼을 눌러 "사전에 추가"를 선택하면 이후로는 표시되지 않아요.</div>';
 
-  var tabsHtml = '<div class="ms-tabs">' + Object.keys(MS_FORMATS).map(function(key){
-    return '<button type="button" class="ms-tab '+(m.format===key?"on":"")+'" data-msformat="'+key+'">'+esc(MS_FORMATS[key].label)+'</button>';
-  }).join("") + '</div>';
-
-  /* 상시 노출 줄(quickbar): "가끔 쓰는" 설정류(등장인물/통계/서식/글꼴/원고지
-   * 툴바 등)는 전부 접이식 도구 패널 안으로 옮기고, 여기에는 도구 패널을 여는
-   * 토글 · 현재 서식 라벨(정보만, 클릭 불가) · 집중 모드만 남긴다. */
+  /* 상시 노출 줄(quickbar): "가끔 쓰는" 설정류(등장인물/통계/글꼴/원고지 툴바
+   * 등)는 접이식 도구 패널로, "지금 뭘로 쓸지/무엇으로 볼지"는 여기 이 줄의
+   * 모드 드롭다운 하나로 옮겼다 -- 예전엔 상태만 보여주는 뱃지였는데, 클릭하면
+   * 바로 전환까지 되는 UI로 바꿔서 "도구 열기 -> 서식 탭 찾기 -> 클릭" 세 단계를
+   * 한 번의 클릭으로 줄였다. 서식 탭(.ms-tabs)은 이 드롭다운과 중복이라 없앴다. */
   var toolsToggleHtml = '<button type="button" id="msToolsToggle" class="ms-tools-toggle'+(state.msToolsOpen?" on":"")+'">'+ic("chevron",11)+'<span>도구</span></button>';
-  var formatBadgeHtml = '<span class="ms-format-badge">'+esc((MS_FORMATS[m.format]||{}).label||"")+'</span>';
-  var readerTriggerHtml = '<button type="button" id="rpTriggerBtn" class="rp-trigger'+(state.readerOpen?" on":"")+'" title="집필창과 분리된 읽기 전용 독자 화면을 엽니다">'+ic("phone",13)+'<span>미리보기</span></button>';
-  var focusBtnHtml = '<button type="button" id="msFocusToggle" class="ms-focus-btn'+(state.focusMode?" on":"")+'" title="사이드바를 숨기고 집중해서 씁니다">'+ic("eye",13)+'<span>집중 모드</span></button>';
-  var quickbarHtml = '<div class="ms-quickbar">' + toolsToggleHtml + formatBadgeHtml + readerTriggerHtml + focusBtnHtml + '</div>';
+  var modeTriggerHtml = '<button type="button" id="msModeTrigger" class="ms-mode-trigger" title="집필 형식을 바꾸거나, 플랫폼별 독자 화면으로 바로 미리 봅니다">'+esc((MS_FORMATS[m.format]||{}).label||"")+ic("chevron",10)+'</button>';
+  var readerTriggerHtml = '<button type="button" id="rpTriggerBtn" class="rp-trigger'+(state.readerOpen?" on":"")+'" title="독자가 실제로 보는 화면으로 전환합니다">'+ic("phone",13)+'<span>미리보기</span></button>';
+  var focusBtnHtml = '<button type="button" id="msFocusToggle" class="ms-focus-btn'+(state.focusMode?" on":"")+'" title="사이드바를 숨기고 집필에만 집중합니다">'+ic("eye",13)+'<span>전체 모드</span></button>';
+  var quickbarHtml = '<div class="ms-quickbar">' + toolsToggleHtml + modeTriggerHtml + readerTriggerHtml + focusBtnHtml + '</div>';
 
   var bodyHtml;
   if (isBook) {
@@ -15616,7 +15697,7 @@ function renderManuscriptPage(m) {
   main.innerHTML =
     '<div class="graph-shell'+(state.msToolsOpen?" ms-tools-open":"")+'">' +
       titleBarHtml + epSwitcherHtml + quickbarHtml +
-      '<div class="page-pad'+(isPaper?" paper-info-compact":"")+'" style="padding-top:14px">' + povHtml + statsHtml + tabsHtml +
+      '<div class="page-pad'+(isPaper?" paper-info-compact":"")+'" style="padding-top:14px">' + povHtml + statsHtml +
         ((isBook || isPaper)
           ? '<div class="ms-editor-stack">' + bodyHtml + '<div class="ms-context-panel stacked" id="msContextPanel"></div><div class="rp-context-slot" id="rpSideSlot" style="display:none"></div></div>'
           : '<div class="ms-editor-row"><div class="ms-editor-main">' + bodyHtml + '</div><div class="ms-context-panel" id="msContextPanel"></div><div class="rp-context-slot" id="rpSideSlot" style="display:none"></div></div>') +
@@ -15646,9 +15727,8 @@ function renderManuscriptPage(m) {
   updateContextPanel(m, msWorkId);
   updateMsStatsBar(m);
   updateMsGoalBar(m);
-  main.querySelectorAll("[data-msformat]").forEach(function(btn){
-    btn.addEventListener("click", function(){ m.format = btn.dataset.msformat; saveData(); renderManuscriptPage(m); });
-  });
+  var modeTrigger = document.getElementById("msModeTrigger");
+  if (modeTrigger) modeTrigger.addEventListener("click", function(e){ openFormatModeMenu(e.currentTarget, m); });
   var goalInput = document.getElementById("msGoalInput");
   if (goalInput) goalInput.addEventListener("input", function(e){
     var v = parseInt(e.target.value, 10);
@@ -15765,7 +15845,7 @@ function readerParasHtml(text) {
 /* 실측 페이지네이션 -- .rp-text.pf-<플랫폼> 클래스를 그대로 붙인 detached
  * probe에 문단을 하나씩 채워보면서 scrollHeight가 컨테이너 높이를 넘는
  * 순간 그 앞까지를 한 페이지로 끊는다(paginateBook과 같은 기법). */
-function measureReaderPages(text, widthPx, heightPx, platKey) {
+function measureReaderPages(text, widthPx, heightPx, platKey, fontScale) {
   var list = readerParagraphs(text);
   if (!list.length) return [""];
   var probe = document.createElement("div");
@@ -15773,6 +15853,7 @@ function measureReaderPages(text, widthPx, heightPx, platKey) {
   probe.style.position = "fixed"; probe.style.visibility = "hidden"; probe.style.pointerEvents = "none";
   probe.style.left = "-9999px"; probe.style.top = "0"; probe.style.width = widthPx + "px";
   document.body.appendChild(probe);
+  if (fontScale && fontScale !== 1) probe.style.fontSize = (parseFloat(getComputedStyle(probe).fontSize) * fontScale) + "px";
   function setParas(l) { probe.innerHTML = l.map(function(p){ return "<p>"+esc(p)+"</p>"; }).join(""); }
   var pages = [], cur = [];
   list.forEach(function(p){
@@ -15787,38 +15868,36 @@ function measureReaderPages(text, widthPx, heightPx, platKey) {
   return pages.length ? pages : [""];
 }
 
+/* 독자 모드 패널 -- 예전엔 플랫폼/기기/읽기/패널 네 줄이 패널 머리에 항상
+ * 떠 있었는데, "미리보기 = 조판 확인용 대시보드"가 아니라 "독자 체험"이어야
+ * 한다는 요구에 맞춰 그 네 줄을 전부 걷어냈다. 지금 머리에는 현재 플랫폼
+ * 이름과 설정(⚙)·닫기 버튼만 남고, 나머지는 설정 버튼을 눌러야 뜨는
+ * 팝오버(openReaderSettingsMenu) 안으로 옮겼다. */
 function readerPanelInnerHtml(m) {
-  function pillRow(labelText, dict, activeKey, attr) {
-    var buttons = Object.keys(dict).map(function(k){
-      return '<button type="button" class="rp-pill'+(k===activeKey?" on":"")+'" data-'+attr+'="'+k+'">'+esc(dict[k].label)+'</button>';
-    }).join("");
-    return '<div class="rp-row"><span class="rp-row-label">'+labelText+'</span>'+buttons+'</div>';
-  }
   var plat = READER_PLATFORMS[m.readerPlatform] || READER_PLATFORMS.munpia;
   return (
     '<div class="rp-head">' +
-      '<div class="rp-head-title">'+ic("phone",13)+'<span>조판 미리보기 · 독자 화면</span></div>' +
-      '<button type="button" class="rp-close" id="rpCloseBtn" title="닫기">'+ic("close",14)+'</button>' +
+      '<div class="rp-head-title">'+ic("phone",13)+'<span>독자 모드 · '+esc(plat.label)+'</span></div>' +
+      '<div class="rp-head-actions">' +
+        '<button type="button" class="rp-head-icon" id="rpSettingsBtn" title="플랫폼·기기·읽기 방식">'+ic("gear",14)+'</button>' +
+        '<button type="button" class="rp-close" id="rpCloseBtn" title="닫기(Esc)">'+ic("close",14)+'</button>' +
+      '</div>' +
     '</div>' +
-    '<div class="rp-controls">' +
-      pillRow("플랫폼", READER_PLATFORMS, m.readerPlatform, "rpplat") +
-      pillRow("기기", READER_DEVICES, m.readerDevice, "rpdevice") +
-      pillRow("읽기", READER_READMODES, m.readerReadMode, "rpreadmode") +
-      pillRow("패널", READER_PANELMODES, state.readerPanelMode, "rppanelmode") +
-    '</div>' +
-    '<div class="rp-stage" id="rpStage">' + renderReaderPhoneHtml(m) + '</div>' +
-    '<div class="rp-foot">'+esc(plat.label)+' 독자 화면 미리보기 · 실제 서비스와 세부 사항은 다를 수 있습니다.</div>'
+    '<div class="rp-stage" id="rpStage">' + renderReaderPhoneHtml(m) + '</div>'
   );
 }
 
 function renderReaderPhoneHtml(m) {
   var platKey = m.readerPlatform, device = m.readerDevice;
   var isNaver = platKey === "naver";
+  /* 뒤로가기·더보기는 예전엔 클릭해도 아무 일도 안 일어나는 장식이었다 --
+   * "구현 안 된 기능은 노출 금지" 원칙에 따라 실제 동작(닫기/설정 열기)을
+   * 붙이거나, 못 붙일 거면 아예 뺀다. 여기선 붙였다. */
   var appbarHtml =
     '<div class="rp-appbar pf-'+platKey+'">' +
-      '<span class="rp-appbar-back">'+ic("chevL",15)+'</span>' +
+      '<button type="button" class="rp-appbar-back" id="rpAppbarBack" title="독자 모드 닫기">'+ic("chevL",15)+'</button>' +
       '<span class="rp-appbar-title" id="rpAppbarTitle">'+esc(m.title||"제목 없음")+'</span>' +
-      '<span class="rp-appbar-more">'+ic("tag",15)+'</span>' +
+      '<button type="button" class="rp-appbar-more" id="rpAppbarMore" title="플랫폼·기기·읽기 방식">'+ic("gear",14)+'</button>' +
     '</div>' +
     (isNaver ? '<div class="rp-progress"><div class="rp-progress-fill" style="width:38%"></div></div>' : '');
   var statusbarHtml = '<div class="rp-statusbar"><span>9:41</span><div class="rp-statusbar-icons"><span>'+ic("wand",10)+'</span><div class="rp-batt"></div></div></div>';
@@ -15845,10 +15924,11 @@ function updateReaderStageContent(m, dir) {
   if (m.readerReadMode === "scroll") {
     contentEl.innerHTML = '<div class="rp-text pf-'+m.readerPlatform+'">' + readerParasHtml(m.text) + '</div>';
     renderReaderFoot(m);
+    applyReaderTextScale(m);
     return;
   }
   var w = contentEl.clientWidth || 260, h = contentEl.clientHeight || 480;
-  if (dir === undefined) { _readerPagesCache = measureReaderPages(m.text, w, h, m.readerPlatform); if (m.readerPage >= _readerPagesCache.length) m.readerPage = Math.max(0, _readerPagesCache.length-1); }
+  if (dir === undefined) { _readerPagesCache = measureReaderPages(m.text, w, h, m.readerPlatform, m.readerFontScale); if (m.readerPage >= _readerPagesCache.length) m.readerPage = Math.max(0, _readerPagesCache.length-1); }
   var pageText = _readerPagesCache[m.readerPage] || "";
   var slide = document.createElement("div");
   slide.className = "rp-page-slide" + (dir === 1 ? " rp-enter-next" : dir === -1 ? " rp-enter-prev" : "");
@@ -15857,6 +15937,23 @@ function updateReaderStageContent(m, dir) {
   contentEl.appendChild(slide);
   if (dir) requestAnimationFrame(function(){ requestAnimationFrame(function(){ slide.className = "rp-page-slide"; }); });
   renderReaderFoot(m);
+  applyReaderTextScale(m);
+}
+/* 글자크기(readerFontScale)는 CSS(.rp-text.pf-*)에 박혀 있는 기준 크기에
+ * 배율만 곱해서 인라인으로 덮어쓴다 -- 기준값을 JS에 다시 들고 있지 않아도
+ * 되고, 실제 렌더링과 페이지 분량 측정(measureReaderPages)이 항상 같은
+ * 기준을 보게 된다. 밝기(readerBrightness)는 화면 전체에 CSS filter로. */
+function applyReaderTextScale(m) {
+  var scale = m.readerFontScale || 1;
+  document.querySelectorAll("#rpContent .rp-text").forEach(function(t){
+    t.style.fontSize = "";
+    if (scale !== 1) {
+      var base = parseFloat(getComputedStyle(t).fontSize);
+      t.style.fontSize = (base * scale) + "px";
+    }
+  });
+  var screenEl = document.querySelector(".rp-phone-screen");
+  if (screenEl) screenEl.style.filter = "brightness(" + (m.readerBrightness || 100) + "%)";
 }
 function renderReaderFoot(m) {
   var footEl = document.getElementById("rpFoot");
@@ -15872,14 +15969,23 @@ function renderReaderFoot(m) {
     var prevBtn = document.getElementById("rpPrevPage"), nextBtn = document.getElementById("rpNextPage");
     if (prevBtn) prevBtn.addEventListener("click", function(){ goToReaderPage(m, -1); });
     if (nextBtn) nextBtn.addEventListener("click", function(){ goToReaderPage(m, 1); });
-  } else if (m.readerPlatform === "naver") {
-    footEl.innerHTML = '<div class="rp-bottombar">' +
-      '<button type="button">'+ic("sun",14)+'<span>밝기</span></button>' +
-      '<button type="button">Aa<span>글자</span></button>' +
-      '<button type="button">'+ic("star",14)+'<span>보관함</span></button>' +
-    '</div>';
   } else {
-    footEl.innerHTML = "";
+    /* 스크롤 모드에서는 실제로 동작하는 밝기·글자크기 조절만 남긴다 --
+     * 예전 "보관함" 버튼은 아무 기능도 없어서 뺐다(원칙 4). */
+    footEl.innerHTML =
+      '<div class="rp-toolbar">' +
+        '<button type="button" id="rpBrightDown" title="어둡게">'+ic("moon",13)+'</button>' +
+        '<button type="button" id="rpBrightUp" title="밝게">'+ic("sun",13)+'</button>' +
+        '<span class="rp-toolbar-sep"></span>' +
+        '<button type="button" id="rpFontDown" title="글자 작게">A-</button>' +
+        '<button type="button" id="rpFontUp" title="글자 크게">A+</button>' +
+      '</div>';
+    var bDown = document.getElementById("rpBrightDown"), bUp = document.getElementById("rpBrightUp");
+    var fDown = document.getElementById("rpFontDown"), fUp = document.getElementById("rpFontUp");
+    if (bDown) bDown.addEventListener("click", function(){ m.readerBrightness = Math.max(55, (m.readerBrightness||100)-15); saveData(); applyReaderTextScale(m); });
+    if (bUp) bUp.addEventListener("click", function(){ m.readerBrightness = Math.min(100, (m.readerBrightness||100)+15); saveData(); applyReaderTextScale(m); });
+    if (fDown) fDown.addEventListener("click", function(){ m.readerFontScale = Math.max(0.8, +((m.readerFontScale||1)-0.1).toFixed(2)); saveData(); updateReaderStageContent(m); });
+    if (fUp) fUp.addEventListener("click", function(){ m.readerFontScale = Math.min(1.4, +((m.readerFontScale||1)+0.1).toFixed(2)); saveData(); updateReaderStageContent(m); });
   }
 }
 function goToReaderPage(m, dir) {
@@ -15924,7 +16030,9 @@ function wireReaderSwipe(el, m) {
   });
 }
 document.addEventListener("keydown", function(e){
-  if (!_readerActiveM || _readerActiveM.readerReadMode !== "page") return;
+  if (!_readerActiveM) return;
+  if (e.key === "Escape" && state.readerPanelMode === "fullscreen") { e.preventDefault(); closeReaderPanel(); return; }
+  if (_readerActiveM.readerReadMode !== "page") return;
   var ae = document.activeElement;
   if (ae && (ae.tagName === "TEXTAREA" || ae.tagName === "INPUT" || ae.isContentEditable)) return;
   if (e.key === "ArrowRight") { e.preventDefault(); goToReaderPage(_readerActiveM, 1); }
@@ -15932,27 +16040,55 @@ document.addEventListener("keydown", function(e){
 });
 
 function wireReaderPanel(m) {
-  var stage = document.getElementById("rpStage");
-  document.querySelectorAll("[data-rpplat]").forEach(function(b){
-    b.addEventListener("click", function(){ m.readerPlatform = b.dataset.rpplat; m.readerPage = 0; saveData(); mountReaderPanel(m); });
-  });
-  document.querySelectorAll("[data-rpdevice]").forEach(function(b){
-    b.addEventListener("click", function(){ m.readerDevice = b.dataset.rpdevice; saveData(); mountReaderPanel(m); });
-  });
-  document.querySelectorAll("[data-rpreadmode]").forEach(function(b){
-    b.addEventListener("click", function(){ m.readerReadMode = b.dataset.rpreadmode; m.readerPage = 0; saveData(); mountReaderPanel(m); });
-  });
-  document.querySelectorAll("[data-rppanelmode]").forEach(function(b){
-    b.addEventListener("click", function(){ setReaderPanelMode(m, b.dataset.rppanelmode); });
-  });
   var closeBtn = document.getElementById("rpCloseBtn");
   if (closeBtn) closeBtn.addEventListener("click", function(){ closeReaderPanel(); });
+  var settingsBtn = document.getElementById("rpSettingsBtn");
+  if (settingsBtn) settingsBtn.addEventListener("click", function(e){ openReaderSettingsMenu(e.currentTarget, m); });
+  var backBtn = document.getElementById("rpAppbarBack");
+  if (backBtn) backBtn.addEventListener("click", function(){ closeReaderPanel(); });
+  var moreBtn = document.getElementById("rpAppbarMore");
+  if (moreBtn) moreBtn.addEventListener("click", function(e){ openReaderSettingsMenu(e.currentTarget, m); });
   var contentEl = document.getElementById("rpContent");
   if (contentEl) {
     wireReaderDragScroll(contentEl);
     wireReaderSwipe(contentEl, m);
   }
   updateReaderStageContent(m);
+}
+/* 설정(⚙) 팝오버 -- 플랫폼/기기/읽기 방식은 여기 안에, "다른 방식으로
+ * 보기"(사이드 패널/팝업 창/전체화면)도 같이 둔다. 지금 켜져 있는 방식은
+ * 목록에서 빼서 "이미 이거 보고 있잖아요"를 굳이 보여주지 않는다. */
+function openReaderSettingsMenu(anchorEl, m) {
+  function pillRow(labelText, dict, activeKey, attr) {
+    var buttons = Object.keys(dict).map(function(k){
+      return '<button type="button" class="rp-pill'+(k===activeKey?" on":"")+'" data-'+attr+'="'+k+'">'+esc(dict[k].label)+'</button>';
+    }).join("");
+    return '<div class="rp-row"><span class="rp-row-label">'+labelText+'</span>'+buttons+'</div>';
+  }
+  var panelLinks = Object.keys(READER_PANELMODES).filter(function(k){ return k !== state.readerPanelMode; }).map(function(k){
+    return '<div class="mode-menu-item" data-rppanelswitch="'+k+'"><span>'+esc(READER_PANELMODES[k].label)+'으로 보기</span>'+ic("chevR",11)+'</div>';
+  }).join("");
+  var html =
+    '<div class="rp-settings-controls">' +
+      pillRow("플랫폼", READER_PLATFORMS, m.readerPlatform, "rpplat") +
+      pillRow("기기", READER_DEVICES, m.readerDevice, "rpdevice") +
+      pillRow("읽기", READER_READMODES, m.readerReadMode, "rpreadmode") +
+    '</div>' +
+    '<div class="mode-menu-divider"></div>' +
+    panelLinks;
+  var pop = openGenericPopover(anchorEl, html, { className: "rp-settings-pop" });
+  pop.querySelectorAll("[data-rpplat]").forEach(function(b){
+    b.addEventListener("click", function(){ closeGenericPopover(); m.readerPlatform = b.dataset.rpplat; m.readerPage = 0; saveData(); mountReaderPanel(m); });
+  });
+  pop.querySelectorAll("[data-rpdevice]").forEach(function(b){
+    b.addEventListener("click", function(){ closeGenericPopover(); m.readerDevice = b.dataset.rpdevice; saveData(); mountReaderPanel(m); });
+  });
+  pop.querySelectorAll("[data-rpreadmode]").forEach(function(b){
+    b.addEventListener("click", function(){ closeGenericPopover(); m.readerReadMode = b.dataset.rpreadmode; m.readerPage = 0; saveData(); mountReaderPanel(m); });
+  });
+  pop.querySelectorAll("[data-rppanelswitch]").forEach(function(b){
+    b.addEventListener("click", function(){ closeGenericPopover(); setReaderPanelMode(m, b.dataset.rppanelswitch); });
+  });
 }
 
 function mountReaderPanel(m) {
@@ -15986,29 +16122,65 @@ function unmountReaderPanel() {
 function closeReaderPanel() {
   state.readerOpen = false;
   unmountReaderPanel();
+  if (_readerPopupWin && !_readerPopupWin.closed) { _readerPopupWin.close(); _readerPopupWin = null; }
   updateReaderTriggerBtn();
 }
 function updateReaderTriggerBtn() {
   var btn = document.getElementById("rpTriggerBtn");
   if (btn) btn.classList.toggle("on", !!state.readerOpen);
 }
+/* 설정 팝오버 안 "다른 방식으로 보기" 전용 -- 독자 모드가 열려 있는 채로
+ * 사이드/팝업/전체화면 사이만 바꾼다. 미리보기 버튼 자체의 진입점은 항상
+ * openReaderMode()다(아래) -- 그래야 "미리보기 누르면 매번 같은 동작"이
+ * 보장된다. */
 function setReaderPanelMode(m, mode) {
   if (mode === state.readerPanelMode) return;
   if (state.readerPanelMode !== "popup") unmountReaderPanel();
+  /* 팝업을 닫을 때 그 창의 beforeunload가 동기적으로 발화해서
+   * window.__jipseulReaderPopupClosed()가 이 자리에서 즉시 실행되며
+   * state.readerOpen을 false로 되돌려놓는 브라우저가 있다. 그 직후 아래
+   * mountReaderPanel/openReaderPopup으로 패널을 다시 띄우면서도
+   * state.readerOpen을 true로 못 박아두지 않으면, 화면엔 패널이 떠 있는데
+   * 상태상으로는 "닫힘"으로 어긋나 버튼도 안 맞고 다음 렌더에서 패널이
+   * 유령처럼 남는 문제가 있었다 -- 그래서 순서와 무관하게 여기서 항상
+   * true로 확정한다. */
   if (_readerPopupWin && !_readerPopupWin.closed && mode !== "popup") { _readerPopupWin.close(); _readerPopupWin = null; }
   state.readerPanelMode = mode;
+  state.readerOpen = true;
   if (mode === "popup") openReaderPopup(m); else mountReaderPanel(m);
+  updateReaderTriggerBtn();
+}
+/* "미리보기" 버튼과 모드 드롭다운의 플랫폼 바로가기가 공유하는 단일
+ * 진입점 -- 항상 전체화면 독자 모드로 연다(사이드/팝업으로 남아 있던
+ * 이전 선택을 기억하지 않는다). 독자 체험은 매번 예측 가능해야 한다. */
+function openReaderMode(m) {
+  state.readerPanelMode = "fullscreen";
+  if (_readerPopupWin && !_readerPopupWin.closed) { _readerPopupWin.close(); _readerPopupWin = null; }
+  /* 팝업의 beforeunload 콜백이 위 close() 도중 동기적으로 끼어들어
+   * state.readerOpen을 꺼버릴 수 있으므로, 그 뒤에 다시 한번 확정한다. */
+  state.readerOpen = true;
+  mountReaderPanel(m);
+  updateReaderTriggerBtn();
+}
+/* beforeunload는 사용자가 실제로 팝업 창의 X 버튼을 눌렀을 때는 항상
+ * 발화하지만, 그 신호 하나만 믿지 않는다 -- 브라우저마다, 그리고 창을
+ * 닫는 경로에 따라 beforeunload가 씹히는 경우가 있고, 그러면
+ * state.readerOpen이 "열림"에 멈춰 있는 채로 죽은 창 참조만 남아 다음
+ * 클릭에서 미리보기가 열리는 대신 (이미 열려 있다고 착각해) 곧장
+ * 닫히는 걸로 처리돼 버튼이 먹통처럼 느껴진다. 그래서 실제로 만지는
+ * 진입점(토글 클릭, 매 렌더마다의 재확인)마다 창이 진짜 살아있는지
+ * _readerPopupWin.closed로 직접 다시 확인해서 어긋난 상태를 스스로
+ * 고친다. */
+function reconcileReaderPopupState() {
+  if (_readerPopupWin && _readerPopupWin.closed) {
+    _readerPopupWin = null;
+    if (state.readerPanelMode === "popup") { state.readerOpen = false; updateReaderTriggerBtn(); }
+  }
 }
 function toggleReaderPanel(m) {
-  if (state.readerPanelMode === "popup") {
-    if (_readerPopupWin && !_readerPopupWin.closed) { _readerPopupWin.focus(); return; }
-    openReaderPopup(m);
-    state.readerOpen = true;
-  } else {
-    state.readerOpen = !state.readerOpen;
-    if (state.readerOpen) mountReaderPanel(m); else unmountReaderPanel();
-  }
-  updateReaderTriggerBtn();
+  reconcileReaderPopupState();
+  if (state.readerOpen) { closeReaderPanel(); return; }
+  openReaderMode(m);
 }
 window.__jipseulReaderPopupClosed = function(){ _readerPopupWin = null; state.readerOpen = false; updateReaderTriggerBtn(); };
 
@@ -16107,11 +16279,6 @@ function readerPopupMain() {
       }
     });
     el.addEventListener("pointerleave", endDrag);
-    document.addEventListener("keydown", function(e){
-      if (state.read !== "page") return;
-      if (e.key === "ArrowRight") { e.preventDefault(); goPage(1); }
-      else if (e.key === "ArrowLeft") { e.preventDefault(); goPage(-1); }
-    });
   }
 
   function goPage(dir) {
@@ -16154,6 +16321,17 @@ function readerPopupMain() {
       if (changed) { if (state.read === "page") state.pages = null; renderContent(true); }
     } catch (e) {}
   }
+
+  /* 방향키는 renderShell()이 몇 번을 다시 그리든(플랫폼/기기/읽기 방식을
+   * 바꿀 때마다) 딱 한 번만 등록한다 -- wireInteractions() 안에 있었을 땐
+   * renderShell()을 부를 때마다 document에 리스너가 하나씩 더 쌓여서,
+   * 방향키를 누르면 페이지가 여러 장씩 건너뛰는(그리고 결국 감당 못 하는)
+   * 버그가 있었다. */
+  document.addEventListener("keydown", function(e){
+    if (state.read !== "page") return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goPage(1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goPage(-1); }
+  });
 
   renderShell();
   var pollTimer = setInterval(poll, 350);
@@ -16228,10 +16406,13 @@ function openReaderPopup(m) {
 }
 
 function wireReaderPreview(m) {
+  reconcileReaderPopupState();
   if (m.readerPlatform === undefined) m.readerPlatform = "munpia";
   if (m.readerDevice === undefined) m.readerDevice = "iphone";
   if (m.readerReadMode === undefined) m.readerReadMode = "scroll";
   if (m.readerPage === undefined) m.readerPage = 0;
+  if (m.readerFontScale === undefined) m.readerFontScale = 1;
+  if (m.readerBrightness === undefined) m.readerBrightness = 100;
   window.__jipseulReaderState = function(){
     return { title: m.title||"", text: m.text||"", platform: m.readerPlatform, device: m.readerDevice, readMode: m.readerReadMode };
   };
