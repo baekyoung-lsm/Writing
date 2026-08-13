@@ -968,6 +968,120 @@
   .app.focus-mode .paper-toolbar,
   .app.focus-mode .paper-stats-bar,
   .app.focus-mode .book-mode-toggle { display:none !important; }
+  .app.focus-mode .rp-trigger,
+  .app.focus-mode .rp-context-slot,
+  .app.focus-mode .rp-overlay { display:none !important; }
+
+  /* ---------- 조판 미리보기(독자 화면) ----------
+   * 집필창은 항상 워드/한글 같은 순수 입력 표면이고, "독자가 실제로 보는
+   * 화면"은 이 읽기 전용 미리보기에서만 재현한다. 플랫폼 3종(조아라/문피아/
+   * 네이버시리즈)은 색만 다른 게 아니라 문단 밀도·들여쓰기·줄간격·여백·
+   * 크롬(상단바/하단바) 자체가 다르다 -- 실제 상표·로고는 쓰지 않고 레이아웃
+   * 관례만 재현한다. 패널은 사이드/팝업/전체화면 세 모드를 모두 이 마크업
+   * 하나(rp-panel)로 공유하고, 바깥 래퍼만 모드별로 다르게 감싼다. */
+  .rp-trigger { display:flex; align-items:center; gap:6px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:20px; padding:6px 13px; font-size:12.5px; color:var(--ink-soft); }
+  .rp-trigger:hover { border-color:var(--accent); color:var(--accent); }
+  .rp-trigger.on { background:var(--accent-soft); color:var(--accent); border-color:var(--accent); font-weight:600; }
+
+  .rp-overlay { position:fixed; inset:0; z-index:300; background:rgba(20,18,14,0.55); display:flex; align-items:center; justify-content:center; padding:24px; box-sizing:border-box; }
+  .rp-overlay.side-slot { position:static; inset:auto; z-index:auto; background:none; padding:0; display:block; }
+
+  .rp-panel { display:flex; flex-direction:column; background:var(--bg-card); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow-popover, 0 10px 30px rgba(0,0,0,0.25)); overflow:hidden; }
+  .rp-panel.side { width:380px; flex:none; position:sticky; top:20px; max-height:calc(100vh - 100px); }
+  .rp-panel.fullscreen { width:min(94vw, 460px); height:min(92vh, 860px); }
+  .rp-context-slot { display:flex; flex:none; }
+  .ms-editor-stack .rp-panel.side { position:static; width:100%; max-height:none; }
+  @media (max-width:1100px) { .rp-panel.side { position:static; width:100%; max-height:none; } }
+
+  .rp-head { display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid var(--border); gap:8px; }
+  .rp-head-title { font-size:12.5px; font-weight:600; color:var(--ink-soft); display:flex; align-items:center; gap:6px; }
+  .rp-close { background:none; border:none; color:var(--ink-faint); padding:4px; border-radius:6px; display:flex; }
+  .rp-close:hover { color:var(--rose); background:var(--rose-soft); }
+
+  .rp-controls { display:flex; flex-direction:column; gap:8px; padding:10px 12px; border-bottom:1px solid var(--border); background:var(--bg-panel); }
+  .rp-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .rp-row-label { font-size:10.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.05em; flex:none; width:52px; }
+  .rp-pill { border:1px solid var(--border-strong); background:var(--bg-card); border-radius:20px; padding:5px 11px; font-size:12px; color:var(--ink-soft); display:flex; align-items:center; gap:4px; }
+  .rp-pill:hover { border-color:var(--accent); color:var(--accent); }
+  .rp-pill.on { background:var(--accent-soft); color:var(--accent); border-color:var(--accent); font-weight:600; }
+
+  .rp-stage { flex:1; min-height:0; overflow:auto; display:flex; align-items:flex-start; justify-content:center; padding:22px 14px; background:
+      repeating-linear-gradient(135deg, var(--bg-panel) 0 10px, var(--bg) 10px 20px); }
+
+  /* 기기 프레임 -- 실제 로고 없이 실루엣만 흉내낸다 */
+  .rp-phone { position:relative; flex:none; width:300px; height:610px; background:#0b0b0d; border-radius:40px; padding:12px; box-shadow:0 18px 40px rgba(0,0,0,0.35), 0 4px 10px rgba(0,0,0,0.25); }
+  .rp-phone.android { border-radius:26px; background:#141416; }
+  .rp-phone.frameless { width:340px; height:auto; max-height:610px; background:none; padding:0; border-radius:0; box-shadow:none; }
+  .rp-phone-screen { position:relative; width:100%; height:100%; background:#fff; border-radius:28px; overflow:hidden; display:flex; flex-direction:column; }
+  .rp-phone.android .rp-phone-screen { border-radius:16px; }
+  .rp-phone.frameless .rp-phone-screen { border-radius:10px; height:610px; box-shadow:0 1px 3px var(--shadow); }
+  .rp-notch { position:absolute; top:10px; left:50%; transform:translateX(-50%); width:84px; height:22px; background:#0b0b0d; border-radius:14px; z-index:5; }
+  .rp-phone.android .rp-notch { width:10px; height:10px; border-radius:50%; top:12px; }
+  .rp-phone.frameless .rp-notch { display:none; }
+  .rp-home-indicator { position:absolute; bottom:6px; left:50%; transform:translateX(-50%); width:110px; height:4px; border-radius:3px; background:#0b0b0d; opacity:.7; z-index:5; }
+  .rp-phone.android .rp-home-indicator { width:90px; height:3px; opacity:.35; }
+  .rp-phone.frameless .rp-home-indicator { display:none; }
+
+  .rp-statusbar { flex:none; display:flex; align-items:center; justify-content:space-between; padding:8px 20px 4px; font-size:11px; font-weight:600; color:#111; font-variant-numeric:tabular-nums; }
+  .rp-phone.frameless .rp-statusbar { display:none; }
+  .rp-statusbar-icons { display:flex; align-items:center; gap:4px; }
+  .rp-statusbar-icons span { display:inline-block; }
+  .rp-batt { width:18px; height:9px; border:1px solid #111; border-radius:2px; position:relative; }
+  .rp-batt::after { content:""; position:absolute; right:-3px; top:2px; width:2px; height:3px; background:#111; border-radius:0 1px 1px 0; }
+  .rp-batt::before { content:""; position:absolute; inset:1.5px; left:1.5px; right:4px; background:#111; }
+
+  /* 앱 헤더(뒤로가기/화 제목/더보기) -- 플랫폼마다 색·굵기만 다름 */
+  .rp-appbar { flex:none; display:flex; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid rgba(0,0,0,0.06); }
+  .rp-appbar-back, .rp-appbar-more { flex:none; display:flex; color:#333; }
+  .rp-appbar-title { flex:1; min-width:0; font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#1a1a1a; }
+  .rp-appbar.pf-joara { background:#fff; }
+  .rp-appbar.pf-joara .rp-appbar-back, .rp-appbar.pf-joara .rp-appbar-more { color:#2FA89C; }
+  .rp-appbar.pf-munpia { background:#FBF7EF; border-bottom-color:rgba(181,101,29,0.15); }
+  .rp-appbar.pf-munpia .rp-appbar-back, .rp-appbar.pf-munpia .rp-appbar-more { color:#B5651D; }
+  .rp-appbar.pf-munpia .rp-appbar-title { font-family:var(--serif); }
+  .rp-appbar.pf-naver { background:#fff; }
+  .rp-appbar.pf-naver .rp-appbar-back, .rp-appbar.pf-naver .rp-appbar-more { color:#22A855; }
+  .rp-progress { flex:none; height:2px; background:rgba(0,0,0,0.08); }
+  .rp-progress-fill { height:100%; background:#22A855; }
+
+  /* 읽기 영역 -- 플랫폼별 문단 밀도/들여쓰기/여백/글꼴이 실제로 다르다 */
+  .rp-content { flex:1; min-height:0; position:relative; }
+  .rp-content.mode-scroll { overflow-y:auto; -webkit-overflow-scrolling:touch; cursor:grab; }
+  .rp-content.mode-scroll.dragging { cursor:grabbing; user-select:none; }
+  .rp-content.mode-page { overflow:hidden; }
+  .rp-page-slide { position:absolute; inset:0; transition:transform .2s ease, opacity .2s ease; }
+  .rp-page-slide.rp-enter-next { transform:translateX(16px); opacity:0; transition:none; }
+  .rp-page-slide.rp-enter-prev { transform:translateX(-16px); opacity:0; transition:none; }
+
+  /* 플랫폼별 타이포그래피 -- 실측(measureReaderPages)과 실제 화면 렌더링이
+   * 반드시 같은 규칙을 봐야 페이지 분량이 어긋나지 않으므로, 이 세 블록이
+   * 유일한 기준이다(JS 쪽에 폰트 수치를 따로 들고 있지 않는다). */
+  .rp-text { box-sizing:border-box; width:100%; padding:18px 20px; }
+  .rp-text p { margin:0; }
+  .rp-content.mode-scroll .rp-text { min-height:100%; }
+  .rp-content.mode-page .rp-text { height:100%; overflow:hidden; }
+  .rp-text.pf-joara { background:#fff; color:#1c1c1c; font-family:var(--sans); font-size:16px; line-height:1.9; letter-spacing:0; }
+  .rp-text.pf-joara p { text-indent:0; margin:0 0 1.05em; }
+  .rp-text.pf-munpia { background:#FBF7EF; color:#241C12; font-family:var(--serif); font-size:15.5px; line-height:1.62; letter-spacing:-0.01em; }
+  .rp-text.pf-munpia p { text-indent:1em; margin:0; }
+  .rp-text.pf-naver { background:#fff; color:#1A1A1A; font-family:var(--sans); font-size:17px; line-height:2.05; letter-spacing:-0.01em; }
+  .rp-text.pf-naver p { text-indent:0; margin:0 0 0.9em; }
+  .rp-text-empty { color:var(--ink-faint); font-style:italic; }
+
+  .rp-bottombar { flex:none; display:flex; align-items:center; justify-content:space-around; padding:9px 10px; border-top:1px solid rgba(0,0,0,0.06); background:#fff; color:#666; }
+  .rp-bottombar button { background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; color:inherit; font-size:9.5px; padding:2px 6px; }
+  .rp-bottombar button:hover { color:#22A855; }
+
+  .rp-pagenav { flex:none; display:flex; align-items:center; justify-content:space-between; padding:8px 14px; border-top:1px solid rgba(0,0,0,0.06); background:rgba(255,255,255,0.9); font-size:11px; color:#555; font-variant-numeric:tabular-nums; }
+  .rp-pagenav button { background:none; border:none; display:flex; color:#555; padding:4px; }
+  .rp-pagenav button:disabled { opacity:.3; }
+  .rp-phone.frameless .rp-pagenav { background:var(--bg-card); border-top:1px solid var(--border); color:var(--ink-faint); }
+
+  .rp-foot { flex:none; padding:8px 12px; border-top:1px solid var(--border); font-size:11px; color:var(--ink-faint); text-align:center; }
+
+  /* 팝업 창(방식 B)에는 이 앱 스타일시트가 없으므로, 최소한의 동일 규칙을
+   * writePopupHtml()이 별도로 문자열째 복제해서 넣는다(JS 쪽 주석 참고). */
+  .rp-popup-note { display:flex; align-items:center; gap:6px; }
 
   /* ---------- book mode (양장본) ---------- */
   .book-outer { display:flex; justify-content:center; padding:6px 0 22px; overflow-x:auto; }
@@ -1037,26 +1151,6 @@
   .paper-page-nav button { background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:7px 14px; color:var(--ink); }
   .paper-page-nav button:disabled { opacity:.35; }
   .paper-page-label { min-width:160px; text-align:center; }
-
-  /* ---------- 조아라/문피아/네이버시리즈: 플랫폼별 집필 영역 ----------
-   * 세 플랫폼 모두 바깥 골격(헤더/탭/툴바)은 공통이고, 여기 아래 감싸개만
-   * 플랫폼 UI 관례를 흉내낸다(실제 로고·상표는 쓰지 않음). 포인트 컬러는
-   * 전역 --accent를 바꾸지 않도록 각 감싸개 안에서만 지역 변수로 정의한다. */
-  .joara-outer { display:flex; justify-content:center; padding:6px 0 16px; }
-  .joara-sheet-wrap { --joara-accent:#2FA89C; flex:none; width:100%; max-width:640px; }
-  .joara-topline { display:flex; align-items:center; gap:8px; padding:0 2px 10px; }
-  .joara-topline .dot { width:7px; height:7px; border-radius:50%; background:var(--joara-accent); flex:none; }
-  .joara-topline .line { flex:1; height:1px; background:var(--border); }
-  .ms-textarea.joara-text { border-radius:12px; box-shadow:0 1px 3px var(--shadow); }
-
-  .munpia-outer { display:flex; justify-content:center; padding:6px 0 16px; }
-  .munpia-sheet-wrap { --munpia-accent:#B5651D; flex:none; width:100%; max-width:680px; position:relative; padding-left:14px; box-sizing:border-box; }
-  .munpia-sheet-wrap::before { content:""; position:absolute; left:0; top:4px; bottom:4px; width:4px; border-radius:3px; background:var(--munpia-accent); }
-  .ms-textarea.munpia-text { border:1px solid var(--border-strong); border-radius:6px; }
-
-  .naver-outer { display:flex; justify-content:center; padding:10px 0 20px; }
-  .naver-sheet-wrap { --naver-accent:#22A855; flex:none; width:100%; max-width:720px; background:var(--bg-card); border-radius:16px; box-shadow:var(--shadow-2, 0 6px 20px var(--shadow)); padding:6px; box-sizing:border-box; }
-  .ms-textarea.naver-text { border:none; border-radius:12px; border-bottom:3px solid var(--naver-accent); }
 
   /* ---------- 원고지 미리보기: 별도 화면(모달 아님, 탭 전환) ----------
    * computeManuscriptLayout()의 정밀 계산 결과를 그대로 실물 원고지 낱장
@@ -1540,6 +1634,9 @@ function ic(name, size) {
     chevron: '<path d="M4.5 6l3.5 4 3.5-4"/>',
     graph: '<circle cx="4" cy="4" r="1.6"/><circle cx="12" cy="4" r="1.6"/><circle cx="8" cy="12.5" r="1.6"/><line x1="5.2" y1="4.8" x2="10.8" y2="4.8"/><line x1="5" y1="5.3" x2="7.3" y2="11"/><line x1="11" y1="5.3" x2="8.7" y2="11"/>',
     fit: '<path d="M2.5 5.5V2.5h3"/><path d="M13.5 5.5V2.5h-3"/><path d="M2.5 10.5v3h3"/><path d="M13.5 10.5v3h-3"/>',
+    phone: '<rect x="4.3" y="1.3" width="7.4" height="13.4" rx="1.8"/><line x1="6.6" y1="12.5" x2="9.4" y2="12.5"/>',
+    popout: '<rect x="2.3" y="5.3" width="8.4" height="8.4" rx="1"/><path d="M8 2.3h5.7V8"/><line x1="13.5" y1="2.5" x2="7.6" y2="8.4"/>',
+    swipe: '<path d="M2 8h9"/><path d="M8 4.5L11.5 8 8 11.5"/><circle cx="13.2" cy="8" r="1" fill="currentColor" stroke="none"/>',
     zoomin: '<circle cx="6.8" cy="6.8" r="4.3"/><line x1="10" y1="10" x2="13.5" y2="13.5"/><line x1="6.8" y1="4.8" x2="6.8" y2="8.8"/><line x1="4.8" y1="6.8" x2="8.8" y2="6.8"/>',
     zoomout: '<circle cx="6.8" cy="6.8" r="4.3"/><line x1="10" y1="10" x2="13.5" y2="13.5"/><line x1="4.8" y1="6.8" x2="8.8" y2="6.8"/>',
     connect: '<circle cx="3.3" cy="3.3" r="1.6"/><circle cx="12.7" cy="12.7" r="1.6"/><line x1="4.6" y1="4.6" x2="11.4" y2="11.4" stroke-dasharray="2.2 2.2"/>',
@@ -1957,13 +2054,15 @@ var LIFE_STATUSES = {
   missing: { label: "실종", color: "var(--tide)" },
   unknown: { label: "행방불명", color: "var(--ink-faint)" }
 };
+/* 예전엔 조아라/문피아/네이버시리즈가 "집필창 테마"(글꼴·배경색·여백만 다른
+ * textarea)로 여기 있었다. 집필 화면은 어떤 플랫폼으로 낼지와 무관하게 항상
+ * 워드/한글 같은 순수 집필 표면이어야 하므로 그 셋은 집필 포맷에서 뺐다 --
+ * 플랫폼별 "독자가 실제로 보는 화면"은 renderReaderPreview()의 조판
+ * 미리보기(READER_PLATFORMS)에서 담당한다. */
 var MS_FORMATS = {
   general: { label:"양장본" },
   plain:   { label:"일반 집필창", lineHeight:"1.9", pad:"56px 64px", bg:"#FFFFFF", color:"#1A1A1A", spacing:"0" },
-  paper:   { label:"원고지" },
-  joara:   { label:"조아라", lineHeight:"1.55", pad:"24px 22px", bg:"#F4F4F1", color:"#222222", spacing:"-0.01em" },
-  munpia:  { label:"문피아", lineHeight:"1.9", pad:"26px 28px", bg:"#FAF8F3", color:"#1E1E1E", spacing:"0" },
-  naver:   { label:"네이버시리즈", lineHeight:"1.95", pad:"30px 34px", bg:"#FFFFFF", color:"#191919", spacing:"-0.01em" }
+  paper:   { label:"원고지" }
 };
 /* ---------------- 원고지(manuscript paper) : 다국어 통합 집필 엔진 ----------------
  * 이 앱은 한국어 전용 집필기가 아니라 한국어/영어/일본어/중국어 및 혼합 원고를
@@ -4347,7 +4446,7 @@ function openFindReplace(textareaId, triggerEl, onUpdate) {
 }
 
 /* ---------------- state ---------------- */
-var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, pendingMapFocusMarker: null, focusMode: false, msToolsOpen: false, appearTab: {}, splitView: false, splitSelectedId: null, wsHomeTab: {}, wsLastTabByCat: {} };
+var state = { mode: "empty", activeId: null, query: "", collapsed: {}, addPropOpen: false, colorPickerOpen: false, povFilter: {}, pendingMapFocusRegion: null, pendingMapFocusMarker: null, focusMode: false, msToolsOpen: false, readerOpen: false, readerPanelMode: "side", appearTab: {}, splitView: false, splitSelectedId: null, wsHomeTab: {}, wsLastTabByCat: {} };
 function applyFocusModeClass() {
   var appEl = document.querySelector(".app");
   if (!appEl) return;
@@ -8277,7 +8376,14 @@ function renderSidebar() {
   var el = document.getElementById("sbBody");
   var html = "";
 
-  html += '<button class="btn primary" id="newWorkBtn" style="width:100%; justify-content:center; margin-bottom:2px">'+ic("plus",13)+' 새 작품</button>';
+  /* "새 작품"은 작품이 하나도 없을 때만 큰 버튼으로 강조한다 -- 이미 작품이
+   * 있으면 매 화면(집필 중에도)에 계속 떠 있을 이유가 없는 기능이라, 작품
+   * 목록 영역 안에 "소설 원고 +"와 같은 방식의 작은 아이콘으로 낮춘다.
+   * 작품 생성은 어디까지나 작품 목록(라이브러리)의 책임이지 집필 화면의
+   * 책임이 아니다. */
+  html += WORKS.length
+    ? '<div class="ws-section-head" style="padding:2px 2px 8px"><span class="t">내 작품</span><button class="add" id="newWorkBtn" title="새 작품">'+ic("plus",13)+'</button></div>'
+    : '<button class="btn primary" id="newWorkBtn" style="width:100%; justify-content:center; margin-bottom:2px">'+ic("plus",13)+' 새 작품</button>';
 
   var visibleWorks = WORKS.filter(function(w){
     if (!q) return true;
@@ -8425,7 +8531,7 @@ function autoGrow(el) { el.style.height = "auto"; el.style.height = el.scrollHei
 function applyMsStyle(m) {
   var el = document.getElementById("msText");
   if (!el) return;
-  var f = MS_FORMATS[m.format] || MS_FORMATS.joara;
+  var f = MS_FORMATS[m.format] || MS_FORMATS.plain;
   var dark = !!m.previewDark;
   el.style.fontSize = (m.previewFontSize||16) + "px";
   el.style.lineHeight = f.lineHeight;
@@ -14731,7 +14837,7 @@ function renderBookArea(m) {
       m.text = flowEl.innerText.split(String.fromCharCode(160)).join(" ");
       var denom0 = flowEl.scrollWidth - flowEl.clientWidth;
       m.editScrollFrac = denom0 > 0 ? Math.max(0, Math.min(1, flowEl.scrollLeft/denom0)) : 0;
-      schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); flashSaveIndicator();
+      schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); flashSaveIndicator(); refreshReaderIfOpen(m);
     });
     flowEl.addEventListener("blur", flushPaperSave);
     flowEl.addEventListener("scroll", function(){
@@ -14748,7 +14854,7 @@ function renderBookArea(m) {
       '<div class="book-hint">쓰기 모드는 스크롤로 이어 씁니다 — 미리보기에서 페이지 단위로 넘겨볼 수 있어요</div>';
     var editEl = document.getElementById("bookEditText");
     wireAutoIndent(editEl);
-    editEl.addEventListener("input", function(e){ m.text = e.target.value; m.editScrollFrac = editScrollFraction(); schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); updateContextPanel(m, bookWorkId); flashSaveIndicator(); });
+    editEl.addEventListener("input", function(e){ m.text = e.target.value; m.editScrollFrac = editScrollFraction(); schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, bookWorkId); updateContextPanel(m, bookWorkId); flashSaveIndicator(); refreshReaderIfOpen(m); });
     editEl.addEventListener("blur", flushPaperSave);
     editEl.addEventListener("scroll", function(){ m.editScrollFrac = editScrollFraction(); });
     wireMentionAutocomplete(editEl, bookWorkId);
@@ -14960,6 +15066,7 @@ function renderManuscriptPaperWrite(m) {
     flashSaveIndicator();
     refreshPaperFormatPreview();
     scheduleStatsRefresh(true);
+    refreshReaderIfOpen(m);
   });
   textEl.addEventListener("keydown", function (e) {
     if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
@@ -15375,6 +15482,14 @@ function renderManuscriptPage(m) {
   if (m.bookSpread === undefined) m.bookSpread = false;
   if (m.editScrollFrac === undefined) m.editScrollFrac = 0;
   if (m.format === undefined) m.format = "general";
+  /* 예전 버전에서 저장된 조아라/문피아/네이버 포맷은 이제 집필 포맷이 아니라
+   * 조판 미리보기 쪽 플랫폼이므로, 열람 시 집필 표면은 일반 집필창으로
+   * 옮겨주고 그 플랫폼은 미리보기 기본 선택값으로 넘겨준다. */
+  if (m.format === "joara" || m.format === "munpia" || m.format === "naver") {
+    if (m.readerPlatform === undefined) m.readerPlatform = m.format;
+    m.format = "plain";
+    saveData();
+  }
   if (m.paperLang === undefined) m.paperLang = "auto";
   if (m.paperSize === undefined) m.paperSize = 400;
   if (m.paperVertical === undefined) m.paperVertical = false;
@@ -15419,8 +15534,9 @@ function renderManuscriptPage(m) {
    * 토글 · 현재 서식 라벨(정보만, 클릭 불가) · 집중 모드만 남긴다. */
   var toolsToggleHtml = '<button type="button" id="msToolsToggle" class="ms-tools-toggle'+(state.msToolsOpen?" on":"")+'">'+ic("chevron",11)+'<span>도구</span></button>';
   var formatBadgeHtml = '<span class="ms-format-badge">'+esc((MS_FORMATS[m.format]||{}).label||"")+'</span>';
+  var readerTriggerHtml = '<button type="button" id="rpTriggerBtn" class="rp-trigger'+(state.readerOpen?" on":"")+'" title="집필창과 분리된 읽기 전용 독자 화면을 엽니다">'+ic("phone",13)+'<span>미리보기</span></button>';
   var focusBtnHtml = '<button type="button" id="msFocusToggle" class="ms-focus-btn'+(state.focusMode?" on":"")+'" title="사이드바를 숨기고 집중해서 씁니다">'+ic("eye",13)+'<span>집중 모드</span></button>';
-  var quickbarHtml = '<div class="ms-quickbar">' + toolsToggleHtml + formatBadgeHtml + focusBtnHtml + '</div>';
+  var quickbarHtml = '<div class="ms-quickbar">' + toolsToggleHtml + formatBadgeHtml + readerTriggerHtml + focusBtnHtml + '</div>';
 
   var bodyHtml;
   if (isBook) {
@@ -15434,8 +15550,7 @@ function renderManuscriptPage(m) {
   } else if (isPaper) {
     bodyHtml = '<div id="paperArea"></div>';
   } else {
-    var platformExtraCls = { joara:" joara-text", munpia:" munpia-text", naver:" naver-text" }[m.format] || "";
-    var textareaCls = isPlain ? "paper-text" : ("ms-textarea"+platformExtraCls);
+    var textareaCls = "paper-text";
     var textareaHtml = '<textarea class="'+textareaCls+'" id="msText" spellcheck="true" placeholder="여기에 소설 본문을 적어보세요."'+(m.showFormatPreview?' style="display:none"':'')+'>'+esc(m.text||"")+'</textarea>';
     var formatPreviewHtml = '<div class="ms-format-preview '+textareaCls+'" id="msFormatPreview"'+(m.showFormatPreview?'':' style="display:none"')+'>'+renderFormattedPlainText(m.text||"", m.formatRanges)+'</div>';
     bodyHtml =
@@ -15453,13 +15568,7 @@ function renderManuscriptPage(m) {
         '<div class="sep"></div>' +
         '<button type="button" id="msFindBtn">'+ic("search",13)+'<span>찾아바꾸기</span></button>' +
       '</div>' +
-      (isPlain
-        ? '<div class="paper-outer"><div class="paper-sheet-wrap">' + textareaHtml + formatPreviewHtml + '</div></div>'
-        : m.format === "joara"
-        ? '<div class="joara-outer"><div class="joara-sheet-wrap"><div class="joara-topline"><span class="dot"></span><span class="line"></span></div>' + textareaHtml + formatPreviewHtml + '</div></div>'
-        : m.format === "munpia"
-        ? '<div class="munpia-outer"><div class="munpia-sheet-wrap">' + textareaHtml + formatPreviewHtml + '</div></div>'
-        : '<div class="naver-outer"><div class="naver-sheet-wrap">' + textareaHtml + formatPreviewHtml + '</div></div>');
+      '<div class="paper-outer"><div class="paper-sheet-wrap">' + textareaHtml + formatPreviewHtml + '</div></div>';
   }
 
   /* 원고지 모드는 "정보 영역이 원고지 본문보다 눈에 띄면 안 된다"는 요구에
@@ -15509,8 +15618,8 @@ function renderManuscriptPage(m) {
       titleBarHtml + epSwitcherHtml + quickbarHtml +
       '<div class="page-pad'+(isPaper?" paper-info-compact":"")+'" style="padding-top:14px">' + povHtml + statsHtml + tabsHtml +
         ((isBook || isPaper)
-          ? '<div class="ms-editor-stack">' + bodyHtml + '<div class="ms-context-panel stacked" id="msContextPanel"></div></div>'
-          : '<div class="ms-editor-row"><div class="ms-editor-main">' + bodyHtml + '</div><div class="ms-context-panel" id="msContextPanel"></div></div>') +
+          ? '<div class="ms-editor-stack">' + bodyHtml + '<div class="ms-context-panel stacked" id="msContextPanel"></div><div class="rp-context-slot" id="rpSideSlot" style="display:none"></div></div>'
+          : '<div class="ms-editor-row"><div class="ms-editor-main">' + bodyHtml + '</div><div class="ms-context-panel" id="msContextPanel"></div><div class="rp-context-slot" id="rpSideSlot" style="display:none"></div></div>') +
       '</div>' +
     '</div>';
   if (novelOfMs) {
@@ -15531,7 +15640,7 @@ function renderManuscriptPage(m) {
     if (infoSettingsBtn) infoSettingsBtn.addEventListener("click", openPaperInfoModeModal);
   }
 
-  document.getElementById("msTitle").addEventListener("input", function(e){ m.title = e.target.value; saveData(); renderSidebar(); updateMsStatsBar(m); flashSaveIndicator(); });
+  document.getElementById("msTitle").addEventListener("input", function(e){ m.title = e.target.value; saveData(); renderSidebar(); updateMsStatsBar(m); flashSaveIndicator(); refreshReaderIfOpen(m); });
   document.getElementById("deleteMsBtn").addEventListener("click", function(){ deleteManuscript(m.id); });
   updateCharacterChips(m, msWorkId, true);
   updateContextPanel(m, msWorkId);
@@ -15606,7 +15715,7 @@ function renderManuscriptPage(m) {
       var oldVal = m.text||"";
       m.formatRanges = rebaseFormatRanges(m.formatRanges, oldVal, e.target.value);
       m.text = e.target.value;
-      schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId); updateContextPanel(m, msWorkId); flashSaveIndicator(); refreshMsFormatPreview();
+      schedulePaperSave(); updateMsCharCount(m); updateMsStatsBar(m); updateMsGoalBar(m); updateCharacterChips(m, msWorkId); updateContextPanel(m, msWorkId); flashSaveIndicator(); refreshMsFormatPreview(); refreshReaderIfOpen(m);
     });
     msTextEl.addEventListener("blur", flushPaperSave);
     wireMentionAutocomplete(msTextEl, msWorkId);
@@ -15623,6 +15732,513 @@ function renderManuscriptPage(m) {
       });
     });
   }
+
+  wireReaderPreview(m);
+}
+
+/* ==================== 조판 미리보기(독자 화면) ====================
+ * 집필창(위)과 역할을 완전히 분리한 읽기 전용 모듈이다. 조아라/문피아/
+ * 네이버시리즈는 색만 다른 테마가 아니라 문단 밀도·들여쓰기·줄간격·여백·
+ * 크롬(상단바/앱바/하단바)이 실제로 다르게 그려진다(실제 로고·상표는
+ * 쓰지 않고 레이아웃 관례만 재현). 타이포그래피는 .rp-text.pf-* CSS가
+ * 유일한 기준이며, 페이지 분량 측정도 그 클래스를 그대로 붙인 probe로
+ * 재는 것이라 실제 렌더링과 절대 어긋나지 않는다.
+ *
+ * 패널은 세 가지 방식(사이드 패널/팝업 창/전체화면)을 모두 이 마크업
+ * 하나(readerPanelInnerHtml)로 공유한다 -- 팝업만 별도 문서라 CSS·JS를
+ * 그대로 복제해 넣는다(readerPopupMain, 아래 주석 참고). */
+var READER_PLATFORMS = { joara:{label:"조아라"}, munpia:{label:"문피아"}, naver:{label:"네이버시리즈"} };
+var READER_DEVICES = { iphone:{label:"iPhone"}, android:{label:"Android"}, frameless:{label:"프레임 없음"} };
+var READER_READMODES = { scroll:{label:"스크롤"}, page:{label:"페이지 넘김"} };
+var READER_PANELMODES = { side:{label:"사이드 패널"}, popup:{label:"팝업 창"}, fullscreen:{label:"전체화면"} };
+
+var _readerPagesCache = [""];
+var _readerActiveM = null;   // 현재 사이드/전체화면 패널이 보여주는 원고(팝업 모드에선 null -- 팝업은 자체 문서라 키보드 리스너도 자기 안에 따로 있다)
+var _readerPopupWin = null;
+
+function readerParagraphs(text) { return String(text||"").split(/\n+/).filter(function(p){ return p.length > 0; }); }
+function readerParasHtml(text) {
+  var list = readerParagraphs(text);
+  if (!list.length) return '<p class="rp-text-empty">아직 쓴 내용이 없습니다.</p>';
+  return list.map(function(p){ return "<p>"+esc(p)+"</p>"; }).join("");
+}
+/* 실측 페이지네이션 -- .rp-text.pf-<플랫폼> 클래스를 그대로 붙인 detached
+ * probe에 문단을 하나씩 채워보면서 scrollHeight가 컨테이너 높이를 넘는
+ * 순간 그 앞까지를 한 페이지로 끊는다(paginateBook과 같은 기법). */
+function measureReaderPages(text, widthPx, heightPx, platKey) {
+  var list = readerParagraphs(text);
+  if (!list.length) return [""];
+  var probe = document.createElement("div");
+  probe.className = "rp-text pf-" + platKey;
+  probe.style.position = "fixed"; probe.style.visibility = "hidden"; probe.style.pointerEvents = "none";
+  probe.style.left = "-9999px"; probe.style.top = "0"; probe.style.width = widthPx + "px";
+  document.body.appendChild(probe);
+  function setParas(l) { probe.innerHTML = l.map(function(p){ return "<p>"+esc(p)+"</p>"; }).join(""); }
+  var pages = [], cur = [];
+  list.forEach(function(p){
+    cur.push(p); setParas(cur);
+    if (probe.scrollHeight > heightPx) {
+      cur.pop();
+      if (cur.length) { pages.push(cur.join("\n")); cur = [p]; } else { cur = [p]; }
+    }
+  });
+  if (cur.length) pages.push(cur.join("\n"));
+  document.body.removeChild(probe);
+  return pages.length ? pages : [""];
+}
+
+function readerPanelInnerHtml(m) {
+  function pillRow(labelText, dict, activeKey, attr) {
+    var buttons = Object.keys(dict).map(function(k){
+      return '<button type="button" class="rp-pill'+(k===activeKey?" on":"")+'" data-'+attr+'="'+k+'">'+esc(dict[k].label)+'</button>';
+    }).join("");
+    return '<div class="rp-row"><span class="rp-row-label">'+labelText+'</span>'+buttons+'</div>';
+  }
+  var plat = READER_PLATFORMS[m.readerPlatform] || READER_PLATFORMS.munpia;
+  return (
+    '<div class="rp-head">' +
+      '<div class="rp-head-title">'+ic("phone",13)+'<span>조판 미리보기 · 독자 화면</span></div>' +
+      '<button type="button" class="rp-close" id="rpCloseBtn" title="닫기">'+ic("close",14)+'</button>' +
+    '</div>' +
+    '<div class="rp-controls">' +
+      pillRow("플랫폼", READER_PLATFORMS, m.readerPlatform, "rpplat") +
+      pillRow("기기", READER_DEVICES, m.readerDevice, "rpdevice") +
+      pillRow("읽기", READER_READMODES, m.readerReadMode, "rpreadmode") +
+      pillRow("패널", READER_PANELMODES, state.readerPanelMode, "rppanelmode") +
+    '</div>' +
+    '<div class="rp-stage" id="rpStage">' + renderReaderPhoneHtml(m) + '</div>' +
+    '<div class="rp-foot">'+esc(plat.label)+' 독자 화면 미리보기 · 실제 서비스와 세부 사항은 다를 수 있습니다.</div>'
+  );
+}
+
+function renderReaderPhoneHtml(m) {
+  var platKey = m.readerPlatform, device = m.readerDevice;
+  var isNaver = platKey === "naver";
+  var appbarHtml =
+    '<div class="rp-appbar pf-'+platKey+'">' +
+      '<span class="rp-appbar-back">'+ic("chevL",15)+'</span>' +
+      '<span class="rp-appbar-title" id="rpAppbarTitle">'+esc(m.title||"제목 없음")+'</span>' +
+      '<span class="rp-appbar-more">'+ic("tag",15)+'</span>' +
+    '</div>' +
+    (isNaver ? '<div class="rp-progress"><div class="rp-progress-fill" style="width:38%"></div></div>' : '');
+  var statusbarHtml = '<div class="rp-statusbar"><span>9:41</span><div class="rp-statusbar-icons"><span>'+ic("wand",10)+'</span><div class="rp-batt"></div></div></div>';
+  return (
+    '<div class="rp-phone '+device+'">' +
+      '<div class="rp-notch"></div>' +
+      '<div class="rp-phone-screen">' +
+        statusbarHtml + appbarHtml +
+        '<div class="rp-content mode-'+m.readerReadMode+'" id="rpContent"></div>' +
+        '<div id="rpFoot"></div>' +
+      '</div>' +
+      '<div class="rp-home-indicator"></div>' +
+    '</div>'
+  );
+}
+
+/* 텍스트가 바뀔 때마다(매 키 입력) 이 함수만 다시 부른다 -- 컨트롤·기기
+ * 프레임 전체를 새로 그리지 않으므로 "새로고침" 없이 실시간으로 갱신된다. */
+function updateReaderStageContent(m, dir) {
+  var titleEl = document.getElementById("rpAppbarTitle");
+  if (titleEl) titleEl.textContent = m.title || "제목 없음";
+  var contentEl = document.getElementById("rpContent");
+  if (!contentEl) return;
+  if (m.readerReadMode === "scroll") {
+    contentEl.innerHTML = '<div class="rp-text pf-'+m.readerPlatform+'">' + readerParasHtml(m.text) + '</div>';
+    renderReaderFoot(m);
+    return;
+  }
+  var w = contentEl.clientWidth || 260, h = contentEl.clientHeight || 480;
+  if (dir === undefined) { _readerPagesCache = measureReaderPages(m.text, w, h, m.readerPlatform); if (m.readerPage >= _readerPagesCache.length) m.readerPage = Math.max(0, _readerPagesCache.length-1); }
+  var pageText = _readerPagesCache[m.readerPage] || "";
+  var slide = document.createElement("div");
+  slide.className = "rp-page-slide" + (dir === 1 ? " rp-enter-next" : dir === -1 ? " rp-enter-prev" : "");
+  slide.innerHTML = '<div class="rp-text pf-'+m.readerPlatform+'">' + readerParasHtml(pageText) + '</div>';
+  contentEl.innerHTML = "";
+  contentEl.appendChild(slide);
+  if (dir) requestAnimationFrame(function(){ requestAnimationFrame(function(){ slide.className = "rp-page-slide"; }); });
+  renderReaderFoot(m);
+}
+function renderReaderFoot(m) {
+  var footEl = document.getElementById("rpFoot");
+  if (!footEl) return;
+  if (m.readerReadMode === "page") {
+    var total = _readerPagesCache.length;
+    footEl.innerHTML =
+      '<div class="rp-pagenav">' +
+        '<button type="button" id="rpPrevPage"'+(m.readerPage<=0?" disabled":"")+'>'+ic("chevL",13)+'<span>이전</span></button>' +
+        '<span>'+(total?m.readerPage+1:0)+' / '+total+'</span>' +
+        '<button type="button" id="rpNextPage"'+(m.readerPage>=total-1?" disabled":"")+'><span>다음</span>'+ic("chevR",13)+'</button>' +
+      '</div>';
+    var prevBtn = document.getElementById("rpPrevPage"), nextBtn = document.getElementById("rpNextPage");
+    if (prevBtn) prevBtn.addEventListener("click", function(){ goToReaderPage(m, -1); });
+    if (nextBtn) nextBtn.addEventListener("click", function(){ goToReaderPage(m, 1); });
+  } else if (m.readerPlatform === "naver") {
+    footEl.innerHTML = '<div class="rp-bottombar">' +
+      '<button type="button">'+ic("sun",14)+'<span>밝기</span></button>' +
+      '<button type="button">Aa<span>글자</span></button>' +
+      '<button type="button">'+ic("star",14)+'<span>보관함</span></button>' +
+    '</div>';
+  } else {
+    footEl.innerHTML = "";
+  }
+}
+function goToReaderPage(m, dir) {
+  var next = m.readerPage + dir;
+  if (next < 0 || next >= _readerPagesCache.length) return;
+  m.readerPage = next; saveData();
+  updateReaderStageContent(m, dir);
+}
+/* 집필창(양장본/원고지/일반 전부)의 모든 입력 리스너가 매 키 입력마다
+ * 이걸 부른다 -- 사이드/전체화면으로 열려 있을 때만 실제로 다시 그린다.
+ * 팝업은 자기가 직접 opener를 폴링하므로 여기서 손댈 필요가 없다. */
+function refreshReaderIfOpen(m) {
+  if (state.readerOpen && state.readerPanelMode !== "popup") updateReaderStageContent(m);
+}
+
+/* 스크롤 모드에서 "마우스로 클릭+드래그해서 읽기"는 브라우저 기본 동작이
+ * 아니다(기본값은 텍스트 선택) -- 터치는 이미 네이티브로 되므로 마우스일
+ * 때만 별도로 잡아준다. 휠 스크롤은 overflow-y:auto만으로 이미 된다. */
+function wireReaderDragScroll(el) {
+  var drag = null;
+  el.addEventListener("pointerdown", function(e){
+    if (e.pointerType === "touch") return;
+    drag = { y: e.clientY, top: el.scrollTop };
+    el.classList.add("dragging");
+    e.preventDefault();
+  });
+  el.addEventListener("pointermove", function(e){ if (drag) el.scrollTop = drag.top - (e.clientY - drag.y); });
+  function end() { drag = null; el.classList.remove("dragging"); }
+  el.addEventListener("pointerup", end);
+  el.addEventListener("pointerleave", function(){ if (drag) end(); });
+}
+/* 페이지 모드에서 손가락 좌우 스와이프 지원(터치만 -- 마우스 드래그는
+ * 페이지 모드에선 의미가 없으므로 건드리지 않는다). */
+function wireReaderSwipe(el, m) {
+  var start = null;
+  el.addEventListener("pointerdown", function(e){ if (e.pointerType === "touch") start = { x: e.clientX, y: e.clientY }; });
+  el.addEventListener("pointerup", function(e){
+    if (!start) return;
+    var dx = e.clientX - start.x, dy = e.clientY - start.y;
+    start = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.4) goToReaderPage(m, dx < 0 ? 1 : -1);
+  });
+}
+document.addEventListener("keydown", function(e){
+  if (!_readerActiveM || _readerActiveM.readerReadMode !== "page") return;
+  var ae = document.activeElement;
+  if (ae && (ae.tagName === "TEXTAREA" || ae.tagName === "INPUT" || ae.isContentEditable)) return;
+  if (e.key === "ArrowRight") { e.preventDefault(); goToReaderPage(_readerActiveM, 1); }
+  else if (e.key === "ArrowLeft") { e.preventDefault(); goToReaderPage(_readerActiveM, -1); }
+});
+
+function wireReaderPanel(m) {
+  var stage = document.getElementById("rpStage");
+  document.querySelectorAll("[data-rpplat]").forEach(function(b){
+    b.addEventListener("click", function(){ m.readerPlatform = b.dataset.rpplat; m.readerPage = 0; saveData(); mountReaderPanel(m); });
+  });
+  document.querySelectorAll("[data-rpdevice]").forEach(function(b){
+    b.addEventListener("click", function(){ m.readerDevice = b.dataset.rpdevice; saveData(); mountReaderPanel(m); });
+  });
+  document.querySelectorAll("[data-rpreadmode]").forEach(function(b){
+    b.addEventListener("click", function(){ m.readerReadMode = b.dataset.rpreadmode; m.readerPage = 0; saveData(); mountReaderPanel(m); });
+  });
+  document.querySelectorAll("[data-rppanelmode]").forEach(function(b){
+    b.addEventListener("click", function(){ setReaderPanelMode(m, b.dataset.rppanelmode); });
+  });
+  var closeBtn = document.getElementById("rpCloseBtn");
+  if (closeBtn) closeBtn.addEventListener("click", function(){ closeReaderPanel(); });
+  var contentEl = document.getElementById("rpContent");
+  if (contentEl) {
+    wireReaderDragScroll(contentEl);
+    wireReaderSwipe(contentEl, m);
+  }
+  updateReaderStageContent(m);
+}
+
+function mountReaderPanel(m) {
+  if (state.readerPanelMode === "fullscreen") {
+    var ov = document.getElementById("rpOverlay");
+    if (!ov) {
+      ov = document.createElement("div");
+      ov.className = "rp-overlay";
+      ov.id = "rpOverlay";
+      document.body.appendChild(ov);
+      ov.addEventListener("mousedown", function(e){ if (e.target === ov) closeReaderPanel(); });
+    }
+    ov.innerHTML = '<div class="rp-panel fullscreen" id="rpPanel"></div>';
+    document.getElementById("rpPanel").innerHTML = readerPanelInnerHtml(m);
+  } else {
+    var slot = document.getElementById("rpSideSlot");
+    if (!slot) return;
+    slot.style.display = "flex";
+    slot.innerHTML = '<div class="rp-panel side" id="rpPanel">' + readerPanelInnerHtml(m) + '</div>';
+  }
+  _readerActiveM = m;
+  wireReaderPanel(m);
+}
+function unmountReaderPanel() {
+  var ov = document.getElementById("rpOverlay");
+  if (ov) ov.remove();
+  var slot = document.getElementById("rpSideSlot");
+  if (slot) { slot.innerHTML = ""; slot.style.display = "none"; }
+  _readerActiveM = null;
+}
+function closeReaderPanel() {
+  state.readerOpen = false;
+  unmountReaderPanel();
+  updateReaderTriggerBtn();
+}
+function updateReaderTriggerBtn() {
+  var btn = document.getElementById("rpTriggerBtn");
+  if (btn) btn.classList.toggle("on", !!state.readerOpen);
+}
+function setReaderPanelMode(m, mode) {
+  if (mode === state.readerPanelMode) return;
+  if (state.readerPanelMode !== "popup") unmountReaderPanel();
+  if (_readerPopupWin && !_readerPopupWin.closed && mode !== "popup") { _readerPopupWin.close(); _readerPopupWin = null; }
+  state.readerPanelMode = mode;
+  if (mode === "popup") openReaderPopup(m); else mountReaderPanel(m);
+}
+function toggleReaderPanel(m) {
+  if (state.readerPanelMode === "popup") {
+    if (_readerPopupWin && !_readerPopupWin.closed) { _readerPopupWin.focus(); return; }
+    openReaderPopup(m);
+    state.readerOpen = true;
+  } else {
+    state.readerOpen = !state.readerOpen;
+    if (state.readerOpen) mountReaderPanel(m); else unmountReaderPanel();
+  }
+  updateReaderTriggerBtn();
+}
+window.__jipseulReaderPopupClosed = function(){ _readerPopupWin = null; state.readerOpen = false; updateReaderTriggerBtn(); };
+
+/* ---------------- 팝업(방식 B) ----------------
+ * 실제 브라우저 별도 창으로 띄운다(this app이 file://로 열려도 동작).
+ * 이 앱의 함수를 직접 부르지 않고 opener.__jipseulReaderState()를 짧은
+ * 주기로 폴링만 하는 완전히 독립된 문서라, 부모 창을 새로고침하거나
+ * 닫아도 팝업 자체는 안전하다. readerPopupMain은 일반 함수로 작성한 뒤
+ * toString()으로 그대로 팝업 문서의 <script>에 박아 넣는다 -- 문자열을
+ * 손으로 이스케이프하지 않아도 되므로 훨씬 안전하다. */
+function readerPopupMain() {
+  var PLATFORMS = ["joara","munpia","naver"], PLATFORM_LABEL = { joara:"조아라", munpia:"문피아", naver:"네이버시리즈" };
+  var DEVICES = ["iphone","android","frameless"], DEVICE_LABEL = { iphone:"iPhone", android:"Android", frameless:"프레임 없음" };
+  var READMODES = ["scroll","page"], READMODE_LABEL = { scroll:"스크롤", page:"페이지 넘김" };
+  var state = { plat:"munpia", device:"iphone", read:"scroll", page:0, pages:null, text:"", title:"" };
+  try {
+    var init = window.opener && window.opener.__jipseulReaderState && window.opener.__jipseulReaderState();
+    if (init) {
+      if (init.platform) state.plat = init.platform;
+      if (init.device) state.device = init.device;
+      if (init.readMode) state.read = init.readMode;
+    }
+  } catch (e) {}
+
+  function esc(s) { return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function paras(t) { return String(t||"").split(/\n+/).filter(function(p){ return p.length > 0; }); }
+  function parasHtml(list) { return list.length ? list.map(function(p){ return "<p>"+esc(p)+"</p>"; }).join("") : '<p class="empty">아직 쓴 내용이 없습니다.</p>'; }
+
+  function measurePages(text, w, h, plat) {
+    var list = paras(text);
+    if (!list.length) return [""];
+    var probe = document.createElement("div");
+    probe.className = "txt pf-" + plat;
+    probe.style.position = "fixed"; probe.style.visibility = "hidden"; probe.style.left = "-9999px"; probe.style.top = "0"; probe.style.width = w + "px";
+    document.body.appendChild(probe);
+    function setP(l) { probe.innerHTML = l.map(function(p){ return "<p>"+esc(p)+"</p>"; }).join(""); }
+    var pages = [], cur = [];
+    list.forEach(function(p){
+      cur.push(p); setP(cur);
+      if (probe.scrollHeight > h) { cur.pop(); if (cur.length) { pages.push(cur.join("\n")); cur = [p]; } else cur = [p]; }
+    });
+    if (cur.length) pages.push(cur.join("\n"));
+    document.body.removeChild(probe);
+    return pages.length ? pages : [""];
+  }
+
+  function pillRow(label, keys, labels, active, attr) {
+    return '<div class="row"><span class="lbl">'+label+'</span>' + keys.map(function(k){
+      return '<button type="button" class="pill'+(k===active?" on":"")+'" data-'+attr+'="'+k+'">'+labels[k]+'</button>';
+    }).join("") + "</div>";
+  }
+  function renderShell() {
+    document.body.innerHTML =
+      '<div class="bar">' +
+        pillRow("플랫폼", PLATFORMS, PLATFORM_LABEL, state.plat, "plat") +
+        pillRow("기기", DEVICES, DEVICE_LABEL, state.device, "device") +
+        pillRow("읽기", READMODES, READMODE_LABEL, state.read, "read") +
+      "</div>" +
+      '<div class="stage"><div id="phoneWrap"></div></div>';
+    var isNaver = state.plat === "naver";
+    document.getElementById("phoneWrap").innerHTML =
+      '<div class="phone '+state.device+'">' +
+        '<div class="notch"></div>' +
+        '<div class="screen">' +
+          '<div class="statusbar"><span>9:41</span><span>&#9679;&#9679;&#9679;</span></div>' +
+          '<div class="appbar pf-'+state.plat+'"><span class="ic">&lsaquo;</span><span class="t" id="rpTitle"></span><span class="ic">&#8942;</span></div>' +
+          (isNaver ? '<div class="progress"><i></i></div>' : "") +
+          '<div class="content '+state.read+'" id="rpContent"></div>' +
+          '<div id="rpFoot"></div>' +
+        "</div>" +
+        '<div class="homeind"></div>' +
+      "</div>";
+    document.querySelectorAll("[data-plat]").forEach(function(b){ b.addEventListener("click", function(){ state.plat = b.getAttribute("data-plat"); state.page = 0; state.pages = null; renderShell(); }); });
+    document.querySelectorAll("[data-device]").forEach(function(b){ b.addEventListener("click", function(){ state.device = b.getAttribute("data-device"); renderShell(); }); });
+    document.querySelectorAll("[data-read]").forEach(function(b){ b.addEventListener("click", function(){ state.read = b.getAttribute("data-read"); state.page = 0; state.pages = null; renderShell(); }); });
+    wireInteractions();
+    renderContent(true);
+  }
+
+  var drag = null, touch = null;
+  function wireInteractions() {
+    var el = document.getElementById("rpContent");
+    if (!el) return;
+    el.addEventListener("pointerdown", function(e){
+      if (e.pointerType === "touch") { touch = { x:e.clientX, y:e.clientY }; return; }
+      if (state.read !== "scroll") return;
+      drag = { y:e.clientY, top:el.scrollTop }; el.classList.add("dragging"); e.preventDefault();
+    });
+    el.addEventListener("pointermove", function(e){ if (drag) el.scrollTop = drag.top - (e.clientY - drag.y); });
+    function endDrag(){ if (drag) { drag = null; el.classList.remove("dragging"); } }
+    el.addEventListener("pointerup", function(e){
+      endDrag();
+      if (touch) {
+        var dx = e.clientX - touch.x, dy = e.clientY - touch.y; touch = null;
+        if (state.read === "page" && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.4) goPage(dx < 0 ? 1 : -1);
+      }
+    });
+    el.addEventListener("pointerleave", endDrag);
+    document.addEventListener("keydown", function(e){
+      if (state.read !== "page") return;
+      if (e.key === "ArrowRight") { e.preventDefault(); goPage(1); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); goPage(-1); }
+    });
+  }
+
+  function goPage(dir) {
+    var next = state.page + dir;
+    if (!state.pages || next < 0 || next >= state.pages.length) return;
+    state.page = next;
+    renderContent(false, dir);
+  }
+
+  function renderContent(fresh, dir) {
+    var contentEl = document.getElementById("rpContent"), footEl = document.getElementById("rpFoot"), titleEl = document.getElementById("rpTitle");
+    if (!contentEl) return;
+    if (titleEl) titleEl.textContent = state.title || "제목 없음";
+    if (state.read === "scroll") {
+      contentEl.innerHTML = '<div class="txt pf-'+state.plat+'">' + parasHtml(paras(state.text)) + "</div>";
+      footEl.innerHTML = state.plat === "naver" ? '<div class="bottombar"><span>&#9728; 밝기</span><span>Aa 글자</span><span>&#9734; 보관함</span></div>' : "";
+      return;
+    }
+    var w = contentEl.clientWidth || 260, h = contentEl.clientHeight || 480;
+    if (fresh || !state.pages) state.pages = measurePages(state.text, w, h, state.plat);
+    if (state.page >= state.pages.length) state.page = Math.max(0, state.pages.length - 1);
+    var slide = document.createElement("div");
+    slide.className = "slide" + (dir === 1 ? " enter-n" : dir === -1 ? " enter-p" : "");
+    slide.innerHTML = '<div class="txt pf-'+state.plat+'">' + parasHtml(paras(state.pages[state.page])) + "</div>";
+    contentEl.innerHTML = ""; contentEl.appendChild(slide);
+    if (dir) requestAnimationFrame(function(){ requestAnimationFrame(function(){ slide.className = "slide"; }); });
+    var total = state.pages.length;
+    footEl.innerHTML = '<div class="pagenav"><button type="button" id="rpPrev"'+(state.page<=0?" disabled":"")+'>&lsaquo; 이전</button><span>'+(total?state.page+1:0)+' / '+total+'</span><button type="button" id="rpNext"'+(state.page>=total-1?" disabled":"")+'>다음 &rsaquo;</button></div>';
+    var pb = document.getElementById("rpPrev"), nb = document.getElementById("rpNext");
+    if (pb) pb.addEventListener("click", function(){ goPage(-1); });
+    if (nb) nb.addEventListener("click", function(){ goPage(1); });
+  }
+
+  function poll() {
+    try {
+      var live = window.opener && window.opener.__jipseulReaderState && window.opener.__jipseulReaderState();
+      if (!live) { document.title = "독자 화면 미리보기 (연결 끊김) — 집썰"; return; }
+      var changed = live.text !== state.text || live.title !== state.title;
+      state.text = live.text || ""; state.title = live.title || "";
+      if (changed) { if (state.read === "page") state.pages = null; renderContent(true); }
+    } catch (e) {}
+  }
+
+  renderShell();
+  var pollTimer = setInterval(poll, 350);
+  window.addEventListener("beforeunload", function(){
+    clearInterval(pollTimer);
+    try { window.opener && window.opener.__jipseulReaderPopupClosed && window.opener.__jipseulReaderPopupClosed(); } catch (e) {}
+  });
+}
+
+function readerPopupDocument() {
+  var css =
+    'html,body{margin:0;height:100%;background:#e9e6dd;font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic",sans-serif;}' +
+    '*{box-sizing:border-box;}' +
+    'body{display:flex;flex-direction:column;}' +
+    '.bar{flex:none;display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:#fff;border-bottom:1px solid #e2ddd0;}' +
+    '.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}' +
+    '.row .lbl{font-size:10.5px;color:#9a9384;width:44px;flex:none;text-transform:uppercase;letter-spacing:.05em;}' +
+    '.pill{border:1px solid #d8d2c2;background:#fff;border-radius:20px;padding:5px 11px;font-size:12px;color:#4b4738;cursor:pointer;}' +
+    '.pill.on{background:#efe7d3;border-color:#b08d3e;color:#7a5c1e;font-weight:600;}' +
+    '.stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;background:repeating-linear-gradient(135deg,#e2ded3 0 10px,#eae6da 10px 20px);}' +
+    '.phone{position:relative;width:300px;height:610px;background:#0b0b0d;border-radius:40px;padding:12px;box-shadow:0 18px 40px rgba(0,0,0,.35);}' +
+    '.phone.android{border-radius:26px;}' +
+    '.phone.frameless{background:none;padding:0;border-radius:0;box-shadow:none;width:340px;}' +
+    '.screen{position:relative;width:100%;height:100%;background:#fff;border-radius:28px;overflow:hidden;display:flex;flex-direction:column;}' +
+    '.phone.android .screen{border-radius:16px;}' +
+    '.phone.frameless .screen{border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.12);}' +
+    '.notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:84px;height:22px;background:#0b0b0d;border-radius:14px;z-index:5;}' +
+    '.phone.android .notch{width:10px;height:10px;border-radius:50%;top:12px;}' +
+    '.phone.frameless .notch{display:none;}' +
+    '.homeind{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:110px;height:4px;border-radius:3px;background:#0b0b0d;opacity:.7;z-index:5;}' +
+    '.phone.frameless .homeind{display:none;}' +
+    '.statusbar{flex:none;display:flex;align-items:center;justify-content:space-between;padding:8px 20px 4px;font-size:11px;font-weight:600;color:#111;}' +
+    '.phone.frameless .statusbar{display:none;}' +
+    '.appbar{flex:none;display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid rgba(0,0,0,.06);}' +
+    '.appbar .t{flex:1;min-width:0;font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1a1a1a;}' +
+    '.appbar .ic{color:#333;flex:none;}' +
+    '.appbar.pf-joara .ic{color:#2FA89C;}' +
+    '.appbar.pf-munpia{background:#FBF7EF;border-bottom-color:rgba(181,101,29,.15);} .appbar.pf-munpia .ic{color:#B5651D;} .appbar.pf-munpia .t{font-family:Georgia,serif;}' +
+    '.appbar.pf-naver .ic{color:#22A855;}' +
+    '.progress{flex:none;height:2px;background:rgba(0,0,0,.08);} .progress i{display:block;height:100%;background:#22A855;width:38%;}' +
+    '.content{flex:1;min-height:0;position:relative;}' +
+    '.content.scroll{overflow-y:auto;cursor:grab;} .content.scroll.dragging{cursor:grabbing;user-select:none;}' +
+    '.content.page{overflow:hidden;}' +
+    '.slide{position:absolute;inset:0;transition:transform .2s ease,opacity .2s ease;}' +
+    '.slide.enter-n{transform:translateX(16px);opacity:0;transition:none;} .slide.enter-p{transform:translateX(-16px);opacity:0;transition:none;}' +
+    '.txt{box-sizing:border-box;width:100%;padding:18px 20px;}' +
+    '.content.scroll .txt{min-height:100%;} .content.page .txt{height:100%;overflow:hidden;}' +
+    '.txt p{margin:0;}' +
+    '.txt.pf-joara{background:#fff;color:#1c1c1c;font-size:16px;line-height:1.9;} .txt.pf-joara p{margin:0 0 1.05em;}' +
+    '.txt.pf-munpia{background:#FBF7EF;color:#241C12;font-family:Georgia,serif;font-size:15.5px;line-height:1.62;letter-spacing:-0.01em;} .txt.pf-munpia p{text-indent:1em;}' +
+    '.txt.pf-naver{background:#fff;color:#1A1A1A;font-size:17px;line-height:2.05;letter-spacing:-0.01em;} .txt.pf-naver p{margin:0 0 0.9em;}' +
+    '.empty{color:#a39c8d;font-style:italic;}' +
+    '.bottombar{flex:none;display:flex;align-items:center;justify-content:space-around;padding:9px 10px;border-top:1px solid rgba(0,0,0,.06);color:#666;font-size:10.5px;}' +
+    '.pagenav{flex:none;display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-top:1px solid rgba(0,0,0,.06);font-size:11px;color:#555;}' +
+    '.pagenav button{border:none;background:none;font-size:12.5px;color:#555;cursor:pointer;padding:4px 8px;}' +
+    '.pagenav button:disabled{opacity:.3;cursor:default;}';
+  return (
+    "<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\">" +
+    "<title>독자 화면 미리보기 — 집썰</title>" +
+    "<style>" + css + "</style></head><body>" +
+    "<script>(" + readerPopupMain.toString() + ")();</scr" + "ipt>" +
+    "</body></html>"
+  );
+}
+function openReaderPopup(m) {
+  var win = window.open("", "jipseulReaderPreview", "width=420,height=780");
+  if (!win) { alert("팝업이 차단되었습니다. 브라우저의 팝업 차단 설정을 확인해주세요."); return; }
+  win.document.open();
+  win.document.write(readerPopupDocument());
+  win.document.close();
+  _readerPopupWin = win;
+}
+
+function wireReaderPreview(m) {
+  if (m.readerPlatform === undefined) m.readerPlatform = "munpia";
+  if (m.readerDevice === undefined) m.readerDevice = "iphone";
+  if (m.readerReadMode === undefined) m.readerReadMode = "scroll";
+  if (m.readerPage === undefined) m.readerPage = 0;
+  window.__jipseulReaderState = function(){
+    return { title: m.title||"", text: m.text||"", platform: m.readerPlatform, device: m.readerDevice, readMode: m.readerReadMode };
+  };
+  var trigger = document.getElementById("rpTriggerBtn");
+  if (trigger) trigger.addEventListener("click", function(){ toggleReaderPanel(m); });
+  if (state.readerOpen && state.readerPanelMode !== "popup") mountReaderPanel(m);
+  else _readerActiveM = null;
 }
 
 /* ---------------- 수필·자서전 entry editor ----------------
