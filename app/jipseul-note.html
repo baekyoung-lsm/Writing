@@ -15510,7 +15510,13 @@ function openFormatModeMenu(anchorEl, m) {
       closeGenericPopover();
       var fmt = row.dataset.modeformat;
       if (fmt === m.format) return;
-      m.format = fmt; saveData(); renderManuscriptPage(m);
+      m.format = fmt;
+      /* 서식 미리보기(읽기 전용)를 보던 채로 형식을 바꾸면 새 형식도 그대로
+       * 읽기 전용으로 열려서 "형식을 바꿨더니 입력이 안 된다"처럼 보인다 --
+       * 형식 전환은 곧 "이걸로 계속 쓰겠다"는 뜻이니 편집 가능한 상태로
+       * 되돌린다. */
+      m.showFormatPreview = false;
+      saveData(); renderManuscriptPage(m);
     });
   });
   pop.querySelectorAll("[data-modeplat]").forEach(function(row){
