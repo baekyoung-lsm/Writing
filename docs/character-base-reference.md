@@ -20,7 +20,13 @@ assets/character-base/male/seed42_male_base_opt.png  (팔레트 축소판, 앱�
 assets/character-layers/hair/female_bob_black_medium.png            (헤어 레이어, 아직 앱에 미연결)
 assets/character-layers/tops/female_blouse_blue_transparent.png     (의상 원본, rembg 투명화만 된 상태)
 assets/character-layers/tops/female_blouse_blue_aligned_opt.png     (몸 랜드마크에 맞춰 정렬·축소, 앱에 실제 임베드)
+assets/character-layers/hair/female_<style>_opt.png       (헤어 11종, 정렬 불필요 -- 몸과 같은 832x1216 캔버스에 인페인팅해서 바로 겹쳐짐, 앱에 실제 임베드)
+assets/character-layers/tops/female_<id>_opt.png          (상의 8종 -- shirt는 위 blouse 재사용, 나머지 7종 신규, 앱에 실제 임베드)
+assets/character-layers/bottoms/female_<id>_opt.png       (하의 7종, 앱에 실제 임베드)
+assets/character-layers/shoes/female_<id>_opt.png         (신발 6종, 앱에 실제 임베드)
 ```
+
+헤어/상의/하의/신발의 `<style>`/`<id>`는 `app/jipseul-note.html`의 `PixelDollParts.hair`/`tops`/`bottoms`/`shoes` enum 키와 그대로 맞춘 이름. `bald`(헤어)·`none`(상의/하의)·`barefoot`(신발)은 "에셋 없음"이 곧 정답이라 이미지가 없다.
 
 `_opt.png` 파일명의 `none/small/medium/large/xlarge`는 `app/jipseul-note.html`의 `bustSize`/`VD_BUST_SIZE_MULT` enum 키와 그대로 맞춘 이름이고, 원본 파일명의 `big/verybig`는 이전 세션 산출물 이름을 그대로 유지한 것 — 매핑은 big=large, verybig=xlarge.
 
@@ -86,8 +92,38 @@ VTON 계열(외부 유료 API·실사풍 학습이라 화풍 불일치 위험) �
 
 **남은 다듬을 점**: 기장이 다소 길고 헐렁하게(원피스에 가깝게) 나옴 — 옷 자체를 다시 생성하거나 밑단을 크롭하면 더 자연스러워짐. 지금은 상의 1종뿐이라 패널에 "지금은 상의 1종만 미리 입혀볼 수 있어요" 안내를 추가해 기대치를 정확히 알려줌.
 
-## 다음 단계 (미완료, `jipseul-note-sync.md` §③ 참고)
+## 헤어 11종 + 상의 7종 + 하의 7종 + 신발 6종 완성, enum 기반으로 앱에 전면 연동함
 
-- 헤어 레이어(이미 만든 `female_bob_black_medium.png`)는 아직 앱에 연결 안 함 — 의상과 같은 방식(몸 캔버스에 랜드마크 정렬 + 같은 메시로 워프)으로 붙이면 될 것으로 예상되고, 코드 구조도 이미 준비돼 있음(`appearRasterWarpDraw` 재사용 가능).
-- 의상·헤어 종류를 늘리는 작업이 남음 — 검증된 파이프라인(인페인팅 or 단독 생성 + diff/rembg 추출 + 랜드마크 정렬)을 반복하면 됨. 남자용 의상은 아직 하나도 없음.
-- 옷 기장이 길게 나온 것 등 개별 에셋 품질은 다시 생성하거나 수동 보정하면 개선됨 — 파이프라인 자체의 한계는 아님.
+이전 세션까지는 상의 1종(블라우스)만 하드코딩으로 붙어 있었음. 이번 세션에서 `PixelDollParts.hair`/`tops`/`bottoms`/`shoes` enum 전체(대머리·없음류 제외)를 실제 이미지로 채우고, "외형 확인" 패널이 캐릭터가 고른 조합(헤어+상의+하의+신발)을 실제로 합성해서 보여주도록 코드 구조 자체를 바꿈.
+
+**생성 파이프라인 (ComfyUI 재사용, `python -m pip install rembg`는 결국 안 씀)**
+- 헤어: 기존에 검증된 인페인팅 방식(`DifferentialDiffusion`+`SetLatentNoiseMask`, 마스크는 얼굴 부분 구멍) 그대로 반복. steps=8~12, cfg=2.0~2.5(기존 세션의 cfg=1.0보다 살짝 올림 -- 마스크 밖은 어차피 100% 보존되니 마스크 안 색상 표현력만 올라감, 몸 보존에는 영향 없음을 확인).
+- 상의/하의/신발: 몸 이미지를 참조로 안 걸고(`TextEncodeZImageOmni` reference 방식은 latent shape mismatch 에러로 실패, 디버깅 포기) 순수 `CLIPTextEncode` 텍스트 프롬프트만으로 흰 배경에 단독 생성. cfg=1.0(원래 시도)은 그라데이션/음영이 남는 문제가 있었음 -- cfg=3.0~4.0으로 올리고 프롬프트에 "flat solid color, no gradient, no shading, no highlight, cel-shaded icon style"을 강하게 반복하니 대부분 해결됨. 실측: 토르소 영역 RGB 표준편차가 cfg=1.0에서 채널당 약 120~150 → cfg=3.0에서 1~3으로 감소(픽셀 단위로 거의 완전한 단색).
+- 갑옷류(armor, armorLegs)는 금속 표현 특성상 그라데이션이 특히 잘 안 없어짐 -- "children's book flat silhouette icon, 두 가지 색상만 사용, 두 색 모두 100% 균일" 식으로 프롬프트를 더 강하게 제한하고 cfg=4.0까지 올려서 겨우 통과 수준으로 만듦.
+
+**품질 검수에서 실제로 걸러낸 것들 (전수 육안 검수, "매우 까다롭게")**
+- top_armor, top_qipaoDress, top_romanceUniform, bottom_wuxiaRobeSkirt, bottom_armorLegs, bottom_leggings(사실적 사진 화풍으로 나와서 전면 재생성), 신발 boots/sandals(그라데이션 또는 좌우 짝짝이 색상) -- 전부 재생성 후 통과.
+- shoe_heels는 좌우 신발이 겹쳐서 그려지는(한쪽은 펌프스, 한쪽은 부츠처럼 보이는) 비대칭 구도라 별도로 다시 생성함.
+
+**정렬 파이프라인 -- `align_garment()` 버그 근본 수정**
+기존 방식은 옷 이미지의 고정된 한 행(collar Y 등)에서 반너비를 재서 스케일을 계산했는데, ballDress처럼 그 행이 우연히 비어있거나 극단적으로 넓은 옷(off-shoulder 등)을 만나면 스케일 값이 깨졌음(`scale=94.3` 등). **수정**: 옷 자체 bbox 상단 12~18% 밴드 전체에서 각 행의 폭을 재고 **중앙값(median)**을 반너비로 씀 -- 한 행이 어쩌다 비정상이어도 중앙값은 영향을 거의 안 받음. 상의는 어깨 랜드마크(halfw×2×1.15)에, 하의는 허리 랜드마크에, 신발은 발목 랜드마크(×1.9, 두 짝이 나란히 서는 폭 고려)에 맞춰 등비 축소 후 배치. ballDress로 재현·수정 확인, jeans/tank/romanceSkirt/wuxiaRobe/shorts/qipaoDress로 회귀 없음 확인(전부 몸 위에 합성해서 육안 검수).
+
+**헤어 레이어 추출 -- VAE 왕복 노이즈 버그 발견·수정**
+diff 픽셀 임계값을 낮게(10) 잡았더니, 인페인팅이 실제로 그리지 않은 마스크 영역(어깨·팔 등)에도 VAE 인코드/디코드 왕복에서 생기는 미세한 재구성 오차가 "변경된 픽셀"로 잡혀서, 팔레트 축소 후 피부색/헤어색이 뒤섞인 반점 노이즈로 눈에 띄게 나타났음(twintail/hoodie 조합에서 발견). **수정**: 임계값을 45로 올리고, 연결omponent 분석(`scipy.ndimage.label`)으로 40px 미만의 작은 조각(=노이즈)은 버리고 큰 덩어리(=실제 머리카락)만 남김.
+
+**longFantasy 헤어 -- 마스크 모양 자체가 원인이었던 버그**
+기존 마스크가 가슴 높이(캔버스의 40%)에서 끝나 있어서 "허리 아래까지 오는 긴 머리"를 절대 그릴 수 없는 모양이었음(길이 부족의 진짜 원인). 마스크를 허벅지 중간(캔버스의 80%)까지 두 갈래로 늘려 새로 그려서 해결. 추가로 머리 돔과 갈래 사이 연결부가 오목한(concave) 모양이면 그 자리에 흰 반점(미채색 구멍) 아티팩트가 생기는 것도 발견 -- 연결부를 매끈한 타원 돔으로 단순화해서 같이 해결.
+
+**afro 정수리 대머리** -- 이번 세션 재시도(cfg=2.0, 기존 마스크 재사용)에서 자연스럽게 해결됨. 정수리까지 완전히 덮인 둥근 아프로로 나옴.
+
+**앱 코드 반영 (`app/jipseul-note.html`)**
+- `APPEAR_RASTER_HAIR_PREVIEW`/`APPEAR_RASTER_BOTTOM_PREVIEW`/`APPEAR_RASTER_SHOES_PREVIEW` 신설, `APPEAR_RASTER_TOP_PREVIEW`를 `{f: {shirt: ..., hoodie: ..., ...}}` 형태로 확장(기존 블라우스 base64는 그대로 재사용, 새로 인코딩 안 함). 큰 base64 삽입은 항상 그렇듯 Python 스크립트(`embed_assets.py`, 스크래치패드)로 문자열 치환.
+- `appearRasterDrawOutfitInto`를 하드코딩 2-레이어(몸+블라우스)에서 하의→신발→상의→헤어 순 범용 레이어 합성으로 재작성. `PixelDollParts.tops[ap.top].dress === true`(치파오/드레스류)면 SVG 벡터돌과 동일한 규칙으로 하의 레이어를 생략. 모든 레이어에 같은 `appearRasterWarpMesh`를 공유해서 체형 반응성 유지.
+- `appearHairFilterCss(targetHex)` 신설 -- `appearSkinFilterCss`와 똑같은 hue-rotate/saturate/brightness 방식, 기준색 `APPEAR_RASTER_HAIR_BASE = "#3B2A1E"`(헤어 이미지를 생성한 색이자 앱 기본 머리색 `APPEAR_HAIR_COLORS[1]`과 정확히 일치 -- 기본 캐릭터는 필터가 완전 no-op). 헤어 레이어에만 적용, 의상 레이어는 아직 색상 필터 없음(기존 블라우스도 마찬가지였던 범위 유지 -- topColor/bottomColor 필터는 향후 과제).
+- 헤드리스 대신 실제 Chrome(로컬 정적 서버 + `appearRasterDrawOutfitInto` 직접 호출 + canvas dataURL을 fetch로 로컬 서버에 저장)로 다양한 조합(로맨스 유니폼+업두, 아머+아프로, 볼드레스+롱판타지 헤어(보라색 필터 적용 확인), 치파오+글래머 체형, 탱크+슬림 체형+하복치마)을 실제 렌더링해서 확인 -- 워프·레이어 순서·드레스일 때 하의 생략·헤어 색상 필터 전부 정상 동작.
+
+**남자용 의상/헤어**: 이번 세션도 여자만 채움(기존 범위 유지, `appearRasterHasOutfit`는 여전히 `gender !== "m"`). 남자는 기존 안내 문구 그대로.
+
+**자잘하게 남은 다듬을 점** (기능은 아님, 나중에 여유 있을 때)
+- 몇몇 헤어(업두, 로맨스 유니폼 옷깃 부근)에 아주 작은 흰 반점이 미세하게 남아있는 경우가 있음(longFantasy만큼 심하지 않아서 재생성은 안 함) -- 마스크 오목부 매끈화를 전체 헤어에 다 적용하면 없앨 수 있음.
+- shoe_heels는 스틸레토 굽이 뚜렷하게 안 보이고 플랫에 가깝게 나옴 -- 스타일 디테일 문제, 기능엔 지장 없음.
