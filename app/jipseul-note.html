@@ -939,11 +939,24 @@
   .sc-mn-field input:focus, .sc-mn-field select:focus { border-color:var(--accent); }
   .sc-mn-glyph-preview { overflow-x:auto; margin-bottom:8px; border:1px solid var(--border); border-radius:8px; background:var(--bg-card); padding:6px; }
   .sc-mn-glyph-preview svg { display:block; }
-  .sc-mn-memo { width:100%; box-sizing:border-box; border:1px dashed var(--border-strong); border-radius:var(--radius-sm); padding:9px 11px; font-size:13px; line-height:1.6; background:var(--bg-panel); color:var(--ink-soft); outline:none; resize:vertical; font-family:inherit; }
   .sc-mn-composer { margin-top:8px; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--bg-card); }
+  .sc-mn-composer-label { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--ink-faint); margin-bottom:8px; text-transform:uppercase; letter-spacing:.03em; }
   .sc-mn-composer-grid { grid-template-columns:repeat(auto-fill, minmax(64px,1fr)); }
   .sc-mn-glyph-pick { cursor:pointer; }
   .sc-mn-glyph-pick svg { height:40px; }
+  .sc-mn-composer-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .sc-mn-memo-row { cursor:pointer; }
+  .sc-mn-memo-row-head { display:flex; align-items:center; gap:7px; padding:11px 0; font-size:12.5px; font-weight:600; color:var(--ink-soft); }
+  .sc-mn-memo-row:hover .sc-mn-memo-row-head { color:var(--accent); }
+  .sc-mn-memo-preview { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:400; color:var(--ink-faint); font-size:12px; }
+  .sc-mn-memo-preview.empty { font-style:italic; }
+  .sc-mn-memo-overlay { position:fixed; inset:0; background:rgba(20,16,10,0.45); z-index:250; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .sc-mn-memo-box { width:min(640px, 100%); max-height:80vh; display:flex; flex-direction:column; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:14px; box-shadow:var(--shadow-3); overflow:hidden; }
+  .sc-mn-memo-box-head { display:flex; align-items:center; gap:8px; padding:16px 18px; border-bottom:1px solid var(--border); flex:none; }
+  .sc-mn-memo-box-title { flex:1; min-width:0; display:flex; align-items:center; gap:7px; font-family:var(--serif); font-weight:700; font-size:15px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sc-mn-memo-close { flex:none; background:none; border:none; color:var(--ink-faint); padding:5px; border-radius:6px; display:flex; }
+  .sc-mn-memo-close:hover { color:var(--rose); background:var(--rose-soft); }
+  .sc-mn-memo-box-text { flex:1; min-height:280px; box-sizing:border-box; border:none; outline:none; resize:none; padding:20px 22px; font-size:14.5px; line-height:1.8; background:var(--bg); color:var(--ink); font-family:inherit; }
   @media (max-width: 1100px) {
     .sc-mn-shell { grid-template-columns:180px 240px 1fr; }
   }
@@ -16980,8 +16993,7 @@ var scState = {
   strokes: [], curPts: null, smoothPt: null, editingGlyphId: null, kbLayout: "compact", mode: "glyph",
   /* 뜻대응 전용 상태 -- 폴더/목록/상세 3단 구성과 손글씨 조합기(글자 선택 or 새로 그리기) */
   mnView: "folder", mnFolderId: null, mnSearch: "", mnDetailId: null,
-  mnComposerOpen: false, mnDrawMode: false, mnDrawEditGlyphId: null,
-  mnDragItemId: null
+  mnDrawMode: false, mnDragItemId: null
 };
 var SC_PAD_SIZE = 220;
 var _scAutoNavDoneFor = null;
@@ -17463,36 +17475,38 @@ function scMnListHtml(sc) {
       : '<div class="chip-empty-hint" style="padding:20px">'+(scState.mnView==="search"?"일치하는 항목이 없어요.":"아직 항목이 없어요. 위의 “단어/구”나 “문장” 버튼으로 추가해보세요.")+'</div>') +
   '</div>';
 }
+/* 뜻대응의 "창작 문자" 구역은 접었다 펴는 게 아니라 항상 문자표(이미 만든 글자들의
+   대응 목록)가 바로 보이게 한다 -- 토글 뒤에 숨어 있으면 "손글씨를 추가하거나 문자표로
+   뜻을 확인할 방법이 없다"는 것과 똑같아진다. 손으로 새로 그리는 패드만 별도로 접는다. */
 function scMnComposerHtml(sc) {
-  var body = "";
-  if (scState.mnComposerOpen) {
-    body =
-      '<div class="sc-mn-composer">' +
-        (sc.glyphs.length
-          ? '<div class="glyph-grid sc-mn-composer-grid">' + sc.glyphs.map(function(g){
-              return '<div class="glyph-card sc-mn-glyph-pick" data-mnpickglyph="'+g.id+'">' + glyphVisualHtml(g) + '<div class="gc-map">'+esc(g.mapTo||"?")+'</div></div>';
-            }).join("") + '</div>'
-          : '<div class="chip-empty-hint">아직 만들어둔 문자가 없어요. 아래에서 새로 그려보세요.</div>') +
-        '<button type="button" class="chip-add" data-mntoggledraw="1" style="margin-top:10px">'+ic(scState.mnDrawMode?"chevUp":"plus",10)+'<span>'+(scState.mnDrawMode?"그리기 닫기":"새 글자 손으로 쓰기")+'</span></button>' +
-        (scState.mnDrawMode
-          ? '<div class="glyph-pad-wrap" style="margin-top:10px">' +
-              '<div>' +
-                '<svg id="mnGlyphPad" class="glyph-pad" viewBox="0 0 '+SC_PAD_SIZE+' '+SC_PAD_SIZE+'" width="'+SC_PAD_SIZE+'" height="'+SC_PAD_SIZE+'"></svg>' +
-                '<div class="glyph-pad-tools">' +
-                  '<button type="button" id="mnGlyphUndoBtn">'+ic("rotate",12)+'<span>한 획 취소</span></button>' +
-                  '<button type="button" id="mnGlyphClearBtn">'+ic("close",12)+'<span>지우기</span></button>' +
-                '</div>' +
-              '</div>' +
-              '<div class="glyph-form">' +
-                '<div><label>대응 문자</label><input type="text" id="mnGlyphMapTo" placeholder="예: ㄱ, g, α"></div>' +
-                '<div><label>메모(선택)</label><input type="text" id="mnGlyphNote" placeholder="발음이나 설명"></div>' +
-                '<button type="button" class="btn primary" id="mnGlyphSaveBtn" style="align-self:flex-start">'+ic("plus",13)+'<span>새 글자 저장하고 이어붙이기</span></button>' +
-              '</div>' +
-            '</div>'
-          : '') +
-      '</div>';
-  }
-  return '<button type="button" class="chip-add" data-mntogglecomposer="1" style="margin-top:8px">'+ic(scState.mnComposerOpen?"chevUp":"plus",10)+'<span>'+(scState.mnComposerOpen?"글자 고르기 닫기":"여기서 글자 이어붙이기")+'</span></button>' + body;
+  return '<div class="sc-mn-composer">' +
+    '<div class="sc-mn-composer-label">'+ic("grid",11)+'<span>문자표 — 눌러서 이어붙이기</span></div>' +
+    (sc.glyphs.length
+      ? '<div class="glyph-grid sc-mn-composer-grid">' + sc.glyphs.map(function(g){
+          return '<div class="glyph-card sc-mn-glyph-pick" data-mnpickglyph="'+g.id+'" title="이어붙이기">' + glyphVisualHtml(g) + '<div class="gc-map">'+esc(g.mapTo||"?")+'</div></div>';
+        }).join("") + '</div>'
+      : '<div class="chip-empty-hint">아직 만들어둔 문자가 없어요. 아래에서 새로 그려보세요.</div>') +
+    '<div class="sc-mn-composer-actions">' +
+      '<button type="button" class="chip-add" data-mntoggledraw="1">'+ic(scState.mnDrawMode?"chevUp":"plus",10)+'<span>'+(scState.mnDrawMode?"그리기 닫기":"새 글자 손으로 쓰기")+'</span></button>' +
+      '<button type="button" class="chip-add" data-gotoglyphmode="1">'+ic("pen",10)+'<span>문자대응에서 전체 문자표 보기</span></button>' +
+    '</div>' +
+    (scState.mnDrawMode
+      ? '<div class="glyph-pad-wrap" style="margin-top:10px">' +
+          '<div>' +
+            '<svg id="mnGlyphPad" class="glyph-pad" viewBox="0 0 '+SC_PAD_SIZE+' '+SC_PAD_SIZE+'" width="'+SC_PAD_SIZE+'" height="'+SC_PAD_SIZE+'"></svg>' +
+            '<div class="glyph-pad-tools">' +
+              '<button type="button" id="mnGlyphUndoBtn">'+ic("rotate",12)+'<span>한 획 취소</span></button>' +
+              '<button type="button" id="mnGlyphClearBtn">'+ic("close",12)+'<span>지우기</span></button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="glyph-form">' +
+            '<div><label>대응 문자</label><input type="text" id="mnGlyphMapTo" placeholder="예: ㄱ, g, α"></div>' +
+            '<div><label>메모(선택)</label><input type="text" id="mnGlyphNote" placeholder="발음이나 설명"></div>' +
+            '<button type="button" class="btn primary" id="mnGlyphSaveBtn" style="align-self:flex-start">'+ic("plus",13)+'<span>새 글자 저장하고 이어붙이기</span></button>' +
+          '</div>' +
+        '</div>'
+      : '') +
+  '</div>';
 }
 function scMnDetailHtml(sc) {
   var entry = scState.mnDetailId ? scFindMeaningEntry(sc, scState.mnDetailId) : null;
@@ -17544,13 +17558,57 @@ function scMnDetailHtml(sc) {
       '<button type="button" class="chip-add" data-gotogrammar="1" style="margin-top:8px">'+ic("table",10)+'<span>문법 모드 열기</span></button>' +
     '</details>' +
 
-    '<details class="sc-mn-section"><summary>'+ic("docIcon",12)+'<span>메모'+(pair.memo?" ●":"")+'</span></summary>' +
-      '<textarea class="sc-mn-memo" data-mnfield="memo" rows="6" placeholder="자동 뜻과 실제 뜻이 다른 이유, 문화적 배경, 사용상 주의사항 등 자유롭게 적어두세요.">'+esc(pair.memo||"")+'</textarea>' +
-    '</details>' +
+    '<div class="sc-mn-section sc-mn-memo-row" data-mnmemoopen="'+pair.id+'">' +
+      '<div class="sc-mn-memo-row-head">' + ic("docIcon",12) + '<span>메모</span>' +
+        (pair.memo
+          ? '<span class="sc-mn-memo-preview">'+esc(pair.memo.length>34 ? pair.memo.slice(0,34)+"…" : pair.memo)+'</span>'
+          : '<span class="sc-mn-memo-preview empty">눌러서 크게 작성</span>') +
+        ic("chevR",11) +
+      '</div>' +
+    '</div>' +
   '</div>';
 }
 function renderScMeaningModeHtml(sc) {
   return '<div class="sc-mn-shell">' + scMnNavHtml(sc) + scMnListHtml(sc) + scMnDetailHtml(sc) + '</div>';
+}
+/* 메모는 우측 상세 패널의 좁은 폭 안에 접어두는 대신, 클릭하면 화면 중앙에 큼직하게
+   띄워서 한눈에 읽고 쓸 수 있게 한다. */
+var _scMemoOverlayEscHandler = null;
+function closeScMemoOverlay() {
+  var el = document.getElementById("scMemoOverlay");
+  if (el) el.remove();
+  if (_scMemoOverlayEscHandler) { document.removeEventListener("keydown", _scMemoOverlayEscHandler); _scMemoOverlayEscHandler = null; }
+}
+function openScMemoOverlay(sc, pair) {
+  closeScMemoOverlay();
+  var wrap = document.createElement("div");
+  wrap.innerHTML =
+    '<div class="sc-mn-memo-overlay" id="scMemoOverlay">' +
+      '<div class="sc-mn-memo-box">' +
+        '<div class="sc-mn-memo-box-head">' +
+          '<div class="sc-mn-memo-box-title">'+ic("docIcon",14)+'<span>'+esc(pair.a||"(빈 항목)")+' — 메모</span></div>' +
+          '<button type="button" class="sc-mn-memo-close" id="scMemoOverlayClose">'+ic("close",14)+'</button>' +
+        '</div>' +
+        '<textarea class="sc-mn-memo-box-text" id="scMemoOverlayText" placeholder="자동 뜻과 실제 뜻이 다른 이유, 문화적 배경, 사용상 주의사항 등 자유롭게 적어두세요.">'+esc(pair.memo||"")+'</textarea>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(wrap.firstElementChild);
+  var overlay = document.getElementById("scMemoOverlay");
+  var textEl = document.getElementById("scMemoOverlayText");
+  textEl.focus();
+  textEl.addEventListener("input", function(){
+    pair.memo = textEl.value; pair.updatedAt = Date.now();
+    saveData();
+  });
+  function finishAndClose() {
+    closeScMemoOverlay();
+    touchScSection(sc, "meaning");
+    renderScriptPage(sc);
+  }
+  document.getElementById("scMemoOverlayClose").addEventListener("click", finishAndClose);
+  overlay.addEventListener("mousedown", function(e){ if (e.target === overlay) finishAndClose(); });
+  _scMemoOverlayEscHandler = function(e){ if (e.key === "Escape") finishAndClose(); };
+  document.addEventListener("keydown", _scMemoOverlayEscHandler);
 }
 function scGrammarCardHtml(r) {
   return '<div class="script-card sc-grammar-card" data-grammarid="'+r.id+'">' +
@@ -17583,7 +17641,7 @@ function renderScriptPage(sc) {
     _scAutoNavDoneFor = sc.id;
     scState.mode = scAutoNavMode(sc);
     scState.mnView = "folder"; scState.mnFolderId = null; scState.mnSearch = "";
-    scState.mnDetailId = null; scState.mnComposerOpen = false; scState.mnDrawMode = false;
+    scState.mnDetailId = null; scState.mnDrawMode = false;
   }
   var glyphSectionHtml =
     '<div class="script-card">' +
@@ -17785,7 +17843,7 @@ function wireScMeaningMode(sc) {
       scState.mnDetailId = id;
       var clicked = scFindMeaningEntry(sc, id);
       if (clicked) { clicked.pair.lastOpenedAt = Date.now(); saveData(); }
-      scState.mnComposerOpen = false; scState.mnDrawMode = false;
+      scState.mnDrawMode = false;
       renderScriptPage(sc);
     });
     row.addEventListener("dragstart", function(e){
@@ -17817,7 +17875,10 @@ function wireScMeaningMode(sc) {
       saveData();
     });
     var refreshEvt = el.tagName === "SELECT" ? "change" : "blur";
-    el.addEventListener(refreshEvt, function(){ touchScSection(sc, "meaning"); renderScriptPage(sc); });
+    /* blur는 다른 버튼(문자표 카드 등)을 누르는 마우스다운 시점에 클릭보다 먼저 발생한다.
+       여기서 곧장 다시 그리면 지금 막 누르려던 버튼이 DOM에서 사라져 클릭이 씹힌다 --
+       한 틱 미뤄서 그 클릭이 먼저 끝나게 한 뒤에 다시 그린다. */
+    el.addEventListener(refreshEvt, function(){ setTimeout(function(){ touchScSection(sc, "meaning"); renderScriptPage(sc); }, 0); });
   });
 
   var revertBtn = document.querySelector("[data-revertgloss]");
@@ -17839,12 +17900,12 @@ function wireScMeaningMode(sc) {
   var gotoGrammarBtn = document.querySelector("[data-gotogrammar]");
   if (gotoGrammarBtn) gotoGrammarBtn.addEventListener("click", function(){ scState.mode = "grammar"; renderScriptPage(sc); });
 
-  var toggleComposerBtn = document.querySelector("[data-mntogglecomposer]");
-  if (toggleComposerBtn) toggleComposerBtn.addEventListener("click", function(){
-    scState.mnComposerOpen = !scState.mnComposerOpen;
-    if (!scState.mnComposerOpen) scState.mnDrawMode = false;
-    renderScriptPage(sc);
-  });
+  var memoRow = document.querySelector("[data-mnmemoopen]");
+  if (memoRow) memoRow.addEventListener("click", function(){ openScMemoOverlay(sc, pair); });
+
+  var gotoGlyphBtn = document.querySelector("[data-gotoglyphmode]");
+  if (gotoGlyphBtn) gotoGlyphBtn.addEventListener("click", function(){ scState.mode = "glyph"; renderScriptPage(sc); });
+
   var toggleDrawBtn = document.querySelector("[data-mntoggledraw]");
   if (toggleDrawBtn) toggleDrawBtn.addEventListener("click", function(){
     scState.mnDrawMode = !scState.mnDrawMode;
