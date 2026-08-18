@@ -850,13 +850,46 @@
   .glyph-card .gc-del { position:absolute; top:3px; right:3px; width:15px; height:15px; opacity:0; background:var(--bg-card-hover); border:1px solid var(--border-strong); border-radius:50%; padding:0; color:var(--ink-faint); display:flex; align-items:center; justify-content:center; }
   .glyph-card:hover .gc-del { opacity:1; }
   .glyph-card .gc-del:hover { color:var(--rose); border-color:var(--rose); }
-  .pair-list { display:flex; flex-direction:column; gap:6px; }
-  .pair-row { display:flex; align-items:center; gap:8px; }
-  .pair-row input { flex:1; min-width:0; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; font-size:13px; outline:none; background:var(--bg); }
-  .pair-row input:focus { border-color:var(--accent); }
-  .pair-row .pair-eq { flex:none; color:var(--ink-faint); font-size:13px; }
-  .pair-row .pair-del { flex:none; background:none; border:none; color:var(--ink-faint); padding:4px; border-radius:5px; display:flex; }
-  .pair-row .pair-del:hover { color:var(--rose); background:var(--rose-soft); }
+  .pair-del { flex:none; background:none; border:none; color:var(--ink-faint); padding:4px; border-radius:5px; display:flex; }
+  .pair-del:hover { color:var(--rose); background:var(--rose-soft); }
+  .sc-mode-tabs { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+  .sc-book-wrap { border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:var(--shadow-2); background:var(--bg-card); margin-bottom:16px; }
+  .sc-book-section-label { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-faint); padding:14px 18px 10px; }
+  .sc-spread-row { display:flex; position:relative; border-top:1px solid var(--border); }
+  .sc-book-section-label + .sc-spread-row { border-top:none; }
+  .sc-spread-row.active .sc-page-left, .sc-spread-row.active .sc-page-right { background:var(--accent-soft); }
+  .sc-page-left, .sc-page-right { flex:1; min-width:0; padding:14px 18px; display:flex; flex-direction:column; gap:8px; box-sizing:border-box; }
+  .sc-page-left { border-right:1px solid var(--border-strong); position:relative; }
+  .sc-page-left::after { content:""; position:absolute; top:0; right:-3px; bottom:0; width:6px; background:linear-gradient(to right, rgba(0,0,0,0.07), transparent); pointer-events:none; }
+  .sc-spread-a { border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; font-size:13px; background:var(--bg); color:var(--ink); outline:none; }
+  .sc-spread-a:focus { border-color:var(--accent); }
+  .sc-spread-glyph { overflow-x:auto; }
+  .sc-spread-glyph svg { display:block; }
+  .scg-head { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .scg-badge { display:inline-flex; align-items:center; gap:3px; font-size:10.5px; font-weight:600; border-radius:12px; padding:2px 8px; flex:none; }
+  .scg-badge.scg-auto { background:var(--accent-soft); color:var(--accent); }
+  .scg-badge.scg-edited { background:var(--tide-soft); color:var(--tide); }
+  .scg-badge.scg-manual { background:var(--bg-panel); color:var(--ink-faint); }
+  .scg-revert, .scg-memo-toggle { display:inline-flex; align-items:center; gap:3px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:20px; padding:3px 8px; font-size:10.5px; color:var(--ink-soft); flex:none; }
+  .scg-revert:hover, .scg-memo-toggle:hover { border-color:var(--accent); color:var(--accent); }
+  .scg-memo-toggle.has { border-color:var(--accent); color:var(--accent); }
+  .scg-head .pair-del { margin-left:auto; flex:none; }
+  .sc-spread-b { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; font-size:13px; background:var(--bg); color:var(--ink); outline:none; resize:vertical; font-family:inherit; }
+  .sc-spread-b:focus { border-color:var(--accent); }
+  .scg-diff-hint { font-size:11px; color:var(--ink-faint); }
+  .sc-spread-memo { width:100%; box-sizing:border-box; border:1px dashed var(--border-strong); border-radius:var(--radius-sm); padding:7px 10px; font-size:12px; background:var(--bg-panel); color:var(--ink-soft); outline:none; resize:vertical; font-family:inherit; }
+  .sc-grammar-card { display:flex; flex-direction:column; gap:10px; }
+  .sc-grammar-card label { font-size:11px; color:var(--ink-faint); display:block; margin-bottom:4px; }
+  .sc-grammar-card input, .sc-grammar-card textarea { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 10px; font-size:13px; outline:none; background:var(--bg); color:var(--ink); font-family:inherit; resize:vertical; }
+  .sc-grammar-card input:focus, .sc-grammar-card textarea:focus { border-color:var(--accent); }
+  .sc-grammar-row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .sc-grammar-del { align-self:flex-start; }
+  @media (max-width: 720px) {
+    .sc-spread-row { flex-direction:column; }
+    .sc-page-left { border-right:none; border-bottom:1px solid var(--border-strong); }
+    .sc-page-left::after { display:none; }
+    .sc-grammar-row2 { grid-template-columns:1fr; }
+  }
   .sc-typein { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 11px; font-size:14px; outline:none; background:var(--bg); margin-bottom:10px; }
   .sc-typein:focus { border-color:var(--accent); }
   .sc-output-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:8px; background:var(--bg-card); margin-bottom:16px; padding:6px; }
@@ -5168,7 +5201,11 @@ function deleteTable(id) {
     }
   });
 }
-function currentScript() { return SCRIPTS.find(function(s){ return s.id === state.activeId; }); }
+function currentScript() {
+  var s = SCRIPTS.find(function(s){ return s.id === state.activeId; });
+  if (s) migrateScript(s);
+  return s;
+}
 function newScript(workId) {
   openModal({
     title: "새 문자 체계",
@@ -5176,7 +5213,7 @@ function newScript(workId) {
     confirmLabel: "만들기",
     onConfirm: function(values){
       var title = values[0]; if (!title) return;
-      var sc = { id: uid(), workId: workId, title: title, glyphs: [], words: [], sentences: [] };
+      var sc = { id: uid(), workId: workId, title: title, glyphs: [], words: [], sentences: [], grammar: [] };
       SCRIPTS.push(sc); saveData();
       state.mode = "script"; state.activeId = sc.id;
       render();
@@ -16867,8 +16904,123 @@ function renderPlayScriptPage(ps) {
 }
 
 /* ---------------- custom script (hand-drawn alphabet) ---------------- */
-var scState = { strokes: [], curPts: null, smoothPt: null, editingGlyphId: null, kbLayout: "compact" };
+var scState = { strokes: [], curPts: null, smoothPt: null, editingGlyphId: null, kbLayout: "compact", mode: "glyph", selectedPairId: null, memoOpenId: null };
 var SC_PAD_SIZE = 220;
+var _scAutoNavDoneFor = null;
+
+/* 기존 데이터(문자 대응만 있던 시절)를 건드리지 않고 자동/수동 뜻풀이 상태 필드만 채워 넣는다.
+   이미 채워진 필드는 그대로 두므로 몇 번을 다시 호출해도 안전(idempotent)하다. */
+function migrateScPair(p) {
+  if (p.glossMode === undefined) p.glossMode = (p.b && p.b.trim()) ? "manual" : "auto";
+  if (p.memo === undefined) p.memo = "";
+}
+function migrateScript(sc) {
+  sc.grammar = sc.grammar || [];
+  (sc.words || []).forEach(migrateScPair);
+  (sc.sentences || []).forEach(migrateScPair);
+  sc.glyphsUpdatedAt = sc.glyphsUpdatedAt || 0;
+  sc.meaningUpdatedAt = sc.meaningUpdatedAt || 0;
+  sc.grammarUpdatedAt = sc.grammarUpdatedAt || 0;
+  return sc;
+}
+function touchScSection(sc, section) { sc[section + "UpdatedAt"] = Date.now(); }
+
+/* ---- 뜻 대응 자동 계산: 이미 알려진 단어 대응 + 문법 규칙에서 뜻을 유도한다.
+   예) 문법 규칙 "-ra"=복수, 단어 "△○"=사람 이 이미 있으면 "△○-ra"의 자동 뜻은 "사람(복수)". */
+function scFindWordMeaning(sc, scriptText, excludeId) {
+  if (!scriptText) return "";
+  var hit = (sc.words || []).find(function(p){ return p.id !== excludeId && (p.a || "").trim() === scriptText; });
+  if (!hit) return "";
+  return hit.glossMode === "manual" ? (hit.b || "") : computeAutoGloss(sc, "word", hit);
+}
+function scGrammarAutoGloss(sc, scriptText, excludeId) {
+  var rules = sc.grammar || [];
+  for (var i = 0; i < rules.length; i++) {
+    var r = rules[i];
+    var item = (r.item || "").trim();
+    if (!item) continue;
+    var meaning = (r.koreanMeaning || r.rule || "").trim();
+    if (item.charAt(0) === "-" && item.length > 1) {
+      var suf = item.slice(1);
+      if (suf && scriptText.length > suf.length && scriptText.slice(-suf.length) === suf) {
+        var base = scriptText.slice(0, scriptText.length - suf.length);
+        var baseMeaning = scFindWordMeaning(sc, base, excludeId);
+        if (baseMeaning) return meaning ? (baseMeaning + "(" + meaning + ")") : baseMeaning;
+      }
+    }
+    if (item.charAt(item.length - 1) === "-" && item.length > 1) {
+      var pre = item.slice(0, -1);
+      if (pre && scriptText.length > pre.length && scriptText.slice(0, pre.length) === pre) {
+        var base2 = scriptText.slice(pre.length);
+        var baseMeaning2 = scFindWordMeaning(sc, base2, excludeId);
+        if (baseMeaning2) return meaning ? (baseMeaning2 + "(" + meaning + ")") : baseMeaning2;
+      }
+    }
+  }
+  return "";
+}
+function computeAutoGloss(sc, kind, pair) {
+  var text = (pair.a || "").trim();
+  if (!text) return "";
+  if (kind === "sentence") {
+    var tokens = text.split(/\s+/).filter(Boolean);
+    if (!tokens.length) return "";
+    var unresolved = 0;
+    var parts = tokens.map(function(tok){
+      var m = scFindWordMeaning(sc, tok, null) || scGrammarAutoGloss(sc, tok, null);
+      if (!m) unresolved++;
+      return m || "⟨?⟩";
+    });
+    if (unresolved === parts.length) return "";
+    return parts.join(" ");
+  }
+  return scGrammarAutoGloss(sc, text, pair.id);
+}
+/* 자동/수정됨/수동 3상태를 사용자에게 그대로 보여준다.
+   자동: 자동 계산값을 그대로 사용 중. 수정됨: 자동값이 있는데 사용자가 다르게 고침. 수동: 자동 유도 불가라 사용자가 직접 채움. */
+function scGlossState(sc, pair, kind) {
+  var auto = computeAutoGloss(sc, kind, pair);
+  if (pair.glossMode !== "manual") return { label: "자동", cls: "auto", auto: auto };
+  if (auto && auto !== (pair.b || "")) return { label: "수정됨", cls: "edited", auto: auto };
+  return { label: "수동", cls: "manual", auto: auto };
+}
+function scGlossDisplayValue(sc, pair, kind) {
+  return pair.glossMode === "manual" ? (pair.b || "") : computeAutoGloss(sc, kind, pair);
+}
+/* 세 모드(문자대응/뜻대응/문법)의 실제 완성도를 가중치로 계산해, 다음에 열 때 가장 손이 덜 간 곳으로 자동 이동한다.
+   단순히 "값이 있냐 없냐"가 아니라 항목 수·채움 비율을 함께 보고, 표본이 적으면 점수를 깎아 "1개 중 1개 다 채움=100%"처럼
+   보이는 착시를 막는다. */
+function scModeProgress(sc) {
+  var glyphs = (sc.glyphs || []).filter(function(g){ return !g.builtin; });
+  var glyphFilled = glyphs.filter(function(g){ return (g.mapTo || "").trim() && ((g.strokes && g.strokes.length) || g.fontChar); }).length;
+  var glyphScore = glyphs.length === 0 ? 0 : Math.min(1, glyphFilled / Math.max(6, glyphs.length));
+
+  var pairs = (sc.words || []).concat(sc.sentences || []);
+  var pairFilled = pairs.filter(function(p){ return (p.a || "").trim() && (p.b || "").trim(); }).length;
+  var meaningScore = pairs.length === 0 ? 0 : (pairFilled / pairs.length) * Math.min(1, pairs.length / 6);
+
+  var gr = sc.grammar || [];
+  var grFilled = gr.filter(function(r){ return (r.item || "").trim() && (r.rule || "").trim(); }).length;
+  var grammarScore = gr.length === 0 ? 0 : Math.min(1, grFilled / Math.max(4, gr.length));
+
+  return { glyph: glyphScore, meaning: meaningScore, grammar: grammarScore };
+}
+function scAutoNavMode(sc) {
+  var p = scModeProgress(sc);
+  var entries = [
+    { mode: "glyph", score: p.glyph, t: sc.glyphsUpdatedAt || 0 },
+    { mode: "meaning", score: p.meaning, t: sc.meaningUpdatedAt || 0 },
+    { mode: "grammar", score: p.grammar, t: sc.grammarUpdatedAt || 0 }
+  ];
+  entries.sort(function(a, b){ return a.score - b.score; });
+  var lowest = entries[0].score;
+  var nearTies = entries.filter(function(e){ return e.score - lowest <= 0.08; });
+  if (nearTies.length > 1) {
+    nearTies.sort(function(a, b){ return b.t - a.t; }); // 근소한 차이면 마지막으로 편집한 영역이 우선
+    return nearTies[0].mode;
+  }
+  return entries[0].mode;
+}
 function scPointsToPath(pts) {
   if (!pts.length) return "";
   if (pts.length === 1) return "M "+pts[0][0]+" "+pts[0][1]+" L "+pts[0][0]+" "+pts[0][1];
@@ -17097,25 +17249,86 @@ function renderTklKeyboardHtml(sc) {
     '<div class="kb-nav-gap"></div>' + TKL_ARROWS.map(function(row){ return tklRowHtml(sc, row); }).join("");
   return '<div class="kb-tkl"><div class="kb-main">'+main+'</div><div class="kb-nav">'+nav+'</div></div>';
 }
-function renderPairSection(sc, field, label, exA, exB) {
-  var list = sc[field] || [];
-  return '<div class="script-card">' +
-    '<div class="script-card-head">'+ic("link",15)+'<span>'+esc(label)+' · '+list.length+'개</span></div>' +
-    '<div class="pair-list" data-pairfield="'+field+'">' +
-      list.map(function(p){
-        return '<div class="pair-row" data-pairid="'+p.id+'">' +
-          '<input type="text" data-pairside="a" value="'+esc(p.a||"")+'" placeholder="'+esc(exA)+'">' +
-          '<span class="pair-eq">=</span>' +
-          '<input type="text" data-pairside="b" value="'+esc(p.b||"")+'" placeholder="'+esc(exB)+'">' +
-          '<button type="button" class="pair-del" data-delpair="'+p.id+'" title="삭제">'+ic("close",12)+'</button>' +
-        '</div>';
-      }).join("") +
+var SC_MODE_LABELS = { glyph: "문자대응", meaning: "뜻대응", grammar: "문법" };
+function scModeTabsHtml(sc) {
+  var p = scModeProgress(sc);
+  var icons = { glyph: "pen", meaning: "link", grammar: "table" };
+  return '<div class="sc-mode-tabs">' + ["glyph","meaning","grammar"].map(function(mode){
+    var pct = Math.round((p[mode]||0) * 100);
+    return '<button type="button" class="rp-pill'+(scState.mode===mode?" on":"")+'" data-scmode="'+mode+'">' +
+      ic(icons[mode], 12) + '<span>'+SC_MODE_LABELS[mode]+' · '+pct+'%</span></button>';
+  }).join("") + '</div>';
+}
+function scPairRowHtml(sc, kind, pair) {
+  var gs = scGlossState(sc, pair, kind);
+  var displayB = scGlossDisplayValue(sc, pair, kind);
+  var memoOpen = scState.memoOpenId === pair.id;
+  var badgeIcon = gs.cls === "auto" ? "wand" : (gs.cls === "edited" ? "pen" : "docIcon");
+  return '<div class="sc-spread-row'+(scState.selectedPairId===pair.id?" active":"")+'" data-pairid="'+pair.id+'" data-pairkind="'+kind+'">' +
+    '<div class="sc-page-left">' +
+      '<input type="text" class="sc-spread-a" data-pairside="a" value="'+esc(pair.a||"")+'" placeholder="'+(kind==="word"?"창작 문자 단어":"창작 문자 문장")+'">' +
+      '<div class="sc-spread-glyph">'+renderGlyphSequenceSvg(sc, pair.a||"")+'</div>' +
     '</div>' +
-    '<button type="button" class="chip-add pair-add-btn" data-addpair="'+field+'" style="margin-top:8px">'+ic("plus",10)+' 추가</button>' +
+    '<div class="sc-page-right">' +
+      '<div class="scg-head">' +
+        '<span class="scg-badge scg-'+gs.cls+'">'+ic(badgeIcon,10)+'<span>'+gs.label+'</span></span>' +
+        (pair.glossMode === "manual" ? '<button type="button" class="scg-revert" data-revertgloss="'+pair.id+'" title="자동 계산값으로 되돌리기">'+ic("rotate",11)+'<span>되돌리기</span></button>' : '') +
+        '<button type="button" class="scg-memo-toggle'+(pair.memo?" has":"")+'" data-memotoggle="'+pair.id+'">'+ic("docIcon",11)+'<span>메모'+(pair.memo?" ●":"")+'</span></button>' +
+        '<button type="button" class="pair-del" data-delpair2="'+pair.id+'" data-pairkind2="'+kind+'" title="삭제">'+ic("close",12)+'</button>' +
+      '</div>' +
+      '<textarea class="sc-spread-b" data-pairside="b" rows="2" placeholder="뜻(한글)">'+esc(displayB)+'</textarea>' +
+      (gs.cls === "edited" ? '<div class="scg-diff-hint">자동 계산값: '+esc(gs.auto)+'</div>' : '') +
+      (memoOpen ? '<textarea class="sc-spread-memo" data-memofield="'+pair.id+'" rows="2" placeholder="자동 뜻과 실제 뜻이 다른 이유(문법·존댓말·고어·뉘앙스 등)">'+esc(pair.memo||"")+'</textarea>' : '') +
+    '</div>' +
   '</div>';
+}
+function renderScSpreadSectionHtml(sc, kind, field, label, exA) {
+  var list = sc[field] || [];
+  return '<div class="sc-book-section-label">'+ic(kind==="word"?"link":"docIcon",12)+'<span>'+label+' · '+list.length+'개</span></div>' +
+    (list.length
+      ? list.map(function(p){ return scPairRowHtml(sc, kind, p); }).join("")
+      : '<div class="chip-empty-hint" style="padding:0 18px 14px">아직 없어요. 예: '+exA+'</div>') +
+    '<div style="padding:10px 18px 16px"><button type="button" class="chip-add" data-addpair2="'+field+'">'+ic("plus",10)+' '+label+' 추가</button></div>';
+}
+function renderScMeaningModeHtml(sc) {
+  return '<div class="sc-book-wrap">' +
+    renderScSpreadSectionHtml(sc, "word", "words", "단어 대응", "사랑 → love") +
+    renderScSpreadSectionHtml(sc, "sentence", "sentences", "문장 대응", "i love her → 나는 그녀를 사랑한다") +
+  '</div>';
+}
+function scGrammarCardHtml(r) {
+  return '<div class="script-card sc-grammar-card" data-grammarid="'+r.id+'">' +
+    '<div class="sc-grammar-row2">' +
+      '<div><label>항목</label><input type="text" data-gfield="item" value="'+esc(r.item||"")+'" placeholder="예: -ra"></div>' +
+      '<div><label>뜻(한글)</label><input type="text" data-gfield="koreanMeaning" value="'+esc(r.koreanMeaning||"")+'" placeholder="예: 복수"></div>' +
+    '</div>' +
+    '<div><label>규칙</label><textarea data-gfield="rule" rows="2" placeholder="이 요소가 붙는 규칙을 설명하세요">'+esc(r.rule||"")+'</textarea></div>' +
+    '<div><label>예외</label><textarea data-gfield="exception" rows="2" placeholder="예외 상황(선택)">'+esc(r.exception||"")+'</textarea></div>' +
+    '<div><label>예문</label><textarea data-gfield="example" rows="2" placeholder="창작 문자 예문">'+esc(r.example||"")+'</textarea></div>' +
+    '<div><label>한글 해석</label><textarea data-gfield="exampleKo" rows="2" placeholder="위 예문의 한글 해석">'+esc(r.exampleKo||"")+'</textarea></div>' +
+    '<div><label>메모</label><textarea data-gfield="note" rows="2" placeholder="추가로 기억해둘 점">'+esc(r.note||"")+'</textarea></div>' +
+    '<button type="button" class="pair-del sc-grammar-del" data-delgrammar="'+r.id+'" title="삭제">'+ic("close",12)+'<span>이 규칙 삭제</span></button>' +
+  '</div>';
+}
+function renderScGrammarModeHtml(sc) {
+  var list = sc.grammar || [];
+  return '<div class="script-card">' +
+    '<div class="script-card-head">'+ic("table",15)+'<span>문법 규칙 · '+list.length+'개</span></div>' +
+    '<div class="chip-empty-hint" style="margin-bottom:14px">항목(예: -ra)과 뜻을 채워두면 뜻대응 화면에서 단어·문장의 자동 뜻풀이에 그대로 연결돼요. 예: -ra=복수 + △○=사람 → "△○-ra"의 자동 뜻은 "사람(복수)".</div>' +
+    '<button type="button" class="btn primary" id="grammarAddBtn" style="margin-bottom:14px">'+ic("plus",13)+'<span>문법 규칙 추가</span></button>' +
+  '</div>' +
+  (list.length ? list.map(scGrammarCardHtml).join("") : '');
 }
 function renderScriptPage(sc) {
   var main = document.getElementById("main");
+  /* 이 문자 체계를 새로 열었을 때만 "가장 손이 덜 간 모드"로 자동 이동한다.
+     같은 문자 체계 안에서 편집하다가 재렌더링될 때마다 모드가 튀면 안 되므로, 문자 체계 id가 바뀔 때 한 번만 계산한다. */
+  if (_scAutoNavDoneFor !== sc.id) {
+    _scAutoNavDoneFor = sc.id;
+    scState.mode = scAutoNavMode(sc);
+    scState.selectedPairId = null;
+    scState.memoOpenId = null;
+  }
   var glyphSectionHtml =
     '<div class="script-card">' +
       '<div class="script-card-head">'+ic("pen",15)+'<span>손글씨 문자 · '+sc.glyphs.length+'개</span></div>' +
@@ -17151,22 +17364,126 @@ function renderScriptPage(sc) {
       '<div class="sc-kb-hint">키보드를 실제로 누르면 위 키보드가 즉시 반짝여요(물리 키 위치 기준이라 한/영 전환과 무관하게 동작해요). 화면의 키를 마우스로 눌러서 입력할 수도 있어요. 밑줄 점선으로 나오는 글자는 아직 대응 문자가 없는 글자고, 완성형 한글은 매칭되는 낱자(자모) 글자가 있으면 자동으로 풀어서 그려줘요.</div>' +
     '</div>';
 
+  var modeBodyHtml = scState.mode === "meaning" ? renderScMeaningModeHtml(sc) :
+    scState.mode === "grammar" ? renderScGrammarModeHtml(sc) :
+    (glyphSectionHtml + typingSectionHtml);
+
   main.innerHTML =
     '<div class="graph-shell">' +
       '<div class="graph-title-bar"><input class="graph-title" id="scTitle" value="'+esc(sc.title)+'" placeholder="문자 체계 이름"><button class="page-del" id="deleteScriptBtn" style="margin-top:0">'+ic("trash",13)+'<span>문자 삭제</span></button></div>' +
-      '<div class="page-pad" style="padding-top:26px">' +
-        glyphSectionHtml +
-        typingSectionHtml +
-        renderPairSection(sc, "words", "단어 대응", "사랑", "love") +
-        renderPairSection(sc, "sentences", "문장 대응", "i love her", "나는 그녀를 사랑한다") +
+      '<div class="page-pad" style="padding-top:18px">' +
+        scModeTabsHtml(sc) +
+        modeBodyHtml +
       '</div>' +
     '</div>';
 
   wireScriptPage(sc);
 }
+function scFieldForKind(kind) { return kind === "word" ? "words" : "sentences"; }
+function scFindPair(sc, id) {
+  return (sc.words || []).find(function(p){ return p.id === id; }) ||
+    (sc.sentences || []).find(function(p){ return p.id === id; });
+}
+function wireScMeaningMode(sc) {
+  document.querySelectorAll(".sc-spread-row").forEach(function(row){
+    var id = row.dataset.pairid;
+    var kind = row.dataset.pairkind;
+    var field = scFieldForKind(kind);
+    var pair = sc[field].find(function(p){ return p.id === id; });
+    if (!pair) return;
+
+    row.addEventListener("click", function(){
+      if (scState.selectedPairId === id) return;
+      var prevId = scState.selectedPairId;
+      scState.selectedPairId = id;
+      if (prevId) { var prevRow = document.querySelector('.sc-spread-row[data-pairid="'+prevId+'"]'); if (prevRow) prevRow.classList.remove("active"); }
+      row.classList.add("active");
+    });
+
+    var aInput = row.querySelector('[data-pairside="a"]');
+    aInput.addEventListener("input", function(){ pair.a = aInput.value; saveData(); });
+    aInput.addEventListener("blur", function(){ touchScSection(sc, "meaning"); renderScriptPage(sc); });
+
+    var bInput = row.querySelector('[data-pairside="b"]');
+    bInput.addEventListener("input", function(){ pair.glossMode = "manual"; pair.b = bInput.value; saveData(); });
+    bInput.addEventListener("blur", function(){ touchScSection(sc, "meaning"); renderScriptPage(sc); });
+
+    var revertBtn = row.querySelector("[data-revertgloss]");
+    if (revertBtn) revertBtn.addEventListener("click", function(){
+      pair.glossMode = "auto";
+      saveData(); touchScSection(sc, "meaning");
+      renderScriptPage(sc);
+    });
+
+    row.querySelector("[data-memotoggle]").addEventListener("click", function(){
+      scState.memoOpenId = scState.memoOpenId === id ? null : id;
+      renderScriptPage(sc);
+    });
+    var memoField = row.querySelector("[data-memofield]");
+    if (memoField) {
+      memoField.addEventListener("input", function(){ pair.memo = memoField.value; saveData(); });
+      memoField.addEventListener("blur", function(){ renderScriptPage(sc); });
+    }
+
+    row.querySelector("[data-delpair2]").addEventListener("click", function(e){
+      e.stopPropagation();
+      sc[field] = sc[field].filter(function(p){ return p.id !== id; });
+      if (scState.selectedPairId === id) scState.selectedPairId = null;
+      saveData(); touchScSection(sc, "meaning");
+      renderScriptPage(sc);
+    });
+  });
+
+  document.querySelectorAll("[data-addpair2]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var field = btn.dataset.addpair2;
+      var newPair = { id: uid(), a: "", b: "", glossMode: "auto", memo: "" };
+      sc[field].push(newPair);
+      saveData(); touchScSection(sc, "meaning");
+      renderScriptPage(sc);
+      var addedRow = document.querySelector('.sc-spread-row[data-pairid="'+newPair.id+'"]');
+      if (addedRow) addedRow.querySelector('[data-pairside="a"]').focus();
+    });
+  });
+}
+function wireScGrammarMode(sc) {
+  document.getElementById("grammarAddBtn").addEventListener("click", function(){
+    var r = { id: uid(), item: "", rule: "", exception: "", example: "", exampleKo: "", koreanMeaning: "", note: "" };
+    sc.grammar.push(r);
+    saveData(); touchScSection(sc, "grammar");
+    renderScriptPage(sc);
+    var card = document.querySelector('.sc-grammar-card[data-grammarid="'+r.id+'"]');
+    if (card) card.querySelector('[data-gfield="item"]').focus();
+  });
+  document.querySelectorAll(".sc-grammar-card").forEach(function(card){
+    var id = card.dataset.grammarid;
+    var r = sc.grammar.find(function(r){ return r.id === id; });
+    if (!r) return;
+    card.querySelectorAll("[data-gfield]").forEach(function(field){
+      field.addEventListener("input", function(){ r[field.dataset.gfield] = field.value; saveData(); });
+      field.addEventListener("blur", function(){ touchScSection(sc, "grammar"); });
+    });
+    card.querySelector("[data-delgrammar]").addEventListener("click", function(){
+      sc.grammar = sc.grammar.filter(function(x){ return x.id !== id; });
+      saveData(); touchScSection(sc, "grammar");
+      renderScriptPage(sc);
+    });
+  });
+}
 function wireScriptPage(sc) {
   document.getElementById("scTitle").addEventListener("input", function(e){ sc.title = e.target.value; saveData(); renderSidebar(); });
   document.getElementById("deleteScriptBtn").addEventListener("click", function(){ deleteScript(sc.id); });
+
+  document.querySelectorAll("[data-scmode]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      if (scState.mode === btn.dataset.scmode) return;
+      scState.mode = btn.dataset.scmode;
+      renderScriptPage(sc);
+    });
+  });
+
+  if (scState.mode === "meaning") { wireScMeaningMode(sc); return; }
+  if (scState.mode === "grammar") { wireScGrammarMode(sc); return; }
 
   scState.strokes = []; scState.curPts = null; scState.smoothPt = null; scState.editingGlyphId = null;
   var pad = document.getElementById("glyphPad");
@@ -17245,37 +17562,6 @@ function wireScriptPage(sc) {
       e.stopPropagation();
       sc.glyphs = sc.glyphs.filter(function(g){ return g.id !== btn.dataset.delglyph; });
       saveData(); renderScriptPage(sc);
-    });
-  });
-
-  ["words","sentences"].forEach(function(field){
-    document.querySelectorAll('[data-pairfield="'+field+'"] .pair-row').forEach(function(row){
-      var id = row.dataset.pairid;
-      row.querySelectorAll("[data-pairside]").forEach(function(inp){
-        inp.addEventListener("input", function(){
-          var p = sc[field].find(function(p){ return p.id === id; });
-          if (p) { p[inp.dataset.pairside] = inp.value; saveData(); }
-        });
-      });
-    });
-  });
-  document.querySelectorAll("[data-delpair]").forEach(function(btn){
-    btn.addEventListener("click", function(){
-      var row = btn.closest("[data-pairid]");
-      var field = row.parentElement.dataset.pairfield;
-      sc[field] = sc[field].filter(function(p){ return p.id !== row.dataset.pairid; });
-      saveData(); renderScriptPage(sc);
-    });
-  });
-  document.querySelectorAll("[data-addpair]").forEach(function(btn){
-    btn.addEventListener("click", function(){
-      var field = btn.dataset.addpair;
-      sc[field].push({ id: uid(), a: "", b: "" });
-      saveData();
-      renderScriptPage(sc);
-      var rows = document.querySelectorAll('[data-pairfield="'+field+'"] .pair-row');
-      var last = rows[rows.length-1];
-      if (last) last.querySelector('[data-pairside="a"]').focus();
     });
   });
 
@@ -17450,6 +17736,10 @@ function render() {
    * 관문인 여기서 한 번 더 정리해 새어나가지 않게 막는다. */
   if (_mapWinHandlers) { window.removeEventListener("mousemove", _mapWinHandlers.move); window.removeEventListener("mouseup", _mapWinHandlers.up); _mapWinHandlers = null; }
   if (_graphWinHandlers) { window.removeEventListener("mousemove", _graphWinHandlers.move); window.removeEventListener("mouseup", _graphWinHandlers.up); _graphWinHandlers = null; }
+  /* 문자 페이지를 완전히 떠나면 다음에 어떤 문자 체계를 열든 "새로 열었다"로 쳐서
+     진행도 기반 자동 이동이 다시 계산되게 한다(같은 문자 체계를 계속 편집하는
+     동안에는 재렌더링마다 모드가 튀지 않아야 하므로 여기서만 초기화한다). */
+  if (state.mode !== "script") _scAutoNavDoneFor = null;
   if (state.mode === "doc") {
     var d = currentDoc();
     if (d) { renderDocPage(d); return; }
