@@ -126,6 +126,17 @@
   button { cursor: pointer; }
   ::selection { background: var(--accent-soft); }
 
+  /* ---------- 전역 스크롤바 ----------
+   * 브라우저 기본 회색 스크롤바 대신, 평소엔 옅게 있다가 지나가거나 스크롤할 때만
+   * 또렷해지는 얇은 스크롤바로 통일한다. 색은 테마 토큰(--border-strong/--ink-faint)을
+   * 그대로 쓰므로 라이트/다크/RGB 어떤 테마에서도 자동으로 맞는 색이 나온다. */
+  * { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background-color: var(--border-strong); border-radius: 20px; border: 2.5px solid transparent; background-clip: padding-box; }
+  *::-webkit-scrollbar-thumb:hover { background-color: var(--ink-faint); }
+  *::-webkit-scrollbar-corner { background: transparent; }
+
   .diamond { display:inline-block; width:8px; height:8px; background:currentColor; transform:rotate(45deg); flex:none; }
   .diamond.outline { background:transparent; border:1.4px solid currentColor; }
   svg.icon { flex: none; }
@@ -206,7 +217,7 @@
   .ws-section-head .t { font-size:11.5px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); }
   .ws-section-head .add { color:var(--ink-faint); display:flex; padding:3px; border-radius:5px; background:none; border:none; flex:none; }
   .ws-section-head .add:hover { color:var(--accent); background:var(--bg-card); }
-  .ws-chip-wrap { display:flex; gap:6px; overflow-x:auto; padding:2px 20px 12px; scrollbar-width:thin; }
+  .ws-chip-wrap { display:flex; gap:6px; overflow-x:auto; padding:2px 20px 12px; }
   .ws-chip-wrap .doc-row, .ws-chip-wrap .graph-row { flex:none; width:200px; border:1px solid var(--border); background:var(--bg-card); }
   .ws-chip-wrap .ms-draggable, .ws-chip-wrap .essay-draggable { width:270px; }
   .ws-chip-wrap .novel-folder, .ws-chip-wrap .sb-empty { padding-left:20px; }
@@ -853,41 +864,92 @@
   .pair-del { flex:none; background:none; border:none; color:var(--ink-faint); padding:4px; border-radius:5px; display:flex; }
   .pair-del:hover { color:var(--rose); background:var(--rose-soft); }
   .sc-mode-tabs { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
-  .sc-book-wrap { border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:var(--shadow-2); background:var(--bg-card); margin-bottom:16px; }
-  .sc-book-section-label { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-faint); padding:14px 18px 10px; }
-  .sc-spread-row { display:flex; position:relative; border-top:1px solid var(--border); }
-  .sc-book-section-label + .sc-spread-row { border-top:none; }
-  .sc-spread-row.active .sc-page-left, .sc-spread-row.active .sc-page-right { background:var(--accent-soft); }
-  .sc-page-left, .sc-page-right { flex:1; min-width:0; padding:14px 18px; display:flex; flex-direction:column; gap:8px; box-sizing:border-box; }
-  .sc-page-left { border-right:1px solid var(--border-strong); position:relative; }
-  .sc-page-left::after { content:""; position:absolute; top:0; right:-3px; bottom:0; width:6px; background:linear-gradient(to right, rgba(0,0,0,0.07), transparent); pointer-events:none; }
-  .sc-spread-a { border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; font-size:13px; background:var(--bg); color:var(--ink); outline:none; }
+  .sc-spread-a { border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; font-size:13px; background:var(--bg); color:var(--ink); outline:none; width:100%; box-sizing:border-box; }
   .sc-spread-a:focus { border-color:var(--accent); }
-  .sc-spread-glyph { overflow-x:auto; }
-  .sc-spread-glyph svg { display:block; }
-  .scg-head { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .scg-head { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
   .scg-badge { display:inline-flex; align-items:center; gap:3px; font-size:10.5px; font-weight:600; border-radius:12px; padding:2px 8px; flex:none; }
   .scg-badge.scg-auto { background:var(--accent-soft); color:var(--accent); }
   .scg-badge.scg-edited { background:var(--tide-soft); color:var(--tide); }
   .scg-badge.scg-manual { background:var(--bg-panel); color:var(--ink-faint); }
-  .scg-revert, .scg-memo-toggle { display:inline-flex; align-items:center; gap:3px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:20px; padding:3px 8px; font-size:10.5px; color:var(--ink-soft); flex:none; }
-  .scg-revert:hover, .scg-memo-toggle:hover { border-color:var(--accent); color:var(--accent); }
-  .scg-memo-toggle.has { border-color:var(--accent); color:var(--accent); }
-  .scg-head .pair-del { margin-left:auto; flex:none; }
+  .scg-revert { display:inline-flex; align-items:center; gap:3px; border:1px solid var(--border-strong); background:var(--bg-card); border-radius:20px; padding:3px 8px; font-size:10.5px; color:var(--ink-soft); flex:none; }
+  .scg-revert:hover { border-color:var(--accent); color:var(--accent); }
   .sc-spread-b { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; font-size:13px; background:var(--bg); color:var(--ink); outline:none; resize:vertical; font-family:inherit; }
   .sc-spread-b:focus { border-color:var(--accent); }
-  .scg-diff-hint { font-size:11px; color:var(--ink-faint); }
-  .sc-spread-memo { width:100%; box-sizing:border-box; border:1px dashed var(--border-strong); border-radius:var(--radius-sm); padding:7px 10px; font-size:12px; background:var(--bg-panel); color:var(--ink-soft); outline:none; resize:vertical; font-family:inherit; }
+  .scg-diff-hint { font-size:11px; color:var(--ink-faint); margin-top:4px; }
   .sc-grammar-card { display:flex; flex-direction:column; gap:10px; }
   .sc-grammar-card label { font-size:11px; color:var(--ink-faint); display:block; margin-bottom:4px; }
   .sc-grammar-card input, .sc-grammar-card textarea { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 10px; font-size:13px; outline:none; background:var(--bg); color:var(--ink); font-family:inherit; resize:vertical; }
   .sc-grammar-card input:focus, .sc-grammar-card textarea:focus { border-color:var(--accent); }
   .sc-grammar-row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .sc-grammar-del { align-self:flex-start; }
-  @media (max-width: 720px) {
-    .sc-spread-row { flex-direction:column; }
-    .sc-page-left { border-right:none; border-bottom:1px solid var(--border-strong); }
-    .sc-page-left::after { display:none; }
+
+  /* ---------- 뜻대응: 폴더 / 목록 / 상세 3단 ---------- */
+  .sc-mn-shell { display:grid; grid-template-columns:220px 280px 1fr; gap:0; border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:var(--shadow-2); background:var(--bg-card); align-items:stretch; min-height:520px; }
+  .sc-mn-nav, .sc-mn-list { border-right:1px solid var(--border); display:flex; flex-direction:column; min-height:0; }
+  .sc-mn-nav { padding:14px 10px; gap:10px; }
+  .sc-mn-search { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; font-size:12.5px; background:var(--bg); color:var(--ink); outline:none; }
+  .sc-mn-search:focus { border-color:var(--accent); }
+  .sc-mn-quick { display:flex; flex-direction:column; gap:2px; }
+  .sc-mn-quick-btn { display:flex; align-items:center; gap:7px; border:none; background:none; padding:7px 8px; border-radius:8px; font-size:12.5px; color:var(--ink-soft); text-align:left; }
+  .sc-mn-quick-btn:hover { background:var(--bg-card-hover); }
+  .sc-mn-quick-btn.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .sc-mn-quick-btn .sc-mn-folder-count { margin-left:auto; }
+  .sc-mn-tree-head { display:flex; align-items:center; justify-content:space-between; font-size:11px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.04em; padding:6px 8px 2px; }
+  .sc-mn-tree-head button { background:none; border:none; color:var(--ink-faint); display:flex; padding:2px; border-radius:5px; }
+  .sc-mn-tree-head button:hover { color:var(--accent); background:var(--bg-card-hover); }
+  .sc-mn-tree { display:flex; flex-direction:column; gap:1px; overflow-y:auto; flex:1; min-height:0; }
+  .sc-mn-folder-row { display:flex; align-items:center; gap:6px; padding:6px 8px; border-radius:7px; font-size:12.5px; color:var(--ink-soft); cursor:pointer; }
+  .sc-mn-folder-row:hover { background:var(--bg-card-hover); }
+  .sc-mn-folder-row.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .sc-mn-folder-row.dragover { outline:1.5px dashed var(--accent); outline-offset:-2px; background:var(--accent-soft); }
+  .sc-mn-folder-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sc-mn-folder-count { font-size:10.5px; color:var(--ink-faint); flex:none; }
+  .sc-mn-folder-row.on .sc-mn-folder-count { color:var(--accent); }
+  .sc-mn-folder-add, .sc-mn-folder-del { flex:none; background:none; border:none; color:var(--ink-faint); padding:2px; border-radius:5px; display:none; }
+  .sc-mn-folder-row:hover .sc-mn-folder-add, .sc-mn-folder-row:hover .sc-mn-folder-del { display:flex; }
+  .sc-mn-folder-add:hover { color:var(--accent); background:var(--bg-card-hover); }
+  .sc-mn-folder-del:hover { color:var(--rose); background:var(--rose-soft); }
+  .sc-mn-list { padding:12px 0; }
+  .sc-mn-list-head { padding:0 14px 10px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:2px; }
+  .sc-mn-list-title { font-size:12.5px; font-weight:600; color:var(--ink); }
+  .sc-mn-list-add { display:flex; gap:6px; }
+  .sc-mn-item-list { overflow-y:auto; flex:1; min-height:0; }
+  .sc-mn-item-row { display:flex; align-items:center; gap:8px; padding:9px 14px; cursor:pointer; border-bottom:1px solid var(--border); }
+  .sc-mn-item-row:hover { background:var(--bg-card-hover); }
+  .sc-mn-item-row.on { background:var(--accent-soft); }
+  .sc-mn-item-text { flex:1; min-width:0; }
+  .sc-mn-item-a { font-family:var(--serif); font-size:13.5px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sc-mn-item-b { font-size:11.5px; color:var(--ink-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:1px; }
+  .sc-mn-item-folderchip { flex:none; font-size:10px; color:var(--ink-faint); background:var(--bg-panel); border-radius:10px; padding:2px 7px; }
+  .sc-mn-item-star { flex:none; background:none; border:none; color:var(--border-strong); padding:2px; display:flex; }
+  .sc-mn-item-star:hover { color:var(--ink-faint); }
+  .sc-mn-item-star.on { color:var(--accent); }
+  .sc-mn-detail { padding:16px 20px 24px; overflow-y:auto; min-height:0; }
+  .sc-mn-detail-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--ink-faint); text-align:center; padding:40px 24px; }
+  .sc-mn-detail-head { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  .sc-mn-detail-title { flex:1; min-width:0; font-family:var(--serif); font-size:17px; font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sc-mn-section { border:1px solid var(--border); border-radius:10px; margin-bottom:10px; padding:0 14px; background:var(--bg); }
+  .sc-mn-section[open] { padding-bottom:14px; }
+  .sc-mn-section summary { display:flex; align-items:center; gap:7px; padding:11px 0; font-size:12.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; list-style:none; }
+  .sc-mn-section summary::-webkit-details-marker { display:none; }
+  .sc-mn-field { margin-bottom:10px; }
+  .sc-mn-field:last-child { margin-bottom:0; }
+  .sc-mn-field label { font-size:11px; color:var(--ink-faint); display:block; margin-bottom:4px; }
+  .sc-mn-field input, .sc-mn-field select { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; font-size:13px; outline:none; background:var(--bg-card); color:var(--ink); font-family:inherit; }
+  .sc-mn-field input:focus, .sc-mn-field select:focus { border-color:var(--accent); }
+  .sc-mn-glyph-preview { overflow-x:auto; margin-bottom:8px; border:1px solid var(--border); border-radius:8px; background:var(--bg-card); padding:6px; }
+  .sc-mn-glyph-preview svg { display:block; }
+  .sc-mn-memo { width:100%; box-sizing:border-box; border:1px dashed var(--border-strong); border-radius:var(--radius-sm); padding:9px 11px; font-size:13px; line-height:1.6; background:var(--bg-panel); color:var(--ink-soft); outline:none; resize:vertical; font-family:inherit; }
+  .sc-mn-composer { margin-top:8px; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--bg-card); }
+  .sc-mn-composer-grid { grid-template-columns:repeat(auto-fill, minmax(64px,1fr)); }
+  .sc-mn-glyph-pick { cursor:pointer; }
+  .sc-mn-glyph-pick svg { height:40px; }
+  @media (max-width: 1100px) {
+    .sc-mn-shell { grid-template-columns:180px 240px 1fr; }
+  }
+  @media (max-width: 900px) {
+    .sc-mn-shell { grid-template-columns:1fr; }
+    .sc-mn-nav, .sc-mn-list { border-right:none; border-bottom:1px solid var(--border); max-height:220px; }
     .sc-grammar-row2 { grid-template-columns:1fr; }
   }
   .sc-typein { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 11px; font-size:14px; outline:none; background:var(--bg); margin-bottom:10px; }
@@ -1106,6 +1168,11 @@
   .rp-progress-fill { height:100%; background:#22A855; }
 
   /* 읽기 영역 -- 플랫폼별 문단 밀도/들여쓰기/여백/글꼴이 실제로 다르다 */
+  /* 폰 화면 안쪽은 실제 리더 앱을 흉내내는 고정 흰 배경이라, 앱 테마(다크·RGB 등)를
+     그대로 따라가면 화면과 안 어울리는 색이 나온다 -- 여기만 별도로 옅은 회색 계열로 고정한다. */
+  .rp-phone-screen { scrollbar-color: #c7c2b4 transparent; }
+  .rp-phone-screen::-webkit-scrollbar-thumb { background-color: #c7c2b4; }
+  .rp-phone-screen::-webkit-scrollbar-thumb:hover { background-color: #a39c8a; }
   .rp-content { flex:1; min-height:0; position:relative; }
   .rp-content.mode-scroll { overflow-y:auto; -webkit-overflow-scrolling:touch; cursor:grab; }
   .rp-content.mode-scroll.dragging { cursor:grabbing; user-select:none; }
@@ -16417,6 +16484,11 @@ function readerPopupDocument() {
   var css =
     'html,body{margin:0;height:100%;background:#e9e6dd;font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic",sans-serif;}' +
     '*{box-sizing:border-box;}' +
+    '*{scrollbar-width:thin;scrollbar-color:#c7c2b4 transparent;}' +
+    '*::-webkit-scrollbar{width:10px;height:10px;}' +
+    '*::-webkit-scrollbar-track{background:transparent;}' +
+    '*::-webkit-scrollbar-thumb{background-color:#c7c2b4;border-radius:20px;border:2.5px solid transparent;background-clip:padding-box;}' +
+    '*::-webkit-scrollbar-thumb:hover{background-color:#a39c8a;}' +
     'body{display:flex;flex-direction:column;}' +
     '.bar{flex:none;display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:#fff;border-bottom:1px solid #e2ddd0;}' +
     '.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}' +
@@ -16904,7 +16976,13 @@ function renderPlayScriptPage(ps) {
 }
 
 /* ---------------- custom script (hand-drawn alphabet) ---------------- */
-var scState = { strokes: [], curPts: null, smoothPt: null, editingGlyphId: null, kbLayout: "compact", mode: "glyph", selectedPairId: null, memoOpenId: null };
+var scState = {
+  strokes: [], curPts: null, smoothPt: null, editingGlyphId: null, kbLayout: "compact", mode: "glyph",
+  /* 뜻대응 전용 상태 -- 폴더/목록/상세 3단 구성과 손글씨 조합기(글자 선택 or 새로 그리기) */
+  mnView: "folder", mnFolderId: null, mnSearch: "", mnDetailId: null,
+  mnComposerOpen: false, mnDrawMode: false, mnDrawEditGlyphId: null,
+  mnDragItemId: null
+};
 var SC_PAD_SIZE = 220;
 var _scAutoNavDoneFor = null;
 
@@ -16913,15 +16991,45 @@ var _scAutoNavDoneFor = null;
 function migrateScPair(p) {
   if (p.glossMode === undefined) p.glossMode = (p.b && p.b.trim()) ? "manual" : "auto";
   if (p.memo === undefined) p.memo = "";
+  if (p.folderId === undefined) p.folderId = null;
+  if (p.favorite === undefined) p.favorite = false;
+  if (p.pos === undefined) p.pos = "";
+  if (p.related === undefined) p.related = "";
+  if (p.category === undefined) p.category = "";
+  if (p.lastOpenedAt === undefined) p.lastOpenedAt = 0;
+  if (p.updatedAt === undefined) p.updatedAt = 0;
 }
 function migrateScript(sc) {
   sc.grammar = sc.grammar || [];
+  sc.meaningFolders = sc.meaningFolders || [];
   (sc.words || []).forEach(migrateScPair);
   (sc.sentences || []).forEach(migrateScPair);
   sc.glyphsUpdatedAt = sc.glyphsUpdatedAt || 0;
   sc.meaningUpdatedAt = sc.meaningUpdatedAt || 0;
   sc.grammarUpdatedAt = sc.grammarUpdatedAt || 0;
   return sc;
+}
+/* 뜻대응 항목 전체(단어+문장)를 폴더 계층과 함께 다루기 위한 헬퍼들. */
+function scAllMeaningItems(sc) {
+  return (sc.words || []).map(function(p){ return { pair: p, kind: "word" }; })
+    .concat((sc.sentences || []).map(function(p){ return { pair: p, kind: "sentence" }; }));
+}
+function scFindMeaningEntry(sc, id) {
+  return scAllMeaningItems(sc).find(function(e){ return e.pair.id === id; }) || null;
+}
+function scFolderChildren(sc, parentId) {
+  return (sc.meaningFolders || []).filter(function(f){ return (f.parentId || null) === (parentId || null); });
+}
+function scFolderDescendantIds(sc, folderId) {
+  var out = [folderId];
+  scFolderChildren(sc, folderId).forEach(function(f){ out = out.concat(scFolderDescendantIds(sc, f.id)); });
+  return out;
+}
+function scFolderPath(sc, folderId) {
+  var path = [];
+  var cur = (sc.meaningFolders || []).find(function(f){ return f.id === folderId; });
+  while (cur) { path.unshift(cur); cur = (sc.meaningFolders || []).find(function(f){ return f.id === cur.parentId; }); }
+  return path;
 }
 function touchScSection(sc, section) { sc[section + "UpdatedAt"] = Date.now(); }
 
@@ -16933,19 +17041,20 @@ function scFindWordMeaning(sc, scriptText, excludeId) {
   if (!hit) return "";
   return hit.glossMode === "manual" ? (hit.b || "") : computeAutoGloss(sc, "word", hit);
 }
-function scGrammarAutoGloss(sc, scriptText, excludeId) {
+/* 접미/접두 표기(-ra, hu- 등)로 등록된 문법 규칙 중 이 텍스트에 실제로 걸리는 규칙 하나를 찾는다.
+   자동 뜻풀이 계산과 뜻대응 상세 화면의 "연결된 문법 규칙" 표시가 이 하나의 판단 로직을 공유한다. */
+function scFindMatchingGrammarRule(sc, scriptText, excludeId) {
   var rules = sc.grammar || [];
   for (var i = 0; i < rules.length; i++) {
     var r = rules[i];
     var item = (r.item || "").trim();
     if (!item) continue;
-    var meaning = (r.koreanMeaning || r.rule || "").trim();
     if (item.charAt(0) === "-" && item.length > 1) {
       var suf = item.slice(1);
       if (suf && scriptText.length > suf.length && scriptText.slice(-suf.length) === suf) {
         var base = scriptText.slice(0, scriptText.length - suf.length);
         var baseMeaning = scFindWordMeaning(sc, base, excludeId);
-        if (baseMeaning) return meaning ? (baseMeaning + "(" + meaning + ")") : baseMeaning;
+        if (baseMeaning) return { rule: r, base: base, baseMeaning: baseMeaning };
       }
     }
     if (item.charAt(item.length - 1) === "-" && item.length > 1) {
@@ -16953,11 +17062,21 @@ function scGrammarAutoGloss(sc, scriptText, excludeId) {
       if (pre && scriptText.length > pre.length && scriptText.slice(0, pre.length) === pre) {
         var base2 = scriptText.slice(pre.length);
         var baseMeaning2 = scFindWordMeaning(sc, base2, excludeId);
-        if (baseMeaning2) return meaning ? (baseMeaning2 + "(" + meaning + ")") : baseMeaning2;
+        if (baseMeaning2) return { rule: r, base: base2, baseMeaning: baseMeaning2 };
       }
     }
   }
-  return "";
+  return null;
+}
+function scGrammarAutoGloss(sc, scriptText, excludeId) {
+  var m = scFindMatchingGrammarRule(sc, scriptText, excludeId);
+  if (!m) return "";
+  var meaning = (m.rule.koreanMeaning || m.rule.rule || "").trim();
+  return meaning ? (m.baseMeaning + "(" + meaning + ")") : m.baseMeaning;
+}
+function scMatchedGrammarRule(sc, scriptText) {
+  var m = scFindMatchingGrammarRule(sc, (scriptText || "").trim(), null);
+  return m ? m.rule : null;
 }
 function computeAutoGloss(sc, kind, pair) {
   var text = (pair.a || "").trim();
@@ -17032,8 +17151,8 @@ function scPointsToPath(pts) {
   d += " L "+pts[pts.length-1][0]+" "+pts[pts.length-1][1];
   return d;
 }
-function scRenderPad() {
-  var svg = document.getElementById("glyphPad");
+function scRenderPad(padId) {
+  var svg = document.getElementById(padId || "glyphPad");
   if (!svg) return;
   var half = SC_PAD_SIZE/2;
   var grid = '<line x1="0" y1="'+half+'" x2="'+SC_PAD_SIZE+'" y2="'+half+'" stroke="var(--border)" stroke-width="1"/>' +
@@ -17259,42 +17378,179 @@ function scModeTabsHtml(sc) {
       ic(icons[mode], 12) + '<span>'+SC_MODE_LABELS[mode]+' · '+pct+'%</span></button>';
   }).join("") + '</div>';
 }
-function scPairRowHtml(sc, kind, pair) {
+/* ---------------- 뜻대응: 폴더 트리 / 항목 목록 / 상세 3단 구성 ----------------
+ * 문자대응(손글씨 문자 그리기)과 조작 경험(그리기·undo·지우기·저장)은 그대로 재사용하되,
+ * 뜻대응은 "문자 하나 = 뜻 하나"가 아니라 단어·구·짧은 문장 단위의 의미 표현을 폴더로
+ * 정리해서 쌓아가는 사전/노트에 가깝게 만든다. */
+function scMnFolderRowHtml(sc, folder, depth) {
+  var itemCount = scAllMeaningItems(sc).filter(function(e){ return e.pair.folderId === folder.id; }).length;
+  var kids = scFolderChildren(sc, folder.id);
+  return '<div class="sc-mn-folder-row'+(scState.mnView==="folder"&&scState.mnFolderId===folder.id?" on":"")+'" data-mnfolder="'+folder.id+'" draggable="true" style="padding-left:'+(10+depth*16)+'px">' +
+      ic("docIcon",12) +
+      '<span class="sc-mn-folder-name">'+esc(folder.name||"제목 없는 폴더")+'</span>' +
+      '<span class="sc-mn-folder-count">'+itemCount+'</span>' +
+      '<button type="button" class="sc-mn-folder-add" data-mnaddsubfolder="'+folder.id+'" title="하위 폴더 추가">'+ic("plus",10)+'</button>' +
+      '<button type="button" class="sc-mn-folder-del" data-mndelfolder="'+folder.id+'" title="폴더 삭제">'+ic("close",10)+'</button>' +
+    '</div>' +
+    kids.map(function(k){ return scMnFolderRowHtml(sc, k, depth+1); }).join("");
+}
+function scMnNavHtml(sc) {
+  var favCount = scAllMeaningItems(sc).filter(function(e){ return e.pair.favorite; }).length;
+  var rootFolders = scFolderChildren(sc, null);
+  return '<div class="sc-mn-nav">' +
+    '<input type="text" class="sc-mn-search" id="scMnSearch" value="'+esc(scState.mnSearch)+'" placeholder="문자·뜻·메모·폴더 검색">' +
+    '<div class="sc-mn-quick">' +
+      '<button type="button" class="sc-mn-quick-btn'+(scState.mnView==="favorites"?" on":"")+'" data-mnview="favorites">'+ic("starFill",12)+'<span>즐겨찾기</span><span class="sc-mn-folder-count">'+favCount+'</span></button>' +
+      '<button type="button" class="sc-mn-quick-btn'+(scState.mnView==="recent"?" on":"")+'" data-mnview="recent">'+ic("rotate",12)+'<span>최근 수정</span></button>' +
+    '</div>' +
+    '<div class="sc-mn-tree-head"><span>폴더</span><button type="button" class="sc-mn-folder-add" data-mnaddfolder="1" title="새 폴더">'+ic("plus",12)+'</button></div>' +
+    '<div class="sc-mn-tree">' +
+      '<div class="sc-mn-folder-row'+(scState.mnView==="folder"&&!scState.mnFolderId?" on":"")+'" data-mnfolder="" style="padding-left:10px">'+ic("list",12)+'<span class="sc-mn-folder-name">전체</span><span class="sc-mn-folder-count">'+scAllMeaningItems(sc).length+'</span></div>' +
+      rootFolders.map(function(f){ return scMnFolderRowHtml(sc, f, 1); }).join("") +
+    '</div>' +
+  '</div>';
+}
+function scMnCurrentItems(sc) {
+  var all = scAllMeaningItems(sc);
+  if (scState.mnView === "favorites") return all.filter(function(e){ return e.pair.favorite; });
+  if (scState.mnView === "recent") return all.slice().sort(function(a,b){ return (b.pair.updatedAt||0)-(a.pair.updatedAt||0); }).slice(0, 20);
+  if (scState.mnView === "search") {
+    var q = scState.mnSearch.trim().toLowerCase();
+    if (!q) return [];
+    return all.filter(function(e){
+      var p = e.pair;
+      var folder = p.folderId ? (sc.meaningFolders||[]).find(function(f){ return f.id===p.folderId; }) : null;
+      var hay = [p.a, p.b, p.memo, p.pos, p.related, p.category, folder?folder.name:""].join(" ").toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+  }
+  if (!scState.mnFolderId) return all; // "전체" -- 폴더 구분 없이 모든 항목
+  return all.filter(function(e){ return e.pair.folderId === scState.mnFolderId; });
+}
+function scMnListHeadLabel(sc) {
+  if (scState.mnView === "favorites") return "즐겨찾기";
+  if (scState.mnView === "recent") return "최근 수정";
+  if (scState.mnView === "search") return '"'+scState.mnSearch+'" 검색 결과';
+  if (!scState.mnFolderId) return "전체";
+  var f = (sc.meaningFolders||[]).find(function(f){ return f.id === scState.mnFolderId; });
+  return f ? f.name : "전체";
+}
+function scMnItemRowHtml(sc, entry) {
+  var pair = entry.pair, kind = entry.kind;
+  var previewB = scGlossDisplayValue(sc, pair, kind) || "(뜻 없음)";
+  var folder = pair.folderId ? (sc.meaningFolders||[]).find(function(f){ return f.id===pair.folderId; }) : null;
+  return '<div class="sc-mn-item-row'+(scState.mnDetailId===pair.id?" on":"")+'" data-mnitem="'+pair.id+'" data-mnitemkind="'+kind+'" draggable="true">' +
+    '<div class="sc-mn-item-text">' +
+      '<div class="sc-mn-item-a">'+esc(pair.a||"(빈 항목)")+'</div>' +
+      '<div class="sc-mn-item-b">'+esc(previewB)+'</div>' +
+    '</div>' +
+    ((scState.mnView!=="folder" || !scState.mnFolderId) && folder ? '<span class="sc-mn-item-folderchip">'+esc(folder.name)+'</span>' : '') +
+    '<button type="button" class="sc-mn-item-star'+(pair.favorite?" on":"")+'" data-mnfav="'+pair.id+'" title="즐겨찾기">'+ic(pair.favorite?"starFill":"star",13)+'</button>' +
+  '</div>';
+}
+function scMnListHtml(sc) {
+  var items = scMnCurrentItems(sc);
+  return '<div class="sc-mn-list">' +
+    '<div class="sc-mn-list-head">' +
+      '<div class="sc-mn-list-title">'+esc(scMnListHeadLabel(sc))+' · '+items.length+'개</div>' +
+      (scState.mnView === "folder" ? '<div class="sc-mn-list-add">' +
+        '<button type="button" class="chip-add" data-mnadditem="word">'+ic("plus",10)+' 단어/구</button>' +
+        '<button type="button" class="chip-add" data-mnadditem="sentence">'+ic("plus",10)+' 문장</button>' +
+      '</div>' : '') +
+    '</div>' +
+    (items.length
+      ? '<div class="sc-mn-item-list">' + items.map(function(e){ return scMnItemRowHtml(sc, e); }).join("") + '</div>'
+      : '<div class="chip-empty-hint" style="padding:20px">'+(scState.mnView==="search"?"일치하는 항목이 없어요.":"아직 항목이 없어요. 위의 “단어/구”나 “문장” 버튼으로 추가해보세요.")+'</div>') +
+  '</div>';
+}
+function scMnComposerHtml(sc) {
+  var body = "";
+  if (scState.mnComposerOpen) {
+    body =
+      '<div class="sc-mn-composer">' +
+        (sc.glyphs.length
+          ? '<div class="glyph-grid sc-mn-composer-grid">' + sc.glyphs.map(function(g){
+              return '<div class="glyph-card sc-mn-glyph-pick" data-mnpickglyph="'+g.id+'">' + glyphVisualHtml(g) + '<div class="gc-map">'+esc(g.mapTo||"?")+'</div></div>';
+            }).join("") + '</div>'
+          : '<div class="chip-empty-hint">아직 만들어둔 문자가 없어요. 아래에서 새로 그려보세요.</div>') +
+        '<button type="button" class="chip-add" data-mntoggledraw="1" style="margin-top:10px">'+ic(scState.mnDrawMode?"chevUp":"plus",10)+'<span>'+(scState.mnDrawMode?"그리기 닫기":"새 글자 손으로 쓰기")+'</span></button>' +
+        (scState.mnDrawMode
+          ? '<div class="glyph-pad-wrap" style="margin-top:10px">' +
+              '<div>' +
+                '<svg id="mnGlyphPad" class="glyph-pad" viewBox="0 0 '+SC_PAD_SIZE+' '+SC_PAD_SIZE+'" width="'+SC_PAD_SIZE+'" height="'+SC_PAD_SIZE+'"></svg>' +
+                '<div class="glyph-pad-tools">' +
+                  '<button type="button" id="mnGlyphUndoBtn">'+ic("rotate",12)+'<span>한 획 취소</span></button>' +
+                  '<button type="button" id="mnGlyphClearBtn">'+ic("close",12)+'<span>지우기</span></button>' +
+                '</div>' +
+              '</div>' +
+              '<div class="glyph-form">' +
+                '<div><label>대응 문자</label><input type="text" id="mnGlyphMapTo" placeholder="예: ㄱ, g, α"></div>' +
+                '<div><label>메모(선택)</label><input type="text" id="mnGlyphNote" placeholder="발음이나 설명"></div>' +
+                '<button type="button" class="btn primary" id="mnGlyphSaveBtn" style="align-self:flex-start">'+ic("plus",13)+'<span>새 글자 저장하고 이어붙이기</span></button>' +
+              '</div>' +
+            '</div>'
+          : '') +
+      '</div>';
+  }
+  return '<button type="button" class="chip-add" data-mntogglecomposer="1" style="margin-top:8px">'+ic(scState.mnComposerOpen?"chevUp":"plus",10)+'<span>'+(scState.mnComposerOpen?"글자 고르기 닫기":"여기서 글자 이어붙이기")+'</span></button>' + body;
+}
+function scMnDetailHtml(sc) {
+  var entry = scState.mnDetailId ? scFindMeaningEntry(sc, scState.mnDetailId) : null;
+  if (!entry) {
+    return '<div class="sc-mn-detail sc-mn-detail-empty">'+ic("docIcon",22)+'<p>목록에서 항목을 선택하면 여기에서 자세히 보고 편집할 수 있어요.</p></div>';
+  }
+  var pair = entry.pair, kind = entry.kind;
   var gs = scGlossState(sc, pair, kind);
   var displayB = scGlossDisplayValue(sc, pair, kind);
-  var memoOpen = scState.memoOpenId === pair.id;
+  var folderOptionsHtml = '<option value="">(미분류)</option>' + (sc.meaningFolders||[]).map(function(f){
+    var path = scFolderPath(sc, f.id).map(function(x){ return x.name; }).join(" / ");
+    return '<option value="'+f.id+'"'+(pair.folderId===f.id?" selected":"")+'>'+esc(path)+'</option>';
+  }).join("");
+  var matchedRule = scMatchedGrammarRule(sc, pair.a||"");
   var badgeIcon = gs.cls === "auto" ? "wand" : (gs.cls === "edited" ? "pen" : "docIcon");
-  return '<div class="sc-spread-row'+(scState.selectedPairId===pair.id?" active":"")+'" data-pairid="'+pair.id+'" data-pairkind="'+kind+'">' +
-    '<div class="sc-page-left">' +
-      '<input type="text" class="sc-spread-a" data-pairside="a" value="'+esc(pair.a||"")+'" placeholder="'+(kind==="word"?"창작 문자 단어":"창작 문자 문장")+'">' +
-      '<div class="sc-spread-glyph">'+renderGlyphSequenceSvg(sc, pair.a||"")+'</div>' +
+  return '<div class="sc-mn-detail">' +
+    '<div class="sc-mn-detail-head">' +
+      '<button type="button" class="sc-mn-item-star'+(pair.favorite?" on":"")+'" data-mnfav="'+pair.id+'" title="즐겨찾기">'+ic(pair.favorite?"starFill":"star",15)+'</button>' +
+      '<div class="sc-mn-detail-title">'+esc(pair.a||"(빈 항목)")+'</div>' +
+      '<button type="button" class="pair-del" data-delpair2="'+pair.id+'" data-pairkind2="'+kind+'" title="삭제">'+ic("trash",13)+'</button>' +
     '</div>' +
-    '<div class="sc-page-right">' +
+
+    '<details class="sc-mn-section" open><summary>'+ic("list",12)+'<span>기본 정보</span></summary>' +
+      '<div class="sc-mn-field"><label>폴더</label><select data-mnfield="folderId">'+folderOptionsHtml+'</select></div>' +
+      '<div class="sc-mn-field"><label>품사</label><input type="text" data-mnfield="pos" value="'+esc(pair.pos||"")+'" placeholder="예: 명사, 동사, 감탄사"></div>' +
+      '<div class="sc-mn-field"><label>관련 단어</label><input type="text" data-mnfield="related" value="'+esc(pair.related||"")+'" placeholder="쉼표로 구분"></div>' +
+      '<div class="sc-mn-field"><label>분류</label><input type="text" data-mnfield="category" value="'+esc(pair.category||"")+'" placeholder="예: 자연, 감정 (쉼표로 여러 개)"></div>' +
+    '</details>' +
+
+    '<details class="sc-mn-section" open><summary>'+ic("pen",12)+'<span>창작 문자</span></summary>' +
+      '<div class="sc-mn-glyph-preview">'+renderGlyphSequenceSvg(sc, pair.a||"")+'</div>' +
+      '<input type="text" class="sc-spread-a" data-mnfield="a" value="'+esc(pair.a||"")+'" placeholder="'+(kind==="word"?"단어/짧은 구":"짧은 문장")+' — 직접 입력하거나 아래에서 글자를 골라 이어붙일 수 있어요">' +
+      scMnComposerHtml(sc) +
+    '</details>' +
+
+    '<details class="sc-mn-section" open><summary>'+ic("wand",12)+'<span>뜻풀이</span></summary>' +
       '<div class="scg-head">' +
         '<span class="scg-badge scg-'+gs.cls+'">'+ic(badgeIcon,10)+'<span>'+gs.label+'</span></span>' +
-        (pair.glossMode === "manual" ? '<button type="button" class="scg-revert" data-revertgloss="'+pair.id+'" title="자동 계산값으로 되돌리기">'+ic("rotate",11)+'<span>되돌리기</span></button>' : '') +
-        '<button type="button" class="scg-memo-toggle'+(pair.memo?" has":"")+'" data-memotoggle="'+pair.id+'">'+ic("docIcon",11)+'<span>메모'+(pair.memo?" ●":"")+'</span></button>' +
-        '<button type="button" class="pair-del" data-delpair2="'+pair.id+'" data-pairkind2="'+kind+'" title="삭제">'+ic("close",12)+'</button>' +
+        (pair.glossMode==="manual" ? '<button type="button" class="scg-revert" data-revertgloss="'+pair.id+'">'+ic("rotate",11)+'<span>되돌리기</span></button>' : '') +
       '</div>' +
-      '<textarea class="sc-spread-b" data-pairside="b" rows="2" placeholder="뜻(한글)">'+esc(displayB)+'</textarea>' +
-      (gs.cls === "edited" ? '<div class="scg-diff-hint">자동 계산값: '+esc(gs.auto)+'</div>' : '') +
-      (memoOpen ? '<textarea class="sc-spread-memo" data-memofield="'+pair.id+'" rows="2" placeholder="자동 뜻과 실제 뜻이 다른 이유(문법·존댓말·고어·뉘앙스 등)">'+esc(pair.memo||"")+'</textarea>' : '') +
-    '</div>' +
+      '<textarea class="sc-spread-b" data-mnfield="b" rows="2" placeholder="뜻(한글)">'+esc(displayB)+'</textarea>' +
+      (gs.cls==="edited" ? '<div class="scg-diff-hint">자동 계산값: '+esc(gs.auto)+'</div>' : '') +
+    '</details>' +
+
+    '<details class="sc-mn-section"><summary>'+ic("table",12)+'<span>문법</span></summary>' +
+      (matchedRule
+        ? '<div class="chip-empty-hint">연결된 문법 규칙: <b>'+esc(matchedRule.item)+'</b>'+(matchedRule.koreanMeaning?' — '+esc(matchedRule.koreanMeaning):'')+'</div>'
+        : '<div class="chip-empty-hint">이 표현에 자동으로 연결된 문법 규칙이 없어요. 문법 모드에서 항목을 추가하면 여기에 표시돼요.</div>') +
+      '<button type="button" class="chip-add" data-gotogrammar="1" style="margin-top:8px">'+ic("table",10)+'<span>문법 모드 열기</span></button>' +
+    '</details>' +
+
+    '<details class="sc-mn-section"><summary>'+ic("docIcon",12)+'<span>메모'+(pair.memo?" ●":"")+'</span></summary>' +
+      '<textarea class="sc-mn-memo" data-mnfield="memo" rows="6" placeholder="자동 뜻과 실제 뜻이 다른 이유, 문화적 배경, 사용상 주의사항 등 자유롭게 적어두세요.">'+esc(pair.memo||"")+'</textarea>' +
+    '</details>' +
   '</div>';
-}
-function renderScSpreadSectionHtml(sc, kind, field, label, exA) {
-  var list = sc[field] || [];
-  return '<div class="sc-book-section-label">'+ic(kind==="word"?"link":"docIcon",12)+'<span>'+label+' · '+list.length+'개</span></div>' +
-    (list.length
-      ? list.map(function(p){ return scPairRowHtml(sc, kind, p); }).join("")
-      : '<div class="chip-empty-hint" style="padding:0 18px 14px">아직 없어요. 예: '+exA+'</div>') +
-    '<div style="padding:10px 18px 16px"><button type="button" class="chip-add" data-addpair2="'+field+'">'+ic("plus",10)+' '+label+' 추가</button></div>';
 }
 function renderScMeaningModeHtml(sc) {
-  return '<div class="sc-book-wrap">' +
-    renderScSpreadSectionHtml(sc, "word", "words", "단어 대응", "사랑 → love") +
-    renderScSpreadSectionHtml(sc, "sentence", "sentences", "문장 대응", "i love her → 나는 그녀를 사랑한다") +
-  '</div>';
+  return '<div class="sc-mn-shell">' + scMnNavHtml(sc) + scMnListHtml(sc) + scMnDetailHtml(sc) + '</div>';
 }
 function scGrammarCardHtml(r) {
   return '<div class="script-card sc-grammar-card" data-grammarid="'+r.id+'">' +
@@ -17326,8 +17582,8 @@ function renderScriptPage(sc) {
   if (_scAutoNavDoneFor !== sc.id) {
     _scAutoNavDoneFor = sc.id;
     scState.mode = scAutoNavMode(sc);
-    scState.selectedPairId = null;
-    scState.memoOpenId = null;
+    scState.mnView = "folder"; scState.mnFolderId = null; scState.mnSearch = "";
+    scState.mnDetailId = null; scState.mnComposerOpen = false; scState.mnDrawMode = false;
   }
   var glyphSectionHtml =
     '<div class="script-card">' +
@@ -17380,71 +17636,242 @@ function renderScriptPage(sc) {
   wireScriptPage(sc);
 }
 function scFieldForKind(kind) { return kind === "word" ? "words" : "sentences"; }
-function scFindPair(sc, id) {
-  return (sc.words || []).find(function(p){ return p.id === id; }) ||
-    (sc.sentences || []).find(function(p){ return p.id === id; });
+/* 손글씨 문자 패드 조작(그리기·한 획 취소·지우기·저장)을 문자대응과 뜻대응 손글씨
+   조합기가 그대로 공유한다 -- 두 곳이 "같은 도구, 같은 손글씨 경험"을 갖도록 하는
+   재사용 지점. onSave(mapTo, note, strokes)만 호출부마다 다르게 넘기면 된다. */
+function wireGlyphPad(ids, onSave) {
+  var pad = document.getElementById(ids.pad);
+  if (!pad) return;
+  var mapToInput = ids.mapTo ? document.getElementById(ids.mapTo) : null;
+  var noteInput = ids.note ? document.getElementById(ids.note) : null;
+  scRenderPad(ids.pad);
+
+  function ptFromEvent(e) {
+    var rect = pad.getBoundingClientRect();
+    var x = (e.clientX - rect.left) * (SC_PAD_SIZE/rect.width);
+    var y = (e.clientY - rect.top) * (SC_PAD_SIZE/rect.height);
+    return [Math.max(0, Math.min(SC_PAD_SIZE, x)), Math.max(0, Math.min(SC_PAD_SIZE, y))];
+  }
+  pad.addEventListener("pointerdown", function(e){
+    e.preventDefault();
+    if (pad.setPointerCapture) { try { pad.setPointerCapture(e.pointerId); } catch (err) {} }
+    var p = ptFromEvent(e);
+    scState.curPts = [p]; scState.smoothPt = p;
+    scRenderPad(ids.pad);
+  });
+  pad.addEventListener("pointermove", function(e){
+    if (!scState.curPts) return;
+    var raw = ptFromEvent(e);
+    var alpha = 0.4;
+    scState.smoothPt = [ scState.smoothPt[0]+(raw[0]-scState.smoothPt[0])*alpha, scState.smoothPt[1]+(raw[1]-scState.smoothPt[1])*alpha ];
+    scState.curPts.push(scState.smoothPt.slice());
+    scRenderPad(ids.pad);
+  });
+  function finishStroke() {
+    if (scState.curPts && scState.curPts.length) scState.strokes.push(scPointsToPath(scState.curPts));
+    scState.curPts = null; scState.smoothPt = null;
+    scRenderPad(ids.pad);
+  }
+  pad.addEventListener("pointerup", finishStroke);
+  pad.addEventListener("pointerleave", function(){ if (scState.curPts) finishStroke(); });
+
+  if (ids.undoBtn) document.getElementById(ids.undoBtn).addEventListener("click", function(){ scState.strokes.pop(); scRenderPad(ids.pad); });
+  if (ids.clearBtn) document.getElementById(ids.clearBtn).addEventListener("click", function(){ scState.strokes = []; scState.curPts = null; scRenderPad(ids.pad); });
+  if (ids.saveBtn) document.getElementById(ids.saveBtn).addEventListener("click", function(){
+    if (!scState.strokes.length) return;
+    onSave(mapToInput ? mapToInput.value.trim() : "", noteInput ? noteInput.value.trim() : "", scState.strokes.slice());
+  });
 }
 function wireScMeaningMode(sc) {
-  document.querySelectorAll(".sc-spread-row").forEach(function(row){
-    var id = row.dataset.pairid;
-    var kind = row.dataset.pairkind;
-    var field = scFieldForKind(kind);
-    var pair = sc[field].find(function(p){ return p.id === id; });
-    if (!pair) return;
+  var entry = scState.mnDetailId ? scFindMeaningEntry(sc, scState.mnDetailId) : null;
+  var pair = entry ? entry.pair : null;
 
-    row.addEventListener("click", function(){
-      if (scState.selectedPairId === id) return;
-      var prevId = scState.selectedPairId;
-      scState.selectedPairId = id;
-      if (prevId) { var prevRow = document.querySelector('.sc-spread-row[data-pairid="'+prevId+'"]'); if (prevRow) prevRow.classList.remove("active"); }
-      row.classList.add("active");
+  var searchInput = document.getElementById("scMnSearch");
+  if (searchInput) searchInput.addEventListener("input", function(){
+    scState.mnSearch = searchInput.value;
+    scState.mnView = scState.mnSearch.trim() ? "search" : "folder";
+    var caret = searchInput.selectionStart;
+    renderScriptPage(sc);
+    var freshInput = document.getElementById("scMnSearch");
+    if (freshInput) { freshInput.focus(); try { freshInput.setSelectionRange(caret, caret); } catch (err) {} }
+  });
+
+  document.querySelectorAll("[data-mnview]").forEach(function(btn){
+    btn.addEventListener("click", function(){ scState.mnView = btn.dataset.mnview; renderScriptPage(sc); });
+  });
+
+  document.querySelectorAll("[data-mnfolder]").forEach(function(row){
+    row.addEventListener("click", function(e){
+      if (e.target.closest("[data-mnaddsubfolder],[data-mndelfolder]")) return;
+      scState.mnView = "folder";
+      scState.mnFolderId = row.dataset.mnfolder || null;
+      renderScriptPage(sc);
     });
-
-    var aInput = row.querySelector('[data-pairside="a"]');
-    aInput.addEventListener("input", function(){ pair.a = aInput.value; saveData(); });
-    aInput.addEventListener("blur", function(){ touchScSection(sc, "meaning"); renderScriptPage(sc); });
-
-    var bInput = row.querySelector('[data-pairside="b"]');
-    bInput.addEventListener("input", function(){ pair.glossMode = "manual"; pair.b = bInput.value; saveData(); });
-    bInput.addEventListener("blur", function(){ touchScSection(sc, "meaning"); renderScriptPage(sc); });
-
-    var revertBtn = row.querySelector("[data-revertgloss]");
-    if (revertBtn) revertBtn.addEventListener("click", function(){
-      pair.glossMode = "auto";
+    row.addEventListener("dragover", function(e){ e.preventDefault(); row.classList.add("dragover"); });
+    row.addEventListener("dragleave", function(){ row.classList.remove("dragover"); });
+    row.addEventListener("drop", function(e){
+      e.preventDefault();
+      row.classList.remove("dragover");
+      var id = scState.mnDragItemId;
+      if (!id) return;
+      var draggedEntry = scFindMeaningEntry(sc, id);
+      if (!draggedEntry) return;
+      draggedEntry.pair.folderId = row.dataset.mnfolder || null;
+      draggedEntry.pair.updatedAt = Date.now();
+      scState.mnDragItemId = null;
       saveData(); touchScSection(sc, "meaning");
       renderScriptPage(sc);
     });
+  });
 
-    row.querySelector("[data-memotoggle]").addEventListener("click", function(){
-      scState.memoOpenId = scState.memoOpenId === id ? null : id;
-      renderScriptPage(sc);
-    });
-    var memoField = row.querySelector("[data-memofield]");
-    if (memoField) {
-      memoField.addEventListener("input", function(){ pair.memo = memoField.value; saveData(); });
-      memoField.addEventListener("blur", function(){ renderScriptPage(sc); });
-    }
-
-    row.querySelector("[data-delpair2]").addEventListener("click", function(e){
+  document.querySelectorAll("[data-mnaddfolder],[data-mnaddsubfolder]").forEach(function(btn){
+    btn.addEventListener("click", function(e){
       e.stopPropagation();
-      sc[field] = sc[field].filter(function(p){ return p.id !== id; });
-      if (scState.selectedPairId === id) scState.selectedPairId = null;
+      var parentId = btn.dataset.mnaddsubfolder || null;
+      openModal({
+        title: parentId ? "하위 폴더 만들기" : "새 폴더",
+        fields: [{ placeholder: "폴더 이름" }],
+        confirmLabel: "만들기",
+        onConfirm: function(values){
+          var name = values[0]; if (!name) return;
+          var f = { id: uid(), name: name, parentId: parentId };
+          sc.meaningFolders.push(f);
+          scState.mnView = "folder"; scState.mnFolderId = f.id;
+          saveData(); renderScriptPage(sc);
+        }
+      });
+    });
+  });
+  document.querySelectorAll("[data-mndelfolder]").forEach(function(btn){
+    btn.addEventListener("click", function(e){
+      e.stopPropagation();
+      var fid = btn.dataset.mndelfolder;
+      var folder = (sc.meaningFolders||[]).find(function(f){ return f.id === fid; });
+      if (!folder) return;
+      openModal({
+        title: "폴더를 삭제할까요?",
+        message: '"'+(folder.name||"제목 없음")+'"과(와) 하위 폴더를 삭제합니다. 안에 있던 항목은 지워지지 않고 미분류로 이동해요.',
+        confirmLabel: "삭제", danger: true,
+        onConfirm: function(){
+          var ids = scFolderDescendantIds(sc, fid);
+          scAllMeaningItems(sc).forEach(function(e){ if (ids.indexOf(e.pair.folderId) !== -1) e.pair.folderId = null; });
+          sc.meaningFolders = sc.meaningFolders.filter(function(f){ return ids.indexOf(f.id) === -1; });
+          if (ids.indexOf(scState.mnFolderId) !== -1) scState.mnFolderId = null;
+          saveData(); renderScriptPage(sc);
+        }
+      });
+    });
+  });
+
+  document.querySelectorAll("[data-mnadditem]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var kind = btn.dataset.mnadditem;
+      var field = scFieldForKind(kind);
+      var now = Date.now();
+      var newPair = { id: uid(), a: "", b: "", glossMode: "auto", memo: "", folderId: scState.mnFolderId, favorite: false, pos: "", related: "", category: "", lastOpenedAt: now, updatedAt: now };
+      sc[field].push(newPair);
+      scState.mnDetailId = newPair.id;
       saveData(); touchScSection(sc, "meaning");
+      renderScriptPage(sc);
+      var aInput = document.querySelector('[data-mnfield="a"]');
+      if (aInput) aInput.focus();
+    });
+  });
+
+  document.querySelectorAll("[data-mnitem]").forEach(function(row){
+    var id = row.dataset.mnitem;
+    row.addEventListener("click", function(e){
+      if (e.target.closest("[data-mnfav]")) return;
+      scState.mnDetailId = id;
+      var clicked = scFindMeaningEntry(sc, id);
+      if (clicked) { clicked.pair.lastOpenedAt = Date.now(); saveData(); }
+      scState.mnComposerOpen = false; scState.mnDrawMode = false;
+      renderScriptPage(sc);
+    });
+    row.addEventListener("dragstart", function(e){
+      scState.mnDragItemId = id;
+      e.dataTransfer.effectAllowed = "move";
+      try { e.dataTransfer.setData("text/plain", id); } catch (err) {}
+    });
+  });
+  document.querySelectorAll("[data-mnfav]").forEach(function(btn){
+    btn.addEventListener("click", function(e){
+      e.stopPropagation();
+      var favEntry = scFindMeaningEntry(sc, btn.dataset.mnfav);
+      if (!favEntry) return;
+      favEntry.pair.favorite = !favEntry.pair.favorite;
+      saveData();
       renderScriptPage(sc);
     });
   });
 
-  document.querySelectorAll("[data-addpair2]").forEach(function(btn){
-    btn.addEventListener("click", function(){
-      var field = btn.dataset.addpair2;
-      var newPair = { id: uid(), a: "", b: "", glossMode: "auto", memo: "" };
-      sc[field].push(newPair);
+  if (!entry) return;
+
+  document.querySelectorAll("[data-mnfield]").forEach(function(el){
+    var field = el.dataset.mnfield;
+    el.addEventListener("input", function(){
+      if (field === "b") { pair.glossMode = "manual"; pair.b = el.value; }
+      else if (field === "folderId") { pair.folderId = el.value || null; }
+      else { pair[field] = el.value; }
+      pair.updatedAt = Date.now();
+      saveData();
+    });
+    var refreshEvt = el.tagName === "SELECT" ? "change" : "blur";
+    el.addEventListener(refreshEvt, function(){ touchScSection(sc, "meaning"); renderScriptPage(sc); });
+  });
+
+  var revertBtn = document.querySelector("[data-revertgloss]");
+  if (revertBtn) revertBtn.addEventListener("click", function(){
+    pair.glossMode = "auto"; pair.updatedAt = Date.now();
+    saveData(); touchScSection(sc, "meaning");
+    renderScriptPage(sc);
+  });
+
+  var delBtn = document.querySelector("[data-delpair2]");
+  if (delBtn) delBtn.addEventListener("click", function(){
+    var field = scFieldForKind(delBtn.dataset.pairkind2);
+    sc[field] = sc[field].filter(function(p){ return p.id !== delBtn.dataset.delpair2; });
+    if (scState.mnDetailId === delBtn.dataset.delpair2) scState.mnDetailId = null;
+    saveData(); touchScSection(sc, "meaning");
+    renderScriptPage(sc);
+  });
+
+  var gotoGrammarBtn = document.querySelector("[data-gotogrammar]");
+  if (gotoGrammarBtn) gotoGrammarBtn.addEventListener("click", function(){ scState.mode = "grammar"; renderScriptPage(sc); });
+
+  var toggleComposerBtn = document.querySelector("[data-mntogglecomposer]");
+  if (toggleComposerBtn) toggleComposerBtn.addEventListener("click", function(){
+    scState.mnComposerOpen = !scState.mnComposerOpen;
+    if (!scState.mnComposerOpen) scState.mnDrawMode = false;
+    renderScriptPage(sc);
+  });
+  var toggleDrawBtn = document.querySelector("[data-mntoggledraw]");
+  if (toggleDrawBtn) toggleDrawBtn.addEventListener("click", function(){
+    scState.mnDrawMode = !scState.mnDrawMode;
+    renderScriptPage(sc);
+  });
+  document.querySelectorAll("[data-mnpickglyph]").forEach(function(card){
+    card.addEventListener("click", function(){
+      var g = sc.glyphs.find(function(g){ return g.id === card.dataset.mnpickglyph; });
+      if (!g) return;
+      pair.a = (pair.a||"") + (g.mapTo||"");
+      pair.updatedAt = Date.now();
       saveData(); touchScSection(sc, "meaning");
       renderScriptPage(sc);
-      var addedRow = document.querySelector('.sc-spread-row[data-pairid="'+newPair.id+'"]');
-      if (addedRow) addedRow.querySelector('[data-pairside="a"]').focus();
     });
   });
+  if (scState.mnDrawMode) {
+    scState.strokes = []; scState.curPts = null; scState.smoothPt = null;
+    wireGlyphPad({ pad: "mnGlyphPad", mapTo: "mnGlyphMapTo", note: "mnGlyphNote", saveBtn: "mnGlyphSaveBtn", undoBtn: "mnGlyphUndoBtn", clearBtn: "mnGlyphClearBtn" },
+      function(mapTo, note, strokes){
+        sc.glyphs.push({ id: uid(), strokes: strokes, mapTo: mapTo, note: note });
+        pair.a = (pair.a||"") + (mapTo||"");
+        pair.updatedAt = Date.now();
+        saveData(); touchScSection(sc, "glyphs"); touchScSection(sc, "meaning");
+        scState.mnDrawMode = false;
+        renderScriptPage(sc);
+      });
+  }
 }
 function wireScGrammarMode(sc) {
   document.getElementById("grammarAddBtn").addEventListener("click", function(){
@@ -17490,57 +17917,18 @@ function wireScriptPage(sc) {
   var mapToInput = document.getElementById("glyphMapTo");
   var noteInput = document.getElementById("glyphNote");
   var saveLabel = document.getElementById("glyphSaveLabel");
-  scRenderPad();
 
-  function ptFromEvent(e) {
-    var rect = pad.getBoundingClientRect();
-    var x = (e.clientX - rect.left) * (SC_PAD_SIZE/rect.width);
-    var y = (e.clientY - rect.top) * (SC_PAD_SIZE/rect.height);
-    return [Math.max(0, Math.min(SC_PAD_SIZE, x)), Math.max(0, Math.min(SC_PAD_SIZE, y))];
-  }
-  pad.addEventListener("pointerdown", function(e){
-    e.preventDefault();
-    if (pad.setPointerCapture) { try { pad.setPointerCapture(e.pointerId); } catch (err) {} }
-    var p = ptFromEvent(e);
-    scState.curPts = [p];
-    scState.smoothPt = p;
-    scRenderPad();
-  });
-  pad.addEventListener("pointermove", function(e){
-    if (!scState.curPts) return;
-    var raw = ptFromEvent(e);
-    var alpha = 0.4;
-    scState.smoothPt = [
-      scState.smoothPt[0] + (raw[0]-scState.smoothPt[0])*alpha,
-      scState.smoothPt[1] + (raw[1]-scState.smoothPt[1])*alpha
-    ];
-    scState.curPts.push(scState.smoothPt.slice());
-    scRenderPad();
-  });
-  function finishStroke() {
-    if (scState.curPts && scState.curPts.length) scState.strokes.push(scPointsToPath(scState.curPts));
-    scState.curPts = null; scState.smoothPt = null;
-    scRenderPad();
-  }
-  pad.addEventListener("pointerup", finishStroke);
-  pad.addEventListener("pointerleave", function(){ if (scState.curPts) finishStroke(); });
-
-  document.getElementById("glyphUndoBtn").addEventListener("click", function(){ scState.strokes.pop(); scRenderPad(); });
-  document.getElementById("glyphClearBtn").addEventListener("click", function(){ scState.strokes = []; scState.curPts = null; scRenderPad(); });
-
-  document.getElementById("glyphSaveBtn").addEventListener("click", function(){
-    if (!scState.strokes.length) return;
-    var mapTo = mapToInput.value.trim();
-    var note = noteInput.value.trim();
-    if (scState.editingGlyphId) {
-      var g = sc.glyphs.find(function(g){ return g.id === scState.editingGlyphId; });
-      if (g) { g.strokes = scState.strokes.slice(); g.mapTo = mapTo; g.note = note; }
-    } else {
-      sc.glyphs.push({ id: uid(), strokes: scState.strokes.slice(), mapTo: mapTo, note: note });
-    }
-    saveData();
-    renderScriptPage(sc);
-  });
+  wireGlyphPad({ pad: "glyphPad", mapTo: "glyphMapTo", note: "glyphNote", saveBtn: "glyphSaveBtn", undoBtn: "glyphUndoBtn", clearBtn: "glyphClearBtn" },
+    function(mapTo, note, strokes){
+      if (scState.editingGlyphId) {
+        var g = sc.glyphs.find(function(g){ return g.id === scState.editingGlyphId; });
+        if (g) { g.strokes = strokes; g.mapTo = mapTo; g.note = note; }
+      } else {
+        sc.glyphs.push({ id: uid(), strokes: strokes, mapTo: mapTo, note: note });
+      }
+      saveData();
+      renderScriptPage(sc);
+    });
 
   document.querySelectorAll("[data-editglyph]").forEach(function(card){
     card.addEventListener("click", function(e){
@@ -17950,6 +18338,11 @@ var ASSET_CSS = `/* World-Building Viewer — self-contained stylesheet (no exte
   }
 }
 * { box-sizing: border-box; }
+* { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background-color: var(--border-strong); border-radius: 20px; border: 2.5px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background-color: var(--ink-faint); }
 html, body { margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "Apple SD Gothic Neo", "Segoe UI", sans-serif;
