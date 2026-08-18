@@ -884,69 +884,12 @@
   .sc-grammar-del { align-self:flex-start; }
 
   /* ---------- 뜻대응: 폴더 / 목록 / 상세 3단 ---------- */
-  .sc-mn-shell { display:grid; grid-template-columns:220px 280px 1fr; gap:0; border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:var(--shadow-2); background:var(--bg-card); align-items:stretch; min-height:520px; }
-  .sc-mn-nav, .sc-mn-list { border-right:1px solid var(--border); display:flex; flex-direction:column; min-height:0; }
-  .sc-mn-nav { padding:14px 10px; gap:10px; }
-  .sc-mn-search { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; font-size:12.5px; background:var(--bg); color:var(--ink); outline:none; }
-  .sc-mn-search:focus { border-color:var(--accent); }
-  .sc-mn-quick { display:flex; flex-direction:column; gap:2px; }
-  .sc-mn-quick-btn { display:flex; align-items:center; gap:7px; border:none; background:none; padding:7px 8px; border-radius:8px; font-size:12.5px; color:var(--ink-soft); text-align:left; }
-  .sc-mn-quick-btn:hover { background:var(--bg-card-hover); }
-  .sc-mn-quick-btn.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
-  .sc-mn-quick-btn .sc-mn-folder-count { margin-left:auto; }
-  .sc-mn-tree-head { display:flex; align-items:center; justify-content:space-between; font-size:11px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.04em; padding:6px 8px 2px; }
-  .sc-mn-tree-head button { background:none; border:none; color:var(--ink-faint); display:flex; padding:2px; border-radius:5px; }
-  .sc-mn-tree-head button:hover { color:var(--accent); background:var(--bg-card-hover); }
-  .sc-mn-tree { display:flex; flex-direction:column; gap:1px; overflow-y:auto; flex:1; min-height:0; }
-  .sc-mn-folder-row { display:flex; align-items:center; gap:6px; padding:6px 8px; border-radius:7px; font-size:12.5px; color:var(--ink-soft); cursor:pointer; }
-  .sc-mn-folder-row:hover { background:var(--bg-card-hover); }
-  .sc-mn-folder-row.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
-  .sc-mn-folder-row.dragover { outline:1.5px dashed var(--accent); outline-offset:-2px; background:var(--accent-soft); }
-  .sc-mn-folder-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .sc-mn-folder-count { font-size:10.5px; color:var(--ink-faint); flex:none; }
-  .sc-mn-folder-row.on .sc-mn-folder-count { color:var(--accent); }
-  .sc-mn-folder-add, .sc-mn-folder-del { flex:none; background:none; border:none; color:var(--ink-faint); padding:2px; border-radius:5px; display:none; }
-  .sc-mn-folder-row:hover .sc-mn-folder-add, .sc-mn-folder-row:hover .sc-mn-folder-del { display:flex; }
-  .sc-mn-folder-add:hover { color:var(--accent); background:var(--bg-card-hover); }
-  .sc-mn-folder-del:hover { color:var(--rose); background:var(--rose-soft); }
-  .sc-mn-list { padding:12px 0; }
-  .sc-mn-list-head { padding:0 14px 10px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:2px; }
-  .sc-mn-list-title { font-size:12.5px; font-weight:600; color:var(--ink); }
-  .sc-mn-list-add { display:flex; gap:6px; }
-  .sc-mn-item-list { overflow-y:auto; flex:1; min-height:0; }
-  .sc-mn-item-row { display:flex; align-items:center; gap:8px; padding:9px 14px; cursor:pointer; border-bottom:1px solid var(--border); }
-  .sc-mn-item-row:hover { background:var(--bg-card-hover); }
-  .sc-mn-item-row.on { background:var(--accent-soft); }
-  .sc-mn-item-text { flex:1; min-width:0; }
-  .sc-mn-item-a { font-family:var(--serif); font-size:13.5px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .sc-mn-item-b { font-size:11.5px; color:var(--ink-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:1px; }
-  .sc-mn-item-folderchip { flex:none; font-size:10px; color:var(--ink-faint); background:var(--bg-panel); border-radius:10px; padding:2px 7px; }
-  .sc-mn-item-star { flex:none; background:none; border:none; color:var(--border-strong); padding:2px; display:flex; }
-  .sc-mn-item-star:hover { color:var(--ink-faint); }
-  .sc-mn-item-star.on { color:var(--accent); }
-  .sc-mn-detail { padding:16px 20px 24px; overflow-y:auto; min-height:0; }
-  .sc-mn-detail-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--ink-faint); text-align:center; padding:40px 24px; }
-  .sc-mn-detail-head { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
-  .sc-mn-detail-title { flex:1; min-width:0; font-family:var(--serif); font-size:17px; font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .sc-mn-section { border:1px solid var(--border); border-radius:10px; margin-bottom:10px; padding:0 14px; background:var(--bg); }
-  .sc-mn-section[open] { padding-bottom:14px; }
-  .sc-mn-section summary { display:flex; align-items:center; gap:7px; padding:11px 0; font-size:12.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; list-style:none; }
-  .sc-mn-section summary::-webkit-details-marker { display:none; }
-  .sc-mn-field { margin-bottom:10px; }
-  .sc-mn-field:last-child { margin-bottom:0; }
-  .sc-mn-field label { font-size:11px; color:var(--ink-faint); display:block; margin-bottom:4px; }
-  .sc-mn-field input, .sc-mn-field select { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; font-size:13px; outline:none; background:var(--bg-card); color:var(--ink); font-family:inherit; }
-  .sc-mn-field input:focus, .sc-mn-field select:focus { border-color:var(--accent); }
-  .sc-mn-glyph-preview { overflow-x:auto; margin-bottom:8px; border:1px solid var(--border); border-radius:8px; background:var(--bg-card); padding:6px; }
-  .sc-mn-glyph-preview svg { display:block; }
-  .sc-mn-composer { margin-top:8px; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--bg-card); }
-  .sc-mn-composer-label { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--ink-faint); margin-bottom:8px; text-transform:uppercase; letter-spacing:.03em; }
-  .sc-mn-composer-grid { grid-template-columns:repeat(auto-fill, minmax(64px,1fr)); }
-  .sc-mn-glyph-pick { cursor:pointer; }
-  .sc-mn-glyph-pick svg { height:40px; }
-  .sc-mn-composer-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .kb-key.kb-unassigned { opacity:.35; }
+  .kb-key.kb-unassigned .kb-key-label { text-decoration:none; }
+  .kb-key[draggable="true"] { cursor:grab; }
+  .kb-key.kb-dragover { outline:2px dashed var(--accent); outline-offset:-2px; }
   .sc-mn-memo-row { cursor:pointer; }
-  .sc-mn-memo-row-head { display:flex; align-items:center; gap:7px; padding:11px 0; font-size:12.5px; font-weight:600; color:var(--ink-soft); }
+  .sc-mn-memo-row-head { display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:600; color:var(--ink-soft); }
   .sc-mn-memo-row:hover .sc-mn-memo-row-head { color:var(--accent); }
   .sc-mn-memo-preview { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:400; color:var(--ink-faint); font-size:12px; }
   .sc-mn-memo-preview.empty { font-style:italic; }
@@ -957,12 +900,7 @@
   .sc-mn-memo-close { flex:none; background:none; border:none; color:var(--ink-faint); padding:5px; border-radius:6px; display:flex; }
   .sc-mn-memo-close:hover { color:var(--rose); background:var(--rose-soft); }
   .sc-mn-memo-box-text { flex:1; min-height:280px; box-sizing:border-box; border:none; outline:none; resize:none; padding:20px 22px; font-size:14.5px; line-height:1.8; background:var(--bg); color:var(--ink); font-family:inherit; }
-  @media (max-width: 1100px) {
-    .sc-mn-shell { grid-template-columns:180px 240px 1fr; }
-  }
   @media (max-width: 900px) {
-    .sc-mn-shell { grid-template-columns:1fr; }
-    .sc-mn-nav, .sc-mn-list { border-right:none; border-bottom:1px solid var(--border); max-height:220px; }
     .sc-grammar-row2 { grid-template-columns:1fr; }
   }
   .sc-typein { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 11px; font-size:14px; outline:none; background:var(--bg); margin-bottom:10px; }
@@ -17010,6 +16948,7 @@ function migrateScPair(p) {
   if (p.category === undefined) p.category = "";
   if (p.lastOpenedAt === undefined) p.lastOpenedAt = 0;
   if (p.updatedAt === undefined) p.updatedAt = 0;
+  if (p.strokes === undefined) p.strokes = [];
 }
 function migrateScript(sc) {
   sc.grammar = sc.grammar || [];
@@ -17019,6 +16958,7 @@ function migrateScript(sc) {
   sc.glyphsUpdatedAt = sc.glyphsUpdatedAt || 0;
   sc.meaningUpdatedAt = sc.meaningUpdatedAt || 0;
   sc.grammarUpdatedAt = sc.grammarUpdatedAt || 0;
+  syncKbAssign(sc);
   return sc;
 }
 /* 뜻대응 항목 전체(단어+문장)를 폴더 계층과 함께 다루기 위한 헬퍼들. */
@@ -17028,20 +16968,6 @@ function scAllMeaningItems(sc) {
 }
 function scFindMeaningEntry(sc, id) {
   return scAllMeaningItems(sc).find(function(e){ return e.pair.id === id; }) || null;
-}
-function scFolderChildren(sc, parentId) {
-  return (sc.meaningFolders || []).filter(function(f){ return (f.parentId || null) === (parentId || null); });
-}
-function scFolderDescendantIds(sc, folderId) {
-  var out = [folderId];
-  scFolderChildren(sc, folderId).forEach(function(f){ out = out.concat(scFolderDescendantIds(sc, f.id)); });
-  return out;
-}
-function scFolderPath(sc, folderId) {
-  var path = [];
-  var cur = (sc.meaningFolders || []).find(function(f){ return f.id === folderId; });
-  while (cur) { path.unshift(cur); cur = (sc.meaningFolders || []).find(function(f){ return f.id === cur.parentId; }); }
-  return path;
 }
 function touchScSection(sc, section) { sc[section + "UpdatedAt"] = Date.now(); }
 
@@ -17085,10 +17011,6 @@ function scGrammarAutoGloss(sc, scriptText, excludeId) {
   if (!m) return "";
   var meaning = (m.rule.koreanMeaning || m.rule.rule || "").trim();
   return meaning ? (m.baseMeaning + "(" + meaning + ")") : m.baseMeaning;
-}
-function scMatchedGrammarRule(sc, scriptText) {
-  var m = scFindMatchingGrammarRule(sc, (scriptText || "").trim(), null);
-  return m ? m.rule : null;
 }
 function computeAutoGloss(sc, kind, pair) {
   var text = (pair.a || "").trim();
@@ -17293,6 +17215,35 @@ var KB_ROWS = [
   ["A","S","D","F","G","H","J","K","L"],
   ["Z","X","C","V","B","N","M"]
 ];
+/* 문자 키(a~z, 숫자·기호 제외)와 손글씨 문자 하나하나를 잇는 배정표. 문자대응/뜻대응 두
+   키보드가 이 표 하나(sc.kbAssign)를 그대로 같이 보고, 드래그로 순서를 바꾸는 것도
+   문자대응 쪽에서만 허용한다 -- 그래서 "두 쪽 배정이 다르면 문자대응이 우선"이라는
+   요구가 애초에 자료구조 하나로 통일돼 있어 어긋날 일이 없다. */
+var KB_LETTER_ORDER = "qwertyuiopasdfghjklzxcvbnm".split("");
+function syncKbAssign(sc) {
+  sc.kbAssign = sc.kbAssign || {};
+  KB_LETTER_ORDER.forEach(function(l){
+    if (sc.kbAssign[l] && !sc.glyphs.some(function(g){ return g.id === sc.kbAssign[l]; })) sc.kbAssign[l] = null;
+  });
+  var assigned = {};
+  KB_LETTER_ORDER.forEach(function(l){ if (sc.kbAssign[l]) assigned[sc.kbAssign[l]] = true; });
+  sc.glyphs.forEach(function(g){
+    if (assigned[g.id]) return;
+    var slot = KB_LETTER_ORDER.find(function(l){ return !sc.kbAssign[l]; });
+    if (slot) { sc.kbAssign[slot] = g.id; assigned[g.id] = true; }
+  });
+}
+function kbGlyphForKey(sc, ch) {
+  if (/^[a-z]$/i.test(ch)) {
+    var gid = sc.kbAssign ? sc.kbAssign[ch.toLowerCase()] : null;
+    return gid ? sc.glyphs.find(function(g){ return g.id === gid; }) : null;
+  }
+  return findGlyphFor(sc, ch);
+}
+function kbCharAllowed(sc, ch) {
+  if (/^[a-z]$/i.test(ch)) return !!kbGlyphForKey(sc, ch);
+  return true; // 숫자/기호/스페이스는 이 배정 시스템 대상이 아니라 항상 통과
+}
 function kbCodeFor(ch) { return /[0-9]/.test(ch) ? "Digit"+ch : "Key"+ch; }
 /* 물리 키보드 위치(KeyboardEvent.code) → 문자. 한/영 전환 등 OS IME 상태와 무관하게 항상 같은 문자가 나오도록
    창작 문자 "미리 써보기" 입력에도 이 표만 사용한다(가상 키보드 반짝임과 동일한 기준). */
@@ -17315,15 +17266,17 @@ function kbGlyphPreviewHtml(g) {
     (g.strokes||[]).map(function(d){ return '<path d="'+d+'" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>'; }).join("") +
   '</svg>';
 }
-function kbKeyHtml(sc, ch) {
-  var g = findGlyphFor(sc, ch);
-  return '<button type="button" class="kb-key" data-code="'+kbCodeFor(ch)+'" data-char="'+esc(ch.toLowerCase())+'">' +
+function kbKeyHtml(sc, ch, editable) {
+  var g = kbGlyphForKey(sc, ch);
+  var isLetter = /^[a-z]$/i.test(ch);
+  var dragAttrs = (editable && isLetter) ? ' draggable="true" data-kbletter="'+ch.toLowerCase()+'"' : '';
+  return '<button type="button" class="kb-key'+(isLetter && !g ? " kb-unassigned" : "")+'" data-code="'+kbCodeFor(ch)+'" data-char="'+esc(ch.toLowerCase())+'"'+dragAttrs+'>' +
     '<span class="kb-key-label">'+esc(ch)+'</span>' + kbGlyphPreviewHtml(g) +
   '</button>';
 }
-function renderKeyboardHtml(sc) {
+function renderKeyboardHtml(sc, editable) {
   var rowsHtml = KB_ROWS.map(function(row){
-    return '<div class="kb-row">' + row.map(function(ch){ return kbKeyHtml(sc, ch); }).join("") + '</div>';
+    return '<div class="kb-row">' + row.map(function(ch){ return kbKeyHtml(sc, ch, editable); }).join("") + '</div>';
   }).join("");
   rowsHtml += '<div class="kb-row"><button type="button" class="kb-key kb-space" data-code="Space" data-char=" "><span class="kb-key-label">스페이스</span></button></div>';
   return rowsHtml;
@@ -17359,25 +17312,27 @@ var TKL_ARROWS = [
   [kdef("ArrowLeft","←"), kdef("ArrowDown","↓"), kdef("ArrowRight","→")]
 ];
 function kbUnitPx(u) { u = u || 1; return u*38 + (u-1)*5; }
-function kbSpecialKeyHtml(sc, def) {
+function kbSpecialKeyHtml(sc, def, editable) {
   var w = kbUnitPx(def.u);
   var hasChar = def.ch !== undefined;
-  var g = hasChar ? findGlyphFor(sc, def.ch) : null;
+  var g = hasChar ? kbGlyphForKey(sc, def.ch) : null;
+  var isLetter = hasChar && /^[a-z]$/i.test(def.ch);
   var glyphHtml = kbGlyphPreviewHtml(g);
   var style = "width:"+w+"px" + (def.gapBefore ? ";margin-left:12px" : "");
-  return '<button type="button" class="kb-key'+(hasChar?"":" kb-mod")+'" style="'+style+'" data-code="'+def.code+'"' + (hasChar ? ' data-char="'+esc(def.ch)+'"' : '') + '>' +
+  var dragAttrs = (editable && isLetter) ? ' draggable="true" data-kbletter="'+def.ch+'"' : '';
+  return '<button type="button" class="kb-key'+(hasChar?"":" kb-mod")+(isLetter && !g ? " kb-unassigned" : "")+'" style="'+style+'" data-code="'+def.code+'"' + (hasChar ? ' data-char="'+esc(def.ch)+'"' : '') + dragAttrs + '>' +
     '<span class="kb-key-label">'+esc(def.label)+'</span>' + glyphHtml +
   '</button>';
 }
 function kbBlankHtml(u) { return '<span class="kb-blank" style="width:'+kbUnitPx(u||1)+'px"></span>'; }
-function tklRowHtml(sc, defs) {
-  return '<div class="kb-row">' + defs.map(function(d){ return d ? kbSpecialKeyHtml(sc, d) : kbBlankHtml(1); }).join("") + '</div>';
+function tklRowHtml(sc, defs, editable) {
+  return '<div class="kb-row">' + defs.map(function(d){ return d ? kbSpecialKeyHtml(sc, d, editable) : kbBlankHtml(1); }).join("") + '</div>';
 }
-function renderTklKeyboardHtml(sc) {
-  var main = tklRowHtml(sc, TKL_ROW_FN) + tklRowHtml(sc, TKL_ROW_NUM) + tklRowHtml(sc, TKL_ROW_Q) +
-    tklRowHtml(sc, TKL_ROW_A) + tklRowHtml(sc, TKL_ROW_Z) + tklRowHtml(sc, TKL_ROW_BOTTOM);
-  var nav = TKL_NAV_TOP.map(function(row){ return tklRowHtml(sc, row); }).join("") +
-    '<div class="kb-nav-gap"></div>' + TKL_ARROWS.map(function(row){ return tklRowHtml(sc, row); }).join("");
+function renderTklKeyboardHtml(sc, editable) {
+  var main = tklRowHtml(sc, TKL_ROW_FN, editable) + tklRowHtml(sc, TKL_ROW_NUM, editable) + tklRowHtml(sc, TKL_ROW_Q, editable) +
+    tklRowHtml(sc, TKL_ROW_A, editable) + tklRowHtml(sc, TKL_ROW_Z, editable) + tklRowHtml(sc, TKL_ROW_BOTTOM, editable);
+  var nav = TKL_NAV_TOP.map(function(row){ return tklRowHtml(sc, row, editable); }).join("") +
+    '<div class="kb-nav-gap"></div>' + TKL_ARROWS.map(function(row){ return tklRowHtml(sc, row, editable); }).join("");
   return '<div class="kb-tkl"><div class="kb-main">'+main+'</div><div class="kb-nav">'+nav+'</div></div>';
 }
 var SC_MODE_LABELS = { glyph: "문자대응", meaning: "뜻대응", grammar: "문법" };
@@ -17394,202 +17349,80 @@ function scModeTabsHtml(sc) {
  * 문자대응(손글씨 문자 그리기)과 조작 경험(그리기·undo·지우기·저장)은 그대로 재사용하되,
  * 뜻대응은 "문자 하나 = 뜻 하나"가 아니라 단어·구·짧은 문장 단위의 의미 표현을 폴더로
  * 정리해서 쌓아가는 사전/노트에 가깝게 만든다. */
-function scMnFolderRowHtml(sc, folder, depth) {
-  var itemCount = scAllMeaningItems(sc).filter(function(e){ return e.pair.folderId === folder.id; }).length;
-  var kids = scFolderChildren(sc, folder.id);
-  return '<div class="sc-mn-folder-row'+(scState.mnView==="folder"&&scState.mnFolderId===folder.id?" on":"")+'" data-mnfolder="'+folder.id+'" draggable="true" style="padding-left:'+(10+depth*16)+'px">' +
-      ic("docIcon",12) +
-      '<span class="sc-mn-folder-name">'+esc(folder.name||"제목 없는 폴더")+'</span>' +
-      '<span class="sc-mn-folder-count">'+itemCount+'</span>' +
-      '<button type="button" class="sc-mn-folder-add" data-mnaddsubfolder="'+folder.id+'" title="하위 폴더 추가">'+ic("plus",10)+'</button>' +
-      '<button type="button" class="sc-mn-folder-del" data-mndelfolder="'+folder.id+'" title="폴더 삭제">'+ic("close",10)+'</button>' +
-    '</div>' +
-    kids.map(function(k){ return scMnFolderRowHtml(sc, k, depth+1); }).join("");
+/* 뜻대응 = 문자대응과 같은 구조(손글씨 카드 + 폼 + 미리 써보기/키보드)를 그대로 쓰되,
+   "대응 문자" 자리에 "대응 뜻"을 적는다는 점만 다르다. 단어·문장을 한 데 모아
+   문자대응의 glyphs 그리드와 같은 카드 그리드로 보여준다. */
+function wordVisualHtml(sc, item) {
+  if (item.strokes && item.strokes.length) return glyphVisualHtml({ strokes: item.strokes });
+  return renderGlyphSequenceSvg(sc, item.a || "");
 }
-function scMnNavHtml(sc) {
-  var favCount = scAllMeaningItems(sc).filter(function(e){ return e.pair.favorite; }).length;
-  var rootFolders = scFolderChildren(sc, null);
-  return '<div class="sc-mn-nav">' +
-    '<input type="text" class="sc-mn-search" id="scMnSearch" value="'+esc(scState.mnSearch)+'" placeholder="문자·뜻·메모·폴더 검색">' +
-    '<div class="sc-mn-quick">' +
-      '<button type="button" class="sc-mn-quick-btn'+(scState.mnView==="favorites"?" on":"")+'" data-mnview="favorites">'+ic("starFill",12)+'<span>즐겨찾기</span><span class="sc-mn-folder-count">'+favCount+'</span></button>' +
-      '<button type="button" class="sc-mn-quick-btn'+(scState.mnView==="recent"?" on":"")+'" data-mnview="recent">'+ic("rotate",12)+'<span>최근 수정</span></button>' +
-    '</div>' +
-    '<div class="sc-mn-tree-head"><span>폴더</span><button type="button" class="sc-mn-folder-add" data-mnaddfolder="1" title="새 폴더">'+ic("plus",12)+'</button></div>' +
-    '<div class="sc-mn-tree">' +
-      '<div class="sc-mn-folder-row'+(scState.mnView==="folder"&&!scState.mnFolderId?" on":"")+'" data-mnfolder="" style="padding-left:10px">'+ic("list",12)+'<span class="sc-mn-folder-name">전체</span><span class="sc-mn-folder-count">'+scAllMeaningItems(sc).length+'</span></div>' +
-      rootFolders.map(function(f){ return scMnFolderRowHtml(sc, f, 1); }).join("") +
-    '</div>' +
+function wordCardHtml(sc, item) {
+  return '<div class="glyph-card" data-editword="'+item.id+'">' +
+    wordVisualHtml(sc, item) +
+    '<div class="gc-map">'+esc(item.b||"?")+'</div>' +
+    (item.memo ? '<div class="gc-note">'+esc(item.memo)+'</div>' : '') +
+    '<button type="button" class="gc-del" data-delword="'+item.id+'" title="삭제">'+ic("close",8)+'</button>' +
   '</div>';
 }
-function scMnCurrentItems(sc) {
-  var all = scAllMeaningItems(sc);
-  if (scState.mnView === "favorites") return all.filter(function(e){ return e.pair.favorite; });
-  if (scState.mnView === "recent") return all.slice().sort(function(a,b){ return (b.pair.updatedAt||0)-(a.pair.updatedAt||0); }).slice(0, 20);
-  if (scState.mnView === "search") {
-    var q = scState.mnSearch.trim().toLowerCase();
-    if (!q) return [];
-    return all.filter(function(e){
-      var p = e.pair;
-      var folder = p.folderId ? (sc.meaningFolders||[]).find(function(f){ return f.id===p.folderId; }) : null;
-      var hay = [p.a, p.b, p.memo, p.pos, p.related, p.category, folder?folder.name:""].join(" ").toLowerCase();
-      return hay.indexOf(q) !== -1;
-    });
-  }
-  if (!scState.mnFolderId) return all; // "전체" -- 폴더 구분 없이 모든 항목
-  return all.filter(function(e){ return e.pair.folderId === scState.mnFolderId; });
-}
-function scMnListHeadLabel(sc) {
-  if (scState.mnView === "favorites") return "즐겨찾기";
-  if (scState.mnView === "recent") return "최근 수정";
-  if (scState.mnView === "search") return '"'+scState.mnSearch+'" 검색 결과';
-  if (!scState.mnFolderId) return "전체";
-  var f = (sc.meaningFolders||[]).find(function(f){ return f.id === scState.mnFolderId; });
-  return f ? f.name : "전체";
-}
-function scMnItemRowHtml(sc, entry) {
-  var pair = entry.pair, kind = entry.kind;
-  var previewB = scGlossDisplayValue(sc, pair, kind) || "(뜻 없음)";
-  var folder = pair.folderId ? (sc.meaningFolders||[]).find(function(f){ return f.id===pair.folderId; }) : null;
-  return '<div class="sc-mn-item-row'+(scState.mnDetailId===pair.id?" on":"")+'" data-mnitem="'+pair.id+'" data-mnitemkind="'+kind+'" draggable="true">' +
-    '<div class="sc-mn-item-text">' +
-      '<div class="sc-mn-item-a">'+esc(pair.a||"(빈 항목)")+'</div>' +
-      '<div class="sc-mn-item-b">'+esc(previewB)+'</div>' +
-    '</div>' +
-    ((scState.mnView!=="folder" || !scState.mnFolderId) && folder ? '<span class="sc-mn-item-folderchip">'+esc(folder.name)+'</span>' : '') +
-    '<button type="button" class="sc-mn-item-star'+(pair.favorite?" on":"")+'" data-mnfav="'+pair.id+'" title="즐겨찾기">'+ic(pair.favorite?"starFill":"star",13)+'</button>' +
-  '</div>';
-}
-function scMnListHtml(sc) {
-  var items = scMnCurrentItems(sc);
-  return '<div class="sc-mn-list">' +
-    '<div class="sc-mn-list-head">' +
-      '<div class="sc-mn-list-title">'+esc(scMnListHeadLabel(sc))+' · '+items.length+'개</div>' +
-      (scState.mnView === "folder" ? '<div class="sc-mn-list-add">' +
-        '<button type="button" class="chip-add" data-mnadditem="word">'+ic("plus",10)+' 단어/구</button>' +
-        '<button type="button" class="chip-add" data-mnadditem="sentence">'+ic("plus",10)+' 문장</button>' +
-      '</div>' : '') +
+function scWordSectionHtml(sc) {
+  var items = scAllMeaningItems(sc).map(function(e){ return e.pair; });
+  return '<div class="script-card">' +
+    '<div class="script-card-head">'+ic("pen",15)+'<span>손글씨 뜻 · '+items.length+'개</span></div>' +
+    '<div class="glyph-pad-wrap">' +
+      '<div>' +
+        '<svg id="mnWordPad" class="glyph-pad" viewBox="0 0 '+SC_PAD_SIZE+' '+SC_PAD_SIZE+'" width="'+SC_PAD_SIZE+'" height="'+SC_PAD_SIZE+'"></svg>' +
+        '<div class="glyph-pad-tools">' +
+          '<button type="button" id="mnWordUndoBtn">'+ic("rotate",12)+'<span>한 획 취소</span></button>' +
+          '<button type="button" id="mnWordClearBtn">'+ic("close",12)+'<span>지우기</span></button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="glyph-form">' +
+        '<div><label>대응 뜻</label><input type="text" id="mnWordMapTo" placeholder="예: 물, 사랑, 안녕하세요"></div>' +
+        '<div><label>메모(선택)</label><input type="text" id="mnWordNote" placeholder="품사나 설명"></div>' +
+        '<button type="button" class="btn primary" id="mnWordSaveBtn" style="align-self:flex-start">'+ic("plus",13)+'<span id="mnWordSaveLabel">이 뜻 저장</span></button>' +
+      '</div>' +
     '</div>' +
     (items.length
-      ? '<div class="sc-mn-item-list">' + items.map(function(e){ return scMnItemRowHtml(sc, e); }).join("") + '</div>'
-      : '<div class="chip-empty-hint" style="padding:20px">'+(scState.mnView==="search"?"일치하는 항목이 없어요.":"아직 항목이 없어요. 위의 “단어/구”나 “문장” 버튼으로 추가해보세요.")+'</div>') +
+      ? '<div class="glyph-grid" id="mnWordGrid">' + items.map(function(it){ return wordCardHtml(sc, it); }).join("") + '</div>'
+      : '<div class="chip-empty-hint" style="margin-top:14px">왼쪽 칸에 마우스로 뜻을 나타내는 표현을 그리고 저장하거나, 아래 "미리 써보기"에서 이미 만든 문자로 조합해 저장해보세요.</div>') +
   '</div>';
 }
-/* 뜻대응의 "창작 문자" 구역은 접었다 펴는 게 아니라 항상 문자표(이미 만든 글자들의
-   대응 목록)가 바로 보이게 한다 -- 토글 뒤에 숨어 있으면 "손글씨를 추가하거나 문자표로
-   뜻을 확인할 방법이 없다"는 것과 똑같아진다. 손으로 새로 그리는 패드만 별도로 접는다. */
-function scMnComposerHtml(sc) {
-  return '<div class="sc-mn-composer">' +
-    '<div class="sc-mn-composer-label">'+ic("grid",11)+'<span>문자표 — 눌러서 이어붙이기</span></div>' +
-    (sc.glyphs.length
-      ? '<div class="glyph-grid sc-mn-composer-grid">' + sc.glyphs.map(function(g){
-          return '<div class="glyph-card sc-mn-glyph-pick" data-mnpickglyph="'+g.id+'" title="이어붙이기">' + glyphVisualHtml(g) + '<div class="gc-map">'+esc(g.mapTo||"?")+'</div></div>';
-        }).join("") + '</div>'
-      : '<div class="chip-empty-hint">아직 만들어둔 문자가 없어요. 아래에서 새로 그려보세요.</div>') +
-    '<div class="sc-mn-composer-actions">' +
-      '<button type="button" class="chip-add" data-mntoggledraw="1">'+ic(scState.mnDrawMode?"chevUp":"plus",10)+'<span>'+(scState.mnDrawMode?"그리기 닫기":"새 글자 손으로 쓰기")+'</span></button>' +
-      '<button type="button" class="chip-add" data-gotoglyphmode="1">'+ic("pen",10)+'<span>문자대응에서 전체 문자표 보기</span></button>' +
+function scWordTypingSectionHtml(sc) {
+  return '<div class="script-card">' +
+    '<div class="script-card-head">'+ic("docIcon",15)+'<span>미리 써보기</span></div>' +
+    '<input type="text" class="sc-typein" id="mnTypeInput" placeholder="이미 만든 문자로 단어·문장을 조합해보세요" autocomplete="off">' +
+    '<div class="sc-output-wrap" id="mnOutputWrap"><svg viewBox="0 0 400 110" width="400" height="110"></svg></div>' +
+    '<button type="button" class="chip-add" id="mnTypeSaveBtn" style="margin-bottom:12px">'+ic("plus",10)+'<span>이 조합을 새 뜻 항목으로 저장</span></button>' +
+    '<div class="kb-layout-toggle">' +
+      '<button type="button" data-kblayout="compact" class="'+(scState.kbLayout!=="tkl"?"on":"")+'">간단히</button>' +
+      '<button type="button" data-kblayout="tkl" class="'+(scState.kbLayout==="tkl"?"on":"")+'">텐키리스 풀 키보드</button>' +
     '</div>' +
-    (scState.mnDrawMode
-      ? '<div class="glyph-pad-wrap" style="margin-top:10px">' +
-          '<div>' +
-            '<svg id="mnGlyphPad" class="glyph-pad" viewBox="0 0 '+SC_PAD_SIZE+' '+SC_PAD_SIZE+'" width="'+SC_PAD_SIZE+'" height="'+SC_PAD_SIZE+'"></svg>' +
-            '<div class="glyph-pad-tools">' +
-              '<button type="button" id="mnGlyphUndoBtn">'+ic("rotate",12)+'<span>한 획 취소</span></button>' +
-              '<button type="button" id="mnGlyphClearBtn">'+ic("close",12)+'<span>지우기</span></button>' +
-            '</div>' +
-          '</div>' +
-          '<div class="glyph-form">' +
-            '<div><label>대응 문자</label><input type="text" id="mnGlyphMapTo" placeholder="예: ㄱ, g, α"></div>' +
-            '<div><label>메모(선택)</label><input type="text" id="mnGlyphNote" placeholder="발음이나 설명"></div>' +
-            '<button type="button" class="btn primary" id="mnGlyphSaveBtn" style="align-self:flex-start">'+ic("plus",13)+'<span>새 글자 저장하고 이어붙이기</span></button>' +
-          '</div>' +
-        '</div>'
-      : '') +
-  '</div>';
-}
-function scMnDetailHtml(sc) {
-  var entry = scState.mnDetailId ? scFindMeaningEntry(sc, scState.mnDetailId) : null;
-  if (!entry) {
-    return '<div class="sc-mn-detail sc-mn-detail-empty">'+ic("docIcon",22)+'<p>목록에서 항목을 선택하면 여기에서 자세히 보고 편집할 수 있어요.</p></div>';
-  }
-  var pair = entry.pair, kind = entry.kind;
-  var gs = scGlossState(sc, pair, kind);
-  var displayB = scGlossDisplayValue(sc, pair, kind);
-  var folderOptionsHtml = '<option value="">(미분류)</option>' + (sc.meaningFolders||[]).map(function(f){
-    var path = scFolderPath(sc, f.id).map(function(x){ return x.name; }).join(" / ");
-    return '<option value="'+f.id+'"'+(pair.folderId===f.id?" selected":"")+'>'+esc(path)+'</option>';
-  }).join("");
-  var matchedRule = scMatchedGrammarRule(sc, pair.a||"");
-  var badgeIcon = gs.cls === "auto" ? "wand" : (gs.cls === "edited" ? "pen" : "docIcon");
-  return '<div class="sc-mn-detail">' +
-    '<div class="sc-mn-detail-head">' +
-      '<button type="button" class="sc-mn-item-star'+(pair.favorite?" on":"")+'" data-mnfav="'+pair.id+'" title="즐겨찾기">'+ic(pair.favorite?"starFill":"star",15)+'</button>' +
-      '<div class="sc-mn-detail-title">'+esc(pair.a||"(빈 항목)")+'</div>' +
-      '<button type="button" class="pair-del" data-delpair2="'+pair.id+'" data-pairkind2="'+kind+'" title="삭제">'+ic("trash",13)+'</button>' +
-    '</div>' +
-
-    '<details class="sc-mn-section" open><summary>'+ic("list",12)+'<span>기본 정보</span></summary>' +
-      '<div class="sc-mn-field"><label>폴더</label><select data-mnfield="folderId">'+folderOptionsHtml+'</select></div>' +
-      '<div class="sc-mn-field"><label>품사</label><input type="text" data-mnfield="pos" value="'+esc(pair.pos||"")+'" placeholder="예: 명사, 동사, 감탄사"></div>' +
-      '<div class="sc-mn-field"><label>관련 단어</label><input type="text" data-mnfield="related" value="'+esc(pair.related||"")+'" placeholder="쉼표로 구분"></div>' +
-      '<div class="sc-mn-field"><label>분류</label><input type="text" data-mnfield="category" value="'+esc(pair.category||"")+'" placeholder="예: 자연, 감정 (쉼표로 여러 개)"></div>' +
-    '</details>' +
-
-    '<details class="sc-mn-section" open><summary>'+ic("pen",12)+'<span>창작 문자</span></summary>' +
-      '<div class="sc-mn-glyph-preview">'+renderGlyphSequenceSvg(sc, pair.a||"")+'</div>' +
-      '<input type="text" class="sc-spread-a" data-mnfield="a" value="'+esc(pair.a||"")+'" placeholder="'+(kind==="word"?"단어/짧은 구":"짧은 문장")+' — 직접 입력하거나 아래에서 글자를 골라 이어붙일 수 있어요">' +
-      scMnComposerHtml(sc) +
-    '</details>' +
-
-    '<details class="sc-mn-section" open><summary>'+ic("wand",12)+'<span>뜻풀이</span></summary>' +
-      '<div class="scg-head">' +
-        '<span class="scg-badge scg-'+gs.cls+'">'+ic(badgeIcon,10)+'<span>'+gs.label+'</span></span>' +
-        (pair.glossMode==="manual" ? '<button type="button" class="scg-revert" data-revertgloss="'+pair.id+'">'+ic("rotate",11)+'<span>되돌리기</span></button>' : '') +
-      '</div>' +
-      '<textarea class="sc-spread-b" data-mnfield="b" rows="2" placeholder="뜻(한글)">'+esc(displayB)+'</textarea>' +
-      (gs.cls==="edited" ? '<div class="scg-diff-hint">자동 계산값: '+esc(gs.auto)+'</div>' : '') +
-    '</details>' +
-
-    '<details class="sc-mn-section"><summary>'+ic("table",12)+'<span>문법</span></summary>' +
-      (matchedRule
-        ? '<div class="chip-empty-hint">연결된 문법 규칙: <b>'+esc(matchedRule.item)+'</b>'+(matchedRule.koreanMeaning?' — '+esc(matchedRule.koreanMeaning):'')+'</div>'
-        : '<div class="chip-empty-hint">이 표현에 자동으로 연결된 문법 규칙이 없어요. 문법 모드에서 항목을 추가하면 여기에 표시돼요.</div>') +
-      '<button type="button" class="chip-add" data-gotogrammar="1" style="margin-top:8px">'+ic("table",10)+'<span>문법 모드 열기</span></button>' +
-    '</details>' +
-
-    '<div class="sc-mn-section sc-mn-memo-row" data-mnmemoopen="'+pair.id+'">' +
-      '<div class="sc-mn-memo-row-head">' + ic("docIcon",12) + '<span>메모</span>' +
-        (pair.memo
-          ? '<span class="sc-mn-memo-preview">'+esc(pair.memo.length>34 ? pair.memo.slice(0,34)+"…" : pair.memo)+'</span>'
-          : '<span class="sc-mn-memo-preview empty">눌러서 크게 작성</span>') +
-        ic("chevR",11) +
-      '</div>' +
-    '</div>' +
+    '<div class="sc-keyboard" id="mnKeyboard">' + (scState.kbLayout==="tkl" ? renderTklKeyboardHtml(sc, false) : renderKeyboardHtml(sc, false)) + '</div>' +
+    '<div class="sc-kb-hint">문자대응에서 정한 키 배치를 그대로 따라요(여기서는 배치를 바꿀 수 없어요). 아직 문자가 배정되지 않은 키는 눌러도 입력되지 않아요.</div>' +
   '</div>';
 }
 function renderScMeaningModeHtml(sc) {
-  return '<div class="sc-mn-shell">' + scMnNavHtml(sc) + scMnListHtml(sc) + scMnDetailHtml(sc) + '</div>';
+  return scWordSectionHtml(sc) + scWordTypingSectionHtml(sc);
 }
-/* 메모는 우측 상세 패널의 좁은 폭 안에 접어두는 대신, 클릭하면 화면 중앙에 큼직하게
-   띄워서 한눈에 읽고 쓸 수 있게 한다. */
+/* 메모는 좁은 인라인 텍스트영역 대신, 클릭하면 화면 중앙에 큼직하게 띄워서 한눈에
+   읽고 쓸 수 있게 한다. 뜻대응 항목(memo)과 문법 규칙(note)이 이 오버레이 하나를 같이 쓴다. */
 var _scMemoOverlayEscHandler = null;
 function closeScMemoOverlay() {
   var el = document.getElementById("scMemoOverlay");
   if (el) el.remove();
   if (_scMemoOverlayEscHandler) { document.removeEventListener("keydown", _scMemoOverlayEscHandler); _scMemoOverlayEscHandler = null; }
 }
-function openScMemoOverlay(sc, pair) {
+function openScMemoOverlay(opts) {
   closeScMemoOverlay();
   var wrap = document.createElement("div");
   wrap.innerHTML =
     '<div class="sc-mn-memo-overlay" id="scMemoOverlay">' +
       '<div class="sc-mn-memo-box">' +
         '<div class="sc-mn-memo-box-head">' +
-          '<div class="sc-mn-memo-box-title">'+ic("docIcon",14)+'<span>'+esc(pair.a||"(빈 항목)")+' — 메모</span></div>' +
+          '<div class="sc-mn-memo-box-title">'+ic("docIcon",14)+'<span>'+esc(opts.title||"메모")+'</span></div>' +
           '<button type="button" class="sc-mn-memo-close" id="scMemoOverlayClose">'+ic("close",14)+'</button>' +
         '</div>' +
-        '<textarea class="sc-mn-memo-box-text" id="scMemoOverlayText" placeholder="자동 뜻과 실제 뜻이 다른 이유, 문화적 배경, 사용상 주의사항 등 자유롭게 적어두세요.">'+esc(pair.memo||"")+'</textarea>' +
+        '<textarea class="sc-mn-memo-box-text" id="scMemoOverlayText" placeholder="자유롭게 적어두세요.">'+esc(opts.obj[opts.field]||"")+'</textarea>' +
       '</div>' +
     '</div>';
   document.body.appendChild(wrap.firstElementChild);
@@ -17597,13 +17430,14 @@ function openScMemoOverlay(sc, pair) {
   var textEl = document.getElementById("scMemoOverlayText");
   textEl.focus();
   textEl.addEventListener("input", function(){
-    pair.memo = textEl.value; pair.updatedAt = Date.now();
+    opts.obj[opts.field] = textEl.value;
+    if ("updatedAt" in opts.obj) opts.obj.updatedAt = Date.now();
     saveData();
   });
   function finishAndClose() {
     closeScMemoOverlay();
-    touchScSection(sc, "meaning");
-    renderScriptPage(sc);
+    if (opts.section) touchScSection(opts.sc, opts.section);
+    renderScriptPage(opts.sc);
   }
   document.getElementById("scMemoOverlayClose").addEventListener("click", finishAndClose);
   overlay.addEventListener("mousedown", function(e){ if (e.target === overlay) finishAndClose(); });
@@ -17620,7 +17454,14 @@ function scGrammarCardHtml(r) {
     '<div><label>예외</label><textarea data-gfield="exception" rows="2" placeholder="예외 상황(선택)">'+esc(r.exception||"")+'</textarea></div>' +
     '<div><label>예문</label><textarea data-gfield="example" rows="2" placeholder="창작 문자 예문">'+esc(r.example||"")+'</textarea></div>' +
     '<div><label>한글 해석</label><textarea data-gfield="exampleKo" rows="2" placeholder="위 예문의 한글 해석">'+esc(r.exampleKo||"")+'</textarea></div>' +
-    '<div><label>메모</label><textarea data-gfield="note" rows="2" placeholder="추가로 기억해둘 점">'+esc(r.note||"")+'</textarea></div>' +
+    '<div class="sc-mn-memo-row" data-grammarmemoopen="'+r.id+'">' +
+      '<div class="sc-mn-memo-row-head">'+ic("docIcon",12)+'<span>메모</span>' +
+        (r.note
+          ? '<span class="sc-mn-memo-preview">'+esc(r.note.length>34 ? r.note.slice(0,34)+"…" : r.note)+'</span>'
+          : '<span class="sc-mn-memo-preview empty">눌러서 크게 작성</span>') +
+        ic("chevR",11) +
+      '</div>' +
+    '</div>' +
     '<button type="button" class="pair-del sc-grammar-del" data-delgrammar="'+r.id+'" title="삭제">'+ic("close",12)+'<span>이 규칙 삭제</span></button>' +
   '</div>';
 }
@@ -17674,8 +17515,8 @@ function renderScriptPage(sc) {
         '<button type="button" data-kblayout="compact" class="'+(scState.kbLayout!=="tkl"?"on":"")+'">간단히</button>' +
         '<button type="button" data-kblayout="tkl" class="'+(scState.kbLayout==="tkl"?"on":"")+'">텐키리스 풀 키보드</button>' +
       '</div>' +
-      '<div class="sc-keyboard" id="scKeyboard">' + (scState.kbLayout==="tkl" ? renderTklKeyboardHtml(sc) : renderKeyboardHtml(sc)) + '</div>' +
-      '<div class="sc-kb-hint">키보드를 실제로 누르면 위 키보드가 즉시 반짝여요(물리 키 위치 기준이라 한/영 전환과 무관하게 동작해요). 화면의 키를 마우스로 눌러서 입력할 수도 있어요. 밑줄 점선으로 나오는 글자는 아직 대응 문자가 없는 글자고, 완성형 한글은 매칭되는 낱자(자모) 글자가 있으면 자동으로 풀어서 그려줘요.</div>' +
+      '<div class="sc-keyboard" id="scKeyboard">' + (scState.kbLayout==="tkl" ? renderTklKeyboardHtml(sc, true) : renderKeyboardHtml(sc, true)) + '</div>' +
+      '<div class="sc-kb-hint">키보드를 실제로 누르면 위 키보드가 즉시 반짝여요(물리 키 위치 기준이라 한/영 전환과 무관하게 동작해요). 화면의 키를 마우스로 눌러서 입력할 수도 있어요. 문자가 배정되지 않은 글쇠는 흐리게 표시되고 눌러도 입력되지 않아요. 키를 서로 드래그하면 배정된 문자끼리 자리를 맞바꿀 수 있어요(숫자·기호 글쇠는 대상이 아니에요). 완성형 한글은 매칭되는 낱자(자모) 글자가 있으면 자동으로 풀어서 그려줘요.</div>' +
     '</div>';
 
   var modeBodyHtml = scState.mode === "meaning" ? renderScMeaningModeHtml(sc) :
@@ -17740,199 +17581,149 @@ function wireGlyphPad(ids, onSave) {
     onSave(mapToInput ? mapToInput.value.trim() : "", noteInput ? noteInput.value.trim() : "", scState.strokes.slice());
   });
 }
-function wireScMeaningMode(sc) {
-  var entry = scState.mnDetailId ? scFindMeaningEntry(sc, scState.mnDetailId) : null;
-  var pair = entry ? entry.pair : null;
-
-  var searchInput = document.getElementById("scMnSearch");
-  if (searchInput) searchInput.addEventListener("input", function(){
-    scState.mnSearch = searchInput.value;
-    scState.mnView = scState.mnSearch.trim() ? "search" : "folder";
-    var caret = searchInput.selectionStart;
-    renderScriptPage(sc);
-    var freshInput = document.getElementById("scMnSearch");
-    if (freshInput) { freshInput.focus(); try { freshInput.setSelectionRange(caret, caret); } catch (err) {} }
+/* "미리 써보기" 입력창 + 키보드 조작(타이핑/클릭 입력, 배정 안 된 키는 입력 자체를 막는 것)을
+   문자대응·뜻대응 두 곳이 그대로 공유한다. */
+function wireTypingPreview(sc, ids) {
+  var typeInput = document.getElementById(ids.typeInput);
+  var outputSvgWrap = document.getElementById(ids.outputWrap);
+  if (!typeInput || !outputSvgWrap) return;
+  function refresh() { outputSvgWrap.innerHTML = renderGlyphSequenceSvg(sc, typeInput.value); }
+  typeInput.addEventListener("keydown", function(e){
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.code === "Backspace" || e.code === "Delete") return;
+    if (e.code === "Enter") { e.preventDefault(); return; }
+    var mapped = TYPE_CODE_TO_CHAR[e.code];
+    if (mapped === undefined) { e.preventDefault(); return; }
+    e.preventDefault();
+    if (mapped !== " " && !kbCharAllowed(sc, mapped)) return;
+    var ch = (e.shiftKey && /^[a-z]$/.test(mapped)) ? mapped.toUpperCase() : mapped;
+    var start = typeInput.selectionStart, end = typeInput.selectionEnd;
+    var val = typeInput.value;
+    typeInput.value = val.slice(0, start) + ch + val.slice(end);
+    typeInput.selectionStart = typeInput.selectionEnd = start + 1;
+    refresh();
   });
-
-  document.querySelectorAll("[data-mnview]").forEach(function(btn){
-    btn.addEventListener("click", function(){ scState.mnView = btn.dataset.mnview; renderScriptPage(sc); });
+  typeInput.addEventListener("input", function(){
+    var clean = sanitizeTypedText(typeInput.value);
+    if (clean !== typeInput.value) {
+      var pos = Math.max(0, typeInput.selectionStart - (typeInput.value.length - clean.length));
+      typeInput.value = clean;
+      try { typeInput.selectionStart = typeInput.selectionEnd = pos; } catch (err) {}
+    }
+    refresh();
   });
-
-  document.querySelectorAll("[data-mnfolder]").forEach(function(row){
-    row.addEventListener("click", function(e){
-      if (e.target.closest("[data-mnaddsubfolder],[data-mndelfolder]")) return;
-      scState.mnView = "folder";
-      scState.mnFolderId = row.dataset.mnfolder || null;
-      renderScriptPage(sc);
-    });
-    row.addEventListener("dragover", function(e){ e.preventDefault(); row.classList.add("dragover"); });
-    row.addEventListener("dragleave", function(){ row.classList.remove("dragover"); });
-    row.addEventListener("drop", function(e){
-      e.preventDefault();
-      row.classList.remove("dragover");
-      var id = scState.mnDragItemId;
-      if (!id) return;
-      var draggedEntry = scFindMeaningEntry(sc, id);
-      if (!draggedEntry) return;
-      draggedEntry.pair.folderId = row.dataset.mnfolder || null;
-      draggedEntry.pair.updatedAt = Date.now();
-      scState.mnDragItemId = null;
-      saveData(); touchScSection(sc, "meaning");
-      renderScriptPage(sc);
-    });
-  });
-
-  document.querySelectorAll("[data-mnaddfolder],[data-mnaddsubfolder]").forEach(function(btn){
-    btn.addEventListener("click", function(e){
-      e.stopPropagation();
-      var parentId = btn.dataset.mnaddsubfolder || null;
-      openModal({
-        title: parentId ? "하위 폴더 만들기" : "새 폴더",
-        fields: [{ placeholder: "폴더 이름" }],
-        confirmLabel: "만들기",
-        onConfirm: function(values){
-          var name = values[0]; if (!name) return;
-          var f = { id: uid(), name: name, parentId: parentId };
-          sc.meaningFolders.push(f);
-          scState.mnView = "folder"; scState.mnFolderId = f.id;
-          saveData(); renderScriptPage(sc);
-        }
-      });
-    });
-  });
-  document.querySelectorAll("[data-mndelfolder]").forEach(function(btn){
-    btn.addEventListener("click", function(e){
-      e.stopPropagation();
-      var fid = btn.dataset.mndelfolder;
-      var folder = (sc.meaningFolders||[]).find(function(f){ return f.id === fid; });
-      if (!folder) return;
-      openModal({
-        title: "폴더를 삭제할까요?",
-        message: '"'+(folder.name||"제목 없음")+'"과(와) 하위 폴더를 삭제합니다. 안에 있던 항목은 지워지지 않고 미분류로 이동해요.',
-        confirmLabel: "삭제", danger: true,
-        onConfirm: function(){
-          var ids = scFolderDescendantIds(sc, fid);
-          scAllMeaningItems(sc).forEach(function(e){ if (ids.indexOf(e.pair.folderId) !== -1) e.pair.folderId = null; });
-          sc.meaningFolders = sc.meaningFolders.filter(function(f){ return ids.indexOf(f.id) === -1; });
-          if (ids.indexOf(scState.mnFolderId) !== -1) scState.mnFolderId = null;
-          saveData(); renderScriptPage(sc);
-        }
-      });
-    });
-  });
-
-  document.querySelectorAll("[data-mnadditem]").forEach(function(btn){
+  refresh();
+  var kbRoot = ids.keyboard ? document.getElementById(ids.keyboard) : document;
+  (kbRoot || document).querySelectorAll(".kb-key").forEach(function(btn){
+    btn.addEventListener("mousedown", function(){ btn.classList.add("pressed"); });
+    btn.addEventListener("mouseup", function(){ btn.classList.remove("pressed"); });
+    btn.addEventListener("mouseleave", function(){ btn.classList.remove("pressed"); });
     btn.addEventListener("click", function(){
-      var kind = btn.dataset.mnadditem;
-      var field = scFieldForKind(kind);
-      var now = Date.now();
-      var newPair = { id: uid(), a: "", b: "", glossMode: "auto", memo: "", folderId: scState.mnFolderId, favorite: false, pos: "", related: "", category: "", lastOpenedAt: now, updatedAt: now };
-      sc[field].push(newPair);
-      scState.mnDetailId = newPair.id;
+      if (btn.dataset.char === undefined) return;
+      if (btn.dataset.char !== " " && !kbCharAllowed(sc, btn.dataset.char)) return;
+      typeInput.value += btn.dataset.char;
+      typeInput.focus();
+      refresh();
+    });
+  });
+}
+/* 키를 서로 드래그해서 배정을 맞바꾸는 것 -- 문자대응에서만 호출한다(뜻대응 키보드는
+   이 함수 자체를 호출하지 않으므로 아무리 드래그해도 배정이 바뀌지 않는다). */
+function wireKbDragReassign(sc, keyboardId) {
+  var root = document.getElementById(keyboardId);
+  if (!root) return;
+  var dragLetter = null;
+  root.querySelectorAll("[data-kbletter]").forEach(function(keyEl){
+    keyEl.addEventListener("dragstart", function(e){
+      dragLetter = keyEl.dataset.kbletter;
+      e.dataTransfer.effectAllowed = "move";
+      try { e.dataTransfer.setData("text/plain", dragLetter); } catch (err) {}
+    });
+    keyEl.addEventListener("dragover", function(e){ e.preventDefault(); keyEl.classList.add("kb-dragover"); });
+    keyEl.addEventListener("dragleave", function(){ keyEl.classList.remove("kb-dragover"); });
+    keyEl.addEventListener("drop", function(e){
+      e.preventDefault();
+      keyEl.classList.remove("kb-dragover");
+      var from = dragLetter || e.dataTransfer.getData("text/plain");
+      var to = keyEl.dataset.kbletter;
+      dragLetter = null;
+      if (!from || !to || from === to) return;
+      var tmp = sc.kbAssign[from];
+      sc.kbAssign[from] = sc.kbAssign[to];
+      sc.kbAssign[to] = tmp;
+      saveData(); touchScSection(sc, "glyphs");
+      renderScriptPage(sc);
+    });
+  });
+}
+function wireScMeaningMode(sc) {
+  scState.strokes = []; scState.curPts = null; scState.smoothPt = null; scState.editingGlyphId = null;
+  var mapToInput = document.getElementById("mnWordMapTo");
+  var noteInput = document.getElementById("mnWordNote");
+  var saveLabel = document.getElementById("mnWordSaveLabel");
+  var pad = document.getElementById("mnWordPad");
+
+  wireGlyphPad({ pad: "mnWordPad", mapTo: "mnWordMapTo", note: "mnWordNote", saveBtn: "mnWordSaveBtn", undoBtn: "mnWordUndoBtn", clearBtn: "mnWordClearBtn" },
+    function(mapTo, note, strokes){
+      if (scState.editingGlyphId) {
+        var editing = scFindMeaningEntry(sc, scState.editingGlyphId);
+        if (editing) {
+          editing.pair.strokes = strokes; editing.pair.b = mapTo; editing.pair.glossMode = "manual";
+          editing.pair.memo = note; editing.pair.updatedAt = Date.now();
+        }
+      } else {
+        var now = Date.now();
+        sc.words.push({ id: uid(), a: "", b: mapTo, glossMode: "manual", memo: note, strokes: strokes,
+          folderId: null, favorite: false, pos: "", related: "", category: "", lastOpenedAt: now, updatedAt: now });
+      }
       saveData(); touchScSection(sc, "meaning");
       renderScriptPage(sc);
-      var aInput = document.querySelector('[data-mnfield="a"]');
-      if (aInput) aInput.focus();
     });
-  });
 
-  document.querySelectorAll("[data-mnitem]").forEach(function(row){
-    var id = row.dataset.mnitem;
-    row.addEventListener("click", function(e){
-      if (e.target.closest("[data-mnfav]")) return;
-      scState.mnDetailId = id;
-      var clicked = scFindMeaningEntry(sc, id);
-      if (clicked) { clicked.pair.lastOpenedAt = Date.now(); saveData(); }
-      scState.mnDrawMode = false;
-      renderScriptPage(sc);
-    });
-    row.addEventListener("dragstart", function(e){
-      scState.mnDragItemId = id;
-      e.dataTransfer.effectAllowed = "move";
-      try { e.dataTransfer.setData("text/plain", id); } catch (err) {}
+  document.querySelectorAll("[data-editword]").forEach(function(card){
+    card.addEventListener("click", function(e){
+      if (e.target.closest("[data-delword]")) return;
+      var editEntry = scFindMeaningEntry(sc, card.dataset.editword);
+      if (!editEntry || !editEntry.pair.strokes || !editEntry.pair.strokes.length) return; // 타이핑으로만 만든 항목은 손그림 수정 대상이 아님
+      scState.strokes = editEntry.pair.strokes.slice();
+      scState.curPts = null;
+      scState.editingGlyphId = editEntry.pair.id;
+      mapToInput.value = editEntry.pair.b || "";
+      noteInput.value = editEntry.pair.memo || "";
+      saveLabel.textContent = "이 뜻 수정 저장";
+      scRenderPad("mnWordPad");
+      pad.scrollIntoView({ behavior: "smooth", block: "center" });
     });
   });
-  document.querySelectorAll("[data-mnfav]").forEach(function(btn){
+  document.querySelectorAll("[data-delword]").forEach(function(btn){
     btn.addEventListener("click", function(e){
       e.stopPropagation();
-      var favEntry = scFindMeaningEntry(sc, btn.dataset.mnfav);
-      if (!favEntry) return;
-      favEntry.pair.favorite = !favEntry.pair.favorite;
-      saveData();
-      renderScriptPage(sc);
-    });
-  });
-
-  if (!entry) return;
-
-  document.querySelectorAll("[data-mnfield]").forEach(function(el){
-    var field = el.dataset.mnfield;
-    el.addEventListener("input", function(){
-      if (field === "b") { pair.glossMode = "manual"; pair.b = el.value; }
-      else if (field === "folderId") { pair.folderId = el.value || null; }
-      else { pair[field] = el.value; }
-      pair.updatedAt = Date.now();
-      saveData();
-    });
-    var refreshEvt = el.tagName === "SELECT" ? "change" : "blur";
-    /* blur는 다른 버튼(문자표 카드 등)을 누르는 마우스다운 시점에 클릭보다 먼저 발생한다.
-       여기서 곧장 다시 그리면 지금 막 누르려던 버튼이 DOM에서 사라져 클릭이 씹힌다 --
-       한 틱 미뤄서 그 클릭이 먼저 끝나게 한 뒤에 다시 그린다. */
-    el.addEventListener(refreshEvt, function(){ setTimeout(function(){ touchScSection(sc, "meaning"); renderScriptPage(sc); }, 0); });
-  });
-
-  var revertBtn = document.querySelector("[data-revertgloss]");
-  if (revertBtn) revertBtn.addEventListener("click", function(){
-    pair.glossMode = "auto"; pair.updatedAt = Date.now();
-    saveData(); touchScSection(sc, "meaning");
-    renderScriptPage(sc);
-  });
-
-  var delBtn = document.querySelector("[data-delpair2]");
-  if (delBtn) delBtn.addEventListener("click", function(){
-    var field = scFieldForKind(delBtn.dataset.pairkind2);
-    sc[field] = sc[field].filter(function(p){ return p.id !== delBtn.dataset.delpair2; });
-    if (scState.mnDetailId === delBtn.dataset.delpair2) scState.mnDetailId = null;
-    saveData(); touchScSection(sc, "meaning");
-    renderScriptPage(sc);
-  });
-
-  var gotoGrammarBtn = document.querySelector("[data-gotogrammar]");
-  if (gotoGrammarBtn) gotoGrammarBtn.addEventListener("click", function(){ scState.mode = "grammar"; renderScriptPage(sc); });
-
-  var memoRow = document.querySelector("[data-mnmemoopen]");
-  if (memoRow) memoRow.addEventListener("click", function(){ openScMemoOverlay(sc, pair); });
-
-  var gotoGlyphBtn = document.querySelector("[data-gotoglyphmode]");
-  if (gotoGlyphBtn) gotoGlyphBtn.addEventListener("click", function(){ scState.mode = "glyph"; renderScriptPage(sc); });
-
-  var toggleDrawBtn = document.querySelector("[data-mntoggledraw]");
-  if (toggleDrawBtn) toggleDrawBtn.addEventListener("click", function(){
-    scState.mnDrawMode = !scState.mnDrawMode;
-    renderScriptPage(sc);
-  });
-  document.querySelectorAll("[data-mnpickglyph]").forEach(function(card){
-    card.addEventListener("click", function(){
-      var g = sc.glyphs.find(function(g){ return g.id === card.dataset.mnpickglyph; });
-      if (!g) return;
-      pair.a = (pair.a||"") + (g.mapTo||"");
-      pair.updatedAt = Date.now();
+      var id = btn.dataset.delword;
+      sc.words = sc.words.filter(function(p){ return p.id !== id; });
+      sc.sentences = sc.sentences.filter(function(p){ return p.id !== id; });
       saveData(); touchScSection(sc, "meaning");
       renderScriptPage(sc);
     });
   });
-  if (scState.mnDrawMode) {
-    scState.strokes = []; scState.curPts = null; scState.smoothPt = null;
-    wireGlyphPad({ pad: "mnGlyphPad", mapTo: "mnGlyphMapTo", note: "mnGlyphNote", saveBtn: "mnGlyphSaveBtn", undoBtn: "mnGlyphUndoBtn", clearBtn: "mnGlyphClearBtn" },
-      function(mapTo, note, strokes){
-        sc.glyphs.push({ id: uid(), strokes: strokes, mapTo: mapTo, note: note });
-        pair.a = (pair.a||"") + (mapTo||"");
-        pair.updatedAt = Date.now();
-        saveData(); touchScSection(sc, "glyphs"); touchScSection(sc, "meaning");
-        scState.mnDrawMode = false;
-        renderScriptPage(sc);
-      });
-  }
+
+  wireTypingPreview(sc, { typeInput: "mnTypeInput", outputWrap: "mnOutputWrap", keyboard: "mnKeyboard" });
+
+  document.querySelectorAll("[data-kblayout]").forEach(function(btn){
+    btn.addEventListener("click", function(){ scState.kbLayout = btn.dataset.kblayout; renderScriptPage(sc); });
+  });
+
+  var typeSaveBtn = document.getElementById("mnTypeSaveBtn");
+  if (typeSaveBtn) typeSaveBtn.addEventListener("click", function(){
+    var typeInput = document.getElementById("mnTypeInput");
+    var text = (typeInput.value || "").trim();
+    if (!text) return;
+    var now = Date.now();
+    sc.words.push({ id: uid(), a: text, b: "", glossMode: "auto", memo: "", strokes: [],
+      folderId: null, favorite: false, pos: "", related: "", category: "", lastOpenedAt: now, updatedAt: now });
+    typeInput.value = "";
+    saveData(); touchScSection(sc, "meaning");
+    renderScriptPage(sc);
+  });
 }
 function wireScGrammarMode(sc) {
   document.getElementById("grammarAddBtn").addEventListener("click", function(){
@@ -17950,6 +17741,10 @@ function wireScGrammarMode(sc) {
     card.querySelectorAll("[data-gfield]").forEach(function(field){
       field.addEventListener("input", function(){ r[field.dataset.gfield] = field.value; saveData(); });
       field.addEventListener("blur", function(){ touchScSection(sc, "grammar"); });
+    });
+    var memoRow = card.querySelector("[data-grammarmemoopen]");
+    if (memoRow) memoRow.addEventListener("click", function(){
+      openScMemoOverlay({ sc: sc, obj: r, field: "note", title: (r.item || "문법 규칙") + " — 메모", section: "grammar" });
     });
     card.querySelector("[data-delgrammar]").addEventListener("click", function(){
       sc.grammar = sc.grammar.filter(function(x){ return x.id !== id; });
@@ -18014,48 +17809,9 @@ function wireScriptPage(sc) {
     });
   });
 
-  var typeInput = document.getElementById("scTypeInput");
-  var outputSvgWrap = document.getElementById("scOutputWrap");
-  function refreshTypingOutput() { outputSvgWrap.innerHTML = renderGlyphSequenceSvg(sc, typeInput.value); }
-  /* 실제 키보드 입력은 물리 키 위치(e.code) 기준으로 직접 값을 조립한다 — 한/영 전환 상태에 따라
-     브라우저 IME가 만들어내는 문자가 달라지는 문제를 피하기 위함. 붙여넣기나 IME 조합으로 다른 문자가
-     섞여 들어오는 경우를 대비해 input 이벤트에서도 허용된 문자만 남기고 나머지는 걸러낸다. */
-  typeInput.addEventListener("keydown", function(e){
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    if (e.code === "Backspace" || e.code === "Delete") return;
-    if (e.code === "Enter") { e.preventDefault(); return; }
-    var mapped = TYPE_CODE_TO_CHAR[e.code];
-    if (mapped === undefined) { e.preventDefault(); return; }
-    e.preventDefault();
-    var ch = (e.shiftKey && /^[a-z]$/.test(mapped)) ? mapped.toUpperCase() : mapped;
-    var start = typeInput.selectionStart, end = typeInput.selectionEnd;
-    var val = typeInput.value;
-    typeInput.value = val.slice(0, start) + ch + val.slice(end);
-    typeInput.selectionStart = typeInput.selectionEnd = start + 1;
-    refreshTypingOutput();
-  });
-  typeInput.addEventListener("input", function(){
-    var clean = sanitizeTypedText(typeInput.value);
-    if (clean !== typeInput.value) {
-      var pos = Math.max(0, typeInput.selectionStart - (typeInput.value.length - clean.length));
-      typeInput.value = clean;
-      try { typeInput.selectionStart = typeInput.selectionEnd = pos; } catch (err) {}
-    }
-    refreshTypingOutput();
-  });
-  refreshTypingOutput();
+  wireTypingPreview(sc, { typeInput: "scTypeInput", outputWrap: "scOutputWrap", keyboard: "scKeyboard" });
+  wireKbDragReassign(sc, "scKeyboard"); // 키 배정을 드래그로 바꾸는 건 문자대응에서만 허용한다
 
-  document.querySelectorAll(".kb-key").forEach(function(btn){
-    btn.addEventListener("mousedown", function(){ btn.classList.add("pressed"); });
-    btn.addEventListener("mouseup", function(){ btn.classList.remove("pressed"); });
-    btn.addEventListener("mouseleave", function(){ btn.classList.remove("pressed"); });
-    btn.addEventListener("click", function(){
-      if (btn.dataset.char === undefined) return;
-      typeInput.value += btn.dataset.char;
-      typeInput.focus();
-      refreshTypingOutput();
-    });
-  });
   document.querySelectorAll("[data-kblayout]").forEach(function(btn){
     btn.addEventListener("click", function(){ scState.kbLayout = btn.dataset.kblayout; renderScriptPage(sc); });
   });
