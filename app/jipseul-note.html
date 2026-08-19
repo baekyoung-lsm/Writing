@@ -510,10 +510,16 @@
   .appear-compare-stage { display:flex; align-items:flex-end; justify-content:center; gap:10px; min-height:150px; overflow-x:auto; }
   .appear-compare-col { display:flex; flex-direction:column; align-items:center; gap:6px; flex:none; }
   .appear-compare-figure, .appear-outfit-figure { display:flex; align-items:flex-end; flex:none; }
-  .appear-compare-figure svg, .appear-compare-figure img, .appear-compare-figure canvas, .appear-outfit-figure svg, .appear-outfit-figure img { display:block; height:100%; width:auto; }
+  .appear-compare-figure svg, .appear-compare-figure img, .appear-compare-figure canvas, .appear-outfit-figure svg, .appear-outfit-figure img, .appear-outfit-figure canvas { display:block; height:100%; width:auto; }
   .appear-compare-tag { font-size:11px; color:var(--ink-soft); font-variant-numeric:tabular-nums; white-space:nowrap; margin-top:6px; }
-  .appear-outfit-placeholder { display:flex; align-items:center; justify-content:center; width:100%; min-height:140px; border:1px dashed var(--border-strong); border-radius:8px; background:var(--bg); padding:14px; box-sizing:border-box; }
-  .appear-outfit-placeholder-text { font-size:11.5px; color:var(--ink-faint); text-align:center; line-height:1.6; }
+  .appear-outfit-assets { width:100%; display:flex; flex-direction:column; gap:6px; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border); }
+  .appear-outfit-asset-row { display:flex; align-items:center; gap:6px; font-size:11.5px; }
+  .appear-outfit-asset-label { color:var(--ink-soft); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .appear-outfit-asset-status { color:var(--ink-faint); white-space:nowrap; }
+  .appear-outfit-asset-status.on { color:var(--accent); }
+  .appear-outfit-asset-btn { border:1px solid var(--border); border-radius:6px; background:var(--bg-card); color:inherit; font-size:11px; padding:3px 8px; cursor:pointer; white-space:nowrap; }
+  .appear-outfit-asset-btn:hover { background:var(--bg-card-hover); }
+  .appear-outfit-asset-btn.danger { color:#c0392b; border-color:rgba(192,57,43,.35); }
   .appear-fields { flex:1; min-width:240px; display:flex; flex-direction:column; gap:10px; }
   .appear-gender-row { display:flex; gap:6px; }
   .appear-field { display:flex; flex-direction:column; gap:4px; }
@@ -3058,10 +3064,10 @@ function colorReadoutHtml(hex) {
 }
 
 var STORE_KEY = "settingnote_v1";
-var DATA_COLLECTIONS = ["docs", "graphs", "manuscripts", "novels", "works", "tables", "timelines", "maps", "recentColors", "sports", "scripts", "essays", "essayEntries", "relationships", "plays", "playScripts"];
+var DATA_COLLECTIONS = ["docs", "graphs", "manuscripts", "novels", "works", "tables", "timelines", "maps", "recentColors", "sports", "scripts", "essays", "essayEntries", "relationships", "plays", "playScripts", "outfitAssets"];
 var _bootIssue = null;
 function emptyData() {
-  return { docs: [], graphs: [], manuscripts: [], novels: [], works: [], tables: [], timelines: [], maps: [], recentColors: [], sports: [], scripts: [], essays: [], essayEntries: [], relationships: [], plays: [], playScripts: [] };
+  return { docs: [], graphs: [], manuscripts: [], novels: [], works: [], tables: [], timelines: [], maps: [], recentColors: [], sports: [], scripts: [], essays: [], essayEntries: [], relationships: [], plays: [], playScripts: [], outfitAssets: [] };
 }
 function normalizeData(data) {
   var normalized = emptyData();
@@ -3130,7 +3136,7 @@ function loadData() {
 }
 function saveData() {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS, plays: PLAYS, playScripts: PLAY_SCRIPTS }));
+    localStorage.setItem(STORE_KEY, JSON.stringify({ docs: DOCS, graphs: GRAPHS, manuscripts: MANUSCRIPTS, novels: NOVELS, works: WORKS, tables: TABLES, timelines: TIMELINES, maps: MAPS, recentColors: RECENT_COLORS, sports: SPORTS, scripts: SCRIPTS, essays: ESSAYS, essayEntries: ESSAY_ENTRIES, relationships: RELATIONSHIPS, plays: PLAYS, playScripts: PLAY_SCRIPTS, outfitAssets: OUTFIT_ASSETS }));
     storageSaveErrorShown = false;
     var oldNotice = document.getElementById("storageSaveError");
     if (oldNotice) oldNotice.remove();
@@ -3302,6 +3308,7 @@ var ESSAY_ENTRIES = _boot.essayEntries || [];
  * scene/act breaks are structurally distinct types rather than mixed plain text. */
 var PLAYS = _boot.plays || [];
 var PLAY_SCRIPTS = _boot.playScripts || [];
+var OUTFIT_ASSETS = _boot.outfitAssets || [];
 /* 구조화된 관계(Relationship) -- 인물-인물뿐 아니라 인물-세력·인물-장소·아이템-소유자·
  * 사건-참여자까지 모든 DOCS 카테고리 쌍을 다룬다. 기존 "관계도"(GRAPHS/edges)는 캔버스
  * 위에 수동 배치하는 시각화 도구라 그대로 두고, 이건 각 문서 상세 페이지의 목록형
@@ -10785,6 +10792,17 @@ function appearRasterWarpMesh(gender, bodyType) {
   return { srcPts: srcPts, dstPts: dstPts, cols: cols, rows: rows };
 }
 
+function appearRasterWarpAll(ctx, img, mesh) {
+  for (var r = 0; r < mesh.rows; r++) {
+    for (var c = 0; c < mesh.cols; c++) {
+      var s00 = mesh.srcPts[r][c], s10 = mesh.srcPts[r][c + 1], s01 = mesh.srcPts[r + 1][c], s11 = mesh.srcPts[r + 1][c + 1];
+      var d00 = mesh.dstPts[r][c], d10 = mesh.dstPts[r][c + 1], d01 = mesh.dstPts[r + 1][c], d11 = mesh.dstPts[r + 1][c + 1];
+      appearRasterWarpTriangle(ctx, img, [s00, s10, s01], [d00, d10, d01]);
+      appearRasterWarpTriangle(ctx, img, [s10, s11, s01], [d10, d11, d01]);
+    }
+  }
+}
+
 function appearRasterWarpTriangle(ctx, src, sp, dp) {
   var x0 = sp[0][0], y0 = sp[0][1], x1 = sp[1][0], y1 = sp[1][1], x2 = sp[2][0], y2 = sp[2][1];
   var u0 = dp[0][0], v0 = dp[0][1], u1 = dp[1][0], v1 = dp[1][1], u2 = dp[2][0], v2 = dp[2][1];
@@ -10846,15 +10864,151 @@ function appearRasterDrawInto(canvasEl, ap) {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, APPEAR_RASTER_CANVAS_W, APPEAR_RASTER_CANVAS_H);
     var mesh = appearRasterWarpMesh(ap.gender, ap.bodyType);
-    for (var r = 0; r < mesh.rows; r++) {
-      for (var c = 0; c < mesh.cols; c++) {
-        var s00 = mesh.srcPts[r][c], s10 = mesh.srcPts[r][c + 1], s01 = mesh.srcPts[r + 1][c], s11 = mesh.srcPts[r + 1][c + 1];
-        var d00 = mesh.dstPts[r][c], d10 = mesh.dstPts[r][c + 1], d01 = mesh.dstPts[r + 1][c], d11 = mesh.dstPts[r + 1][c + 1];
-        appearRasterWarpTriangle(ctx, img, [s00, s10, s01], [d00, d10, d01]);
-        appearRasterWarpTriangle(ctx, img, [s10, s11, s01], [d10, d11, d01]);
-      }
-    }
+    appearRasterWarpAll(ctx, img, mesh);
   });
+}
+
+/* ---------------- AI 원화(raster) 의상 자산 ----------------
+ * 의상 사진은 내가 직접 생성할 수 없으므로, 사용자가 배경 AI 등으로 개별
+ * 제작해 붙여넣는 실제 이미지 파일을 등록해 쓰는 방식이다. 옷이 체형에 뜨는
+ * 문제를 원천적으로 막기 위해, 등록된 의상 이미지는 몸 원화와 정확히 같은
+ * 기준 캔버스(성별당 832x1216, 같은 포즈)에 맞춰 준비된다고 가정하고,
+ * 몸을 늘릴 때 쓰는 것과 동일한 appearRasterWarpMesh/appearRasterWarpAll로
+ * 함께 워프한다 -- 체형이 달라져도 몸과 옷이 항상 같은 비율로 늘어나므로
+ * 옷이 몸에서 분리되어 붕 뜨는 일이 없다. 전신 커버리지를 한 번에 요구하지
+ * 않고, (성별,부위,옵션) 조합별로 있는 것만 그리고 없는 조합은 그냥 그
+ * 부위를 안 그린다 -- "타협 가능한 것만" 하나씩 채워 넣을 수 있게 하기
+ * 위해서다. 실제 이미지 바이트는 지도 배경과 같은 IndexedDB 저장소를
+ * 그대로 재사용한다(putMapAsset/getMapAsset -- 이름은 "map"이지만 완전히
+ * 범용 키-값 블롭 저장소라 새로 만들 필요가 없다). */
+function outfitAssetGenderKey(ap) { return (ap && ap.gender === "m") ? "m" : "f"; }
+function findOutfitAsset(gender, slot, optionId) {
+  for (var i = 0; i < OUTFIT_ASSETS.length; i++) {
+    var r = OUTFIT_ASSETS[i];
+    if (r.gender === gender && r.slot === slot && r.optionId === optionId) return r;
+  }
+  return null;
+}
+function upsertOutfitAsset(gender, slot, optionId, assetId) {
+  var rec = findOutfitAsset(gender, slot, optionId);
+  if (rec) { rec.assetId = assetId; rec.updatedAt = Date.now(); }
+  else { OUTFIT_ASSETS.push({ id: uid(), gender: gender, slot: slot, optionId: optionId, assetId: assetId, tintable: true, createdAt: Date.now() }); }
+  saveData();
+}
+function deleteOutfitAsset(gender, slot, optionId) {
+  var idx = -1;
+  for (var i = 0; i < OUTFIT_ASSETS.length; i++) {
+    if (OUTFIT_ASSETS[i].gender === gender && OUTFIT_ASSETS[i].slot === slot && OUTFIT_ASSETS[i].optionId === optionId) { idx = i; break; }
+  }
+  if (idx === -1) return;
+  var rec = OUTFIT_ASSETS[idx];
+  OUTFIT_ASSETS.splice(idx, 1);
+  saveData();
+  if (rec.assetId) {
+    delete _mapAssetCache[rec.assetId];
+    openMapAssetDb(function (db) {
+      if (!db) return;
+      try { db.transaction(MAP_ASSET_STORE, "readwrite").objectStore(MAP_ASSET_STORE).delete(rec.assetId); } catch (e) { }
+    });
+  }
+}
+function appearOptionLabel(slot, optionId) {
+  var dict = slot === "top" ? PixelDollParts.tops : slot === "bottom" ? PixelDollParts.bottoms : PixelDollParts.shoes;
+  return (dict && dict[optionId] && dict[optionId].label) || optionId;
+}
+/* 원본 레이어의 알파(형태/음영 경계)는 그대로 두고 색상만 목표 hex로 바꾼다.
+ * canvas의 "color" 블렌드 모드는 배경의 명도(밝기 굴곡=원단의 음영·주름)는
+ * 유지한 채 배경의 색상만 전경색으로 바꿔주므로, 사진처럼 음영이 있는
+ * 의상이라도 자연스럽게 재염색된다. 이후 "destination-in"으로 원래
+ * 알파(마스크)를 복원해 재염색이 옷 형태 바깥으로 새어나가지 않게 한다. */
+function appearRasterTintLayer(layerCanvas, hex) {
+  var w = layerCanvas.width, h = layerCanvas.height;
+  var mask = document.createElement("canvas");
+  mask.width = w; mask.height = h;
+  mask.getContext("2d").drawImage(layerCanvas, 0, 0);
+  var ctx = layerCanvas.getContext("2d");
+  ctx.globalCompositeOperation = "color";
+  ctx.fillStyle = hex;
+  ctx.fillRect(0, 0, w, h);
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.drawImage(mask, 0, 0);
+  ctx.globalCompositeOperation = "source-over";
+}
+/* 몸 원화 위에 등록된 의상 자산을 하의->상의->신발 순서로 겹쳐 그린다.
+ * 각 의상 레이어는 몸과 동일한 mesh로 별도 오프스크린 캔버스에 먼저
+ * 워프한 뒤(그래야 재염색이 최종 캔버스의 몸 픽셀을 건드리지 않는다)
+ * 필요하면 재염색해서 합성한다. onDone(missingSlots)로 어떤 부위가
+ * 아직 자산이 없어 표시되지 못했는지 알려준다. */
+function appearRasterDrawOutfitInto(canvasEl, ap, onDone) {
+  if (!canvasEl) return;
+  var src = appearRasterSrc(ap);
+  appearRasterLoadImage(src, function (img) {
+    if (!canvasEl.isConnected) return;
+    canvasEl.width = APPEAR_RASTER_CANVAS_W;
+    canvasEl.height = APPEAR_RASTER_CANVAS_H;
+    var ctx = canvasEl.getContext("2d");
+    ctx.clearRect(0, 0, APPEAR_RASTER_CANVAS_W, APPEAR_RASTER_CANVAS_H);
+    ctx.filter = appearSkinFilterCss(ap.skinTone);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, APPEAR_RASTER_CANVAS_W, APPEAR_RASTER_CANVAS_H);
+    ctx.filter = "none";
+    var mesh = appearRasterWarpMesh(ap.gender, ap.bodyType);
+    appearRasterWarpAll(ctx, img, mesh);
+    var g = outfitAssetGenderKey(ap);
+    var order = [
+      { slot: "bottom", optionId: ap.bottom, color: ap.bottomColor },
+      { slot: "top", optionId: ap.top, color: ap.topColor },
+      { slot: "shoes", optionId: ap.shoes, color: null }
+    ];
+    var missing = [];
+    function drawNext(i) {
+      if (i >= order.length) { if (onDone) onDone(missing); return; }
+      var s = order[i];
+      if (!s.optionId || s.optionId === "none" || s.optionId === "barefoot") { drawNext(i + 1); return; }
+      var rec = findOutfitAsset(g, s.slot, s.optionId);
+      if (!rec) { missing.push(s.slot); drawNext(i + 1); return; }
+      getMapAsset(rec.assetId, function (dataUrl) {
+        if (!dataUrl) { missing.push(s.slot); drawNext(i + 1); return; }
+        appearRasterLoadImage(dataUrl, function (gimg) {
+          if (!canvasEl.isConnected) return;
+          var layer = document.createElement("canvas");
+          layer.width = APPEAR_RASTER_CANVAS_W; layer.height = APPEAR_RASTER_CANVAS_H;
+          appearRasterWarpAll(layer.getContext("2d"), gimg, mesh);
+          if (s.color && rec.tintable !== false) appearRasterTintLayer(layer, s.color);
+          ctx.drawImage(layer, 0, 0);
+          drawNext(i + 1);
+        });
+      });
+    }
+    drawNext(0);
+  });
+}
+/* 현재 캐릭터가 실제로 입고 있는(=none이 아닌) 부위 각각에 대해 등록된
+ * 이미지가 있으면 썸네일+교체+삭제, 없으면 추가 버튼을 보여주는 관리
+ * 목록. "일일이 하나씩" 채워 넣는 작업을 옷장 설정처럼 다룰 수 있게
+ * 하는 UI로, 새 부위를 고르면 해당 부위 자산만 새로 요구한다. */
+var OUTFIT_SLOT_LABELS = { top: "상의", bottom: "하의", shoes: "신발" };
+function outfitAssetManagerHtml(ap) {
+  var g = outfitAssetGenderKey(ap);
+  var slots = [
+    { slot: "top", optionId: ap.top },
+    { slot: "bottom", optionId: ap.bottom },
+    { slot: "shoes", optionId: ap.shoes }
+  ].filter(function (s) { return s.optionId && s.optionId !== "none" && s.optionId !== "barefoot"; });
+  if (!slots.length) return "";
+  return '<div class="appear-outfit-assets">' + slots.map(function (s) {
+    var rec = findOutfitAsset(g, s.slot, s.optionId);
+    var label = OUTFIT_SLOT_LABELS[s.slot] + "(" + esc(appearOptionLabel(s.slot, s.optionId)) + ")";
+    return '<div class="appear-outfit-asset-row" data-outfitslot="' + s.slot + '" data-outfitoption="' + esc(s.optionId) + '">' +
+      '<span class="appear-outfit-asset-label">' + label + '</span>' +
+      (rec
+        ? '<span class="appear-outfit-asset-status on">등록됨</span>' +
+          '<button type="button" class="appear-outfit-asset-btn" data-outfitassetadd="1">교체</button>' +
+          '<button type="button" class="appear-outfit-asset-btn danger" data-outfitassetdel="1">삭제</button>'
+        : '<span class="appear-outfit-asset-status">이미지 없음</span>' +
+          '<button type="button" class="appear-outfit-asset-btn" data-outfitassetadd="1">이미지 추가</button>') +
+      '</div>';
+  }).join("") + '</div>';
 }
 
 function defaultAppearance() {
@@ -11320,9 +11474,11 @@ function renderAppearanceEditor(doc) {
       ? '<div class="appear-panel appear-outfit-panel">' +
         '<div class="appear-panel-label">외형 확인</div>' +
         (rasterOn
-          ? '<div class="appear-outfit-placeholder" style="height:' + comparePxNow + 'px">' +
-            '<span class="appear-outfit-placeholder-text">AI 원화(베타)는 아직 의상을 표현하지 못해요.<br>도트(SVG) 모드에서 완성된 외형을 확인해보세요.</span>' +
-            '</div>'
+          ? '<div class="appear-outfit-figure" style="height:' + comparePxNow + 'px;transform:scaleX(' + bodyRatio + ')"><canvas id="appearOutfitCanvas" class="appear-raster-canvas" aria-label="현재 외형"></canvas></div>' +
+            '<div class="appear-compare-tag">현재 <span class="appear-cm-readout">' + curCm + '</span>cm</div>' +
+            '<div class="appear-render-note" id="appearOutfitMissingNote" hidden></div>' +
+            outfitAssetManagerHtml(ap) +
+            '<input type="file" id="outfitAssetInput" accept="image/*" style="display:none">'
           : '<div class="appear-outfit-figure" id="appearOutfitFigure" style="height:' + comparePxNow + 'px;transform:scaleX(' + bodyRatio + ')">' + renderAppearanceBodySvg(ap) + '</div>' +
             '<div class="appear-compare-tag">현재 <span class="appear-cm-readout">' + curCm + '</span>cm</div>') +
         '</div>'
@@ -11350,9 +11506,24 @@ function renderAppearanceEditor(doc) {
 
 function wireAppearanceEditor(doc) {
   var ap = doc.appearance;
+  function refreshOutfitCanvas() {
+    var canvas = document.getElementById("appearOutfitCanvas");
+    if (!canvas) return;
+    appearRasterDrawOutfitInto(canvas, ap, function (missing) {
+      var note = document.getElementById("appearOutfitMissingNote");
+      if (!note) return;
+      if (missing.length) {
+        note.hidden = false;
+        note.textContent = missing.map(function (s) { return OUTFIT_SLOT_LABELS[s]; }).join("·") + " 이미지가 아직 없어 해당 부위는 표시되지 않았어요. 아래에서 추가할 수 있어요.";
+      } else {
+        note.hidden = true;
+      }
+    });
+  }
   if (state.appearRasterMode && state.appearRasterMode[doc.id]) {
     appearRasterDrawInto(document.getElementById("appearCompareImg"), ap);
     appearRasterDrawInto(document.getElementById("appearCompareTemplateCanvas"), Object.assign({}, defaultAppearance(), { gender: ap.gender }));
+    refreshOutfitCanvas();
   }
   function refreshPreview() {
     var rasterOn = !!(state.appearRasterMode && state.appearRasterMode[doc.id]);
@@ -11371,12 +11542,12 @@ function wireAppearanceEditor(doc) {
         if (outfitPv) outfitPv.innerHTML = renderAppearanceBodySvg(ap);
       }
     } else {
-      /* AI 원화 미리보기는 옷·머리 등 대부분의 픽커에 반응할 그림이 아직 없으니 그대로 두고,
-       * 이 자산이 실제로 표현할 수 있는 것들(피부색·가슴 크기·체형 워프)만 다시 그린다.
-       * 외형 확인 패널은 이 모드에서 안내 문구로 대체되므로 갱신할 이미지가 없다. */
+      /* AI 원화 미리보기는 피부색·가슴 크기·체형 워프, 그리고 등록된 의상 자산이
+       * 있는 부위만 반영해서 다시 그린다. */
       var faceImg = document.getElementById("appearFaceImg");
       if (faceImg) { faceImg.style.filter = appearSkinFilterCss(ap.skinTone); faceImg.src = appearRasterSrc(ap); }
       appearRasterDrawInto(document.getElementById("appearCompareImg"), ap);
+      if (panelsOn.outfit) refreshOutfitCanvas();
     }
     saveData();
   }
@@ -11469,7 +11640,9 @@ function wireAppearanceEditor(doc) {
         ap[cat] = btn.dataset.pickval;
         row.querySelectorAll(".appear-pick-btn").forEach(function (b) { b.classList.toggle("on", b === btn); });
         refreshPreview();
-        if (cat === "top") renderDocPage(doc); // dress tops hide the bottom picker -- needs a full re-render
+        // dress tops hide the bottom picker, and the outfit-asset manager rows are keyed by
+        // the selected option -- both need a full re-render when top/bottom/shoes changes.
+        if (cat === "top" || cat === "bottom" || cat === "shoes") renderDocPage(doc);
       });
     });
   });
@@ -11493,6 +11666,43 @@ function wireAppearanceEditor(doc) {
   });
   var oddEyeChk = document.getElementById("aOddEye");
   if (oddEyeChk) oddEyeChk.addEventListener("change", function () { ap.oddEye = oddEyeChk.checked; saveData(); renderDocPage(doc); });
+  var outfitAssetInput = document.getElementById("outfitAssetInput");
+  if (outfitAssetInput) {
+    var pendingOutfitSlot = null, pendingOutfitOption = null;
+    document.querySelectorAll("[data-outfitassetadd]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var rowEl = btn.closest("[data-outfitslot]");
+        if (!rowEl) return;
+        pendingOutfitSlot = rowEl.dataset.outfitslot;
+        pendingOutfitOption = rowEl.dataset.outfitoption;
+        outfitAssetInput.click();
+      });
+    });
+    document.querySelectorAll("[data-outfitassetdel]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var rowEl = btn.closest("[data-outfitslot]");
+        if (!rowEl) return;
+        deleteOutfitAsset(outfitAssetGenderKey(ap), rowEl.dataset.outfitslot, rowEl.dataset.outfitoption);
+        renderDocPage(doc);
+      });
+    });
+    outfitAssetInput.addEventListener("change", function (e) {
+      var file = e.target.files[0];
+      outfitAssetInput.value = "";
+      if (!file || !pendingOutfitSlot) return;
+      var slot = pendingOutfitSlot, optionId = pendingOutfitOption;
+      pendingOutfitSlot = null; pendingOutfitOption = null;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        putMapAsset(ev.target.result, function (assetId) {
+          if (!assetId) return;
+          upsertOutfitAsset(outfitAssetGenderKey(ap), slot, optionId, assetId);
+          renderDocPage(doc);
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+  }
   var memoKey = "amemoOpen:" + doc.id;
   var memoOpenNow = state.collapsed.hasOwnProperty(memoKey) ? state.collapsed[memoKey] : !!(ap.memo && ap.memo.trim());
   var memoToggleBtn = document.querySelector("[data-memotoggle]");
